@@ -131,13 +131,20 @@
 
 html.use-virtua-font {
   --font-sans-active: var(--font-sans-virtua);
-  font-weight: 400;
-  font-style: normal;
 }
 
-html.use-virtua-font * {
+/* Site default: a single 400 weight everywhere, upright, with no italic and
+   no faux bold/italic, for every font in the toggle. This is the intended look
+   for now — hierarchy comes from size and spacing, not weight or slant.
+   font-synthesis: none stops the browser from faking weights/slants a face
+   doesn't have. The real per-element weights (600 headings, bold strong,
+   italic em, etc.) stay defined in the source, so re-enabling them later is
+   just a matter of removing this one block. */
+html,
+html * {
   font-weight: 400 !important;
   font-style: normal !important;
+  font-synthesis: none;
 }
 
 html.use-inter-font {
