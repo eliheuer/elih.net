@@ -1,0 +1,33 @@
+name: Deploy to GitHub Pages
+
+on:
+  # rebuild on every push to main (change if you use a different branch)
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+# allow the job to create a Pages deployment
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4              # ⬅ latest checkout
+      - uses: withastro/action@v4              # ⬅ latest Astro action (uses artifact v4)
+        with:
+          node-version: 22                    # pnpm 11.6+ requires Node >= 22.13
+          package-manager: pnpm               # lockfile auto-detected, but explicit is fine
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v4         # ⬅ latest deploy action

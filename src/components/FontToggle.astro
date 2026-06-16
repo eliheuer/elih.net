@@ -1,0 +1,56 @@
+---
+// Cycles the UI font between Virtua Grotesk (the in-progress house font)
+// and a set of reference grotesks, for side-by-side testing.
+---
+
+<button
+  id="font-toggle"
+  class="text-muted-foreground hover:text-foreground cursor-pointer transition-colors"
+  title="Cycle font (for testing Virtua Grotesk against references)"
+>
+  Font: <span id="font-toggle-name">Virtua Grotesk</span>
+</button>
+
+<script>
+  const FONTS: [string, string][] = [
+    ['virtua', 'Virtua Grotesk'],
+    ['inter', 'Inter'],
+    ['helvetica', 'Helvetica'],
+    ['geist', 'Geist'],
+  ]
+
+  function currentFont(): string {
+    const stored = localStorage.getItem('font')
+    return FONTS.some(([id]) => id === stored) ? (stored as string) : 'virtua'
+  }
+
+  function applyFont(font: string) {
+    const html = document.documentElement
+    FONTS.forEach(([id]) => html.classList.remove(`use-${id}-font`))
+    html.classList.add(`use-${font}-font`)
+    localStorage.setItem('font', font)
+    const name = document.getElementById('font-toggle-name')
+    if (name) name.textContent = FONTS.find(([id]) => id === font)?.[1] ?? font
+  }
+
+  function cycleFont() {
+    const idx = FONTS.findIndex(([id]) => id === currentFont())
+    applyFont(FONTS[(idx + 1) % FONTS.length][0])
+  }
+
+  function initFontToggle() {
+    applyFont(currentFont())
+    const btn = document.getElementById('font-toggle')
+    if (btn) btn.addEventListener('click', cycleFont)
+  }
+
+  document.addEventListener('astro:page-load', () => {
+    initFontToggle()
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'f' && !e.metaKey && !e.ctrlKey && !e.altKey) {
+        const tag = (e.target as HTMLElement).tagName
+        if (tag !== 'INPUT' && tag !== 'TEXTAREA') cycleFont()
+      }
+    })
+  })
+</script>

@@ -1,0 +1,20 @@
+---
+import Link from '@/components/Link.astro'
+import { NAV_LINKS } from '@/consts'
+---
+
+<header class="border-foreground flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1 border-b py-5">
+  <Link href="/">
+    Eli Heuer’s Blog
+  </Link>
+
+  <nav class="text-muted-foreground flex flex-wrap items-baseline gap-x-4">
+    {
+      NAV_LINKS.map((item) => (
+        <Link href={item.href} class="hover:text-foreground transition-colors">
+          {item.label}
+        </Link>
+      ))
+    }
+  </nav>
+</header>

@@ -1,0 +1,26 @@
+---
+import { formatDate } from '@/lib/utils'
+import type { CollectionEntry } from 'astro:content'
+import Link from './Link.astro'
+
+interface Props {
+  entry:
+    | CollectionEntry<'blog'>
+    | CollectionEntry<'fonts'>
+    | CollectionEntry<'software'>
+}
+
+const { entry } = Astro.props
+---
+
+<div class="flex flex-col gap-x-4 sm:flex-row sm:items-baseline">
+  <time
+    datetime={entry.data.date.toISOString()}
+    class="text-muted-foreground shrink-0 tabular-nums sm:w-32"
+  >
+    {formatDate(entry.data.date)}
+  </time>
+  <Link href={`/${entry.collection}/${entry.id}`} class="hover:underline">
+    {entry.data.title}
+  </Link>
+</div>

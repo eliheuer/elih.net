@@ -1,0 +1,49 @@
+---
+import { SITE } from '@/consts'
+import type { CollectionEntry } from 'astro:content'
+
+interface Props {
+  post: CollectionEntry<'blog'> | CollectionEntry<'fonts'> | CollectionEntry<'software'>
+}
+
+const { post } = Astro.props
+
+const title = post.data.title || SITE.title
+const description = post.data.description || SITE.description
+const defaultImage = new URL('/static/1200x630.png', Astro.site).toString()
+const author = 'authors' in post.data && post.data.authors ? post.data.authors.join(', ') : SITE.author
+
+// We'll use a direct path to the image in the public directory
+const postId = post.id.split('/')[0]; // Get the post ID (folder name)
+const socialImageUrl = new URL(`/og/${postId}.png`, Astro.site).toString();
+
+---
+
+<title>{`${title} | ${SITE.title}`}</title>
+<meta name="title" content={`${title} | ${SITE.title}`} />
+<meta name="description" content={description} />
+<link rel="canonical" href={Astro.url} />
+
+<meta property="og:title" content={title} />
+<meta property="og:description" content={description} />
+<meta property="og:image" content={socialImageUrl} />
+<meta property="og:image:alt" content={title} />
+<meta property="og:type" content="website" />
+<meta property="og:locale" content={SITE.locale} />
+<meta property="og:site_name" content={SITE.title} />
+<meta property="og:url" content={Astro.url} />
+<meta property="og:author" content={author} />
+
+<meta name="twitter:title" content={title} />
+<meta name="twitter:description" content={description} />
+<meta name="twitter:image" content={socialImageUrl} />
+<meta name="twitter:image:alt" content={title} />
+<meta name="twitter:card" content="summary_large_image" />
+<meta name="twitter:creator" content={author} />
+
+{
+  post?.data.tags &&
+    post.data.tags.map((tag: string) => {
+      return <meta property="article:tag" content={tag} />
+    })
+}

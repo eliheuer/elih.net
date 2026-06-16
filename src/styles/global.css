@@ -1,0 +1,189 @@
+@import 'tailwindcss';
+
+@custom-variant dark (&:is(.dark *));
+@custom-variant use-virtua-font (&:is(.use-virtua-font *), &.use-virtua-font);
+@custom-variant use-inter-font (&:is(.use-inter-font *), &.use-inter-font);
+@custom-variant use-helvetica-font (&:is(.use-helvetica-font *), &.use-helvetica-font);
+@custom-variant use-geist-font (&:is(.use-geist-font *), &.use-geist-font);
+
+/* ── Design tokens ── */
+
+@theme inline {
+  --font-sans-geist:
+    'Geist', -apple-system, BlinkMacSystemFont, ui-sans-serif, system-ui,
+    sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol', 'Noto Color Emoji';
+  --font-sans-virtua:
+    'Virtua Grotesk', -apple-system, BlinkMacSystemFont, ui-sans-serif, system-ui,
+    sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol', 'Noto Color Emoji';
+  --font-sans-inter:
+    'Inter', -apple-system, BlinkMacSystemFont, ui-sans-serif, system-ui,
+    sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol', 'Noto Color Emoji';
+  --font-sans-helvetica:
+    'Helvetica Neue', Helvetica, Arial, -apple-system, BlinkMacSystemFont,
+    ui-sans-serif, system-ui, sans-serif;
+  --font-sans: var(--font-sans-active);
+  --font-mono:
+    'Hasubi Mono', ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas,
+    'Liberation Mono', 'Courier New', monospace;
+
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-additive: var(--additive);
+  --color-additive-foreground: var(--additive-foreground);
+  --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
+  --color-border: var(--border);
+  --color-ring: var(--ring);
+}
+
+/* ── Fonts ── */
+
+@font-face {
+  font-family: 'Geist';
+  src: url('/fonts/GeistVF.woff2') format('woff2-variations');
+  font-weight: 100 900;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Virtua Grotesk';
+  src: url('/fonts/VirtuaGroteskVF.woff2') format('woff2-variations');
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Inter';
+  src: url('/fonts/InterVariable.woff2') format('woff2-variations');
+  font-weight: 100 900;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Hasubi Mono';
+  src: url('/fonts/HasubiMono-Regular.woff2') format('woff2');
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Geist Mono';
+  src: url('/fonts/GeistMonoVF.woff2') format('woff2-variations');
+  font-weight: 100 900;
+  font-style: normal;
+  font-display: swap;
+}
+
+/* ── Colors: one foreground per mode ── */
+
+:root {
+  --background: oklch(0.92 0 0);
+  --foreground: oklch(0.3 0 0);
+  --primary: oklch(0.3 0 0);
+  --primary-foreground: oklch(0.985 0 0);
+  --secondary: oklch(0.97 0 0);
+  --secondary-foreground: oklch(0.3 0 0);
+  --muted: oklch(0.97 0 0);
+  --muted-foreground: oklch(0.3 0 0);
+  --accent: oklch(0.97 0 0);
+  --accent-foreground: oklch(0.3 0 0);
+  --destructive: oklch(0.577 0.245 27.325);
+  --border: oklch(0.822 0 0);
+  --ring: oklch(0.708 0 0);
+}
+
+.dark {
+  --background: oklch(0.145 0 0);
+  --foreground: oklch(0.78 0 0);
+  --primary: oklch(0.78 0 0);
+  --primary-foreground: oklch(0.205 0 0);
+  --secondary: oklch(0.269 0 0);
+  --secondary-foreground: oklch(0.78 0 0);
+  --muted: oklch(0.269 0 0);
+  --muted-foreground: oklch(0.78 0 0);
+  --accent: oklch(0.269 0 0);
+  --accent-foreground: oklch(0.78 0 0);
+  --destructive: oklch(0.704 0.191 22.216);
+  --border: oklch(1 0 0 / 10%);
+  --ring: oklch(0.556 0 0);
+}
+
+/* ── Font toggle: just switch the CSS variable, inherit does the rest ── */
+
+/* @theme inline bakes values into utilities, so .font-sans compiles to
+   var(--font-sans-active); these plain rules are what the font toggle
+   actually switches at runtime. */
+:root {
+  --font-sans-active: var(--font-sans-virtua);
+}
+
+html.use-virtua-font {
+  --font-sans-active: var(--font-sans-virtua);
+  font-weight: 400;
+  font-style: normal;
+}
+
+html.use-virtua-font * {
+  font-weight: 400 !important;
+  font-style: normal !important;
+}
+
+html.use-inter-font {
+  --font-sans-active: var(--font-sans-inter);
+}
+
+html.use-helvetica-font {
+  --font-sans-active: var(--font-sans-helvetica);
+}
+
+html.use-geist-font {
+  --font-sans-active: var(--font-sans-geist);
+}
+
+/* ── Base: the single source of truth ── */
+
+@layer base {
+  *,
+  ::after,
+  ::before,
+  ::backdrop,
+  ::file-selector-button {
+    @apply border-border outline-ring/50;
+    border-radius: 2px;
+  }
+
+  html {
+    @apply bg-background text-foreground scheme-light;
+    font-family: var(--font-sans);
+    font-size: 20px;
+    line-height: 1.6;
+    letter-spacing: 0;
+    text-rendering: optimizeLegibility;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+
+    &.dark {
+      @apply scheme-dark;
+    }
+
+    ::-webkit-scrollbar-corner {
+      @apply bg-transparent;
+    }
+  }
+
+  .disable-transitions * {
+    @apply transition-none!;
+  }
+}

@@ -1,0 +1,160 @@
+@reference './global.css';
+
+/* ── Design system: plain engineering-blog prose ───────────── */
+/* Two-tier type: 20px body, 40px (2em) section headings, on    */
+/* top of a 60px post title set in the page template. em-relative */
+/* spacing, ~1.6 line height. Optimized for legibility.         */
+
+@layer components {
+  .prose {
+    color: var(--foreground);
+
+    p {
+      margin: 1.2em 0;
+    }
+
+    p:first-child {
+      margin-top: 0;
+    }
+
+    p:last-child {
+      margin-bottom: 0;
+    }
+
+    h1, h2, h3, h4, h5, h6 {
+      color: var(--foreground);
+      font-weight: 600;
+      line-height: 1.25;
+      margin-top: 2em;
+      margin-bottom: 0.6em;
+      scroll-margin-top: 2rem;
+    }
+
+    h1, h2, h3 { font-size: 2em; }
+    h4, h5, h6 { font-size: 1em; }
+
+    a {
+      color: var(--foreground);
+      font-weight: normal;
+      text-decoration: underline;
+      text-decoration-color: color-mix(in oklch, var(--foreground) 20%, transparent);
+      text-underline-offset: 4px;
+      word-break: break-word;
+      transition: text-decoration-color 0.2s;
+    }
+
+    a:hover {
+      text-decoration-color: color-mix(in oklch, var(--foreground) 60%, transparent);
+    }
+
+    strong {
+      color: var(--foreground);
+      font-weight: 600;
+    }
+
+    ul {
+      margin: 1.2em 0;
+      margin-left: 1.5rem;
+      list-style-type: disc;
+    }
+
+    ol {
+      margin: 1.2em 0;
+      margin-left: 1.5rem;
+      list-style-type: decimal;
+    }
+
+    li {
+      color: var(--foreground);
+      padding-left: 0.25rem;
+      margin: 0.35em 0;
+    }
+
+    li > p {
+      margin: 0;
+    }
+
+    ul ul, ol ol, ul ol, ol ul {
+      margin: 0;
+      margin-left: 1.5rem;
+    }
+
+    code {
+      @apply bg-muted/50;
+      color: var(--foreground);
+      font-size: 0.9em;
+      font-weight: 500;
+      padding: 0.15em 0.3em;
+      border-radius: 2px;
+      word-break: break-word;
+      @apply [&>span[data-line='']>*]:text-(--shiki-light) dark:[&>span[data-line='']>*]:text-(--shiki-dark);
+    }
+
+    blockquote {
+      margin: 1.2em 0;
+      border-left: 2px solid var(--border);
+      padding-left: 1.25rem;
+      color: var(--muted-foreground);
+    }
+
+    hr {
+      margin: 2.5em 0;
+      border-top: 1px solid var(--foreground);
+    }
+
+    table {
+      margin: 1.2em 0;
+      display: block;
+      width: 100%;
+      overflow-x: auto;
+      font-size: 0.85em;
+    }
+
+    thead {
+      border-bottom: 1px solid var(--border);
+    }
+
+    th {
+      padding: 0.5rem 1rem;
+      font-weight: 500;
+      text-align: left;
+    }
+
+    tr {
+      border-bottom: 1px solid var(--border);
+    }
+
+    tr:last-child {
+      border-bottom: none;
+    }
+
+    td {
+      padding: 0.5rem 1rem;
+      color: var(--foreground);
+      vertical-align: top;
+      word-break: break-word;
+      text-align: left;
+    }
+
+    td:first-child, th:first-child {
+      white-space: nowrap;
+    }
+
+    img, video, figure, .expressive-code {
+      margin: 1.4em 0;
+    }
+
+    kbd {
+      color: var(--foreground);
+      background: var(--muted);
+      border: 1px solid var(--border);
+      border-radius: 2px;
+      padding: 0.15em 0.5em;
+      font-weight: 500;
+    }
+  }
+}
+
+@utility fix-margin {
+  @apply [&>*]:first:mt-0! [&>*]:last:mb-0!;
+}

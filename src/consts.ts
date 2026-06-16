@@ -1,0 +1,75 @@
+import type { IconMap, SocialLink, Site } from '@/types'
+
+export const SITE: Site = {
+  title: 'Eli Heuer',
+  description:
+    'A blog about software development, design, Arabic, FOSS, cryptoeconomics, libre graphics, and other things Eli is interested in.',
+  href: 'https://elih.net',
+  author: 'Eli Heuer',
+  locale: 'en-US',
+  featuredPostCount: 3,
+  postsPerPage: 3,
+}
+
+export const NAV_LINKS: SocialLink[] = [
+  {
+    href: '/blog',
+    label: 'Blog',
+  },
+  {
+    href: '/software',
+    label: 'Software',
+  },
+  {
+    href: '/fonts',
+    label: 'Fonts',
+  },
+]
+
+export const SOCIAL_LINKS: SocialLink[] = [
+  {
+    href: 'https://github.com/eliheuer',
+    label: 'GitHub',
+  },
+  {
+    href: 'https://mastodon.social/@eliheuer',
+    label: 'Mastodon',
+  },
+  {
+    href: 'https://x.com/eliheuer',
+    label: 'X/Twitter',
+  },
+  {
+    href: 'https://www.instagram.com/eli.heuer',
+    label: 'Instagram',
+  },
+  {
+    href: 'https://www.youtube.com/@eliheuer',
+    label: 'YouTube',
+  },
+  {
+    href: 'https://www.linkedin.com/in/eliheuer',
+    label: 'LinkedIn',
+  },
+  {
+    href: 'https://www.tiktok.com/@die_gnu_typographie',
+    label: 'TikTok',
+  },
+  {
+    href: 'mailto:elih@protonmail.com',
+    label: 'Email',
+  },
+  {
+    href: '/rss.xml',
+    label: 'RSS',
+  },
+]
+
+export const ICON_MAP: IconMap = {
+  Website: 'lucide:globe',
+  GitHub: 'lucide:github',
+  LinkedIn: 'lucide:linkedin',
+  Twitter: 'lucide:twitter',
+  Email: 'lucide:mail',
+  RSS: 'lucide:rss',
+}

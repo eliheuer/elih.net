@@ -1,0 +1,74 @@
+---
+title: 'Introducing Runebender Xilem'
+description: 'A free and open-source cross-platform font editor desktop app built in pure Rust with Xilem.'
+date: 2026-03-05
+tags: ['design', 'tools', 'aesthetics', 'customization']
+image: './bezy-screenshot.jpg'
+authors: ['elih']
+draft: true
+---
+
+A free and open-source cross-platform font editor desktop app built in pure Rust with Xilem.
+
+Published March 5th, 2026
+
+<div class="pl-6 my-8 [&>*]:text-muted-foreground">
+<p>&ldquo;The enjoyment of one&rsquo;s tools is an essential ingredient of successful work.&rdquo;</p>
+
+<p>—Donald Knuth</p>
+</div>
+
+### What is Runebender Xilem?
+
+Runebender Xilem is a free and open-source font editor written in Rust. It works with [UFO (Unified Font Object)](https://unifiedfontobject.org/) sources and [Designspace](https://fonttools.readthedocs.io/en/latest/designspaceLib/) files, and runs on macOS, GNU/Linux, and Windows. The project is approaching being a full working editor—a viable replacement for the most popular proprietary font editors for a technical user willing to do some work from the CLI and with an LLM assistant. Tasks like editing font info metadata and OpenType feature code were always time-consuming in GUI font editors; Runebender Xilem treats the GUI as a drawing surface and leaves the rest to tools that handle text better. Runebender Xilem is designed as a font editor for professionals and experts, there are already many font editors designed for prosumer users, but high end expert level font editors is an underexplored category.
+
+The thing that makes Runebender unique is that it is a pure Rust application, not build on a WebView like Electron or Tauri. It is designed to be simple and easy to customize, and works we as a CLI application used by Unix eperts and AI agents.
+
+### Where does it come from?
+
+The name "Runebender" comes from an earlier font editor project in the Linebender ecosystem. The original Runebender was built on Druid, a Rust GUI toolkit designed by Raph Levien.
+
+Druid made some progress but was never production-ready. Its data model required cloning and equality testing on all app state, its lens mechanism for data binding grew confusing in complex UIs, and async integration was never satisfactorily solved. Druid is now officially discontinued.
+
+Druid's widget system was forked into Masonry, a retained widget tree library. And on top of Masonry, the Linebender ecosystem built Xilem—a new reactive UI framework that addresses Druid's architectural limitations while keeping the Rust-native, type-safe, GPU-accelerated approach that made Druid compelling in the first place.
+
+Runebender Xilem not an officially endored Linebender project, but is Eli Heuer's attempt to finish the original Runebender Project using Xilem and the rest of the current Linebender ecosystem.
+
+### Why Xilem?
+
+Xilem is interesting for a specific reason: it is designed to work *with* Rust's ownership model rather than fighting it.
+
+Most GUI frameworks in other languages rely on shared mutable state—callbacks that mutate objects through references, global stores, or event buses. These patterns translate poorly to Rust, where the borrow checker enforces strict ownership rules. Many Rust GUI efforts end up wrapping everything in `Arc<Mutex<>>` or using interior mutability patterns that feel like workarounds rather than design.
+
+Xilem takes a different approach inspired by SwiftUI and Elm. On every state change, your application rebuilds a lightweight view tree from a single `AppState`. Xilem diffs this new tree against the previous one and sends only the minimal updates to the underlying Masonry widget tree, which handles layout and painting. Event callbacks receive direct mutable borrows to your state—no shared references, no locks, no runtime type erasure. The compiler statically verifies the types at every level.
+
+The rendering pipeline ends at Vello, a GPU compute-centric 2D renderer also from the Linebender project. Where older toolkits paint to a CPU-rasterized canvas, Vello pushes path rendering to the GPU. For a font editor—where you might be zoomed into a complex glyph with dozens of cubic bezier segments, overlapping contours, and a live preview running simultaneously—this matters.
+
+Type design is best done in a flowstate, and for this kind of work video game like performance is needed, every lag and context switch takes the designer out of the zone.
+
+### How to try it
+
+Runebender Xilem requires Rust 1.88 or later. You also need the img2bez crate cloned as a sibling directory (it hasn't been published to crates.io yet):
+
+```bash
+git clone https://github.com/eliheuer/img2bez.git
+git clone https://github.com/eliheuer/runebender-xilem.git
+cd runebender-xilem
+cargo run
+```
+
+Running `cargo run` with no arguments opens a file picker. You can also open a UFO file directly:
+
+```bash
+cargo run -- path/to/your/font.ufo
+```
+
+The editor works with UFO v3 files. If you don't have one handy, the repo includes a sample at `assets/untitled.ufo`.
+
+Key shortcuts to get started: V for select, P for pen, H for hyperbezier pen, K for knife, Space to preview, Tab to toggle the side panel, and Cmd+S to save.
+
+### What's next
+
+The project is alpha software. Expect rough edges, missing features, and breaking changes. But it is actively developed, the architecture is sound, and contributions are welcome.
+
+The source code is on GitHub at [github.com/eliheuer/runebender-xilem](https://github.com/eliheuer/runebender-xilem), licensed Apache 2.0.

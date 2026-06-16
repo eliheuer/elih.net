@@ -1,0 +1,41 @@
+---
+import '@/styles/global.css'
+import '@/styles/typography.css'
+
+import Footer from '@/components/Footer.astro'
+import Head from '@/components/Head.astro'
+import Header from '@/components/Header.astro'
+import { SITE } from '@/consts'
+---
+
+<!doctype html>
+<html lang={SITE.locale} class="use-virtua-font">
+  <Head>
+    <slot name="head" />
+  </Head>
+  <body>
+    <div class="mx-auto flex min-h-screen w-full max-w-[792px] flex-col px-5 font-sans">
+      <Header />
+      <main class="grow">
+        <slot />
+      </main>
+      <Footer />
+    </div>
+
+    <script is:inline>
+      (function () {
+        try {
+          const fonts = ['virtua', 'inter', 'helvetica', 'geist'];
+          let font = localStorage.getItem('font');
+          if (!fonts.includes(font)) font = 'virtua'; // incl. legacy 'bezy'
+          const html = document.documentElement;
+          fonts.forEach((f) => html.classList.remove('use-' + f + '-font'));
+          html.classList.add('use-' + font + '-font');
+          localStorage.setItem('font', font);
+        } catch (e) {
+          document.documentElement.classList.add('use-virtua-font');
+        }
+      })();
+    </script>
+  </body>
+</html>
