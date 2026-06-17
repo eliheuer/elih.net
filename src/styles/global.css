@@ -176,7 +176,7 @@ html.use-geist-font {
     font-family: var(--font-sans);
     font-size: 20px;
     line-height: 1.6;
-    letter-spacing: 0;
+    letter-spacing: 0.02em;
     text-rendering: optimizeLegibility;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;

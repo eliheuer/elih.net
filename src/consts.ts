@@ -13,17 +13,22 @@ export const SITE: Site = {
 
 export const NAV_LINKS: SocialLink[] = [
   {
-    href: '/blog',
-    label: 'Blog',
+    href: '/about',
+    label: 'About',
   },
-  {
-    href: '/software',
-    label: 'Software',
-  },
-  {
-    href: '/fonts',
-    label: 'Fonts',
-  },
+  // Temporarily hidden — bring these back later.
+  // {
+  //   href: '/blog',
+  //   label: 'Blog',
+  // },
+  // {
+  //   href: '/software',
+  //   label: 'Software',
+  // },
+  // {
+  //   href: '/fonts',
+  //   label: 'Fonts',
+  // },
 ]
 
 export const SOCIAL_LINKS: SocialLink[] = [
