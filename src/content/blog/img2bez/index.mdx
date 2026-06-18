@@ -36,6 +36,15 @@ let result = trace(Path::new("glyph.png"), &TracingConfig::default())?;
 // result.paths: Vec<kurbo::BezPath>
 ```
 
+img2bez also ships inside [Runebender-web](https://github.com/eliheuer/runebender-web), my browser-based font editor, compiled to WebAssembly. There you can drop a reference image behind a glyph and trace it into an editable outline with no install at all. Try it in the browser at [runebender.org](https://runebender.org), or run the editor locally:
+
+```sh
+git clone https://github.com/eliheuer/runebender-web
+cd runebender-web
+pnpm install
+pnpm dev   # editor at http://localhost:5173
+```
+
 ### The Problem
 
 Raster-to-vector tracing has had many open-source options available for a long time, but remains a somewhat unsolved problem. The quality of the autotraced outlines using previous methods is often worse than if a human did the tracing, and requires a second pass of cleanup by a human or AI. For font sources, there is skill and craft in outline construction similar to low-polygon 3D mesh construction in video games. Keeping the point count minimal and placing points with movement and interpolation in mind is important.   
