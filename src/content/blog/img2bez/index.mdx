@@ -8,37 +8,67 @@ authors: ['elih']
 draft: false
 ---
 
-Note: this is a draft that is still being edited, I am open to feedback.
+Note: this is a draft that is still being edited; I am open to feedback.
 
-img2bez is an open-source Rust crate and CLI tool that traces raster images into cubic bézier outlines and writes them directly into [UFO](https://unifiedfontobject.org/) font sources. It is built on the [Linebender](https://linebender.org) ecosystem: [kurbo](https://crates.io/crates/kurbo) for curve math and [norad](https://crates.io/crates/norad) for UFO handling. The source is at [github.com/eliheuer/img2bez](https://github.com/eliheuer/img2bez).
+img2bez is an open-source Rust crate that traces raster images into cubic bézier outlines and writes them directly into [UFO](https://unifiedfontobject.org/) font sources. It is built on the [Linebender](https://linebender.org) ecosystem: [kurbo](https://crates.io/crates/kurbo) for curve math and [norad](https://crates.io/crates/norad) for UFO handling. The source is at [github.com/eliheuer/img2bez](https://github.com/eliheuer/img2bez).
 
 ![An img2bez specimen sheet: the reference outlines (top row) against the traced output (bottom row), with point structure, rendered previews, and overlay diffs.](./specimen-a.png)
 
+### Installation & Setup
+
+Install it and trace a glyph:
+
+```bash
+# install the CLI
+cargo install --git https://github.com/eliheuer/img2bez
+
+# trace a glyph image into an existing UFO source
+img2bez --input glyph.png --output MyFont.ufo --name A --unicode 0041
+```
+
+Or use it as a Rust library:
+
+```rust
+use img2bez::{trace, TracingConfig};
+use std::path::Path;
+
+let result = trace(Path::new("glyph.png"), &TracingConfig::default())?;
+// result.paths: Vec<kurbo::BezPath>
+```
+
 ### The Problem
 
-Raster-to-vector tracing has had many open source options avaiable for a long time, but remains a somewhat unsolved problem, the quality of the the autotraced outlines using previous methods is often worse than if a human did the tracing and requiere a second pass of cleanup by a human or AI. For font sources, there is skill and craft in outline construction similar to low-polygon 3d mesh construction in video games. Keeping the point count minimal and placing points with movement and interpolation in mind is important.   
+Raster-to-vector tracing has had many open-source options available for a long time, but remains a somewhat unsolved problem. The quality of the autotraced outlines using previous methods is often worse than if a human did the tracing, and requires a second pass of cleanup by a human or AI. For font sources, there is skill and craft in outline construction similar to low-polygon 3D mesh construction in video games. Keeping the point count minimal and placing points with movement and interpolation in mind is important.   
 
-The classical autotracers, like Potrace, start by thresholding the image: every pixel is pushed to pure black or pure white by a brightness cutoff, turning a soft gray picture into a hard two-color shape. They then walk the jagged staircase edge of that shape and fit smooth curves to it. The differentiable approach comes at it backwards. You can't read the right curves straight off a bitmap, but you can check a guess: draw a candidate outline and see whether its pixels match the target image. That is where a differentiable rasterizer like diffvg comes in. A plain rasterizer only draws a vector outline into pixels; a differentiable one also reports which way to move the control points to make the drawn result look more like the target. So tracing becomes a search: start from a rough guess, draw it, compare, nudge the control points to shrink the difference, and repeat until the rendering matches the image. It is the same kind of optimization that trains a neural network.
+The classical autotracers, like Potrace, start by thresholding the image: every pixel is pushed to pure black or pure white by a brightness cutoff, turning a soft gray picture into a hard two-color shape. They then walk the jagged staircase edge of that shape and fit smooth curves to it.
 
-Pure LLM approaches to this problem also exist and are getting better, but they are currently slow and expensive via cloud or requiere expensive local AI hardware setups. SaaS companies doing vector graphics AI like QuiverAI almost certianly use something like img2bez under the hood for economic and speed reasons. 
+The differentiable approach comes at it backwards. You can't read the right curves straight off a bitmap, but you can check a guess: draw a candidate outline and see whether its pixels match the target image. That is where a differentiable rasterizer like diffvg comes in. A plain rasterizer only draws a vector outline into pixels; a differentiable one also reports which way to move the control points to make the drawn result look more like the target. So tracing becomes a search: start from a rough guess, draw it, compare, nudge the control points to shrink the difference, and repeat until the rendering matches the image. It is the same kind of optimization that trains a neural network.
+
+Pure LLM approaches to this problem also exist and are getting better, but they are currently slow and expensive via cloud or require expensive local AI hardware setups. SaaS companies doing vector graphics AI like QuiverAI almost certainly use something like img2bez under the hood for economic and speed reasons. 
+
+### Structure, Not Just Silhouette
 
 A font source is judged by its *structure*, not just its silhouette. Type design has strong drawing conventions (Ohno Type's ["Drawing Vectors"](https://ohnotype.co/blog/drawing-vectors) is a good summary), and they exist for mechanical reasons (editing cost, interpolation compatibility, rendering quality):
 
 - **Minimum points.** Every extra on-curve point is something a designer or AI manages on every edit, in every master of a variable font.
 - **Points at extrema**, with handles leaving exactly horizontally or vertically.
 - **Lines are lines**, not flat curves with vestigial handles.
-- **Points at inflections**, where a curve changes directional bias, the spine of an "s".
+- **Points at inflections**, where a curve changes directional bias, the spine of an "s" for example.
 - **Deliberate junction detail.** Inktraps and small details like that. 
 
-An outline can match the bitmap to a tenth of a pixel and fail all of these. A trace with forty points where a designer would use twenty, diagonal handles at the extrema, and curves where lines should be isn't very helpul is creating less work, cleaning it up takes longer than manually traging the image in many cases. So the goal of img2bez is: **the output should look like a perfect trace that a type designer drew, with structure winning over matching the raster iamge exactly wherever the two conflict.**
+An outline can match the bitmap to a tenth of a pixel and fail all of these. A trace with forty points where a manual trace would use twenty, diagonal handles at the extrema, and curves where lines should be isn't very helpful for the kind of data cleaning/engineering work that I use autotracers for; cleaning it up takes longer than manually tracing the image in many cases. So the goal of img2bez is: **the output should look like a perfect trace that a type designer drew, with structure winning over matching the raster image exactly wherever the two conflict.**
 
-### Prior Art, and Why It Solves a Different Problem
+### Existing Approaches, and Why They Solve a Different Problem
 
 **Potrace.** Peter Selinger's [Potrace](https://potrace.sourceforge.net/potrace.pdf) (2003) is the best known example of classical tracing. It's inside Inkscape and FontForge, and the paper is clear and concise. The pipeline: threshold the image to black and white, trace the pixel boundary, approximate it with an optimal polygon, label each corner as sharp or smooth (via a parameter called *alpha*), then fit curves.
 
 **The curve-fitting literature.** Fitting a cubic to a set of points is essentially a solved problem: Philip Schneider's curve fitter from *Graphics Gems* (1990) and, going further, Raph Levien's [fitting work](https://raphlinus.github.io/curves/2021/03/11/bezier-fitting.html) in kurbo, which img2bez leans on directly as a fallback. But fitting is the *last* step. The hard part of tracing type is everything upstream: deciding where the structural points go and what kind of point each one is. No fitter answers that.
 
-**Differentiable rasterization.** The research frontier went a different way: [diffvg](https://people.csail.mit.edu/tzumao/diffvg/) backpropagates an image-space loss through the rasterizer into the curve's control points, and a family of learned vectorizers builds on it. I find this work genuinely useful (img2bez borrows its central trick, below), but a gradient can only slide control points around a *fixed* structure. It can't decide that a designer would have drawn one tense cubic instead of two timid ones, or that this valley should become a tiny flat with two new points. Those decisions are discrete. And the learned systems need training data and GPUs, while still producing outlines with the same structural problems as everything else.
+**Optimization and generative approaches.** Research interest has moved to learning, built on one enabling tool: the *differentiable rasterizer*, a renderer that reports how to nudge a vector outline's control points to better match a target image, so you can vectorize by optimization. [diffvg](https://github.com/BachiLi/diffvg) (2020) is the standard one, and img2bez borrows its central trick, scoring a candidate outline against the pixels (more below). Methods like [LIVE](https://github.com/Picsart-AI-Research/LIVE-Layerwise-Image-Vectorization) build on it to add paths layer by layer, and newer rasterizers like [Bézier Splatting](https://arxiv.org/abs/2503.16424) run an order of magnitude faster.
+
+The current frontier is generative. Vision-language models now write SVG code straight from an image: [StarVector](https://github.com/joanrod/star-vector) and [OmniSVG](https://github.com/OmniSVG/OmniSVG) are the strongest open-source examples, and [PyTorch-SVGRender](https://github.com/ximinng/PyTorch-SVGRender) collects most of the diffusion-based methods in one library. All of it optimizes for image fidelity and general compactness, not for what a font needs: points at extrema with horizontal or vertical handles, lines kept straight, minimal points placed for interpolation. And tellingly, even the newest pipelines lean on a fast classical tracer for the actual conversion. [LayerTracer](https://arxiv.org/abs/2502.01105) (2025) generates layered rasters with a diffusion transformer, then hands them to [vtracer](https://github.com/visioncortex/vtracer) to produce the paths, and notes that it inherits vtracer's limits. That gap is what img2bez is for.
+
+It is important to note that img2bez is designed to be a complement to piplelines involving vision-language model, not a repacement of full alternitive to the. the goal is the to 90% of the work quickly and purly procedurally, then 9% of the work with a language model, and the final 1% with slow and expensive direct human input, but exactly in the core places where the input is needed. 
 
 ### How img2bez Works
 
@@ -50,6 +80,14 @@ img2bez works in three stages. (Fuller detail, with the exact thresholds, is in 
 
 **3. Refine against the image.** An optional final pass re-scores the curves against the original pixels, the same idea diffvg uses, but with no training and no GPU: it just searches the few remaining degrees of freedom for the closest match. This nudges handles that are clearly off, merges two timid curves into the single one a designer would have drawn, and restores small designed details like the tiny flats at stroke junctions. It only changes something when that clearly helps, so points that are already right stay put.
 
+Turn this pass off with `--no-refine`:
+
+```bash
+img2bez --input glyph.png --output MyFont.ufo --name A --no-refine
+```
+
+Those three stages have a lot of knobs: how sharp a turn has to be to count as a corner, how tight a fit has to be, the margins that gate the refinement pass. I tuned almost none of them by hand. They came out of an automated research loop that scores every candidate change against a reference font, which is the next section.
+
 ### Measuring "Draws Like a Designer"
 
 The part of this project I'd defend hardest isn't the tracer, it's the evaluation. "Draws like a designer" sounds unfalsifiable; the harness turns it into a number.
@@ -58,10 +96,18 @@ img2bez is developed against a reference font I drew, [Virtua Grotesk](/fonts/vi
 
 Across basic Latin (a–z, A–Z, 0–9) the mean structural score is currently **0.967**, with 14 glyphs reproducing their reference outlines exactly and all 62 passing the gate. Per-glyph numbers are in [docs/quality.md](https://github.com/eliheuer/img2bez/blob/main/docs/quality.md).
 
-The harness is also what makes agentic development work. Most of the recent progress came from autoresearch loops: an agent proposes a mechanism, the harness scores all 62 glyphs against the references, regressions are rejected outright, and the specimen sheets make failures obvious at a glance. The junction-flat idea took about a dozen propose–measure–reject rounds in an afternoon, two of which scored well for bad reasons and got caught by the per-glyph diff. I don't think I'd have reached this quality by judgment alone; I'd have shipped at least two of the bad versions.
+The harness is also what makes agentic development work, and most of the recent progress came from running it in a loop. The mechanism is simple: an agent proposes one change (a new threshold, or a tweak to the fitting code), then a script reruns the whole reference font, rendering each glyph to a bitmap, tracing it back, and scoring it on both raster overlap and structural match. If the mean improves, the change is kept and committed; if it regresses or errors out, it is reverted; either way the run is logged. The specimen sheets make failures obvious at a glance. The junction-flat idea took about a dozen propose–measure–reject rounds in an afternoon, two of which scored well for bad reasons and got caught by the per-glyph diff. I don't think I'd have reached this quality by judgment alone; I'd have shipped at least two of the bad versions.
+
+Running it yourself is a few commands from the repo root:
+
+```sh
+./autoresearch/setup.sh            # one-time env setup
+./autoresearch/run_experiment.sh   # score all glyphs
+./render-specimen.sh --text "a"    # specimen for one glyph
+```
 
 ### Limitations, and an Invitation
 
 What doesn't work yet, honestly stated. Two glyphs (`7`, `y`) draw a short straight segment where the trace runs the neighboring curve straight through, a line/curve boundary the same candidates-compete-on-the-raster machinery should be able to judge, but doesn't yet. Low-resolution and heavily degraded sources still over-segment. The harmonization pass only equalizes curvature one join at a time; a global curvature-energy polish would do better across long multi-segment curves. And everything is tuned against one reference design, so the conventions it has learned (the eight-unit junction flats, for instance) are *that typeface's* conventions; more reference fonts are needed to see which parts generalize.
 
-If you work on font tooling, curve fitting, or tracing, I'd genuinely like your feedback on the approach, the code, or the parts I've gotten wrong. The repo is [github.com/eliheuer/img2bez](https://github.com/eliheuer/img2bez), issues and PRs are welcome, and I'm around the [Linebender Zulip](https://xi.zulipchat.com).
+If you work on font tooling, curve fitting, or tracing, I'd genuinely like your feedback on the approach, the code, or the parts I've gotten wrong. The repo is [github.com/eliheuer/img2bez](https://github.com/eliheuer/img2bez), issues and PRs are welcome, and I'm around the [Linebender Zulip](https://xi.zulipchat.com). This post itself is [a file on GitHub](https://github.com/eliheuer/elih.net/blob/main/src/content/blog/img2bez/index.mdx), so if you have any corrections, suggestions, or feedback, feel free to open a PR updating this post.
