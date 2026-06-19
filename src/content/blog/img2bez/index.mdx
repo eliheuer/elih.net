@@ -69,7 +69,25 @@ An outline can match the bitmap to a tenth of a pixel and fail all of these.
 
 **Potrace.** Peter Selinger's [Potrace](https://potrace.sourceforge.net/potrace.pdf) (2003) is the best known example of classical tracing. It's inside Inkscape and FontForge, and the paper is clear and concise. The pipeline: threshold the image to black and white, trace the pixel boundary, approximate it with an optimal polygon, label each corner as sharp or smooth (via a parameter called *alpha*), then fit curves.
 
-**The curve-fitting literature.** Fitting a cubic to a set of points is essentially a solved problem: Philip Schneider's curve fitter from *Graphics Gems* (1990) and, going further, Raph Levien's [fitting work](https://raphlinus.github.io/curves/2021/03/11/bezier-fitting.html) in kurbo, which img2bez leans on directly as a fallback. But fitting is the *last* step. The hard part of tracing type is everything upstream: deciding where the structural points go and what kind of point each one is. No fitter answers that.
+**The curve-fitting literature.** Curve fitting is the step that turns a dense run of traced points into a few smooth Bézier curves: take a stretch of the finely-sampled outline and find the single cubic whose handles hug those points within a set tolerance, subdividing only when one cubic cannot. This part is essentially solved, by Philip Schneider's curve fitter from *Graphics Gems* (1990) and, going further, Raph Levien's [fitting work](https://raphlinus.github.io/curves/2021/03/11/bezier-fitting.html) in kurbo, which img2bez leans on directly as a fallback. But it is the *last* step. Both algorithms nail it, and neither decides the anchors: where the on-curve points sit and what kind each one is, a corner, a smooth extremum, an inflection. The fitter only draws the curve between anchors you have already placed. That upstream structure is the hard part of tracing type, and no fitter answers it.
+
+And it is not only fitting. Raph Levien has produced much of the curve work this field stands on, from [path simplification](https://raphlinus.github.io/curves/2023/04/18/bezpath-simplify.html) and [parallel curves](https://raphlinus.github.io/curves/2022/09/09/parallel-beziers.html) to curve-design systems like [Spiro](http://levien.com/spiro/) and his [later splines](https://raphlinus.github.io/curves/2018/12/21/new-spline.html), and img2bez builds on it directly through kurbo. But all of it operates on curves you already have, or helps a person draw better ones. Spiro, the closest to this problem, assumes a designer tracing over a scanned glyph by hand: it makes the curves smooth, it does not find them in the pixels. None of it crosses from a raster to a structured outline, which is the gap img2bez fills.
+
+Concretely, img2bez does not reimplement the fitting. It implements kurbo's `ParamCurveFit` trait over its traced points (a way to sample a position and tangent anywhere along the source), then hands that to kurbo's `fit_to_bezpath_opt`, which returns the fewest cubics for a given accuracy. It is a few lines in [`typefit.rs`](https://github.com/eliheuer/img2bez/blob/main/src/vectorize/typefit.rs):
+
+```rust
+// img2bez exposes its traced polyline to kurbo's fitter (Raph's algorithm)...
+impl ParamCurveFit for PolylineSource<'_> {
+    fn sample_pt_tangent(&self, t: f64, _sign: f64) -> CurveFitSample {
+        let (p, tangent) = self.eval(t);
+        CurveFitSample { p, tangent }
+    }
+    // ...plus sample_pt_deriv and break_cusp
+}
+
+// ...and kurbo returns the minimal set of cubics for the accuracy:
+let path = fit_to_bezpath_opt(&source, accuracy);
+```
 
 **Optimization and generative approaches.** Research interest has moved to learning, built on one enabling tool: the *differentiable rasterizer*, a renderer that reports how to nudge a vector outline's control points to better match a target image, so you can vectorize by optimization. [diffvg](https://github.com/BachiLi/diffvg) (2020) is the standard one, and img2bez borrows its central trick, scoring a candidate outline against the pixels (more below). Methods like [LIVE](https://github.com/Picsart-AI-Research/LIVE-Layerwise-Image-Vectorization) build on it to add paths layer by layer, and newer rasterizers like [Bézier Splatting](https://arxiv.org/abs/2503.16424) run an order of magnitude faster.
 
