@@ -3,16 +3,22 @@ title: 'img2bez: Raster-to-Vector Autotracing for Type Design'
 description: 'A Rust autotracer whose objective is type-design structure, not geometric error, developed against hand-drawn references in an automated evaluation loop. How it works, why Potrace and diffvg solve a different problem, and how to measure "draws like a designer."'
 date: 2026-06-16
 tags: ['fonts', 'rust', 'tools', 'design', 'ai']
-image: './specimen-a.png'
+image: './share-card.png'
 authors: ['elih']
 draft: false
 ---
 
+import TraceDemo from '../../../components/TraceDemoIsland.astro'
+
 Note: this is a draft that is still being edited; I am open to feedback.
 
-img2bez is an open-source Rust crate that traces raster images into cubic bézier outlines and writes them directly into [UFO](https://unifiedfontobject.org/) font sources. It is built on the [Linebender](https://linebender.org) ecosystem: [kurbo](https://crates.io/crates/kurbo) for curve math and [norad](https://crates.io/crates/norad) for UFO handling. The source is at [github.com/eliheuer/img2bez](https://github.com/eliheuer/img2bez).
+img2bez is a Rust crate that traces raster images into cubic bézier outlines and writes them directly into [UFO](https://unifiedfontobject.org/) font sources. It is built on the [Linebender](https://linebender.org) ecosystem: [kurbo](https://crates.io/crates/kurbo) for curve math and [norad](https://crates.io/crates/norad) for UFO handling. The source is at [github.com/eliheuer/img2bez](https://github.com/eliheuer/img2bez).
 
-![An img2bez specimen sheet: the reference outlines (top row) against the traced output (bottom row), with point structure, rendered previews, and overlay diffs.](./specimen-a.png)
+![img2bez: a low-resolution pixelated "a" with the vector outline img2bez traces from it, on-curve points in green and off-curve handles in purple.](./share-card.png)
+
+Here is img2bez running entirely in your browser, compiled to WebAssembly. The bitmap sits behind the work area as a dimmed template, the way you trace over an image in a font editor. Click **Trace** to vectorize it and see the outline img2bez produces, with the on-curve points (green) and off-curve handles (purple) it places. Scroll to zoom and drag to pan. To try your own glyph, drop an image onto the app (or use the picker in the corner) and trace that instead.
+
+<TraceDemo image="/demos/img2bez/a.png" glyph="a" unicode="0061" />
 
 ### Installation & Setup
 
@@ -42,20 +48,20 @@ for path in &result.paths {
 
 ### The Problem
 
-Raster-to-vector tracing has had many open-source options available for a long time, but remains a somewhat unsolved problem. The quality of the autotraced outlines using previous methods is often worse than if a human did the tracing, and requires a second pass of cleanup by a human or AI. For font outline sources, there is skill and craft in outline construction similar to low-polygon 3D mesh construction in video games. Keeping the point count minimal and placing points with movement and interpolation in mind is important.   
+Procedural raster-to-vector tracing has had many open-source options available for a long time, but remains a somewhat unsolved problem. The quality of the autotraced outlines using previous methods is often much worse than if a human did the tracing, and requires a second pass of cleanup by a human or AI. For font outline sources, there is skill and craft in outline construction similar to low-polygon 3D mesh construction in video games. Keeping the point count minimal and placing points with movement and interpolation in mind is important.   
 
-What I want is more specific than a general-purpose tracer:
+What I want with img2bez is more specific than a general-purpose tracer:
 
 - **Integration.** A Rust library I can easily embed in Rust-based font editors like Runebender.
-- **Tunable with agent loops.** Something I can push toward concrete goals automatically, with autoresearch and agent loops (more on that below).
+- **Tunable with agent loops.** Something I can push toward concrete goals automatically, with alongutoresearch and agent loops (more on that below).
 - **Source-ready output.** Output that needs minimal manual or AI adjustment to work as a high-quality font source.
 - **Type Design style outline structure.** Something I can edit manually that interpolates well.
 
-Pure LLM approaches to this problem also exist and are getting better, but they are currently slow and expensive via cloud or require good local AI hardware setups. This procedural autotracer in designed to be used in AI workflows where the tracer can quickly and cheapy do 90% of the work, then let a AI agent handle the next 9%, and a human designer the last 1%.  SaaS companies doing vector graphics AI like QuiverAI almost certainly use something like img2bez under the hood for economic and speed reasons. 
+Pure LLM approaches to this problem also exist and are getting better, but they are currently slow and expensive via cloud or require good local AI hardware setups. This procedural autotracer in designed to be used in AI workflows where the tracer can quickly and cheapy do 90% of the work, then let a AI agent handle the next 9%, and a human designer the last 1% if needed. 
 
 ### Structure, Not Just Silhouette
 
-A font source is judged by its *structure*, not just its silhouette. Type design has strong drawing conventions (Ohno Type's ["Drawing Vectors"](https://ohnotype.co/blog/drawing-vectors) is a good summary), and they exist for mechanical reasons (editing cost, interpolation compatibility, rendering quality):
+A font source is often judged by its *structre*, not just its silhouette. Type design has strong drawing conventions (Ohno Type's ["Drawing Vectors"](https://ohnotype.co/blog/drawing-vectors) is a good summary), and they exist for mechanical reasons (editing cost, interpolation compatibility, rendering quality, etc):
 
 - **Minimum points.** Every extra on-curve point is something a designer or AI manages on every edit, in every master of a variable font.
 - **Points at extrema**, with handles leaving exactly horizontally or vertically.
@@ -63,7 +69,7 @@ A font source is judged by its *structure*, not just its silhouette. Type design
 - **Points at inflections**, where a curve changes directional bias, the spine of an "s" for example.
 - **Deliberate junction detail.** Inktraps and small details like that. 
 
-An outline can match the bitmap to a tenth of a pixel and fail all of these.
+An outline can match the bitmap to a tenth of a pixel and fail all of these. There is quite a bit of cargo culting in the culture of manual hard drawn type design, so when developing tools like this that try to automate and speedup that process, a lot of attention and reserch is need to sperate the wheat from the chaff.
 
 ### Existing Approaches, and Why They Solve a Different Problem
 
@@ -116,6 +122,8 @@ Those three stages have a lot of knobs: how sharp a turn has to be to count as a
 The part of this project I'd defend hardest isn't the tracer, it's the evaluation. "Draws like a designer" sounds unfalsifiable; the harness turns it into a number.
 
 img2bez is developed against a reference font I drew, [Virtua Grotesk](/fonts/virtua-grotesk), in a loop: render each hand-drawn glyph to a bitmap, trace it back, and compare the result to the original *structurally* (point counts and placement, lines vs. curves, H/V handles, how many reference points the trace hit). The specimen sheets in this post are that comparison made visible, and a stress gate fails the build if any glyph drifts too far.
+
+![An img2bez specimen sheet: the reference outlines (top row) against the traced output (bottom row), with point structure, rendered previews, and overlay diffs.](./specimen-a.png)
 
 Across basic Latin (a–z, A–Z, 0–9) the mean structural score is currently **0.967**, with 14 glyphs reproducing their reference outlines exactly and all 62 passing the gate. Per-glyph numbers are in [docs/quality.md](https://github.com/eliheuer/img2bez/blob/main/docs/quality.md).
 

@@ -11,3 +11,5 @@ pnpm-debug.log*
 .idea/
 teaser.pptx
 ~$teaser.pptx
+# Python venv for asset scripts (scripts/make-og-card.py)
+.venv/

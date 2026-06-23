@@ -159,3 +159,11 @@
 @utility fix-margin {
   @apply [&>*]:first:mt-0! [&>*]:last:mb-0!;
 }
+
+/* Expressive Code derives the copy button's top inset from --button-spacing
+   (0.4rem) but its right inset from --ec-uiPadInl/2 (0.5rem), so the button
+   sits closer to the top than the right. Make the top match the right so the
+   margins are equal. Unlayered + extra specificity to beat EC's own rule. */
+.prose .expressive-code .copy {
+  inset-block-start: calc(var(--ec-brdWd) + var(--ec-uiPadInl) / 2);
+}
