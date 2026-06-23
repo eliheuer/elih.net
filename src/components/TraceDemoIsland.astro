@@ -1,0 +1,22 @@
+---
+// Astro wrapper so the React island can be dropped into MDX as a plain
+// component. The client:only directive lives here, where Astro reliably
+// matches it to the import (MDX's own client-directive matching is finicky).
+import TraceDemo from './TraceDemo.tsx'
+
+interface Props {
+  image?: string
+  glyph?: string
+  unicode?: string
+  editorUrl?: string
+}
+const { image, glyph, unicode, editorUrl } = Astro.props
+---
+
+<TraceDemo
+  client:only="react"
+  image={image}
+  glyph={glyph}
+  unicode={unicode}
+  editorUrl={editorUrl}
+/>
