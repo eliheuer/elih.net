@@ -145,6 +145,13 @@
       margin: 1.4em 0;
     }
 
+    /* Same frame as the code blocks and the interactive demo island
+       (Expressive Code: 1px solid var(--border), radius brdRad + brdWd). */
+    img, video {
+      border: 1px solid var(--border);
+      border-radius: calc(0.3rem + 1px);
+    }
+
     kbd {
       color: var(--foreground);
       background: var(--muted);

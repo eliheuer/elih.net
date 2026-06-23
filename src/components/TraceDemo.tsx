@@ -166,22 +166,34 @@ export default function TraceDemo({ image = "/demos/img2bez/a.png", glyph = "a",
     // sits at the island centre by default). At zoom 1 the major lines land
     // exactly on the four edges, and cells stay square because the island is
     // 4:3. It still pans/zooms with the content like an editor.
+    // Draw in device-pixel space, snapped, so the lines are a crisp 1px (the
+    // same weight as the border). Lines that land on the canvas edge are
+    // skipped — the 1px border is itself the outer grid line, so the grid lines
+    // up perfectly with the edge by default.
     const drawGrid = (cell: number, alpha: number) => {
       if (cell * s < 4) return; // hide a level when it would get too dense
+      ctx.save();
+      ctx.setTransform(1, 0, 0, 1, 0, 0);
       ctx.strokeStyle = `rgba(255,255,255,${alpha})`;
-      ctx.lineWidth = 1;
+      ctx.lineWidth = dpr; // 1 CSS px
+      const off = Math.round(dpr) % 2 ? 0.5 : 0; // crisp centring for odd widths
       ctx.beginPath();
       for (let n = Math.ceil((invX(0) - gcx) / cell); n <= (invX(W) - gcx) / cell; n++) {
         const X = IX(gcx + n * cell);
-        ctx.moveTo(X, 0);
-        ctx.lineTo(X, H);
+        if (X < 0.5 || X > W - 0.5) continue; // the border is the edge line
+        const dX = Math.round(X * dpr) + off;
+        ctx.moveTo(dX, 0);
+        ctx.lineTo(dX, H * dpr);
       }
       for (let m = Math.ceil((invY(0) - gcy) / cell); m <= (invY(H) - gcy) / cell; m++) {
         const Y = IY(gcy + m * cell);
-        ctx.moveTo(0, Y);
-        ctx.lineTo(W, Y);
+        if (Y < 0.5 || Y > H - 0.5) continue;
+        const dY = Math.round(Y * dpr) + off;
+        ctx.moveTo(0, dY);
+        ctx.lineTo(W * dpr, dY);
       }
       ctx.stroke();
+      ctx.restore();
     };
     const majorCell = W / 8 / base; // content units; W/8 px at zoom 1
     drawGrid(majorCell / 4, 0.035); // dense sub-grid
@@ -321,11 +333,11 @@ export default function TraceDemo({ image = "/demos/img2bez/a.png", glyph = "a",
         width: "100%",
         aspectRatio: "4 / 3",
         margin: "1.5rem 0",
-        // Match the code snippets' border exactly (Expressive Code: 1.5px solid
+        // Match the code snippets' border exactly (Expressive Code: 1px solid
         // var(--border), radius calc(--ec-brdRad + --ec-brdWd)).
-        borderRadius: "calc(0.3rem + 1.5px)",
+        borderRadius: "calc(0.3rem + 1px)",
         overflow: "hidden",
-        border: `1.5px solid ${dropping ? GREEN : "var(--border)"}`,
+        border: `1px solid ${dropping ? GREEN : "var(--border)"}`,
         background: BG,
       }}
       onDragOver={(e) => {
