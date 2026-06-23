@@ -44,6 +44,7 @@ export default defineConfig({
       styleOverrides: {
         codeFontSize: '0.75rem',
         borderColor: 'var(--border)',
+        borderWidth: '1px', // whole pixel so rounded corners render evenly (1.5px smears at the arc)
         codeFontFamily: 'var(--font-mono)',
         codeBackground:
           'color-mix(in oklab, var(--secondary) 25%, transparent)',

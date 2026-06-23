@@ -22,10 +22,10 @@ from PIL import Image
 
 W, H = 2400, 1260
 CELL = 60  # raster pixel block size (the "low resolution")
+LINE_WIDTH = 8  # one stroke weight for the outline, handles, and point rings
 
 # colours, 0-1 floats. Dark-mode editor palette (matches the demo island).
 BG = (0.047, 0.047, 0.047)
-FRAME = (0.16, 0.16, 0.16)
 PIXEL_MAX = (0.34, 0.34, 0.34)  # brightest raster block (darkest source pixel)
 OUTLINE = (0.90, 0.90, 0.90)
 HANDLE = (0.42, 0.42, 0.42)
@@ -89,13 +89,8 @@ def main():
     db.newPage(W, H)
     db.fill(*BG)
     db.rect(0, 0, W, H)
-
-    # frame, like the code blocks / demo island
-    db.fill(None)
-    db.stroke(*FRAME)
-    db.strokeWidth(2)
-    db.rect(1, 1, W - 2, H - 2)
-    db.stroke(None)
+    # No baked-in frame: the page gives this image the same CSS border + radius
+    # as code blocks and the demo island, so a drawn frame would double it.
 
     # ── the glyph box (drawbot is y-up, origin bottom-left) ──
     # Size the glyph by WIDTH so it fills the wide card (a real zoom-in).
@@ -149,7 +144,7 @@ def main():
     # outline
     db.fill(None)
     db.stroke(*OUTLINE)
-    db.strokeWidth(10)
+    db.strokeWidth(LINE_WIDTH)
     db.lineJoin("round")
     for pts in cs:
         n = len(pts)
@@ -172,7 +167,7 @@ def main():
 
     # handle lines
     db.stroke(*HANDLE)
-    db.strokeWidth(6)
+    db.strokeWidth(LINE_WIDTH)
     for pts in cs:
         n = len(pts)
         for i in range(n):
@@ -186,7 +181,7 @@ def main():
                     db.drawPath(p)
 
     # points (hollow rings: bg fill + coloured stroke)
-    db.strokeWidth(9)
+    db.strokeWidth(LINE_WIDTH)
     for pts in cs:
         for p in pts:
             x, y = tx(p[0], p[1])

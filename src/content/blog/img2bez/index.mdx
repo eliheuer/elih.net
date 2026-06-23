@@ -1,6 +1,6 @@
 ---
 title: 'img2bez: Raster-to-Vector Autotracing for Type Design'
-description: 'A Rust autotracer whose objective is type-design structure, not geometric error, developed against hand-drawn references in an automated evaluation loop. How it works, why Potrace and diffvg solve a different problem, and how to measure "draws like a designer."'
+description: 'A Rust autotracer whose objective is type-design structure, not geometric error, developed against hand-drawn references with an eval harness. How it works, why Potrace and diffvg solve a different problem, and how to measure "draws like a designer."'
 date: 2026-06-16
 tags: ['fonts', 'rust', 'tools', 'design', 'ai']
 image: './share-card.png'
@@ -53,7 +53,7 @@ Procedural raster-to-vector tracing has had many open-source options available f
 What I want with img2bez is more specific than a general-purpose tracer:
 
 - **Integration.** A Rust library I can easily embed in Rust-based font editors like Runebender.
-- **Tunable with agent loops.** Something I can push toward concrete goals automatically, with alongutoresearch and agent loops (more on that below).
+- **Tunable with agent loops.** Something I can push toward concrete goals automatically, with an eval harness and agent loops (more on that below).
 - **Source-ready output.** Output that needs minimal manual or AI adjustment to work as a high-quality font source.
 - **Type Design style outline structure.** Something I can edit manually that interpolates well.
 
@@ -115,11 +115,11 @@ Turn this pass off with `--no-refine`:
 img2bez --input glyph.png --output MyFont.ufo --name A --no-refine
 ```
 
-Those three stages have a lot of knobs: how sharp a turn has to be to count as a corner, how tight a fit has to be, the margins that gate the refinement pass. I tuned almost none of them by hand. They came out of an automated research loop that scores every candidate change against a reference font, which is the next section.
+Those three stages have a lot of knobs: how sharp a turn has to be to count as a corner, how tight a fit has to be, the margins that gate the refinement pass. I tuned almost none of them by hand. They came out of an eval harness that scores every candidate change against a reference font, which is the next section.
 
 ### Measuring "Draws Like a Designer"
 
-The part of this project I'd defend hardest isn't the tracer, it's the evaluation. "Draws like a designer" sounds unfalsifiable; the harness turns it into a number.
+The part of this project I'd defend hardest isn't the tracer, it's the evaluation. "Draws like a designer" sounds unfalsifiable; the eval harness turns it into a number.
 
 img2bez is developed against a reference font I drew, [Virtua Grotesk](/fonts/virtua-grotesk), in a loop: render each hand-drawn glyph to a bitmap, trace it back, and compare the result to the original *structurally* (point counts and placement, lines vs. curves, H/V handles, how many reference points the trace hit). The specimen sheets in this post are that comparison made visible, and a stress gate fails the build if any glyph drifts too far.
 
@@ -127,13 +127,13 @@ img2bez is developed against a reference font I drew, [Virtua Grotesk](/fonts/vi
 
 Across basic Latin (a–z, A–Z, 0–9) the mean structural score is currently **0.967**, with 14 glyphs reproducing their reference outlines exactly and all 62 passing the gate. Per-glyph numbers are in [docs/quality.md](https://github.com/eliheuer/img2bez/blob/main/docs/quality.md).
 
-The harness is also what makes agentic development work, and most of the recent progress came from running it in a loop. The mechanism is simple: an agent proposes one change (a new threshold, or a tweak to the fitting code), then a script reruns the whole reference font, rendering each glyph to a bitmap, tracing it back, and scoring it on both raster overlap and structural match. If the mean improves, the change is kept and committed; if it regresses or errors out, it is reverted; either way the run is logged. The specimen sheets make failures obvious at a glance. The junction-flat idea took about a dozen propose–measure–reject rounds in an afternoon, two of which scored well for bad reasons and got caught by the per-glyph diff. I don't think I'd have reached this quality by judgment alone; I'd have shipped at least two of the bad versions.
+The eval harness is also what makes agentic development work, and most of the recent progress came from running it in a loop. The mechanism is simple: an agent proposes one change (a new threshold, or a tweak to the fitting code), then a script reruns the whole reference font, rendering each glyph to a bitmap, tracing it back, and scoring it on both raster overlap and structural match. If the mean improves, the change is kept and committed; if it regresses or errors out, it is reverted; either way the run is logged. The specimen sheets make failures obvious at a glance. The junction-flat idea took about a dozen propose–measure–reject rounds in an afternoon, two of which scored well for bad reasons and got caught by the per-glyph diff. I don't think I'd have reached this quality by judgment alone; I'd have shipped at least two of the bad versions.
 
 Running it yourself is a few commands from the repo root:
 
 ```sh
-./autoresearch/setup.sh            # one-time env setup
-./autoresearch/run_experiment.sh   # score all glyphs
+./eval-harness/setup.sh            # one-time env setup
+./eval-harness/run_experiment.sh   # score all glyphs
 ./render-specimen.sh --text "a"    # specimen for one glyph
 ```
 
