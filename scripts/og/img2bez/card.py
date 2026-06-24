@@ -12,6 +12,7 @@ the source raster with the `img2bez` CLI, so it needs no pre-existing .ufo.
 Drawn with the eliheuer/drawbot-skia fork. Run from the repo root with the
 local venv:  .venv/bin/python scripts/og/img2bez/card.py
 """
+import math
 import subprocess
 import tempfile
 import xml.etree.ElementTree as ET
@@ -100,9 +101,12 @@ def main():
     TOP_MARGIN = 150
     img = Image.open(SRC)
     sx0, sy0, sx1, sy1, bgval = source_glyph_box(img)
-    box_w = W * WIDTH_FRAC
-    box_h = box_w * (sy1 - sy0) / (sx1 - sx0)
-    box_y = H - TOP_MARGIN - box_h   # top-anchored; foot spills below the bottom edge
+    # Snap sizes to the CELL grid so the raster blocks are exact CELL squares
+    # whose edges land on the card's grid lines (the card is a whole number of
+    # cells). Snap the box top UP to the nearest grid line so the pixels align.
+    box_w = round(W * WIDTH_FRAC / CELL) * CELL
+    box_h = round(box_w * (sy1 - sy0) / (sx1 - sx0) / CELL) * CELL
+    box_y = math.ceil((H - TOP_MARGIN) / CELL) * CELL - box_h  # top-anchored, grid-snapped
 
     # on-curve bbox (the visible outline; off-curve handles spill past it)
     on = [p for c in cs for p in c if p[2]]

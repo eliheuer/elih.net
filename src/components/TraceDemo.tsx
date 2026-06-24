@@ -413,7 +413,7 @@ export default function TraceDemo({ image = "/demos/img2bez/a.png", glyph = "a",
         onClick={() => fileRef.current?.click()}
         style={{ ...baseBtn, bottom: 12, right: 12, color: "#9a9a9a" }}
       >
-        drop or pick your own image
+        drag-&-drop or pick your own image to trace
       </button>
     </div>
   );

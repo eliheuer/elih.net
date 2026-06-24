@@ -1,7 +1,7 @@
 ---
 title: 'img2bez: Raster-to-Vector Autotracing for Type Design'
-description: 'A Rust autotracer whose objective is type-design structure, not geometric error, developed against hand-drawn references with an eval harness. How it works, why Potrace and diffvg solve a different problem, and how to measure "draws like a designer."'
-date: 2026-06-16
+description: 'A Rust autotracer developed against hand-drawn references with an eval harness.'
+date: 2026-06-24
 tags: ['fonts', 'rust', 'tools', 'design', 'ai']
 image: './share-card.png'
 authors: ['elih']
@@ -10,13 +10,13 @@ draft: false
 
 import TraceDemo from '../../../components/TraceDemoIsland.astro'
 
-Note: this is a draft that is still being edited; I am open to feedback.
+Note: this is a draft that is still being edited. I am open to feedback and PRs.
 
 img2bez is a Rust crate that traces raster images into cubic bézier outlines and writes them directly into [UFO](https://unifiedfontobject.org/) font sources. It is built on the [Linebender](https://linebender.org) ecosystem: [kurbo](https://crates.io/crates/kurbo) for curve math and [norad](https://crates.io/crates/norad) for UFO handling. The source is at [github.com/eliheuer/img2bez](https://github.com/eliheuer/img2bez).
 
-![img2bez: a low-resolution pixelated "a" with the vector outline img2bez traces from it, on-curve points in green and off-curve handles in purple.](./share-card.png)
+![img2bez: a low-resolution pixelated "a" with the vector outline img2bez traces from it.](./share-card.png)
+below is img2bez running entirely in your browser, compiled to WebAssembly from Rust with a simple React frontend in an Astro Island. Click **Trace** to vectorize a raster image and see the outline img2bez produces. Scroll to zoom and drag to pan. To try your own glyph, drop an image onto the app (or use the picker in the corner) and trace that instead.
 
-Here is img2bez running entirely in your browser, compiled to WebAssembly. The bitmap sits behind the work area as a dimmed template, the way you trace over an image in a font editor. Click **Trace** to vectorize it and see the outline img2bez produces, with the on-curve points (green) and off-curve handles (purple) it places. Scroll to zoom and drag to pan. To try your own glyph, drop an image onto the app (or use the picker in the corner) and trace that instead.
 
 <TraceDemo image="/demos/img2bez/a.png" glyph="a" unicode="0061" />
 
@@ -28,7 +28,7 @@ Install it and trace a glyph:
 # install the CLI
 cargo install --git https://github.com/eliheuer/img2bez
 
-# trace a glyph image into a UFO (created if it doesn't exist)
+# trace a glyph image into a UFO (creats the UFO if it doesn't exist)
 img2bez --input glyph.png --output MyFont.ufo --name A --unicode 0041
 ```
 

@@ -94,6 +94,8 @@
   --destructive: oklch(0.577 0.245 27.325);
   --border: oklch(0.822 0 0);
   --ring: oklch(0.708 0 0);
+  --scrollbar-thumb: oklch(0.72 0 0);
+  --scrollbar-thumb-hover: oklch(0.62 0 0);
 }
 
 .dark {
@@ -110,6 +112,8 @@
   --destructive: oklch(0.704 0.191 22.216);
   --border: oklch(1 0 0 / 10%);
   --ring: oklch(0.556 0 0);
+  --scrollbar-thumb: oklch(0.32 0 0);
+  --scrollbar-thumb-hover: oklch(0.42 0 0);
 }
 
 /* ── Font toggle: just switch the CSS variable, inherit does the rest ── */
@@ -173,13 +177,33 @@ html.use-geist-font {
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
 
+    /* Firefox: slim scrollbar, no track background */
+    scrollbar-width: thin;
+    scrollbar-color: var(--scrollbar-thumb) transparent;
+
     &.dark {
       @apply scheme-dark;
     }
+  }
 
-    ::-webkit-scrollbar-corner {
-      @apply bg-transparent;
-    }
+  /* Slim, backgroundless scrollbar, site-wide (WebKit/Chromium/Safari) */
+  ::-webkit-scrollbar {
+    width: 14px;
+    height: 14px;
+  }
+  ::-webkit-scrollbar-track,
+  ::-webkit-scrollbar-corner {
+    background: transparent;
+  }
+  ::-webkit-scrollbar-thumb {
+    background-color: var(--scrollbar-thumb);
+    border-radius: 8px;
+    /* transparent border + content-box clip insets the thumb 4px from the edges */
+    border: 4px solid transparent;
+    background-clip: content-box;
+  }
+  ::-webkit-scrollbar-thumb:hover {
+    background-color: var(--scrollbar-thumb-hover);
   }
 
   .disable-transitions * {
