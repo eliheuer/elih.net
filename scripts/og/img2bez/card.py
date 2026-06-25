@@ -23,15 +23,17 @@ from PIL import Image
 
 W, H = 2400, 1260
 CELL = 60  # raster pixel block size (the "low resolution")
-LINE_WIDTH = 8  # one stroke weight for the outline, handles, and point rings
+LINE_WIDTH = 6  # one stroke weight for the outline, handles, and point rings
 
 # colours, 0-1 floats. Dark-mode editor palette (matches the demo island).
 BG = (0.047, 0.047, 0.047)
 PIXEL_MAX = (0.34, 0.34, 0.34)  # brightest raster block (darkest source pixel)
 OUTLINE = (0.90, 0.90, 0.90)
-HANDLE = (0.42, 0.42, 0.42)
-GREEN = (0.40, 0.933, 0.533)  # on-curve
-PURPLE = (0.545, 0.424, 1.0)  # off-curve
+HANDLE = (0.6, 0.6, 0.6)
+# point colours match Runebender-Web (smooth=green, corner=orange, off-curve=purple)
+GREEN = (0.09, 0.72, 0.44)   # smooth on-curve (#18b86f)
+ORANGE = (1.0, 0.6, 0.06)    # corner on-curve (#ff980f)
+PURPLE = (0.55, 0.42, 1.0)   # off-curve (#8c6cff)
 
 HERE = Path(__file__).resolve().parent  # scripts/og/img2bez/
 REPO = HERE.parents[2]
@@ -60,7 +62,8 @@ def contours(glif: Path):
     root = ET.parse(glif).getroot()
     out = []
     for c in root.iter("contour"):
-        pts = [(float(p.get("x")), float(p.get("y")), p.get("type") is not None)
+        pts = [(float(p.get("x")), float(p.get("y")),
+                p.get("type") is not None, p.get("smooth") == "yes")
                for p in c.findall("point")]
         if pts:
             out.append(pts)
@@ -184,15 +187,26 @@ def main():
                     p.lineTo(tx(pts[j][0], pts[j][1]))
                     db.drawPath(p)
 
-    # points (hollow rings: bg fill + coloured stroke)
+    # points match Runebender-Web: smooth on-curve = green circle,
+    # corner on-curve = orange square, off-curve = purple circle.
     db.strokeWidth(LINE_WIDTH)
     for pts in cs:
         for p in pts:
             x, y = tx(p[0], p[1])
-            r = 24 if p[2] else 20
+            on_curve, smooth = p[2], p[3]
             db.fill(*BG)
-            db.stroke(*(GREEN if p[2] else PURPLE))
-            db.oval(x - r, y - r, 2 * r, 2 * r)
+            if not on_curve:
+                r = 17
+                db.stroke(*PURPLE)
+                db.oval(x - r, y - r, 2 * r, 2 * r)
+            elif smooth:
+                r = 21
+                db.stroke(*GREEN)
+                db.oval(x - r, y - r, 2 * r, 2 * r)
+            else:
+                r = 18
+                db.stroke(*ORANGE)
+                db.rect(x - r, y - r, 2 * r, 2 * r)
 
     OG.parent.mkdir(parents=True, exist_ok=True)
     db.saveImage(str(OG))
