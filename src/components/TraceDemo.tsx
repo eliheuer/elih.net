@@ -5,7 +5,8 @@
  * raster sits behind the work area as a dimmed background template (the way
  * you trace over an image in Runebender), a Trace button runs img2bez
  * (compiled to WASM) on it, and the resulting outline is drawn on top with its
- * on-curve (green) / off-curve (purple) points. Drop your own image onto the
+ * structure points: smooth on-curve (green circle), corner on-curve (orange
+ * square), off-curve (purple circle). Drop your own image onto the
  * app to trace it instead. Scroll to zoom, drag to pan.
  *
  * Reuses only the trace core (one WASM call); the viewer is custom so it fits
@@ -15,10 +16,11 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import init, { traceToGlif } from "../lib/img2bez-wasm/img2bez_wasm.js";
 import wasmUrl from "../lib/img2bez-wasm/img2bez_wasm_bg.wasm?url";
 
-// autoresearch / Runebender-web palette
+// Runebender-web point palette
 const BG = "#0c0c0c";
-const GREEN = "#66ee88"; // on-curve
-const PURPLE = "#8b6cff"; // off-curve
+const GREEN = "#18b86f"; // smooth on-curve
+const ORANGE = "#ff980f"; // corner on-curve
+const PURPLE = "#8c6cff"; // off-curve
 const HANDLE = "#7a7a7a";
 const OUTLINE = "#e6e6e6";
 
@@ -28,7 +30,7 @@ function ensureWasm() {
   return wasmReady;
 }
 
-type Pt = { x: number; y: number; on: boolean };
+type Pt = { x: number; y: number; on: boolean; smooth: boolean };
 type Box = { minX: number; minY: number; maxX: number; maxY: number };
 
 function parseGlif(glif: string): Pt[][] {
@@ -41,6 +43,7 @@ function parseGlif(glif: string): Pt[][] {
         x: parseFloat(p.getAttribute("x") || "0"),
         y: parseFloat(p.getAttribute("y") || "0"),
         on: p.getAttribute("type") !== null,
+        smooth: p.getAttribute("smooth") === "yes",
       });
     });
     if (pts.length) contours.push(pts);
@@ -262,15 +265,26 @@ export default function TraceDemo({ image = "/demos/img2bez/a.png", glyph = "a",
           }
       }
     }
-    // points
+    // points: smooth on-curve = green circle, corner on-curve = orange
+    // square, off-curve = purple circle (matching Runebender-web).
     for (const pts of contours)
       for (const p of pts) {
+        const X = FX(p.x), Y = FY(p.y);
         ctx.beginPath();
-        ctx.arc(FX(p.x), FY(p.y), p.on ? 4 : 3, 0, Math.PI * 2);
+        if (!p.on) {
+          ctx.arc(X, Y, 3, 0, Math.PI * 2);
+          ctx.strokeStyle = PURPLE;
+        } else if (p.smooth) {
+          ctx.arc(X, Y, 4, 0, Math.PI * 2);
+          ctx.strokeStyle = GREEN;
+        } else {
+          const r = 3.5;
+          ctx.rect(X - r, Y - r, 2 * r, 2 * r);
+          ctx.strokeStyle = ORANGE;
+        }
         ctx.fillStyle = BG;
         ctx.fill();
         ctx.lineWidth = 1.8;
-        ctx.strokeStyle = p.on ? GREEN : PURPLE;
         ctx.stroke();
       }
   }, [box, contours, zoom, pan, showImage]);
