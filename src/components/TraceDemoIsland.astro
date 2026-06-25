@@ -8,9 +8,8 @@ interface Props {
   image?: string
   glyph?: string
   unicode?: string
-  editorUrl?: string
 }
-const { image, glyph, unicode, editorUrl } = Astro.props
+const { image, glyph, unicode } = Astro.props
 ---
 
 <TraceDemo
@@ -18,5 +17,4 @@ const { image, glyph, unicode, editorUrl } = Astro.props
   image={image}
   glyph={glyph}
   unicode={unicode}
-  editorUrl={editorUrl}
 />
