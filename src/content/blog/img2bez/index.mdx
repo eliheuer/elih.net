@@ -35,15 +35,18 @@ img2bez --input glyph.png --output MyFont.ufo --name A --unicode 0041
 Or use it as a Rust library:
 
 ```rust
-use img2bez::{trace, TracingConfig};
-use std::path::Path;
+use img2bez::{trace, place, TraceOptions, FontMetrics};
 
-let result = trace(Path::new("glyph.png"), &TracingConfig::default())?;
+let bytes = std::fs::read("glyph.png")?;
+let outline = trace(&bytes, &TraceOptions::default())?;
 
-// result.paths is a Vec<kurbo::BezPath>; print each contour's SVG path data
-for path in &result.paths {
+// `outline` is the shape in neutral em space. Read the canonical point
+// model (outline.contours), convert it, or place it into a font:
+for path in outline.to_bezpaths() {
     println!("{}", path.to_svg());
 }
+
+let placed = place(&outline, &FontMetrics::default()); // adds baseline + advance
 ```
 
 You can also use it in a font editor like [Runebender-Xilem](https://github.com/eliheuer/runebender-xilem) or [Runebender-Web](https://github.com/eliheuer/runebender-web); the simplest way to try that is to just go to [runebender.org](https://runebender.org) and try it directly in the browser (drag-&-drop an image into the edit view).
@@ -178,7 +181,46 @@ Turn this pass off with `--no-refine`:
 img2bez --input glyph.png --output MyFont.ufo --name A --no-refine
 ```
 
-Those three stages have a lot of knobs: how sharp a turn has to be to count as a corner, how tight a fit has to be, the margins that gate the refinement pass. I tuned almost none of them by hand. They came out of an eval harness that scores every candidate change against a reference font and is built to be driven by coding agents like Codex, Claude Code, and Hermes. The harness is the next section.
+Those three stages have a lot of knobs: how sharp a turn has to be to count as a corner, how tight a fit has to be, the margins that gate the refinement pass. I tuned almost none of them by hand. They came out of an eval harness that scores every candidate change against a reference font and is built to be driven by coding agents like Codex, Claude Code, and Hermes. (The harness gets its own section below.)
+
+### An API for Other People's Tools
+
+img2bez is most useful as a dependency inside something else: a desktop editor like [Runebender](https://runebender.org), a web editor like [Mixfont](https://www.mixfont.com/) or [Shift](https://github.com/shift-editor/shift), a font-production script, or an AI agent building sources on its own. So the API is built around one rule: **tracing a shape and placing it into a font are two different jobs, and most callers only want the first.**
+
+A font editor already has its own units-per-em, its own baseline, its own sidebearing policy. It does not want to inherit mine. So `trace()` returns the outline in neutral em space — the shape, scaled and right-side up, with no baseline shift, no sidebearings, no advance width — and a separate `place()` step applies font metrics only when you ask for them. An earlier version baked a 1024-UPM, 64-unit-sidebearing world into every result, and any editor that wasn't built to those exact numbers had to reverse-engineer and undo them. Now you trace once and place into your own coordinate system with one transform you already know how to write.
+
+Everything the tracer produces is one type, an `Outline`: a list of contours, each a list of points carrying a position, a kind (line, curve, off-curve), and a smoothness flag. It is plain data — no library-specific geometry types in it — so it serializes straight to JSON, and there are lossless conversions out to whatever a given consumer speaks: `kurbo` bézier paths for Rust, UFO GLIF for font pipelines, an SVG path string for a quick preview. One model in the middle, many front ends, and the smoothness flag (which a raw bézier path can't carry) is preserved through all of them.
+
+That same core is exposed four ways, all running the identical pipeline so the output is byte-for-byte the same no matter how you reach it:
+
+- a **Rust crate** for native tools,
+- a **WebAssembly build** with JavaScript bindings — `traceToJson`, `traceToSvg`, `traceToGlif` — for the browser,
+- a **CLI** that can emit UFO, GLIF, JSON, or SVG to a file or stdout, for scripts, and
+- an **MCP server**, so an AI agent can call the tracer as a native tool ("trace this image and give me the outline").
+
+For a web editor the integration is small. You hand the WASM the image bytes and get back the structured outline as JSON:
+
+```json
+{
+  "name": "Q",
+  "advanceWidth": 896,
+  "unitsPerEm": 1088,
+  "contours": [
+    { "points": [
+      { "x": 450, "y": 752, "kind": "curve", "smooth": true },
+      { "x": 210, "y": 752, "kind": "offcurve" },
+      { "x": 64,  "y": 573, "kind": "offcurve" },
+      { "x": 64,  "y": 334, "kind": "curve" }
+    ] }
+  ]
+}
+```
+
+Map those points into your editor's own point model, place the glyph with your own metrics, and you are done — no XML parsing, no bézier math, no UFO dependency on the client.
+
+None of this is free. One canonical model plus four surfaces is more to maintain than a single function that returns whatever was convenient, and the indirection costs a little ceremony for the simplest "just trace a file" case. The bet is that the alternative — a tracer welded to one application's coordinate system and one output format — is exactly what makes every other tool write its own tracer instead of adopting yours. The whole point of img2bez is to be the shared one, so it is worth the extra surface to make it embeddable everywhere.
+
+That is also the pitch to anyone building a font tool. img2bez is open source under the permissive Apache-2.0/MIT license shared by the `kurbo` and [Linebender](https://linebender.org) ecosystem it builds on, so adopting it carries no lock-in. If it becomes load-bearing for your product I would rather build the parts you need with you — the tracer is one piece of the AI type-design startup I'm building, and the tracer getting better for your glyphs makes the rest of that pipeline better too. There is room to partner on the roadmap, and on funding the work, for tools that want the same default to win.
 
 ### Measuring "Draws Like a Designer"
 
