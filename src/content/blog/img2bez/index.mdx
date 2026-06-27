@@ -189,7 +189,7 @@ img2bez is most useful as a dependency inside something else: a desktop editor l
 
 A font editor already has its own units-per-em, its own baseline, its own sidebearing policy. It does not want to inherit mine. So `trace()` returns the outline in neutral em space — the shape, scaled and right-side up, with no baseline shift, no sidebearings, no advance width — and a separate `place()` step applies font metrics only when you ask for them. An earlier version baked a 1024-UPM, 64-unit-sidebearing world into every result, and any editor that wasn't built to those exact numbers had to reverse-engineer and undo them. Now you trace once and place into your own coordinate system with one transform you already know how to write.
 
-Everything the tracer produces is one type, an `Outline`: a list of contours, each a list of points carrying a position, a kind (line, curve, off-curve), and a smoothness flag. It is plain data — no library-specific geometry types in it — so it serializes straight to JSON, and there are lossless conversions out to whatever a given consumer speaks: `kurbo` bézier paths for Rust, UFO GLIF for font pipelines, an SVG path string for a quick preview. One model in the middle, many front ends, and the smoothness flag (which a raw bézier path can't carry) is preserved through all of them.
+Everything the tracer produces is one type, modeled directly on the [UFO point model](https://unifiedfontobject.org/) — because UFO is the core open source format for fonts, and img2bez is font-specific, so UFO parity is the goal rather than an afterthought. A traced glyph is a list of contours, each a list of points carrying a position, a UFO point type (line, curve, qcurve, or off-curve), and a smoothness flag. It is plain data — no library-specific geometry types in it — so it serializes straight to JSON, and there are lossless conversions out to whatever a given consumer speaks: `kurbo` bézier paths for Rust, UFO GLIF for font pipelines, an SVG path string for a quick preview. One model in the middle, many front ends, and the smoothness flag (which a raw bézier path can't carry) is preserved through all of them.
 
 That same core is exposed four ways, all running the identical pipeline so the output is byte-for-byte the same no matter how you reach it:
 
@@ -198,25 +198,28 @@ That same core is exposed four ways, all running the identical pipeline so the o
 - a **CLI** that can emit UFO, GLIF, JSON, or SVG to a file or stdout, for scripts, and
 - an **MCP server**, so an AI agent can call the tracer as a native tool ("trace this image and give me the outline").
 
-For a web editor the integration is small. You hand the WASM the image bytes and get back the structured outline as JSON:
+For a web editor the integration is small. You hand the WASM the image bytes and get back the glyph as JSON, in a shape that mirrors a UFO `.glif` directly — codepoints as a `unicodes` array, an `advance`, and an `outline` of contours of points, where on-curve points carry a `type` and off-curve points omit it, exactly as UFO does:
 
 ```json
 {
   "name": "Q",
-  "advanceWidth": 896,
+  "unicodes": ["0051"],
+  "advance": { "width": 896 },
   "unitsPerEm": 1088,
-  "contours": [
-    { "points": [
-      { "x": 450, "y": 752, "kind": "curve", "smooth": true },
-      { "x": 210, "y": 752, "kind": "offcurve" },
-      { "x": 64,  "y": 573, "kind": "offcurve" },
-      { "x": 64,  "y": 334, "kind": "curve" }
-    ] }
-  ]
+  "outline": {
+    "contours": [
+      { "points": [
+        { "x": 448, "y": 752, "type": "curve", "smooth": true },
+        { "x": 208, "y": 752 },
+        { "x": 64,  "y": 576 },
+        { "x": 64,  "y": 336, "type": "curve" }
+      ] }
+    ]
+  }
 }
 ```
 
-Map those points into your editor's own point model, place the glyph with your own metrics, and you are done — no XML parsing, no bézier math, no UFO dependency on the client.
+Map those points into your editor's own point model, place the glyph with your own metrics, and you are done — no XML parsing, no bézier math, no UFO dependency on the client. And because the JSON is a one-to-one projection of UFO, anything you build against it speaks the same structure as the rest of the font ecosystem.
 
 None of this is free. One canonical model plus four surfaces is more to maintain than a single function that returns whatever was convenient, and the indirection costs a little ceremony for the simplest "just trace a file" case. The bet is that the alternative — a tracer welded to one application's coordinate system and one output format — is exactly what makes every other tool write its own tracer instead of adopting yours. The whole point of img2bez is to be the shared one, so it is worth the extra surface to make it embeddable everywhere.
 
