@@ -183,6 +183,21 @@ img2bez --input glyph.png --output MyFont.ufo --name A --no-refine
 
 Those three stages have a lot of knobs: how sharp a turn has to be to count as a corner, how tight a fit has to be, the margins that gate the refinement pass. I tuned almost none of them by hand. They came out of an eval harness that scores every candidate change against a reference font and is built to be driven by coding agents like Codex, Claude Code, and Hermes. (The harness gets its own section below.)
 
+### Tuning for Different Inputs
+
+A trace is only as good as its assumptions about the source, and a crisp font render and a fuzzy AI-generated PNG want different settings. img2bez exposes this as a *profile*:
+
+- **`wild`** (the default) assumes an unknown raster — typically an image around 1024×1024 from an AI image API, which is the case the demo at the top of this page runs. It fits loosely on purpose, so it doesn't chase every soft, anti-aliased wobble in the input into an extra on-curve point.
+- **`clean`** is the tighter fit for a high-resolution render of an existing font, where the edges are sharp and you want the trace to track them exactly.
+
+```bash
+img2bez --input glyph.png --output MyFont.ufo --name A --profile clean
+```
+
+Underneath the profile, the pipeline already corrects two common input pathologies on its own, before any curve is fit. A nearest-neighbor *pixel-doubled* image — an old sprite, or a small picture scaled up in a browser — has its anti-aliasing quantized into uniform blocks; img2bez detects that and downscales back to the true resolution so it can read the real edge. And a small, low-resolution glyph is smooth-upscaled first, so the sub-pixel tracer sees anti-aliased ramps instead of hard pixel stair-steps.
+
+What it does *not* do yet is pick the profile for you. The plan is to classify the input automatically in the default mode — cheap checks like resolution and an edge-blurriness measure — and route it to the right settings, with dedicated profiles for the harder sources a single setting handles poorly: a blurry photo of a printed specimen (a page from a restaurant menu, say) or an old, heavily pixelated image from a 2000s website. Each of those needs its own tuning, validated against a labeled corpus of that kind of input — which is the next piece of eval-harness work.
+
 ### An API for Other People's Tools
 
 img2bez is most useful as a dependency inside something else: a desktop or web font editor, a font-production script, or an AI agent building sources on its own. So the API is built around one rule: **tracing a shape and placing it into a font are two separate jobs, and you should be able to do the first without committing to the second.**
