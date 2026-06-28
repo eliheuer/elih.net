@@ -34,6 +34,12 @@
     h1, h2, h3 { font-size: 2em; }
     h4, h5, h6 { font-size: 1em; }
 
+    /* The 2x body→heading jump is too steep in a narrow column; ease it on
+       phones (the root font-size has already scaled down as well). */
+    @media (max-width: 639.98px) {
+      h1, h2, h3 { font-size: 1.6em; }
+    }
+
     a {
       color: var(--foreground);
       font-weight: normal;

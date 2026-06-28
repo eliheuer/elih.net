@@ -34,7 +34,7 @@ const fontFamily = `"${font.data.title}", sans-serif`
       )
     }
 
-    <h1 style="font-size: 72px; line-height: 1.1; font-weight: 500; margin-top: 72px; margin-bottom: 36px;">{font.data.title}</h1>
+    <h1 style="font-size: clamp(40px, 9vw, 72px); line-height: 1.1; font-weight: 500; margin-top: clamp(36px, 7vw, 72px); margin-bottom: 36px;">{font.data.title}</h1>
 
     <div class="max-w-[65ch] mb-[36px]">
       <p class="text-muted-foreground">{font.data.description}</p>

@@ -33,7 +33,7 @@ const { Content } = await render(project)
       )
     }
 
-    <h1 style="font-size: 72px; line-height: 1.1; font-weight: 500; margin-top: 72px; margin-bottom: 36px;">{project.data.title}</h1>
+    <h1 style="font-size: clamp(40px, 9vw, 72px); line-height: 1.1; font-weight: 500; margin-top: clamp(36px, 7vw, 72px); margin-bottom: 36px;">{project.data.title}</h1>
 
     <article class="prose max-w-[65ch]">
       <Content />
