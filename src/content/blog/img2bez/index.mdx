@@ -28,7 +28,7 @@ Install the Rust CLI tool and trace a raster image:
 # install the CLI tool
 cargo install --git https://github.com/eliheuer/img2bez
 
-# trace a glyph image into a UFO (creats the UFO if it doesn't exist)
+# trace a glyph image into a UFO (creates the UFO if it doesn't exist)
 img2bez --input glyph.png --output MyFont.ufo --name A --unicode 0041
 ```
 
@@ -185,18 +185,20 @@ Those three stages have a lot of knobs: how sharp a turn has to be to count as a
 
 ### An API for Other People's Tools
 
-img2bez is most useful as a dependency inside something else: a desktop or web font editor, a font-production script, or an AI agent building sources on its own. So the API is built around one rule: **tracing a shape and placing it into a font are two different jobs, and most callers only want the first.**
+img2bez is most useful as a dependency inside something else: a desktop or web font editor, a font-production script, or an AI agent building sources on its own. So the API is built around one rule: **tracing a shape and placing it into a font are two separate jobs, and you should be able to do the first without committing to the second.**
 
-Why keep them separate? `trace()` returns just the outline — drawn at a standard em scale, but not yet positioned in a font. `place()` does the positioning: it sets the baseline, the sidebearings, and the advance width, and only when you ask. Those are per-font choices, so you make them in your own coordinate system instead of unwinding mine. (The outline is plain x,y coordinates, so if your font uses a different em, you just scale it.)
+The pipeline is three explicit stages. `trace()` answers *what contours are in this image?* and returns just the outline, drawn at a standard em scale but not yet positioned. `place()` answers *where does it belong in this font?* — and it never guesses: you tell it which part of the image is the glyph (the whole canvas, or just the detected ink), which vertical band the ink should fill (baseline-to-cap, descender-to-ascender, or a custom range), and how to set the sidebearings and advance (explicit numbers, a fixed advance, centered, or copied from a neighboring glyph). A final stage attaches the name and codepoints and hands back a UFO-faithful glyph. img2bez never infers typography from a codepoint; placement is a decision, and it stays yours.
+
+Keeping the stages apart is what lets each caller place in its own terms. A font editor positions glyphs against the metrics already open in the document; an agent regenerating one glyph copies the vertical fit and sidebearings from its neighbors. It also fixes the case that breaks a naive tracer: a generated image arrives with arbitrary padding around the letter, so mapping the whole canvas into the em puts the glyph at the wrong size and off the baseline. Fitting *detected ink* into an explicit band instead is resolution- and padding-independent — the same letter lands in the same place whether it came in tightly cropped or floating in whitespace — and every placement returns a report (the ink box it found, the scale and offset it applied, the resulting bounds and sidebearings) so a headless caller can check the result without rendering it.
 
 Everything the tracer produces is one type that follows the [UFO point model](https://unifiedfontobject.org/) — UFO is the core open font-source format, and img2bez is font-specific, so parity with it is the goal. A glyph is just contours of points, each with a position, a UFO point type, and a smoothness flag. It's plain data with no library-specific types, so it serializes straight to JSON and converts losslessly to whatever a consumer needs: `kurbo` paths for Rust, GLIF for font pipelines, an SVG path for a preview. One model, many front ends — and it keeps the smoothness flag a raw bézier path can't.
 
 The same core is exposed four ways, running the identical pipeline so the output is byte-for-byte the same no matter how you reach it:
 
 - a **Rust crate** for native tools,
-- a **WebAssembly build** with JavaScript bindings — `traceToJson`, `traceToSvg`, `traceToGlif` — for the browser,
-- a **CLI** that can emit UFO, GLIF, JSON, or SVG to a file or stdout, for scripts, and
-- an **MCP server**, so an AI agent can call the tracer as a native tool ("trace this image and give me the outline").
+- a **WebAssembly build** with JavaScript bindings — `traceToJson`, `traceToSvg`, `traceToGlif`, plus `tracePlaceToJson` for the trace-and-place path — for the browser,
+- a **CLI** that can emit UFO, GLIF, JSON, or SVG to a file or stdout, with flags to fit detected ink into a target band and copy metrics from a reference glyph, for scripts, and
+- an **MCP server**, so an AI agent can call the tracer as a native tool ("trace this image, fit it like the *b*, and give me the outline").
 
 For a web editor the integration is small. You hand the WASM the image bytes and get back the glyph as JSON — codepoints as a `unicodes` array, an `advance`, and an `outline` of contours of points, where on-curve points carry a `type` and off-curve points omit it:
 
