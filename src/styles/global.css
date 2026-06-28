@@ -170,12 +170,22 @@ html.use-geist-font {
   html {
     @apply bg-background text-foreground scheme-light;
     font-family: var(--font-sans);
+    /* The whole layout is rem/em-based off this root, so scaling it down on
+       small screens shrinks type, headings, spacing, and gutters together —
+       the phone keeps the desktop proportions instead of overflowing. */
     font-size: 20px;
     line-height: 1.6;
     letter-spacing: 0.02em;
     text-rendering: optimizeLegibility;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
+
+    @media (max-width: 639.98px) {
+      font-size: 18px;
+    }
+    @media (max-width: 389.98px) {
+      font-size: 16.5px;
+    }
 
     /* Firefox: slim scrollbar, no track background */
     scrollbar-width: thin;
