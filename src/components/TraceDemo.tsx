@@ -375,7 +375,11 @@ export default function TraceDemo({ image = "/demos/img2bez/a.png", glyph = "a",
           if (drag.current) setPan({ x: e.clientX - drag.current.x, y: e.clientY - drag.current.y });
         }}
         onPointerUp={() => (drag.current = null)}
-        style={{ display: "block", width: "100%", height: "100%", cursor: "grab", touchAction: "none" }}
+        onPointerCancel={() => (drag.current = null)}
+        // pan-y lets a vertical swipe scroll the page (so the demo never traps
+        // scrolling on a phone) while a horizontal drag still pans the glyph;
+        // zoom is on the +/− buttons. On desktop the mouse drag pans freely.
+        style={{ display: "block", width: "100%", height: "100%", cursor: "grab", touchAction: "pan-y" }}
       />
 
       {/* Trace button, inside the app */}
@@ -427,7 +431,7 @@ export default function TraceDemo({ image = "/demos/img2bez/a.png", glyph = "a",
         onClick={() => fileRef.current?.click()}
         style={{ ...baseBtn, bottom: 12, right: 12, color: "#9a9a9a" }}
       >
-        drag-&-drop or pick your own image to trace
+        Pick image
       </button>
     </div>
   );
