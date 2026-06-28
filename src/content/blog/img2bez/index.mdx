@@ -185,27 +185,27 @@ Those three stages have a lot of knobs: how sharp a turn has to be to count as a
 
 ### An API for Other People's Tools
 
-img2bez is most useful as a dependency inside something else: a desktop editor like [Runebender](https://runebender.org), a web editor like [Mixfont](https://www.mixfont.com/) or [Shift](https://github.com/shift-editor/shift), a font-production script, or an AI agent building sources on its own. So the API is built around one rule: **tracing a shape and placing it into a font are two different jobs, and most callers only want the first.**
+img2bez is most useful as a dependency inside something else: a desktop or web font editor, a font-production script, or an AI agent building sources on its own. So the API is built around one rule: **tracing a shape and placing it into a font are two different jobs, and most callers only want the first.**
 
-A font editor already has its own units-per-em, its own baseline, its own sidebearing policy. It does not want to inherit mine. So `trace()` returns the outline in neutral em space — the shape, scaled and right-side up, with no baseline shift, no sidebearings, no advance width — and a separate `place()` step applies font metrics only when you ask for them. An earlier version baked a 1024-UPM, 64-unit-sidebearing world into every result, and any editor that wasn't built to those exact numbers had to reverse-engineer and undo them. Now you trace once and place into your own coordinate system with one transform you already know how to write.
+Why keep them separate? `trace()` returns just the outline — drawn at a standard em scale, but not yet positioned in a font. `place()` does the positioning: it sets the baseline, the sidebearings, and the advance width, and only when you ask. Those are per-font choices, so you make them in your own coordinate system instead of unwinding mine. (The outline is plain x,y coordinates, so if your font uses a different em, you just scale it.)
 
-Everything the tracer produces is one type, modeled directly on the [UFO point model](https://unifiedfontobject.org/) — because UFO is the core open source format for fonts, and img2bez is font-specific, so UFO parity is the goal rather than an afterthought. A traced glyph is a list of contours, each a list of points carrying a position, a UFO point type (line, curve, qcurve, or off-curve), and a smoothness flag. It is plain data — no library-specific geometry types in it — so it serializes straight to JSON, and there are lossless conversions out to whatever a given consumer speaks: `kurbo` bézier paths for Rust, UFO GLIF for font pipelines, an SVG path string for a quick preview. One model in the middle, many front ends, and the smoothness flag (which a raw bézier path can't carry) is preserved through all of them.
+Everything the tracer produces is one type that follows the [UFO point model](https://unifiedfontobject.org/) — UFO is the core open font-source format, and img2bez is font-specific, so parity with it is the goal. A glyph is just contours of points, each with a position, a UFO point type, and a smoothness flag. It's plain data with no library-specific types, so it serializes straight to JSON and converts losslessly to whatever a consumer needs: `kurbo` paths for Rust, GLIF for font pipelines, an SVG path for a preview. One model, many front ends — and it keeps the smoothness flag a raw bézier path can't.
 
-That same core is exposed four ways, all running the identical pipeline so the output is byte-for-byte the same no matter how you reach it:
+The same core is exposed four ways, running the identical pipeline so the output is byte-for-byte the same no matter how you reach it:
 
 - a **Rust crate** for native tools,
 - a **WebAssembly build** with JavaScript bindings — `traceToJson`, `traceToSvg`, `traceToGlif` — for the browser,
 - a **CLI** that can emit UFO, GLIF, JSON, or SVG to a file or stdout, for scripts, and
 - an **MCP server**, so an AI agent can call the tracer as a native tool ("trace this image and give me the outline").
 
-For a web editor the integration is small. You hand the WASM the image bytes and get back the glyph as JSON, in a shape that mirrors a UFO `.glif` directly — codepoints as a `unicodes` array, an `advance`, and an `outline` of contours of points, where on-curve points carry a `type` and off-curve points omit it, exactly as UFO does:
+For a web editor the integration is small. You hand the WASM the image bytes and get back the glyph as JSON — codepoints as a `unicodes` array, an `advance`, and an `outline` of contours of points, where on-curve points carry a `type` and off-curve points omit it:
 
 ```json
 {
   "name": "Q",
   "unicodes": ["0051"],
   "advance": { "width": 896 },
-  "unitsPerEm": 1088,
+  "unitsPerEm": 1024,
   "outline": {
     "contours": [
       { "points": [
@@ -223,7 +223,7 @@ Map those points into your editor's own point model, place the glyph with your o
 
 None of this is free. One canonical model plus four surfaces is more to maintain than a single function that returns whatever was convenient, and the indirection costs a little ceremony for the simplest "just trace a file" case. The bet is that the alternative — a tracer welded to one application's coordinate system and one output format — is exactly what makes every other tool write its own tracer instead of adopting yours. The whole point of img2bez is to be the shared one, so it is worth the extra surface to make it embeddable everywhere.
 
-That is also the pitch to anyone building a font tool. img2bez is open source under the permissive Apache-2.0/MIT license shared by the `kurbo` and [Linebender](https://linebender.org) ecosystem it builds on, so adopting it carries no lock-in. If it becomes load-bearing for your product I would rather build the parts you need with you — the tracer is one piece of the AI type-design startup I'm building, and the tracer getting better for your glyphs makes the rest of that pipeline better too. There is room to partner on the roadmap, and on funding the work, for tools that want the same default to win.
+That is also the pitch to anyone building a font tool. img2bez is open source under the permissive Apache-2.0/MIT license shared by the `kurbo` and [Linebender](https://linebender.org) ecosystem it builds on, so adopting it carries no lock-in. The tracer is one piece of the AI type-design startup I'm building, and it gets better for everyone's glyphs as it gets better for any one tool's — so if you're building something serious on it, I'd rather build the parts you need with you than have you fork it.
 
 ### Measuring "Draws Like a Designer"
 
