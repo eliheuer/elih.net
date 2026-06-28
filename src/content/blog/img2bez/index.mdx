@@ -111,11 +111,11 @@ Runebender supports the generative side too: it can trace through the QuiverAI A
 
 ### How img2bez Works
 
-img2bez works in three stages. (Fuller detail is in the [img2bez git repo](https://github.com/eliheuer/img2bez).)
+img2bez works in four stages. (Fuller detail is in the [img2bez git repo](https://github.com/eliheuer/img2bez).)
 
-**1. Find the edge precisely.** Most tracers first threshold the image to pure black and white, which throws away the soft anti-aliased pixels along the edge. img2bez reads the outline straight from those gray pixels instead, which recovers the boundary to a fraction of a pixel.
+**1. Find the edge precisely.** Most tracers first threshold the image to pure black and white, which throws away the soft anti-aliased pixels along the edge. img2bez runs marching squares at the threshold's iso-level instead, reading the boundary straight from the gray pixels, which recovers it to a fraction of a pixel. Contours that span the whole image frame or are too small to be ink are discarded as artifacts.
 
-**2. Place the points, then fit the curves.** It walks that boundary and uses the way it turns to decide where the structural points go: sharp corners where the direction snaps, straight runs where the edge is genuinely straight, and smooth points at the extrema (the top of an "o" for example) and inflections (the spine of an "s"). Then it fits cubic curves between those points, with the handles pinned horizontal or vertical at the extrema, with some basic logic for exceptions. Because the directions are fixed up front, the outline follows type-drawing conventions by construction, not by a cleanup pass afterward.
+**2. Place the points, then fit the curves.** First it resamples the boundary to even ~1px spacing and applies a light Gaussian smooth: the marching-squares boundary is accurate to ~0.1px, so a small smooth removes sampling jitter without moving features, and the amount rises adaptively for noisy sources. This stabilizes the curvature signal the next step reads. It then walks the boundary and uses the way it turns to decide where the structural points go: sharp corners where the direction snaps, straight runs where the edge is genuinely straight, and smooth points at the extrema (the top of an "o" for example) and inflections (the spine of an "s"). Then it fits cubic curves between those points, with the handles pinned horizontal or vertical at the extrema, with some basic logic for exceptions. Because the directions are fixed up front, the outline follows type-drawing conventions by construction, not by a cleanup pass afterward.
 
 That constraint is what separates it from a general-purpose fitter. kurbo derives each endpoint tangent straight from the curve data, whatever direction the outline happens to have at that parameter:
 
@@ -173,7 +173,9 @@ impl ParamCurveFit for PolylineSource<'_> {
 let path = fit_to_bezpath_opt(&source, accuracy);
 ```
 
-**3. Refine against the image.** An optional final pass re-scores the curves against the original pixels, the same idea diffvg uses, but with no training and no GPU: it just searches the few remaining degrees of freedom for the closest match. This nudges handles that are clearly off, merges two timid curves into the single one a designer would have drawn, and restores small design details like the tiny flats at stroke junctions.
+A cleanup pass then conforms the joins to type-design rules. Collinear line segments are merged, and a sharp corner that anti-aliasing rounded off is rebuilt. At each smooth (non-corner) join the two handles are made colinear so the tangent is continuous (G1), and the on-curve point is nudged to the position where curvature matches on both sides (G2) — the "harmonize" operation Glyphs and FontLab expose as a manual command. Corners, extrema, and lines are left fixed.
+
+**3. Refine against the image.** An optional pass re-scores the curves against the original pixels, the same idea diffvg uses, but with no training and no GPU: it just searches the few remaining degrees of freedom for the closest match. This nudges handles that are clearly off, merges two timid curves into the single one a designer would have drawn, and restores small design details like the tiny flats at stroke junctions.
 
 Turn this pass off with `--no-refine`:
 
@@ -181,7 +183,9 @@ Turn this pass off with `--no-refine`:
 img2bez --input glyph.png --output MyFont.ufo --name A --no-refine
 ```
 
-Those three stages have a lot of knobs: how sharp a turn has to be to count as a corner, how tight a fit has to be, the margins that gate the refinement pass. I tuned almost none of them by hand. They came out of an eval harness that scores every candidate change against a reference font and is built to be driven by coding agents like Codex, Claude Code, and Hermes. (The harness gets its own section below.)
+**4. Snap to font conventions.** Finally the outline is conformed to what a font source expects. Contour directions are set so outer contours and counters wind in opposite directions, which the fill rule requires. On-curve points are snapped to an even-integer grid and the handles rounded to integers, so the coordinates stay clean; any handle left within a few degrees of an axis is snapped exactly horizontal or vertical. An optional chamfer can cut inktrap-style flats at sharp line corners.
+
+These stages have a lot of knobs: how sharp a turn has to be to count as a corner, how tight a fit has to be, the margins that gate the refinement pass. I tuned almost none of them by hand. They came out of an eval harness that scores every candidate change against a reference font and is built to be driven by coding agents like Codex, Claude Code, and Hermes. (The harness gets its own section below.)
 
 ### Tuning for Different Inputs
 
@@ -271,4 +275,4 @@ Because the harness reports a single score, it makes a good target for agentic g
 
 ### Early Days, and an Invitation
 
-img2bez is early, alpha-stage software. It still over-segments low-resolution sources and is tuned against a single reference font, so how much of what it has learned generalizes is unproven. I plan to keep improving it: I'm building a startup in AI type design, and this Rust library is a core part of its data-engineering pipeline. If you work on font tooling, curve fitting, or tracing, I'd welcome your feedback. The repo is [github.com/eliheuer/img2bez](https://github.com/eliheuer/img2bez), issues and PRs are welcome, and I'm on the [Linebender Zulip](https://xi.zulipchat.com); this post is [a file on GitHub](https://github.com/eliheuer/elih.net/blob/main/src/content/blog/img2bez/index.mdx) too, so suggestions can come as a PR.
+img2bez is early, alpha-stage software. It still over-segments low-resolution sources and is tuned against a single reference font, so how much of what it has learned generalizes is unproven. Its scope is also deliberately narrow: it traces one glyph from a single luma channel, with no color, no composite glyphs (accented letters assembled from component references), and no hinting. I plan to keep improving it: I'm building a startup in AI type design, and this Rust library is a core part of its data-engineering pipeline. If you work on font tooling, curve fitting, or tracing, I'd welcome your feedback. The repo is [github.com/eliheuer/img2bez](https://github.com/eliheuer/img2bez), issues and PRs are welcome, and I'm on the [Linebender Zulip](https://xi.zulipchat.com); this post is [a file on GitHub](https://github.com/eliheuer/elih.net/blob/main/src/content/blog/img2bez/index.mdx) too, so suggestions can come as a PR.
