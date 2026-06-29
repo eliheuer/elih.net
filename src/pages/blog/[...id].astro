@@ -31,6 +31,7 @@ const { next, prev } = await getAdjacentPosts(currentPostId)
         <time datetime={post.data.date.toISOString()}>
           {formatDate(post.data.date)}
         </time>
+        {post.data.dateNote && <span> · {post.data.dateNote}</span>}
       </p>
     </header>
 
