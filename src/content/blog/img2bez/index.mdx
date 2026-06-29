@@ -29,10 +29,11 @@ Below is an interactive demo of img2bez compiled from Rust to WASM. Click **Trac
 <li><a href="#4-existing-approaches-and-why-they-solve-a-different-problem"><span class="n">4</span>Existing Approaches, and Why They Solve a Different Problem</a></li>
 <li><a href="#5-how-img2bez-works"><span class="n">5</span>How img2bez Works</a></li>
 <li><a href="#6-tuning-for-different-inputs"><span class="n">6</span>Tuning for Different Inputs</a></li>
-<li><a href="#7-variable-fonts-masters-that-interpolate"><span class="n">7</span>Variable Fonts: Masters that Interpolate</a></li>
-<li><a href="#8-an-api-for-other-peoples-tools"><span class="n">8</span>An API for Other People's Tools</a></li>
-<li><a href="#9-measuring-draws-like-a-designer"><span class="n">9</span>Measuring &ldquo;Draws Like a Designer&rdquo;</a></li>
-<li><a href="#10-early-days-and-an-invitation"><span class="n">10</span>Early Days, and an Invitation</a></li>
+<li><a href="#7-design-constraint-modes"><span class="n">7</span>Design-Constraint Modes</a></li>
+<li><a href="#8-variable-fonts-masters-that-interpolate"><span class="n">8</span>Variable Fonts: Masters that Interpolate</a></li>
+<li><a href="#9-an-api-for-other-peoples-tools"><span class="n">9</span>An API for Other People's Tools</a></li>
+<li><a href="#10-measuring-draws-like-a-designer"><span class="n">10</span>Measuring &ldquo;Draws Like a Designer&rdquo;</a></li>
+<li><a href="#11-early-days-and-an-invitation"><span class="n">11</span>Early Days, and an Invitation</a></li>
 </ol>
 </nav>
 
@@ -65,7 +66,7 @@ for path in outline.to_bezpaths() {
 let placed = place(&outline, &FontMetrics::default()); // adds baseline + advance
 ```
 
-Driving it from a script or an agent: `img2bez --help`, and `img2bez <command> --help` for the `masters` and `new-font` subcommands, list every flag — the authoritative, always-current reference. Add `--format json` (or `glif`/`svg`) to write the structured outline to stdout instead of a UFO, and `--fit-source ink --fit-y <ymin>:<ymax>` when the input is a generated or padded image rather than one already framed to the em. The multi-master commands are in [§7](#7-variable-fonts-masters-that-interpolate); the canonical JSON shape is in [§8](#8-an-api-for-other-peoples-tools).
+Driving it from a script or an agent: `img2bez --help`, and `img2bez <command> --help` for the `masters` and `new-font` subcommands, list every flag — the authoritative, always-current reference. Add `--format json` (or `glif`/`svg`) to write the structured outline to stdout instead of a UFO, and `--fit-source ink --fit-y <ymin>:<ymax>` when the input is a generated or padded image rather than one already framed to the em. The multi-master commands are in [§8](#8-variable-fonts-masters-that-interpolate); the canonical JSON shape is in [§9](#9-an-api-for-other-peoples-tools).
 
 You can also use it in a font editor like [Runebender-Xilem](https://github.com/eliheuer/runebender-xilem) or [Runebender-Web](https://github.com/eliheuer/runebender-web); the simplest way to try that is to just go to [runebender.org](https://runebender.org) and try it directly in the browser: drag-&-drop an image into the edit view, then right-click it and choose **Trace Image**.
 
@@ -223,13 +224,25 @@ Independent of the profile, the pipeline normalizes two common input conditions 
 - **Nearest-neighbor upscales.** An image enlarged with nearest-neighbor sampling has its anti-aliasing quantized into uniform pixel blocks. img2bez detects this and downscales to the original resolution before tracing.
 - **Low-resolution glyphs.** A small glyph is smooth-upscaled first, so the sub-pixel tracer reads anti-aliased edges rather than hard pixel steps.
 
+Beyond the profile, the settings that matter most are exposed as knobs, for tuning by hand or by an agent. `--smoothing` and `--corner-threshold` adjust how hard the boundary is smoothed and how sharp a turn must be to count as a corner — raise them for noisy or degraded sources, lower them to track clean art tightly. `--pre-blur` handles the hardest case: it blurs the *image* before the boundary is extracted, so a photo of printed type — rough inky edges, paper texture, low contrast — is traced through a clean edge instead of through every wobble of the ink. (On an old-style letterpress `a`, the default chases the ink texture into dozens of stray points; a little pre-blur gives a clean outline that follows the letter.) And `img2bez stats <image>` prints the same cheap no-reference features — resolution, sharpness, noise, how close to bilevel — that the future `auto` mode will read, so you can see why one image needs different settings than another.
+
 Profile selection is currently manual, and making it automatic is the next real piece of research. The plan rests on one observation: choosing settings well requires a way to *measure* the choice, which means a corpus with known answers. The eval harness already scores traces against a hand-drawn reference; extending it with controlled *degradation* — taking known-good outlines and rendering them downscaled, blurred, JPEG-compressed, noised, bilevel, and halftoned — produces (degraded image → known-correct outline) pairs across the whole space of input quality. Because each image is generated from a known outline, the right answer is known, which is exactly what lets a setting-selector be tuned and validated.
 
 On that foundation a default `auto` mode reads a few cheap, no-reference signals from the image — glyph resolution, an edge-sharpness measure like the [variance of the Laplacian](https://opencv.org/blog/autofocus-using-opencv-a-comparative-study-of-focus-measures-for-sharpness-assessment/), a noise estimate, and how close to bilevel it is — and maps them to the fit tolerance, smoothing, and corner sensitivity that scored best for that kind of input. The mapping starts as plain rules derived from the corpus (not hand-guessed) and graduates to a tiny learned selector — the [small parameter-prediction networks](https://arxiv.org/pdf/2112.09318) used in camera pipelines are the same shape — only if rules leave quality on the table. Either way it stays a *selector*: it chooses settings for the deterministic tracer; it never becomes a model that draws the outline. That keeps img2bez fast, deterministic, and embeddable — the properties the whole tool is built on, and the reason it can run client-side in the browser.
 
 Two honest limits. At production time there is no reference, so the selector predicts from measured features and self-checks against the input raster (does the trace reproduce it?) plus intrinsic structure (point count, horizontal/vertical handles) — a confidence signal, not a guarantee. And *drawing style* — inktraps, sharp versus rounded terminals — is design intent, not image quality, and is better declared as a profile than inferred from a single raster. The AI harness does the heavy thinking offline (searching the settings space, tuning the rules against the corpus); the tracer in the loop stays a fast procedural step.
 
-### 7. Variable Fonts: Masters that Interpolate
+### 7. Design-Constraint Modes
+
+Sometimes the constraint is not the input but the *output*. A design may call for one point style throughout, regardless of what the source suggests, so img2bez has trace modes that re-shape the finished outline under a constraint.
+
+`--mode smooth` makes every on-curve point a smooth point and every segment a curve — no corners, no straight lines. The trick is that it keeps the *fitted* curve and only aligns the two handles at each vertex to a continuous tangent, so corners round into the flow instead of the shape distorting into a wavy blob. The result is the consistent, organic outline a soft or rounded design wants, drawn the same way everywhere.
+
+`--mode line` does the opposite: it flattens every curve to straight line segments with no off-curve points, for a polygonal outline.
+
+Both run as a post-pass on the finished trace, so they compose with everything else — `--mode smooth` on a pre-blurred old-style scan, say. More modes are the same shape of transform (all-quadratic for TrueType, or monoline), and a mode pairs naturally with a per-design-class style preset.
+
+### 8. Variable Fonts: Masters that Interpolate
 
 A variable font is built from masters — a Regular and a Bold drawing of each glyph, say — and the renderer interpolates between them by moving every point independently along its delta. That only works if the masters are *compatible*: the same contours, the same number of points, in the same order, of the same type. Generating a variable font from images means producing one raster per master and tracing each, and those traces are made independently, so nothing guarantees they line up.
 
@@ -252,7 +265,7 @@ It matches each master to its image (`Regular.png`, `Bold.png`, … — by the m
 
 For an automated loop the exit status and report are the contract: a non-zero exit means the masters could not be reconciled (a different contour count, say) — regenerate the failing image and retry; a `lowConfidence` flag in the report means a point was placed by a guessed correspondence — accept but review, or regenerate; otherwise the masters are compatible and ready to compile.
 
-### 8. An API for Other People's Tools
+### 9. An API for Other People's Tools
 
 img2bez is most useful as a dependency inside something else: a desktop or web font editor, a font-production script, or an AI agent building sources on its own. So the API is built around one rule: **tracing a shape and placing it into a font are two separate jobs, and you should be able to do the first without committing to the second.**
 
@@ -296,7 +309,7 @@ None of this is free. One canonical model plus four surfaces is more to maintain
 
 That is also the pitch to anyone building a font tool. img2bez is open source under the permissive Apache-2.0/MIT license shared by the [`kurbo`](https://github.com/linebender/kurbo) and [Linebender](https://linebender.org) ecosystem it builds on, so adopting it carries no lock-in. The tracer is one piece of the AI type-design startup I'm building, and it gets better for everyone's glyphs as it gets better for any one tool's — so if you're building something serious on it, I'd rather build the parts you need with you than have you fork it.
 
-### 9. Measuring "Draws Like a Designer"
+### 10. Measuring "Draws Like a Designer"
 
 Evaluation, not the tracer, is the hard part of this project. "Draws like a designer" is hard to quantify, so the eval harness measures it: it scores each traced outline against a hand-drawn reference font.
 
@@ -320,6 +333,6 @@ Running it yourself is a few commands from the repo root:
 
 Because the harness reports a single score, it makes a good target for agentic goal-setting like Codex's `/goal` command, which can run the loop toward it on its own.
 
-### 10. Early Days, and an Invitation
+### 11. Early Days, and an Invitation
 
 img2bez is early, alpha-stage software. It still over-segments low-resolution sources and is tuned against a single reference font, so how much of what it has learned generalizes is unproven. Its scope is also deliberately narrow: it traces one glyph from a single luma channel, with no color, no composite glyphs (accented letters assembled from component references), and no hinting. I plan to keep improving it: I'm building a startup in AI type design, and this Rust library is a core part of its data-engineering pipeline. If you work on font tooling, curve fitting, or tracing, I'd welcome your feedback. The repo is [github.com/eliheuer/img2bez](https://github.com/eliheuer/img2bez), issues and PRs are welcome, and I'm on the [Linebender Zulip](https://xi.zulipchat.com); this post is [a file on GitHub](https://github.com/eliheuer/elih.net/blob/main/src/content/blog/img2bez/index.mdx) too, so suggestions can come as a PR.
