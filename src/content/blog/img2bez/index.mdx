@@ -16,7 +16,7 @@ img2bez is a Rust crate that traces raster images into cubic bézier outlines an
 
 ![img2bez: a low-resolution pixelated "a" with the vector outline img2bez traces from it.](./share-card.png)
 
-Below is an interactive demo of img2bez compiled from Rust to WASM. Click **Trace** to vectorize a raster image and see the outline it produces. To try your own glyph, drop an image onto the app (or use the picker in the corner). This runs with the default settings, which can be tuned for better output depending on image quality and design style.
+Below is an interactive demo of img2bez compiled from Rust to WASM. Click **Trace** to vectorize a raster image and see the outline it produces. To try your own glyph, drop an image onto the app (or use the picker in the corner). The Profile, Style, and Output controls tune the trace along the three axes described below, and run the same WASM the rest of this post explains.
 
 <TraceDemo image="/demos/img2bez/a.png" glyph="a" unicode="0061" />
 
@@ -209,27 +209,36 @@ These stages have a lot of knobs: how sharp a turn has to be to count as a corne
 
 ### 6. Tuning for Different Inputs
 
-The right trace settings depend on the source image. img2bez selects them through a *profile*:
+A trace is tuned along three independent axes that compose freely: the **profile** (what the source image is), the **style** (what the drawing is), and the output **mode** (the next section).
+
+The **profile** matches the input's image quality. img2bez ships three:
 
 - **`wild`** (the default) targets unknown rasters, such as a ~1024×1024 image from an AI image API, the case the demo above runs. It uses a looser curve-fit tolerance, which avoids adding extra on-curve points to track anti-aliasing noise in the source.
 - **`clean`** targets high-resolution renders of existing fonts. It uses a tighter tolerance so the trace follows sharp edges closely.
+- **`photo`** targets soft, low-contrast scans of printed type. It blurs the *image* before the boundary is extracted, so a rough inky edge is traced through a clean edge instead of through every wobble of the ink.
+
+The profile is **auto-detected** by default, and forced with `--profile`. Detection reads a few cheap, no-reference features from the image (resolution, an edge-sharpness measure like the [variance of the Laplacian](https://opencv.org/blog/autofocus-using-opencv-a-comparative-study-of-focus-measures-for-sharpness-assessment/), a noise estimate, and how close to bilevel it is, all printed by `img2bez stats <image>`) and recognizes the soft-scan class by its low sharpness and low contrast, far from the crisp-render regime. The effect is concrete: a soft letterpress `a` traces to about 69 on-curve points under the base settings, and to a clean 23 once it is detected as `photo`.
+
+The **style** is the drawing style of the letterform, layered on top of the base. The base already traces a grotesk (a Helvetica-class monolinear sans) well, since that is the most common and important case, and the named styles (`grotesk`, `old-style`, `geometric`, `brush`, `nib`, `qalam`) add design-specific refinements on top as each is developed. Unlike the profile, the style is **declared, not detected**: a drawing style is design intent, not something measurable from one raster.
 
 ```bash
-img2bez --input glyph.png --output MyFont.ufo --name A --profile clean
+img2bez --input glyph.png --output MyFont.ufo --name a --profile photo --style old-style
 ```
+
+In Runebender the same controls sit in the image's trace menu (a Profile selector, a Style dropdown, and an output Mode), so a trace is tuned and re-run without leaving the editor.
 
 Independent of the profile, the pipeline normalizes two common input conditions before fitting:
 
 - **Nearest-neighbor upscales.** An image enlarged with nearest-neighbor sampling has its anti-aliasing quantized into uniform pixel blocks. img2bez detects this and downscales to the original resolution before tracing.
 - **Low-resolution glyphs.** A small glyph is smooth-upscaled first, so the sub-pixel tracer reads anti-aliased edges rather than hard pixel steps.
 
-Beyond the profile, the settings that matter most are exposed as knobs, for tuning by hand or by an agent. `--smoothing` and `--corner-threshold` adjust how hard the boundary is smoothed and how sharp a turn must be to count as a corner: raise them for noisy or degraded sources, lower them to track clean art tightly. `--pre-blur` handles the hardest case: it blurs the *image* before the boundary is extracted, so a photo of printed type (rough inky edges, paper texture, low contrast) is traced through a clean edge instead of through every wobble of the ink. (On an old-style letterpress `a`, the default chases the ink texture into dozens of stray points; a little pre-blur gives a clean outline that follows the letter.) And `img2bez stats <image>` prints the same cheap no-reference features (resolution, sharpness, noise, how close to bilevel) that the future `auto` mode will read, so you can see why one image needs different settings than another.
+The individual settings behind the profiles stay exposed as knobs, for tuning by hand or by an agent: `--smoothing` and `--corner-threshold` adjust how hard the boundary is smoothed and how sharp a turn must be to count as a corner, and `--pre-blur` sets the image blur the `photo` profile applies automatically. Raise them for noisy or degraded sources, lower them to track clean art tightly.
 
-Profile selection is currently manual, and making it automatic is the next real piece of research. The plan rests on one observation: choosing settings well requires a way to *measure* the choice, which means a corpus with known answers. The eval harness already scores traces against a hand-drawn reference; extending it with controlled *degradation* (taking known-good outlines and rendering them downscaled, blurred, JPEG-compressed, noised, bilevel, and halftoned) produces (degraded image → known-correct outline) pairs across the whole space of input quality. Because each image is generated from a known outline, the right answer is known, which is exactly what lets a setting-selector be tuned and validated.
+The soft-scan detection is the first piece of a broader `auto` mode, and widening it across the whole space of inputs is the next real piece of research. The plan rests on one observation: choosing settings well requires a way to *measure* the choice, which means a corpus with known answers. The eval harness already scores traces against a hand-drawn reference; extending it with controlled *degradation* (taking known-good outlines and rendering them downscaled, blurred, JPEG-compressed, noised, bilevel, and halftoned) produces (degraded image → known-correct outline) pairs across the whole space of input quality. Because each image is generated from a known outline, the right answer is known, which is exactly what lets a setting-selector be tuned and validated.
 
 On that foundation a default `auto` mode reads a few cheap, no-reference signals from the image (glyph resolution, an edge-sharpness measure like the [variance of the Laplacian](https://opencv.org/blog/autofocus-using-opencv-a-comparative-study-of-focus-measures-for-sharpness-assessment/), a noise estimate, and how close to bilevel it is) and maps them to the fit tolerance, smoothing, and corner sensitivity that scored best for that kind of input. The mapping starts as plain rules derived from the corpus (not hand-guessed) and graduates to a tiny learned selector (the [small parameter-prediction networks](https://arxiv.org/pdf/2112.09318) used in camera pipelines are the same shape) only if rules leave quality on the table. Either way it stays a *selector*: it chooses settings for the deterministic tracer; it never becomes a model that draws the outline. That keeps img2bez fast, deterministic, and embeddable: the properties the whole tool is built on, and the reason it can run client-side in the browser.
 
-Two honest limits. At production time there is no reference, so the selector predicts from measured features and self-checks against the input raster (does the trace reproduce it?) plus intrinsic structure (point count, horizontal/vertical handles), a confidence signal, not a guarantee. And *drawing style* (inktraps, sharp versus rounded terminals) is design intent, not image quality, and is better declared as a profile than inferred from a single raster. The AI harness does the heavy thinking offline (searching the settings space, tuning the rules against the corpus); the tracer in the loop stays a fast procedural step.
+Two honest limits. At production time there is no reference, so the selector predicts from measured features and self-checks against the input raster (does the trace reproduce it?) plus intrinsic structure (point count, horizontal/vertical handles), a confidence signal, not a guarantee. And *drawing style* (inktraps, sharp versus rounded terminals) is design intent, not image quality, which is why it is a declared *style* rather than something inferred from a single raster. The AI harness does the heavy thinking offline (searching the settings space, tuning the rules against the corpus); the tracer in the loop stays a fast procedural step.
 
 ### 7. Design-Constraint Modes
 

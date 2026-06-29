@@ -96,7 +96,16 @@ export default function TraceDemo({ image = "/demos/img2bez/a.png", glyph = "a",
   const [zoom, setZoom] = useState(1);
   const [pan, setPan] = useState({ x: 0, y: 0 });
   const [showImage, setShowImage] = useState(true);
+  // Structure (points + handles) vs a filled preview, like hand/preview mode in
+  // a font editor. Holding space temporarily inverts it.
+  const [showStructure, setShowStructure] = useState(true);
+  const [spaceHeld, setSpaceHeld] = useState(false);
+  const hovering = useRef(false);
   const [dropping, setDropping] = useState(false);
+  // Trace settings, mirroring the Runebender image-trace menu.
+  const [traceProfile, setTraceProfile] = useState<"auto" | "photo" | "clean">("auto");
+  const [traceStyle, setTraceStyle] = useState("basic");
+  const [traceMode, setTraceMode] = useState<"default" | "smooth" | "line">("default");
   const drag = useRef<{ x: number; y: number } | null>(null);
 
   // Load the current image and measure its glyph box.
@@ -123,7 +132,17 @@ export default function TraceDemo({ image = "/demos/img2bez/a.png", glyph = "a",
     try {
       await ensureWasm();
       const bytes = new Uint8Array(await (await fetch(src)).arrayBuffer());
-      const glif = traceToGlif(bytes, JSON.stringify({ glyph, unicode }));
+      const glif = traceToGlif(
+        bytes,
+        JSON.stringify({
+          glyph,
+          unicode,
+          // `auto` maps to wild + img2bez's auto-detection; photo/clean force.
+          profile: traceProfile === "auto" ? "wild" : traceProfile,
+          style: traceStyle,
+          mode: traceMode,
+        }),
+      );
       setContours(parseGlif(glif));
       setShowImage(false); // focus on the result; toggle back with the button
     } catch {
@@ -131,7 +150,7 @@ export default function TraceDemo({ image = "/demos/img2bez/a.png", glyph = "a",
     } finally {
       setBusy(false);
     }
-  }, [src, glyph, unicode]);
+  }, [src, glyph, unicode, traceProfile, traceStyle, traceMode]);
 
   const draw = useCallback(() => {
     const canvas = canvasRef.current;
@@ -243,6 +262,16 @@ export default function TraceDemo({ image = "/demos/img2bez/a.png", glyph = "a",
       }
       path.closePath();
     }
+
+    // Filled preview (like hand/preview mode in a font editor): solid glyph,
+    // no point/handle overlay. Space temporarily inverts the structure toggle.
+    const preview = (!showStructure) !== spaceHeld;
+    if (preview) {
+      ctx.fillStyle = OUTLINE;
+      ctx.fill(path, "evenodd");
+      return;
+    }
+
     ctx.fillStyle = "rgba(210,210,210,0.07)"; // neutral light-gray fill, no colour
     ctx.fill(path, "evenodd");
     ctx.strokeStyle = OUTLINE;
@@ -287,7 +316,7 @@ export default function TraceDemo({ image = "/demos/img2bez/a.png", glyph = "a",
         ctx.lineWidth = 1.8;
         ctx.stroke();
       }
-  }, [box, contours, zoom, pan, showImage]);
+  }, [box, contours, zoom, pan, showImage, showStructure, spaceHeld]);
 
   useEffect(() => {
     draw();
@@ -310,28 +339,72 @@ export default function TraceDemo({ image = "/demos/img2bez/a.png", glyph = "a",
     return () => canvas.removeEventListener("wheel", onWheel);
   }, []);
 
+  // Hold space to temporarily flip the structure/preview view, like a font
+  // editor. Scoped to when the pointer is over the demo so it never hijacks
+  // page scrolling.
+  useEffect(() => {
+    const onKeyDown = (e: KeyboardEvent) => {
+      if (e.code !== "Space" || !hovering.current) return;
+      e.preventDefault();
+      setSpaceHeld(true);
+    };
+    const onKeyUp = (e: KeyboardEvent) => {
+      if (e.code === "Space") setSpaceHeld(false);
+    };
+    window.addEventListener("keydown", onKeyDown);
+    window.addEventListener("keyup", onKeyUp);
+    return () => {
+      window.removeEventListener("keydown", onKeyDown);
+      window.removeEventListener("keyup", onKeyUp);
+    };
+  }, []);
+
   const zoomBy = (f: number) => setZoom((z) => Math.min(8, Math.max(0.4, z * f)));
-  const resetView = () => {
+  // Reset the whole demo to its initial state: the default image, no trace,
+  // default settings, default view.
+  const resetAll = () => {
+    setSrc(image);
+    setContours(null);
+    setShowImage(true);
     setZoom(1);
     setPan({ x: 0, y: 0 });
+    setTraceProfile("auto");
+    setTraceStyle("basic");
+    setTraceMode("default");
   };
 
   const loadFile = (f?: File | null) => {
     if (f && f.type.startsWith("image/")) setSrc(URL.createObjectURL(f));
   };
 
-  // Shared button style so every control is the same height (border-box keeps
-  // the border from changing it). Individual buttons override colour/position.
-  const baseBtn: React.CSSProperties = {
-    position: "absolute",
+  // Compact chip for the settings bar (Profile / Output segmented controls).
+  const chip = (active: boolean): React.CSSProperties => ({
     font: "inherit",
     fontSize: "0.78em",
-    height: 30,
+    height: 28,
+    boxSizing: "border-box",
+    padding: "0 0.6em",
+    borderRadius: 5,
+    border: active ? "1px solid #6a6a6a" : "1px solid #2c2c2c",
+    background: active ? "#242424" : "#181818",
+    color: active ? "#f1f1f1" : "#8a8a8a",
+    fontWeight: active ? 600 : 400,
+    cursor: "pointer",
+  });
+  const fieldLabel: React.CSSProperties = { fontSize: "0.66em", color: "#8a8a8a", display: "block" };
+  const cap = (s: string) => s.split("-").map((w) => w[0].toUpperCase() + w.slice(1)).join("-");
+
+  // Full-width sidebar button.
+  const sideBtn: React.CSSProperties = {
+    font: "inherit",
+    fontSize: "0.78em",
+    height: 28,
+    width: "100%",
     boxSizing: "border-box",
     display: "inline-flex",
     alignItems: "center",
     justifyContent: "center",
-    padding: "0 0.85em",
+    padding: "0 0.7em",
     borderRadius: 6,
     border: "1px solid #2a2a2a",
     background: "#1b1b1b",
@@ -353,6 +426,7 @@ export default function TraceDemo({ image = "/demos/img2bez/a.png", glyph = "a",
         overflow: "hidden",
         border: `1px solid ${dropping ? GREEN : "var(--border)"}`,
         background: BG,
+        display: "flex",
       }}
       onDragOver={(e) => {
         e.preventDefault();
@@ -364,75 +438,160 @@ export default function TraceDemo({ image = "/demos/img2bez/a.png", glyph = "a",
         setDropping(false);
         loadFile(e.dataTransfer.files?.[0]);
       }}
+      onPointerEnter={() => (hovering.current = true)}
+      onPointerLeave={() => {
+        hovering.current = false;
+        setSpaceHeld(false);
+      }}
     >
-      <canvas
-        ref={canvasRef}
-        onPointerDown={(e) => {
-          drag.current = { x: e.clientX - pan.x, y: e.clientY - pan.y };
-          (e.target as Element).setPointerCapture(e.pointerId);
-        }}
-        onPointerMove={(e) => {
-          if (drag.current) setPan({ x: e.clientX - drag.current.x, y: e.clientY - drag.current.y });
-        }}
-        onPointerUp={() => (drag.current = null)}
-        onPointerCancel={() => (drag.current = null)}
-        // pan-y lets a vertical swipe scroll the page (so the demo never traps
-        // scrolling on a phone) while a horizontal drag still pans the glyph;
-        // zoom is on the +/− buttons. On desktop the mouse drag pans freely.
-        style={{ display: "block", width: "100%", height: "100%", cursor: "grab", touchAction: "pan-y" }}
-      />
-
-      {/* Trace button, inside the app */}
-      <button
-        onClick={trace}
-        disabled={busy}
+      {/* Sidebar: every control in one left column. */}
+      <div
         style={{
-          ...baseBtn,
-          top: 12,
-          left: 12,
-          fontWeight: 500,
-          border: "1px solid #2f7d4f",
-          background: busy ? "#1b3b29" : "#18bf73",
-          color: busy ? "#9fd9bb" : "#062b18",
-          cursor: busy ? "default" : "pointer",
+          width: 186,
+          flex: "none",
+          display: "flex",
+          flexDirection: "column",
+          gap: 8,
+          padding: 12,
+          boxSizing: "border-box",
+          borderRight: "1px solid var(--border)",
+          background: "#141414",
+          overflowX: "hidden",
+          overflowY: "auto",
         }}
       >
-        {busy ? "Tracing…" : "Trace"}
-      </button>
-
-      {/* Toggle the background template, once there is a trace to compare against */}
-      {contours && (
-        <button onClick={() => setShowImage((v) => !v)} style={{ ...baseBtn, top: 12, right: 12 }}>
-          {showImage ? "hide image" : "show image"}
+        <button
+          onClick={trace}
+          disabled={busy}
+          style={{
+            ...sideBtn,
+            fontWeight: 600,
+            border: "1px solid #2f7d4f",
+            background: busy ? "#1b3b29" : "#18bf73",
+            color: busy ? "#9fd9bb" : "#062b18",
+            cursor: busy ? "default" : "pointer",
+          }}
+        >
+          {busy ? "Tracing…" : "Trace"}
         </button>
-      )}
 
-      {/* Zoom controls, inside the app */}
-      {(() => {
-        const sq: React.CSSProperties = { ...baseBtn, position: "static", width: 30, padding: 0, fontSize: "1em" };
-        return (
-          <div style={{ position: "absolute", bottom: 12, left: 12, display: "flex", gap: 6 }}>
-            <button style={sq} onClick={() => zoomBy(1.25)} aria-label="zoom in">+</button>
-            <button style={sq} onClick={() => zoomBy(0.8)} aria-label="zoom out">−</button>
-            <button style={{ ...baseBtn, position: "static" }} onClick={resetView}>reset</button>
+        {/* Settings: same axes as Runebender, Style last. */}
+        <div
+          style={{
+            display: "flex",
+            flexDirection: "column",
+            gap: 8,
+            padding: 10,
+            borderRadius: 8,
+            border: "1px solid #2a2a2a",
+            background: "#1b1b1b",
+          }}
+        >
+          <div>
+            <span style={fieldLabel}>Input Profile</span>
+            <div style={{ display: "flex", flexDirection: "column", gap: 4, marginTop: 4 }}>
+              {(["auto", "photo", "clean"] as const).map((p) => (
+                <button key={p} style={{ ...chip(traceProfile === p), width: "100%" }} onClick={() => setTraceProfile(p)}>
+                  {cap(p)}
+                </button>
+              ))}
+            </div>
           </div>
-        );
-      })()}
+          <div>
+            <span style={fieldLabel}>Vector Output</span>
+            <div style={{ display: "flex", flexDirection: "column", gap: 4, marginTop: 4 }}>
+              {(["default", "smooth", "line"] as const).map((m) => (
+                <button key={m} style={{ ...chip(traceMode === m), width: "100%" }} onClick={() => setTraceMode(m)}>
+                  {m === "default" ? "Normal" : cap(m)}
+                </button>
+              ))}
+            </div>
+          </div>
+          <div>
+            <span style={fieldLabel}>Glyph Style</span>
+            <select
+              value={traceStyle}
+              onChange={(e) => setTraceStyle(e.target.value)}
+              style={{ ...chip(false), width: "100%", marginTop: 4, padding: "0 0.5em", cursor: "pointer" }}
+            >
+              {["basic", "grotesk", "old-style", "geometric", "brush", "nib", "qalam"].map((s) => (
+                <option key={s} value={s} style={{ background: "#1b1b1b", color: "#cfcfcf" }}>
+                  {cap(s)}
+                </option>
+              ))}
+            </select>
+          </div>
+        </div>
 
-      {/* Replace-image affordance */}
-      <input
-        ref={fileRef}
-        type="file"
-        accept="image/*"
-        style={{ display: "none" }}
-        onChange={(e) => loadFile(e.target.files?.[0])}
-      />
-      <button
-        onClick={() => fileRef.current?.click()}
-        style={{ ...baseBtn, bottom: 12, right: 12, color: "#9a9a9a" }}
-      >
-        Pick image
-      </button>
+        {contours && (
+          <button onClick={() => setShowImage((v) => !v)} style={sideBtn}>
+            {showImage ? "Hide image" : "Show image"}
+          </button>
+        )}
+
+        {contours && (
+          <button
+            onClick={() => setShowStructure((v) => !v)}
+            style={sideBtn}
+            title="Toggle points/handles vs filled preview (hold space to peek)"
+          >
+            {showStructure ? "Hide structure" : "Show structure"}
+          </button>
+        )}
+
+        <button onClick={() => fileRef.current?.click()} style={{ ...sideBtn, color: "#9a9a9a" }}>
+          Pick image
+        </button>
+
+        <div style={{ display: "flex", gap: 6 }}>
+          <button
+            style={{ ...sideBtn, flex: 1, width: "auto", padding: 0, fontSize: "1em" }}
+            onClick={() => zoomBy(1.25)}
+            aria-label="zoom in"
+          >
+            +
+          </button>
+          <button
+            style={{ ...sideBtn, flex: 1, width: "auto", padding: 0, fontSize: "1em" }}
+            onClick={() => zoomBy(0.8)}
+            aria-label="zoom out"
+          >
+            −
+          </button>
+        </div>
+
+        {/* Reset (whole app) sits on its own line, pinned to the bottom. */}
+        <button style={{ ...sideBtn, marginTop: "auto" }} onClick={resetAll}>
+          Reset
+        </button>
+
+        <input
+          ref={fileRef}
+          type="file"
+          accept="image/*"
+          style={{ display: "none" }}
+          onChange={(e) => loadFile(e.target.files?.[0])}
+        />
+      </div>
+
+      {/* Canvas area fills the rest. */}
+      <div style={{ position: "relative", flex: 1, minWidth: 0 }}>
+        <canvas
+          ref={canvasRef}
+          onPointerDown={(e) => {
+            drag.current = { x: e.clientX - pan.x, y: e.clientY - pan.y };
+            (e.target as Element).setPointerCapture(e.pointerId);
+          }}
+          onPointerMove={(e) => {
+            if (drag.current) setPan({ x: e.clientX - drag.current.x, y: e.clientY - drag.current.y });
+          }}
+          onPointerUp={() => (drag.current = null)}
+          onPointerCancel={() => (drag.current = null)}
+          // pan-y lets a vertical swipe scroll the page (so the demo never traps
+          // scrolling on a phone) while a horizontal drag still pans the glyph.
+          style={{ display: "block", width: "100%", height: "100%", cursor: "grab", touchAction: "pan-y" }}
+        />
+      </div>
     </div>
   );
 }

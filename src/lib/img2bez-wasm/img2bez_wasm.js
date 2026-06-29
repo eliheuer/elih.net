@@ -5,6 +5,39 @@ export function start() {
 }
 
 /**
+ * Trace, then place deterministically from explicit placement intent, and
+ * return `{ "glyph": <Glyph>, "report": <PlacementReport> }` as JSON. This is
+ * the headless path for generated/padded rasters: with `fitSource: "ink"` the
+ * ink box is fitted to `[fitYMin, fitYMax]` regardless of image margins.
+ * Mirrors the CLI `--fit-source ink` exactly (same library call).
+ * @param {Uint8Array} image_bytes
+ * @param {string} config_json
+ * @returns {string}
+ */
+export function tracePlaceToJson(image_bytes, config_json) {
+    let deferred4_0;
+    let deferred4_1;
+    try {
+        const ptr0 = passArray8ToWasm0(image_bytes, wasm.__wbindgen_malloc);
+        const len0 = WASM_VECTOR_LEN;
+        const ptr1 = passStringToWasm0(config_json, wasm.__wbindgen_malloc, wasm.__wbindgen_realloc);
+        const len1 = WASM_VECTOR_LEN;
+        const ret = wasm.tracePlaceToJson(ptr0, len0, ptr1, len1);
+        var ptr3 = ret[0];
+        var len3 = ret[1];
+        if (ret[3]) {
+            ptr3 = 0; len3 = 0;
+            throw takeFromExternrefTable0(ret[2]);
+        }
+        deferred4_0 = ptr3;
+        deferred4_1 = len3;
+        return getStringFromWasm0(ptr3, len3);
+    } finally {
+        wasm.__wbindgen_free(deferred4_0, deferred4_1, 1);
+    }
+}
+
+/**
  * Trace PNG/JPEG/BMP image bytes to UFO GLIF XML. `config_json` is a JSON
  * object (see `Config`); pass `"{}"` for all defaults.
  * @param {Uint8Array} image_bytes
@@ -20,6 +53,67 @@ export function traceToGlif(image_bytes, config_json) {
         const ptr1 = passStringToWasm0(config_json, wasm.__wbindgen_malloc, wasm.__wbindgen_realloc);
         const len1 = WASM_VECTOR_LEN;
         const ret = wasm.traceToGlif(ptr0, len0, ptr1, len1);
+        var ptr3 = ret[0];
+        var len3 = ret[1];
+        if (ret[3]) {
+            ptr3 = 0; len3 = 0;
+            throw takeFromExternrefTable0(ret[2]);
+        }
+        deferred4_0 = ptr3;
+        deferred4_1 = len3;
+        return getStringFromWasm0(ptr3, len3);
+    } finally {
+        wasm.__wbindgen_free(deferred4_0, deferred4_1, 1);
+    }
+}
+
+/**
+ * Trace image bytes to a UFO-faithful JSON glyph: `{ name, unicodes, advance,
+ * unitsPerEm, outline: { contours: [{ points: [{ x, y, type?, smooth? }] }] } }`.
+ * The structured form web editors and agents consume directly (no XML parsing).
+ * @param {Uint8Array} image_bytes
+ * @param {string} config_json
+ * @returns {string}
+ */
+export function traceToJson(image_bytes, config_json) {
+    let deferred4_0;
+    let deferred4_1;
+    try {
+        const ptr0 = passArray8ToWasm0(image_bytes, wasm.__wbindgen_malloc);
+        const len0 = WASM_VECTOR_LEN;
+        const ptr1 = passStringToWasm0(config_json, wasm.__wbindgen_malloc, wasm.__wbindgen_realloc);
+        const len1 = WASM_VECTOR_LEN;
+        const ret = wasm.traceToJson(ptr0, len0, ptr1, len1);
+        var ptr3 = ret[0];
+        var len3 = ret[1];
+        if (ret[3]) {
+            ptr3 = 0; len3 = 0;
+            throw takeFromExternrefTable0(ret[2]);
+        }
+        deferred4_0 = ptr3;
+        deferred4_1 = len3;
+        return getStringFromWasm0(ptr3, len3);
+    } finally {
+        wasm.__wbindgen_free(deferred4_0, deferred4_1, 1);
+    }
+}
+
+/**
+ * Trace image bytes to an SVG `<path>` `d` string (y-up; flip for a y-down
+ * SVG viewport).
+ * @param {Uint8Array} image_bytes
+ * @param {string} config_json
+ * @returns {string}
+ */
+export function traceToSvg(image_bytes, config_json) {
+    let deferred4_0;
+    let deferred4_1;
+    try {
+        const ptr0 = passArray8ToWasm0(image_bytes, wasm.__wbindgen_malloc);
+        const len0 = WASM_VECTOR_LEN;
+        const ptr1 = passStringToWasm0(config_json, wasm.__wbindgen_malloc, wasm.__wbindgen_realloc);
+        const len1 = WASM_VECTOR_LEN;
+        const ret = wasm.traceToSvg(ptr0, len0, ptr1, len1);
         var ptr3 = ret[0];
         var len3 = ret[1];
         if (ret[3]) {
