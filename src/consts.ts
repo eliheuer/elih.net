@@ -61,7 +61,7 @@ export const SOCIAL_LINKS: SocialLink[] = [
     label: 'TikTok',
   },
   {
-    href: 'mailto:elih@protonmail.com',
+    href: 'mailto:eli@elih.net',
     label: 'Email',
   },
   {
