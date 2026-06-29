@@ -233,16 +233,16 @@ For those, img2bez has an explicit reconcile pass. Given a set of independently 
 
 The pass always emits compatible structure, but it also reports its confidence. When the point counts already match, the correspondence is exact. When it has to insert points, it is guessing correspondence by position, so it flags those contours low-confidence. That flag is the point for an unsupervised pipeline: an agent can trust the clean cases and route the flagged ones back for review or regeneration, instead of silently shipping a master that interpolates into a mess at the in-between weights.
 
-Headlessly it is one command, no editor in the loop:
+Headlessly it is one command per glyph, no editor in the loop. It reads the masters and their metrics from the font's designspace, so you hand it a folder with one image per master — each file named for its master — and the target band in the font's own terms:
 
 ```bash
-img2bez --name germandbls --unicode 00DF \
-  --master VirtuaGrotesk-Regular.ufo:regular.png \
-  --master VirtuaGrotesk-Bold.ufo:bold.png \
-  --fit-source ink --fit-y -256:768
+img2bez masters VirtuaGrotesk.designspace \
+  --glyph germandbls --unicode 00DF \
+  --images germandbls/ \
+  --fit descender:cap
 ```
 
-It traces both images, reconciles them into one shared point structure, and writes the glyph into each master UFO with that weight's own advance width — interpolation-compatible, ready to compile.
+It matches each master to its image (`Regular.png`, `Bold.png`, … — by the master's name, so the same flag works whether a font has two masters or twenty), fits each into the `descender:cap` band the font's metrics define, reconciles them into one shared point structure, and writes the glyph into every master UFO with that weight's own advance width — interpolation-compatible, ready to compile. Pass `--format json` and it returns the outlines and the compatibility report instead of writing, for a pipeline that wants to place them itself; and a sibling `new-font` command scaffolds the designspace and master sources from scratch, so an agent can take a font from nothing to interpolating masters without opening an editor.
 
 ### 8. An API for Other People's Tools
 
