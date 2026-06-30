@@ -102,6 +102,9 @@ export default function TraceDemo({ image = "/demos/img2bez/a.png", glyph = "a",
   const [spaceHeld, setSpaceHeld] = useState(false);
   const hovering = useRef(false);
   const [dropping, setDropping] = useState(false);
+  // Narrow (phone) layout: stack the controls under the canvas instead of a
+  // fixed side column, and lay the settings out as horizontal segments.
+  const [narrow, setNarrow] = useState(false);
   // Trace settings, mirroring the Runebender image-trace menu.
   const [traceProfile, setTraceProfile] = useState<"auto" | "photo" | "clean">("auto");
   const [traceStyle, setTraceStyle] = useState("basic");
@@ -359,6 +362,16 @@ export default function TraceDemo({ image = "/demos/img2bez/a.png", glyph = "a",
     };
   }, []);
 
+  // Track a phone-width viewport so the layout can stack.
+  useEffect(() => {
+    if (typeof window === "undefined" || !window.matchMedia) return;
+    const mq = window.matchMedia("(max-width: 640px)");
+    const update = () => setNarrow(mq.matches);
+    update();
+    mq.addEventListener("change", update);
+    return () => mq.removeEventListener("change", update);
+  }, []);
+
   const zoomBy = (f: number) => setZoom((z) => Math.min(8, Math.max(0.4, z * f)));
   // Reset the whole demo to its initial state: the default image, no trace,
   // default settings, default view.
@@ -418,7 +431,9 @@ export default function TraceDemo({ image = "/demos/img2bez/a.png", glyph = "a",
       style={{
         position: "relative",
         width: "100%",
-        aspectRatio: "4 / 3",
+        // Phones stack (canvas + controls, auto height); wide screens keep the
+        // fixed 4:3 editor rectangle.
+        ...(narrow ? {} : { aspectRatio: "4 / 3" }),
         margin: "1.5rem 0",
         // Match the code snippets' border exactly (Expressive Code: 1px solid
         // var(--border), radius calc(--ec-brdRad + --ec-brdWd)).
@@ -427,6 +442,7 @@ export default function TraceDemo({ image = "/demos/img2bez/a.png", glyph = "a",
         border: `1px solid ${dropping ? GREEN : "var(--border)"}`,
         background: BG,
         display: "flex",
+        flexDirection: narrow ? "column" : "row",
       }}
       onDragOver={(e) => {
         e.preventDefault();
@@ -447,14 +463,15 @@ export default function TraceDemo({ image = "/demos/img2bez/a.png", glyph = "a",
       {/* Sidebar: every control in one left column. */}
       <div
         style={{
-          width: 186,
+          width: narrow ? "100%" : 186,
           flex: "none",
           display: "flex",
           flexDirection: "column",
           gap: 8,
           padding: 12,
           boxSizing: "border-box",
-          borderRight: "1px solid var(--border)",
+          borderRight: narrow ? "none" : "1px solid var(--border)",
+          borderTop: narrow ? "1px solid var(--border)" : "none",
           background: "#141414",
           overflowX: "hidden",
           overflowY: "auto",
@@ -489,9 +506,9 @@ export default function TraceDemo({ image = "/demos/img2bez/a.png", glyph = "a",
         >
           <div>
             <span style={fieldLabel}>Input Profile</span>
-            <div style={{ display: "flex", flexDirection: "column", gap: 4, marginTop: 4 }}>
+            <div style={{ display: "flex", flexDirection: narrow ? "row" : "column", gap: 4, marginTop: 4 }}>
               {(["auto", "photo", "clean"] as const).map((p) => (
-                <button key={p} style={{ ...chip(traceProfile === p), width: "100%" }} onClick={() => setTraceProfile(p)}>
+                <button key={p} style={{ ...chip(traceProfile === p), ...(narrow ? { flex: 1, minWidth: 0 } : { width: "100%" }) }} onClick={() => setTraceProfile(p)}>
                   {cap(p)}
                 </button>
               ))}
@@ -499,9 +516,9 @@ export default function TraceDemo({ image = "/demos/img2bez/a.png", glyph = "a",
           </div>
           <div>
             <span style={fieldLabel}>Vector Output</span>
-            <div style={{ display: "flex", flexDirection: "column", gap: 4, marginTop: 4 }}>
+            <div style={{ display: "flex", flexDirection: narrow ? "row" : "column", gap: 4, marginTop: 4 }}>
               {(["default", "smooth", "line"] as const).map((m) => (
-                <button key={m} style={{ ...chip(traceMode === m), width: "100%" }} onClick={() => setTraceMode(m)}>
+                <button key={m} style={{ ...chip(traceMode === m), ...(narrow ? { flex: 1, minWidth: 0 } : { width: "100%" }) }} onClick={() => setTraceMode(m)}>
                   {m === "default" ? "Normal" : cap(m)}
                 </button>
               ))}
@@ -561,7 +578,7 @@ export default function TraceDemo({ image = "/demos/img2bez/a.png", glyph = "a",
         </div>
 
         {/* Reset (whole app) sits on its own line, pinned to the bottom. */}
-        <button style={{ ...sideBtn, marginTop: "auto" }} onClick={resetAll}>
+        <button style={{ ...sideBtn, marginTop: narrow ? 0 : "auto" }} onClick={resetAll}>
           Reset
         </button>
 
@@ -574,8 +591,16 @@ export default function TraceDemo({ image = "/demos/img2bez/a.png", glyph = "a",
         />
       </div>
 
-      {/* Canvas area fills the rest. */}
-      <div style={{ position: "relative", flex: 1, minWidth: 0 }}>
+      {/* Canvas area fills the rest (sits on top when stacked on a phone). */}
+      <div
+        style={{
+          position: "relative",
+          minWidth: 0,
+          ...(narrow
+            ? { width: "100%", height: "min(82vw, 360px)", order: -1 }
+            : { flex: 1 }),
+        }}
+      >
         <canvas
           ref={canvasRef}
           onPointerDown={(e) => {
