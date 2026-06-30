@@ -381,6 +381,20 @@ This keeps the same shape as everything else in the tool. The model decides whic
 
 The data comes for free. Every time a designer cleans up a trace, that is a new example, and the tool gets a little better at the kind of letters that designer works on. The hard part a fixed rule cannot reach is exactly what a few dozen hand-cleaned examples can teach.
 
-### 14. Early Days, and an Invitation
+### 14. The Data Engine
+
+Every learned part of the tool, the selector that picks settings, the judge that scores a trace, the classifier that decides which points to keep, is only as good as the examples it learns from. Early on I assumed those examples could be synthetic: take a clean reference glyph, degrade it with blur and noise and low contrast, and trace the result. It did not work. The degradations a script can apply are smooth, and a real scan of printed type is not. Its edge carries ink texture and paper grain, and that texture is exactly what makes the hard cases hard. A synthetic corpus taught the model to handle problems it would never meet and to miss the one it always would. The bottleneck was never the model. It was the data.
+
+So the tool collects real data as a side effect of being used, in three streams that feed each other.
+
+The first is a trace log. Every trace can append one line recording what it saw and what it did: the cheap image measurements (edge sharpness, noise, how anti-aliased the edges are, the glyph's size in pixels), the settings it ran with, and the resulting point counts. Across a real tracing session this builds a record of which kinds of input got which treatment, the raw material for learning the selector. It stays opt-in and off by default; the aim is to learn from real work, not to record everything.
+
+The second is hand-cleaned targets. When a designer traces an image and cleans up the outline, that cleaned version is a labeled example, as the previous section described. These are the gold data: a human's judgment of what the trace should have been, on a specific real image. A few dozen, spread across letters and scan qualities, is enough to start training the keep classifier, and they are the only source for the judgment a fixed rule cannot encode.
+
+The third is an eval loop that measures progress against those targets. Given a target, the harness scores any trace against it: how close the point count is, how far each point sits from where the designer put it, how well the two filled shapes overlap. That turns "is this better?" from an argument into a number, and every change to the tracer or the cleanup is scored against the whole set, so a tweak that helps one letter and quietly breaks another is caught instead of shipped. It is the same loop that drove the development above; pointing it at human targets instead of a reference font only changes what "correct" means.
+
+Together these are a flywheel. Using the tool produces traces and cleanups, those become data, the data improves the models, and better models mean less cleanup, which makes the tool more useful, which brings more use. None of it changes the shape of the system. The models that come out the far end are still tiny, still deterministic, and still only decide. The data engine is just how they learn what a designer would do, from designers doing it.
+
+### 15. Early Days, and an Invitation
 
 img2bez is early, alpha-stage software. It still over-segments low-resolution sources and is tuned against a single reference font, so how much of what it has learned generalizes is unproven. Its scope is also deliberately narrow: it traces one glyph from a single luma channel, with no color, no composite glyphs (accented letters assembled from component references), and no hinting. I plan to keep improving it: I'm building a startup in AI type design, and this Rust library is a core part of its data-engineering pipeline. If you work on font tooling, curve fitting, or tracing, I'd welcome your feedback. The repo is [github.com/eliheuer/img2bez](https://github.com/eliheuer/img2bez), issues and PRs are welcome, and I'm on the [Linebender Zulip](https://xi.zulipchat.com); this post is [a file on GitHub](https://github.com/eliheuer/elih.net/blob/main/src/content/blog/img2bez/index.mdx) too, so suggestions can come as a PR.
