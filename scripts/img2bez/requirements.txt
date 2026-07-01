@@ -1,0 +1,10 @@
+# Python deps for the img2bez post's figures (drawbot-skia). Declared per-post
+# so the site is not globally "a Python project" — a future post can use a
+# different toolchain (e.g. the designbot Rust renderer) with its own manifest.
+#
+# Install into the repo-root .venv:
+#   python3 -m venv .venv && .venv/bin/pip install -r scripts/img2bez/requirements.txt
+# Also needs `ffmpeg` on PATH (frames -> mp4) and the `img2bez` CLI (re-tracing).
+
+drawbot-skia @ git+https://github.com/eliheuer/drawbot-skia
+Pillow
