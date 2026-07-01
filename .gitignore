@@ -13,3 +13,6 @@ teaser.pptx
 ~$teaser.pptx
 # Python venv for asset scripts (scripts/make-og-card.py)
 .venv/
+
+# Figure frame scratch (drawbot-skia)
+scripts/**/build/
