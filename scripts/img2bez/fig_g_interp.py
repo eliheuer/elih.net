@@ -33,7 +33,6 @@ OUT = REPO / "public" / "demos" / "img2bez" / "g-interp.mp4"
 SIZE = 640
 N = 72          # frames; 3s loop at 24fps
 FPS = 24
-COLOR = False   # False = mono (light/gray); True = green/orange/purple points
 
 
 def main():
@@ -48,12 +47,10 @@ def main():
     for i in range(N):
         t = lib.ease_pingpong(i, N)
         contours = lib.interp_contours(reg, bold, t)
-        lib.render_frame(contours, FRAMES / f"f{i:03d}.png", X, Y,
-                         size=SIZE, color=COLOR)
+        lib.render_frame(contours, FRAMES / f"f{i:03d}.png", X, Y, size=SIZE)
 
     lib.frames_to_mp4(FRAMES, OUT, fps=FPS)
-    print(f"wrote {OUT.relative_to(REPO)} ({OUT.stat().st_size // 1024} KB, "
-          f"{N} frames, color={COLOR})")
+    print(f"wrote {OUT.relative_to(REPO)} ({OUT.stat().st_size // 1024} KB, {N} frames)")
 
 
 if __name__ == "__main__":
