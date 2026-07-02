@@ -17,13 +17,14 @@ from pathlib import Path
 
 from drawbot_skia.drawing import Drawing
 
-# ── palette (matches scripts/og/img2bez/card.py, the share card) ──────────
+# ── palette (Runebender-web point language) ───────────────────────────────
 BG = (0.047, 0.047, 0.047)
 OUTLINE = (0.90, 0.90, 0.90)
-HANDLE = (0.60, 0.60, 0.60)
-GREEN = (0.09, 0.72, 0.44)   # smooth on-curve  (#18b86f)
-ORANGE = (1.00, 0.60, 0.06)  # corner on-curve  (#ff980f)
-PURPLE = (0.55, 0.42, 1.00)  # off-curve handle (#8c6cff)
+HANDLE = (0.42, 0.42, 0.46)          # handle lines (muted gray)
+GREEN = (0.09, 0.72, 0.44)           # smooth on-curve  (#18b86f)
+ORANGE = (1.00, 0.60, 0.06)          # corner on-curve  (#ff980f)
+PURPLE = (0.55, 0.42, 1.00)          # off-curve        (#8c6cff)
+POINT_INNER = (0.094, 0.094, 0.094)  # dark point fill  (#181818)
 
 
 # ── outline model (img2bez `masters --format json` output) ────────────────
@@ -107,13 +108,14 @@ def draw_contour(db, pts, X, Y):
     db.closePath()
 
 
-def draw_points(db, pts, X, Y, color=False):
-    """Handles + on/off-curve markers. color=True uses the Runebender point
-    language (green smooth, orange corner, purple off-curve); color=False is
-    the mono look (light squares, gray circles)."""
+def draw_points(db, pts, X, Y, r=4.2, sw=3.6):
+    """Runebender-web point language: smooth on-curve = green circle, corner =
+    orange square, off-curve = purple circle; each a dark-filled shape with a
+    colored ring, joined by gray handle lines. Identical for any outline, so the
+    only thing that differs between traces is where the points sit."""
     n = len(pts)
     # handle lines
-    db.stroke(*HANDLE); db.strokeWidth(1.0); db.fill(None)
+    db.stroke(*HANDLE); db.strokeWidth(1.2); db.fill(None)
     for i, p in enumerate(pts):
         if not p.get("type"):
             for j in (i - 1, i + 1):
@@ -123,25 +125,19 @@ def draw_points(db, pts, X, Y, color=False):
                     db.moveTo((X(p["x"]), Y(p["y"])))
                     db.lineTo((X(q["x"]), Y(q["y"])))
                     db.drawPath()
-    # off-curve: hollow circles
-    r = 3.2
-    db.stroke(*(PURPLE if color else HANDLE)); db.strokeWidth(1.0); db.fill(None)
+    # points: dark fill + colored ring; circle (smooth/off-curve) or square (corner)
     for p in pts:
+        cx, cy = X(p["x"]), Y(p["y"])
+        db.fill(*POINT_INNER); db.strokeWidth(sw)
         if not p.get("type"):
-            db.oval(X(p["x"]) - r, Y(p["y"]) - r, 2 * r, 2 * r)
-    # on-curve: filled squares
-    s = 4.2
-    db.stroke(None)
-    for p in pts:
-        if p.get("type"):
-            if color:
-                db.fill(*(GREEN if p.get("smooth") else ORANGE))
-            else:
-                db.fill(*OUTLINE)
-            db.rect(X(p["x"]) - s, Y(p["y"]) - s, 2 * s, 2 * s)
+            db.stroke(*PURPLE); db.oval(cx - r, cy - r, 2 * r, 2 * r)
+        elif p.get("smooth"):
+            db.stroke(*GREEN); db.oval(cx - r, cy - r, 2 * r, 2 * r)
+        else:
+            db.stroke(*ORANGE); db.rect(cx - r, cy - r, 2 * r, 2 * r)
 
 
-def render_frame(contours, path, X, Y, size=640, color=False, fill_alpha=0.10,
+def render_frame(contours, path, X, Y, size=640, fill_alpha=0.10,
                  stroke_w=2.0):
     """Render one frame. X, Y is a fixed transform (from frame_transform) so a
     whole animation shares one framing and the glyph never drifts."""
@@ -160,7 +156,7 @@ def render_frame(contours, path, X, Y, size=640, color=False, fill_alpha=0.10,
     db.drawPath()
     # markers
     for pts in contours:
-        draw_points(db, pts, X, Y, color=color)
+        draw_points(db, pts, X, Y)
     db.saveImage(str(path))
 
 
