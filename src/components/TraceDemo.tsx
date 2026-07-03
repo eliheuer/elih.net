@@ -446,39 +446,80 @@ export default function TraceDemo({ image = "/demos/img2bez/a.png", glyph = "a",
   };
 
   // Compact chip for the settings bar (Profile / Output segmented controls).
-  const chip = (active: boolean): React.CSSProperties => ({
-    font: "inherit",
-    fontSize: "0.78em",
-    height: 28,
+  // One control system: fixed 12px UI type (never inherits the post's
+  // responsive scale), 30px control height, 6px radius, one border color.
+  const seg = (active: boolean): React.CSSProperties => ({
+    flex: 1,
+    minWidth: 0,
+    height: 26,
     boxSizing: "border-box",
-    padding: "0 0.6em",
-    borderRadius: 5,
-    border: active ? "1px solid #6a6a6a" : "1px solid #2c2c2c",
-    background: active ? "#242424" : "#181818",
-    color: active ? "#f1f1f1" : "#8a8a8a",
-    fontWeight: active ? 600 : 400,
+    display: "inline-flex",
+    alignItems: "center",
+    justifyContent: "center",
+    padding: 0,
+    borderRadius: 4,
+    border: "none",
+    background: active ? "#2e2e2e" : "transparent",
+    color: active ? "#f0f0f0" : "#8f8f8f",
+    fontFamily: "inherit",
+    fontSize: 12,
+    fontWeight: 500,
     cursor: "pointer",
+    whiteSpace: "nowrap",
+    overflow: "hidden",
+    textOverflow: "ellipsis",
   });
-  const fieldLabel: React.CSSProperties = { fontSize: "0.66em", color: "#8a8a8a", display: "block" };
+  const segWrap: React.CSSProperties = {
+    display: "flex",
+    gap: 2,
+    padding: 2,
+    borderRadius: 6,
+    border: "1px solid #2a2a2a",
+    background: "#101010",
+  };
+  const fieldLabel: React.CSSProperties = {
+    fontSize: 10,
+    fontWeight: 600,
+    letterSpacing: "0.08em",
+    textTransform: "uppercase",
+    color: "#767676",
+    display: "block",
+    marginBottom: 6,
+  };
   const cap = (s: string) => s.split("-").map((w) => w[0].toUpperCase() + w.slice(1)).join("-");
 
   // Full-width sidebar button.
   const sideBtn: React.CSSProperties = {
-    font: "inherit",
-    fontSize: "0.78em",
-    height: 28,
+    fontFamily: "inherit",
+    fontSize: 12,
+    fontWeight: 500,
+    height: 30,
     width: "100%",
     boxSizing: "border-box",
     display: "inline-flex",
     alignItems: "center",
     justifyContent: "center",
-    padding: "0 0.7em",
+    padding: "0 10px",
     borderRadius: 6,
     border: "1px solid #2a2a2a",
     background: "#1b1b1b",
-    color: "#cfcfcf",
+    color: "#c9c9c9",
     cursor: "pointer",
     lineHeight: 1,
+    whiteSpace: "nowrap",
+  };
+  const cornerBtn: React.CSSProperties = {
+    width: 30,
+    height: 30,
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    borderRadius: 6,
+    border: "1px solid #2a2a2a",
+    background: "#1b1b1bd9",
+    color: "#cfcfcf",
+    cursor: "pointer",
+    padding: 0,
   };
 
   return (
@@ -532,23 +573,7 @@ export default function TraceDemo({ image = "/demos/img2bez/a.png", glyph = "a",
         onClick={() => setFullscreen((f) => !f)}
         title={fullscreen ? "Return to post (Esc)" : "Expand to full window"}
         aria-label={fullscreen ? "Return to post" : "Expand to full window"}
-        style={{
-          position: "absolute",
-          top: 10,
-          right: 10,
-          zIndex: 10,
-          width: 30,
-          height: 30,
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
-          borderRadius: 6,
-          border: "1px solid #2a2a2a",
-          background: "#1b1b1bcc",
-          color: "#cfcfcf",
-          cursor: "pointer",
-          padding: 0,
-        }}
+        style={{ ...cornerBtn, position: "absolute", top: 10, right: 10, zIndex: 10 }}
       >
         {fullscreen ? (
           <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round">
@@ -567,6 +592,26 @@ export default function TraceDemo({ image = "/demos/img2bez/a.png", glyph = "a",
         )}
       </button>
 
+      {/* Zoom, overlaid on the canvas like map controls. */}
+      <div
+        style={{
+          position: "absolute",
+          right: 10,
+          bottom: 10,
+          zIndex: 10,
+          display: "flex",
+          flexDirection: "column",
+          gap: 6,
+        }}
+      >
+        <button style={{ ...cornerBtn, fontSize: 15 }} onClick={() => zoomBy(1.25)} aria-label="zoom in">
+          +
+        </button>
+        <button style={{ ...cornerBtn, fontSize: 15 }} onClick={() => zoomBy(0.8)} aria-label="zoom out">
+          −
+        </button>
+      </div>
+
       {/* Sidebar: every control in one left column. */}
       <div
         style={{
@@ -574,8 +619,10 @@ export default function TraceDemo({ image = "/demos/img2bez/a.png", glyph = "a",
           flex: "none",
           display: "flex",
           flexDirection: "column",
-          gap: 8,
+          gap: 10,
           padding: 12,
+          fontFamily: "var(--font-sans-virtua)",
+          fontSize: 12.5,
           boxSizing: "border-box",
           borderRight: narrow ? "none" : "1px solid var(--border)",
           borderTop: narrow ? "1px solid var(--border)" : "none",
@@ -589,6 +636,8 @@ export default function TraceDemo({ image = "/demos/img2bez/a.png", glyph = "a",
           disabled={busy}
           style={{
             ...sideBtn,
+            height: 34,
+            fontSize: 13,
             fontWeight: 600,
             border: "1px solid #2f7d4f",
             background: busy ? "#1b3b29" : "#18bf73",
@@ -602,7 +651,7 @@ export default function TraceDemo({ image = "/demos/img2bez/a.png", glyph = "a",
         {judge && contours && (
           <div
             style={{
-              fontFamily: "ui-monospace, monospace",
+              fontFamily: "var(--font-mono)",
               fontSize: 11,
               lineHeight: 1.9,
               color: "#c8c8c8",
@@ -668,94 +717,92 @@ export default function TraceDemo({ image = "/demos/img2bez/a.png", glyph = "a",
         )}
 
         {/* Settings: same axes as Runebender, Style last. */}
+        <div>
+          <span style={fieldLabel}>Profile</span>
+          <div style={segWrap}>
+            {(["auto", "photo", "clean"] as const).map((p) => (
+              <button key={p} style={seg(traceProfile === p)} onClick={() => setTraceProfile(p)}>
+                {cap(p)}
+              </button>
+            ))}
+          </div>
+        </div>
+        <div>
+          <span style={fieldLabel}>Output</span>
+          <div style={segWrap}>
+            {(["default", "smooth", "line"] as const).map((m) => (
+              <button key={m} style={seg(traceMode === m)} onClick={() => setTraceMode(m)}>
+                {m === "default" ? "Normal" : cap(m)}
+              </button>
+            ))}
+          </div>
+        </div>
+        <div>
+          <span style={fieldLabel}>Style</span>
+          <select
+            value={traceStyle}
+            onChange={(e) => setTraceStyle(e.target.value)}
+            style={{
+              ...sideBtn,
+              appearance: "none",
+              WebkitAppearance: "none",
+              background:
+                "#1b1b1b url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='8' height='5'%3E%3Cpath d='M0 0l4 5 4-5z' fill='%23777'/%3E%3C/svg%3E\") no-repeat right 10px center",
+              textAlign: "left",
+              justifyContent: "flex-start",
+            }}
+          >
+            {["basic", "grotesk", "old-style", "geometric", "brush", "nib", "qalam"].map((s) => (
+              <option key={s} value={s} style={{ background: "#1b1b1b", color: "#cfcfcf" }}>
+                {cap(s)}
+              </option>
+            ))}
+          </select>
+        </div>
+
+        {contours && (
+          <div>
+            <span style={fieldLabel}>View</span>
+            <div style={segWrap}>
+              <button
+                style={seg(showImage)}
+                onClick={() => setShowImage((v) => !v)}
+                title="Show the source image under the trace"
+              >
+                Image
+              </button>
+              <button
+                style={seg(showStructure)}
+                onClick={() => setShowStructure((v) => !v)}
+                title="Points and handles vs filled preview (hold space to peek)"
+              >
+                Points
+              </button>
+            </div>
+          </div>
+        )}
+
+        {/* Open + Reset, pinned to the bottom as quiet secondary actions. */}
         <div
           style={{
             display: "flex",
-            flexDirection: "column",
-            gap: 8,
-            padding: 10,
-            borderRadius: 8,
-            border: "1px solid #2a2a2a",
-            background: "#1b1b1b",
+            gap: 6,
+            marginTop: narrow ? 0 : "auto",
           }}
         >
-          <div>
-            <span style={fieldLabel}>Input Profile</span>
-            <div style={{ display: "flex", flexDirection: narrow ? "row" : "column", gap: 4, marginTop: 4 }}>
-              {(["auto", "photo", "clean"] as const).map((p) => (
-                <button key={p} style={{ ...chip(traceProfile === p), ...(narrow ? { flex: 1, minWidth: 0 } : { width: "100%" }) }} onClick={() => setTraceProfile(p)}>
-                  {cap(p)}
-                </button>
-              ))}
-            </div>
-          </div>
-          <div>
-            <span style={fieldLabel}>Vector Output</span>
-            <div style={{ display: "flex", flexDirection: narrow ? "row" : "column", gap: 4, marginTop: 4 }}>
-              {(["default", "smooth", "line"] as const).map((m) => (
-                <button key={m} style={{ ...chip(traceMode === m), ...(narrow ? { flex: 1, minWidth: 0 } : { width: "100%" }) }} onClick={() => setTraceMode(m)}>
-                  {m === "default" ? "Normal" : cap(m)}
-                </button>
-              ))}
-            </div>
-          </div>
-          <div>
-            <span style={fieldLabel}>Glyph Style</span>
-            <select
-              value={traceStyle}
-              onChange={(e) => setTraceStyle(e.target.value)}
-              style={{ ...chip(false), width: "100%", marginTop: 4, padding: "0 0.5em", cursor: "pointer" }}
-            >
-              {["basic", "grotesk", "old-style", "geometric", "brush", "nib", "qalam"].map((s) => (
-                <option key={s} value={s} style={{ background: "#1b1b1b", color: "#cfcfcf" }}>
-                  {cap(s)}
-                </option>
-              ))}
-            </select>
-          </div>
-        </div>
-
-        {contours && (
-          <button onClick={() => setShowImage((v) => !v)} style={sideBtn}>
-            {showImage ? "Hide image" : "Show image"}
-          </button>
-        )}
-
-        {contours && (
           <button
-            onClick={() => setShowStructure((v) => !v)}
-            style={sideBtn}
-            title="Toggle points/handles vs filled preview (hold space to peek)"
+            onClick={() => fileRef.current?.click()}
+            style={{ ...sideBtn, flex: 1, width: "auto", color: "#9a9a9a" }}
           >
-            {showStructure ? "Hide structure" : "Show structure"}
-          </button>
-        )}
-
-        <button onClick={() => fileRef.current?.click()} style={{ ...sideBtn, color: "#9a9a9a" }}>
-          Pick image
-        </button>
-
-        <div style={{ display: "flex", gap: 6 }}>
-          <button
-            style={{ ...sideBtn, flex: 1, width: "auto", padding: 0, fontSize: "1em" }}
-            onClick={() => zoomBy(1.25)}
-            aria-label="zoom in"
-          >
-            +
+            Open…
           </button>
           <button
-            style={{ ...sideBtn, flex: 1, width: "auto", padding: 0, fontSize: "1em" }}
-            onClick={() => zoomBy(0.8)}
-            aria-label="zoom out"
+            style={{ ...sideBtn, flex: 1, width: "auto", color: "#9a9a9a" }}
+            onClick={resetAll}
           >
-            −
+            Reset
           </button>
         </div>
-
-        {/* Reset (whole app) sits on its own line, pinned to the bottom. */}
-        <button style={{ ...sideBtn, marginTop: narrow ? 0 : "auto" }} onClick={resetAll}>
-          Reset
-        </button>
 
         <input
           ref={fileRef}
