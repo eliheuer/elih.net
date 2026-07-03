@@ -127,6 +127,38 @@ export function traceToSvg(image_bytes, config_json) {
         wasm.__wbindgen_free(deferred4_0, deferred4_1, 1);
     }
 }
+
+/**
+ * Trace image bytes and judge the result against the source: returns
+ * `{ "glyph": <Glyph>, "judge": <Judgement> }` as JSON. The judge is the
+ * reference-free quality score (reproduction IoU + structural regularizers,
+ * same scale as the CLI's `Judge` line) — the number a tuning loop moves.
+ * @param {Uint8Array} image_bytes
+ * @param {string} config_json
+ * @returns {string}
+ */
+export function traceWithJudge(image_bytes, config_json) {
+    let deferred4_0;
+    let deferred4_1;
+    try {
+        const ptr0 = passArray8ToWasm0(image_bytes, wasm.__wbindgen_malloc);
+        const len0 = WASM_VECTOR_LEN;
+        const ptr1 = passStringToWasm0(config_json, wasm.__wbindgen_malloc, wasm.__wbindgen_realloc);
+        const len1 = WASM_VECTOR_LEN;
+        const ret = wasm.traceWithJudge(ptr0, len0, ptr1, len1);
+        var ptr3 = ret[0];
+        var len3 = ret[1];
+        if (ret[3]) {
+            ptr3 = 0; len3 = 0;
+            throw takeFromExternrefTable0(ret[2]);
+        }
+        deferred4_0 = ptr3;
+        deferred4_1 = len3;
+        return getStringFromWasm0(ptr3, len3);
+    } finally {
+        wasm.__wbindgen_free(deferred4_0, deferred4_1, 1);
+    }
+}
 function __wbg_get_imports() {
     const import0 = {
         __proto__: null,

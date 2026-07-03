@@ -31,6 +31,14 @@ export function traceToJson(image_bytes: Uint8Array, config_json: string): strin
  */
 export function traceToSvg(image_bytes: Uint8Array, config_json: string): string;
 
+/**
+ * Trace image bytes and judge the result against the source: returns
+ * `{ "glyph": <Glyph>, "judge": <Judgement> }` as JSON. The judge is the
+ * reference-free quality score (reproduction IoU + structural regularizers,
+ * same scale as the CLI's `Judge` line) — the number a tuning loop moves.
+ */
+export function traceWithJudge(image_bytes: Uint8Array, config_json: string): string;
+
 export type InitInput = RequestInfo | URL | Response | BufferSource | WebAssembly.Module;
 
 export interface InitOutput {
@@ -40,6 +48,7 @@ export interface InitOutput {
     readonly traceToGlif: (a: number, b: number, c: number, d: number) => [number, number, number, number];
     readonly traceToJson: (a: number, b: number, c: number, d: number) => [number, number, number, number];
     readonly traceToSvg: (a: number, b: number, c: number, d: number) => [number, number, number, number];
+    readonly traceWithJudge: (a: number, b: number, c: number, d: number) => [number, number, number, number];
     readonly __wbindgen_free: (a: number, b: number, c: number) => void;
     readonly __wbindgen_malloc: (a: number, b: number) => number;
     readonly __wbindgen_realloc: (a: number, b: number, c: number, d: number) => number;

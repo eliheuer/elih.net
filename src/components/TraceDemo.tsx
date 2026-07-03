@@ -13,7 +13,7 @@
  * the blog column and needs no WebGPU.
  */
 import { useCallback, useEffect, useRef, useState } from "react";
-import init, { traceToGlif } from "../lib/img2bez-wasm/img2bez_wasm.js";
+import init, { traceWithJudge } from "../lib/img2bez-wasm/img2bez_wasm.js";
 import wasmUrl from "../lib/img2bez-wasm/img2bez_wasm_bg.wasm?url";
 
 // Runebender-web point palette
@@ -32,6 +32,33 @@ function ensureWasm() {
 
 type Pt = { x: number; y: number; on: boolean; smooth: boolean };
 type Box = { minX: number; minY: number; maxX: number; maxY: number };
+
+/// The reference-free judge's verdict, as returned by the wasm binding.
+type Judge = {
+  reproIou: number | null;
+  hvFrac: number;
+  microSegs: number;
+  microClean: number;
+  density: number;
+  parsimony: number;
+  structure: number;
+  wild: number;
+};
+
+function jsonToContours(glyph: {
+  outline: { contours: { points: { x: number; y: number; type?: string; smooth?: boolean }[] }[] };
+}): Pt[][] {
+  return glyph.outline.contours
+    .map((c) =>
+      c.points.map((p) => ({
+        x: p.x,
+        y: p.y,
+        on: p.type !== undefined && p.type !== null,
+        smooth: p.smooth === true,
+      })),
+    )
+    .filter((pts) => pts.length > 0);
+}
 
 function parseGlif(glif: string): Pt[][] {
   const doc = new DOMParser().parseFromString(glif, "application/xml");
@@ -92,6 +119,7 @@ export default function TraceDemo({ image = "/demos/img2bez/a.png", glyph = "a",
   const [src, setSrc] = useState(image);
   const [box, setBox] = useState<Box | null>(null);
   const [contours, setContours] = useState<Pt[][] | null>(null);
+  const [judge, setJudge] = useState<Judge | null>(null);
   const [busy, setBusy] = useState(false);
   const [zoom, setZoom] = useState(1);
   const [pan, setPan] = useState({ x: 0, y: 0 });
@@ -135,18 +163,21 @@ export default function TraceDemo({ image = "/demos/img2bez/a.png", glyph = "a",
     try {
       await ensureWasm();
       const bytes = new Uint8Array(await (await fetch(src)).arrayBuffer());
-      const glif = traceToGlif(
-        bytes,
-        JSON.stringify({
-          glyph,
-          unicode,
-          // `auto` maps to wild + img2bez's auto-detection; photo/clean force.
-          profile: traceProfile === "auto" ? "wild" : traceProfile,
-          style: traceStyle,
-          mode: traceMode,
-        }),
+      const out = JSON.parse(
+        traceWithJudge(
+          bytes,
+          JSON.stringify({
+            glyph,
+            unicode,
+            // `auto` maps to wild + img2bez's auto-detection; photo/clean force.
+            profile: traceProfile === "auto" ? "wild" : traceProfile,
+            style: traceStyle,
+            mode: traceMode,
+          }),
+        ),
       );
-      setContours(parseGlif(glif));
+      setContours(jsonToContours(out.glyph));
+      setJudge(out.judge as Judge);
       setShowImage(false); // focus on the result; toggle back with the button
     } catch {
       /* leave the template visible on failure */
@@ -491,6 +522,46 @@ export default function TraceDemo({ image = "/demos/img2bez/a.png", glyph = "a",
         >
           {busy ? "Tracing…" : "Trace"}
         </button>
+
+        {judge && contours && (
+          <div
+            style={{
+              fontFamily: "ui-monospace, monospace",
+              fontSize: 11,
+              lineHeight: 1.7,
+              color: "#c8c8c8",
+              border: "1px solid #2a2a2a",
+              borderRadius: 6,
+              padding: "6px 9px",
+            }}
+          >
+            <div style={{ display: "flex", justifyContent: "space-between" }}>
+              <span>judge</span>
+              <span style={{ color: judge.wild >= 0.85 ? "#18bf73" : judge.wild >= 0.7 ? "#e8b73a" : "#ff5f4a", fontWeight: 700 }}>
+                {judge.wild.toFixed(3)}
+              </span>
+            </div>
+            <div style={{ display: "flex", justifyContent: "space-between", color: "#8a8a8a" }}>
+              <span>iou</span>
+              <span>{judge.reproIou === null ? "–" : judge.reproIou.toFixed(3)}</span>
+            </div>
+            <div style={{ display: "flex", justifyContent: "space-between", color: "#8a8a8a" }}>
+              <span>h/v handles</span>
+              <span>{(judge.hvFrac * 100).toFixed(0)}%</span>
+            </div>
+            <div style={{ display: "flex", justifyContent: "space-between", color: "#8a8a8a" }}>
+              <span>micro segs</span>
+              <span>{judge.microSegs}</span>
+            </div>
+            <div style={{ display: "flex", justifyContent: "space-between", color: "#8a8a8a" }}>
+              <span>points</span>
+              <span>
+                {contours.reduce((n, c) => n + c.filter((p) => p.on).length, 0)} on ·{" "}
+                {contours.reduce((n, c) => n + c.length, 0)} total
+              </span>
+            </div>
+          </div>
+        )}
 
         {/* Settings: same axes as Runebender, Style last. */}
         <div
