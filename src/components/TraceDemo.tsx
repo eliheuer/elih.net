@@ -128,7 +128,7 @@ export default function TraceDemo({ image = "/demos/img2bez/a.png", glyph = "a",
   const [placeReport, setPlaceReport] = useState<{
     scale: number;
     translation: [number, number];
-    image_size: [number, number];
+    imageSize: [number, number];
   } | null>(null);
   const [busy, setBusy] = useState(false);
   const [zoom, setZoom] = useState(1);
@@ -292,8 +292,16 @@ export default function TraceDemo({ image = "/demos/img2bez/a.png", glyph = "a",
     // fit for traces from an older wasm build without the report.
     let FX: (fx: number) => number;
     let FY: (fy: number) => number;
-    if (placeReport && placeReport.scale > 0) {
-      const { scale: ps, translation: [tx, ty], image_size: [, ih] } = placeReport;
+    const reportOk =
+      placeReport &&
+      Number.isFinite(placeReport.scale) &&
+      placeReport.scale > 0 &&
+      Array.isArray(placeReport.translation) &&
+      Array.isArray(placeReport.imageSize);
+    if (reportOk) {
+      const ps = placeReport.scale;
+      const [tx, ty] = placeReport.translation;
+      const ih = placeReport.imageSize[1];
       FX = (fx: number) => IX((fx - tx) / ps);
       FY = (fy: number) => IY(ih - (fy - ty) / ps);
     } else {
