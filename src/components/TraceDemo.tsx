@@ -668,7 +668,7 @@ export default function TraceDemo({ image = "/demos/img2bez/a.png", glyph = "a",
             fontWeight: 600,
             border: "1px solid #2f7d4f",
             background: busy ? "#1b3b29" : "#18bf73",
-            color: busy ? "#9fd9bb" : "#062b18",
+            color: busy ? "#9fd9bb" : "#ffffff",
             cursor: busy ? "default" : "pointer",
           }}
         >
