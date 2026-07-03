@@ -530,44 +530,66 @@ export default function TraceDemo({ image = "/demos/img2bez/a.png", glyph = "a",
             style={{
               fontFamily: "ui-monospace, monospace",
               fontSize: 11,
-              lineHeight: 1.7,
+              lineHeight: 1.9,
               color: "#c8c8c8",
               border: "1px solid #2a2a2a",
               borderRadius: 6,
-              padding: "6px 9px",
+              padding: "7px 10px",
             }}
           >
-            <div style={{ display: "flex", justifyContent: "space-between" }}>
-              <span>judge</span>
-              <span style={{ color: judge.wild >= 0.85 ? "#18bf73" : judge.wild >= 0.7 ? "#e8b73a" : "#ff5f4a", fontWeight: 700 }}>
-                {judge.wild.toFixed(3)}
-              </span>
-            </div>
-            <div style={{ display: "flex", justifyContent: "space-between", color: "#8a8a8a" }}>
-              <span>iou</span>
-              <span>{judge.reproIou === null ? "–" : judge.reproIou.toFixed(3)}</span>
-            </div>
-            <div style={{ display: "flex", justifyContent: "space-between", color: "#8a8a8a" }}>
-              <span>smooth</span>
-              <span style={{ color: judge.kinkedJoins === 0 ? "#8a8a8a" : "#e8b73a" }}>
-                {judge.smooth.toFixed(2)} · {judge.kinkedJoins} kinks
-              </span>
-            </div>
-            <div style={{ display: "flex", justifyContent: "space-between", color: "#8a8a8a" }}>
-              <span>h/v handles</span>
-              <span>{(judge.hvFrac * 100).toFixed(0)}%</span>
-            </div>
-            <div style={{ display: "flex", justifyContent: "space-between", color: "#8a8a8a" }}>
-              <span>micro segs</span>
-              <span>{judge.microSegs}</span>
-            </div>
-            <div style={{ display: "flex", justifyContent: "space-between", color: "#8a8a8a" }}>
-              <span>points</span>
-              <span>
-                {contours.reduce((n, c) => n + c.filter((p) => p.on).length, 0)} on ·{" "}
-                {contours.reduce((n, c) => n + c.length, 0)} total
-              </span>
-            </div>
+            {(() => {
+              const onPts = contours.reduce((n, c) => n + c.filter((p) => p.on).length, 0);
+              const allPts = contours.reduce((n, c) => n + c.length, 0);
+              const row = (
+                label: string,
+                value: string,
+                color?: string,
+                bold?: boolean,
+              ) => (
+                <div
+                  key={label}
+                  style={{
+                    display: "flex",
+                    justifyContent: "space-between",
+                    gap: 10,
+                    whiteSpace: "nowrap",
+                  }}
+                >
+                  <span style={{ color: "#8a8a8a" }}>{label}</span>
+                  <span
+                    style={{
+                      color: color ?? "#c8c8c8",
+                      fontWeight: bold ? 700 : 400,
+                      fontVariantNumeric: "tabular-nums",
+                    }}
+                  >
+                    {value}
+                  </span>
+                </div>
+              );
+              const judgeColor =
+                judge.wild >= 0.85 ? "#18bf73" : judge.wild >= 0.7 ? "#e8b73a" : "#ff5f4a";
+              return (
+                <>
+                  {row("judge", judge.wild.toFixed(3), judgeColor, true)}
+                  <div style={{ borderTop: "1px solid #262626", margin: "3px 0" }} />
+                  {row("iou", judge.reproIou === null ? "\u2013" : judge.reproIou.toFixed(3))}
+                  {row("smooth", judge.smooth.toFixed(2))}
+                  {row(
+                    "kinks",
+                    String(judge.kinkedJoins),
+                    judge.kinkedJoins === 0 ? undefined : "#e8b73a",
+                  )}
+                  {row("h/v handles", `${(judge.hvFrac * 100).toFixed(0)}%`)}
+                  {row(
+                    "micro segs",
+                    String(judge.microSegs),
+                    judge.microSegs === 0 ? undefined : "#e8b73a",
+                  )}
+                  {row("points", `${onPts} / ${allPts}`)}
+                </>
+              );
+            })()}
           </div>
         )}
 
