@@ -38,6 +38,8 @@ type Judge = {
   reproIou: number | null;
   hvFrac: number;
   microSegs: number;
+  kinkedJoins: number;
+  smooth: number;
   microClean: number;
   density: number;
   parsimony: number;
@@ -544,6 +546,12 @@ export default function TraceDemo({ image = "/demos/img2bez/a.png", glyph = "a",
             <div style={{ display: "flex", justifyContent: "space-between", color: "#8a8a8a" }}>
               <span>iou</span>
               <span>{judge.reproIou === null ? "–" : judge.reproIou.toFixed(3)}</span>
+            </div>
+            <div style={{ display: "flex", justifyContent: "space-between", color: "#8a8a8a" }}>
+              <span>smooth</span>
+              <span style={{ color: judge.kinkedJoins === 0 ? "#8a8a8a" : "#e8b73a" }}>
+                {judge.smooth.toFixed(2)} · {judge.kinkedJoins} kinks
+              </span>
             </div>
             <div style={{ display: "flex", justifyContent: "space-between", color: "#8a8a8a" }}>
               <span>h/v handles</span>
