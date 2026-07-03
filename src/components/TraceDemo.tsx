@@ -122,6 +122,14 @@ export default function TraceDemo({ image = "/demos/img2bez/a.png", glyph = "a",
   const [box, setBox] = useState<Box | null>(null);
   const [contours, setContours] = useState<Pt[][] | null>(null);
   const [judge, setJudge] = useState<Judge | null>(null);
+  // Exact glyph-units -> source-pixel affine from the tracer's placement
+  // report; replaces bbox-fit overlay alignment (which stretched axes
+  // independently and was polluted by handle overshoot).
+  const [placeReport, setPlaceReport] = useState<{
+    scale: number;
+    translation: [number, number];
+    image_size: [number, number];
+  } | null>(null);
   const [busy, setBusy] = useState(false);
   const [zoom, setZoom] = useState(1);
   const [pan, setPan] = useState({ x: 0, y: 0 });
@@ -153,6 +161,7 @@ export default function TraceDemo({ image = "/demos/img2bez/a.png", glyph = "a",
       imgRef.current = img;
       setBox(glyphBoxOf(img));
       setContours(null);
+      setPlaceReport(null);
       setShowImage(true);
       setZoom(1);
       setPan({ x: 0, y: 0 });
@@ -182,6 +191,7 @@ export default function TraceDemo({ image = "/demos/img2bez/a.png", glyph = "a",
         ),
       );
       setContours(jsonToContours(out.glyph));
+      setPlaceReport(out.report ?? null);
       setJudge(out.judge as Judge);
       setShowImage(false); // focus on the result; toggle back with the button
     } catch {
@@ -277,8 +287,19 @@ export default function TraceDemo({ image = "/demos/img2bez/a.png", glyph = "a",
         oMinY = Math.min(oMinY, p.y); oMaxY = Math.max(oMaxY, p.y);
       }
     const oW = oMaxX - oMinX || 1, oH = oMaxY - oMinY || 1;
-    const FX = (fx: number) => IX(box.minX + ((fx - oMinX) / oW) * gW);
-    const FY = (fy: number) => IY(box.maxY - ((fy - oMinY) / oH) * gH);
+    // Preferred: exact inverse of the tracer's placement (uniform scale +
+    // translation, y-up glyph space vs y-down image rows). Fallback: bbox
+    // fit for traces from an older wasm build without the report.
+    let FX: (fx: number) => number;
+    let FY: (fy: number) => number;
+    if (placeReport && placeReport.scale > 0) {
+      const { scale: ps, translation: [tx, ty], image_size: [, ih] } = placeReport;
+      FX = (fx: number) => IX((fx - tx) / ps);
+      FY = (fy: number) => IY(ih - (fy - ty) / ps);
+    } else {
+      FX = (fx: number) => IX(box.minX + ((fx - oMinX) / oW) * gW);
+      FY = (fy: number) => IY(box.maxY - ((fy - oMinY) / oH) * gH);
+    }
 
     const path = new Path2D();
     for (const pts of contours) {
@@ -355,7 +376,7 @@ export default function TraceDemo({ image = "/demos/img2bez/a.png", glyph = "a",
         ctx.lineWidth = 1.8;
         ctx.stroke();
       }
-  }, [box, contours, zoom, pan, showImage, showStructure, spaceHeld]);
+  }, [box, contours, zoom, pan, showImage, showStructure, spaceHeld, placeReport]);
 
   useEffect(() => {
     draw();
