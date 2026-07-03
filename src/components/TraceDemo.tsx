@@ -132,6 +132,9 @@ export default function TraceDemo({ image = "/demos/img2bez/a.png", glyph = "a",
   const [spaceHeld, setSpaceHeld] = useState(false);
   const hovering = useRef(false);
   const [dropping, setDropping] = useState(false);
+  // Expand the demo to fill the browser window; the same corner button
+  // returns to the inline blog-post view. Esc also exits.
+  const [fullscreen, setFullscreen] = useState(false);
   // Narrow (phone) layout: stack the controls under the canvas instead of a
   // fixed side column, and lay the settings out as horizontal segments.
   const [narrow, setNarrow] = useState(false);
@@ -405,6 +408,25 @@ export default function TraceDemo({ image = "/demos/img2bez/a.png", glyph = "a",
     return () => mq.removeEventListener("change", update);
   }, []);
 
+  useEffect(() => {
+    if (typeof document === "undefined") return;
+    if (fullscreen) {
+      const prev = document.body.style.overflow;
+      document.body.style.overflow = "hidden";
+      const onKey = (e: KeyboardEvent) => {
+        if (e.key === "Escape") setFullscreen(false);
+      };
+      window.addEventListener("keydown", onKey);
+      // The container just changed size out from under the canvas.
+      requestAnimationFrame(() => draw());
+      return () => {
+        document.body.style.overflow = prev;
+        window.removeEventListener("keydown", onKey);
+      };
+    }
+    requestAnimationFrame(() => draw());
+  }, [fullscreen, draw]);
+
   const zoomBy = (f: number) => setZoom((z) => Math.min(8, Math.max(0.4, z * f)));
   // Reset the whole demo to its initial state: the default image, no trace,
   // default settings, default view.
@@ -462,15 +484,27 @@ export default function TraceDemo({ image = "/demos/img2bez/a.png", glyph = "a",
   return (
     <div
       style={{
-        position: "relative",
-        width: "100%",
-        // Phones stack (canvas + controls, auto height); wide screens keep the
-        // fixed 4:3 editor rectangle.
-        ...(narrow ? {} : { aspectRatio: "4 / 3" }),
-        margin: "1.5rem 0",
-        // Match the code snippets' border exactly (Expressive Code: 1px solid
-        // var(--border), radius calc(--ec-brdRad + --ec-brdWd)).
-        borderRadius: "calc(0.3rem + 1px)",
+        ...(fullscreen
+          ? {
+              position: "fixed",
+              inset: 0,
+              zIndex: 1000,
+              width: "100%",
+              height: "100%",
+              margin: 0,
+              borderRadius: 0,
+            }
+          : {
+              position: "relative",
+              width: "100%",
+              // Phones stack (canvas + controls, auto height); wide screens
+              // keep the fixed 4:3 editor rectangle.
+              ...(narrow ? {} : { aspectRatio: "4 / 3" }),
+              margin: "1.5rem 0",
+              // Match the code snippets' border exactly (Expressive Code:
+              // 1px solid var(--border), radius calc(--ec-brdRad + --ec-brdWd)).
+              borderRadius: "calc(0.3rem + 1px)",
+            }),
         overflow: "hidden",
         border: `1px solid ${dropping ? GREEN : "var(--border)"}`,
         background: BG,
@@ -493,6 +527,46 @@ export default function TraceDemo({ image = "/demos/img2bez/a.png", glyph = "a",
         setSpaceHeld(false);
       }}
     >
+      {/* Expand / return toggle, upper right of the window. */}
+      <button
+        onClick={() => setFullscreen((f) => !f)}
+        title={fullscreen ? "Return to post (Esc)" : "Expand to full window"}
+        aria-label={fullscreen ? "Return to post" : "Expand to full window"}
+        style={{
+          position: "absolute",
+          top: 10,
+          right: 10,
+          zIndex: 10,
+          width: 30,
+          height: 30,
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          borderRadius: 6,
+          border: "1px solid #2a2a2a",
+          background: "#1b1b1bcc",
+          color: "#cfcfcf",
+          cursor: "pointer",
+          padding: 0,
+        }}
+      >
+        {fullscreen ? (
+          <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round">
+            <path d="M14 6h-4V2" />
+            <path d="M10 6l5-5" />
+            <path d="M2 10h4v4" />
+            <path d="M6 10l-5 5" />
+          </svg>
+        ) : (
+          <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round">
+            <path d="M10 2h4v4" />
+            <path d="M14 2l-5 5" />
+            <path d="M6 14H2v-4" />
+            <path d="M2 14l5-5" />
+          </svg>
+        )}
+      </button>
+
       {/* Sidebar: every control in one left column. */}
       <div
         style={{
