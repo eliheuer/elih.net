@@ -675,21 +675,24 @@ export default function TraceDemo({ image = "/demos/img2bez/a.png", glyph = "a",
           {busy ? "Tracing…" : "Trace"}
         </button>
 
-        {judge && contours && (
-          <div
-            style={{
-              fontFamily: "var(--font-mono)",
-              fontSize: 11,
-              lineHeight: 1.9,
-              color: "#c8c8c8",
-              border: "1px solid #2a2a2a",
-              borderRadius: 6,
-              padding: "7px 10px",
-            }}
-          >
-            {(() => {
-              const onPts = contours.reduce((n, c) => n + c.filter((p) => p.on).length, 0);
-              const allPts = contours.reduce((n, c) => n + c.length, 0);
+        <div
+          style={{
+            fontFamily: "var(--font-mono)",
+            fontSize: 11,
+            lineHeight: 1.9,
+            color: "#c8c8c8",
+            border: "1px solid #2a2a2a",
+            borderRadius: 6,
+            padding: "7px 10px",
+          }}
+        >
+          {(() => {
+              const onPts = contours
+                ? contours.reduce((n, c) => n + c.filter((p) => p.on).length, 0)
+                : null;
+              const allPts = contours
+                ? contours.reduce((n, c) => n + c.length, 0)
+                : null;
               const row = (
                 label: string,
                 value: string,
@@ -717,31 +720,36 @@ export default function TraceDemo({ image = "/demos/img2bez/a.png", glyph = "a",
                   </span>
                 </div>
               );
-              const judgeColor =
-                judge.wild >= 0.85 ? "#18bf73" : judge.wild >= 0.7 ? "#e8b73a" : "#ff5f4a";
+              const dash = "\u2013";
+              const judgeColor = !judge
+                ? "#5a5a5a"
+                : judge.wild >= 0.85
+                  ? "#18bf73"
+                  : judge.wild >= 0.7
+                    ? "#e8b73a"
+                    : "#ff5f4a";
               return (
                 <>
-                  {row("judge", judge.wild.toFixed(3), judgeColor, true)}
+                  {row("judge", judge ? judge.wild.toFixed(3) : dash, judgeColor, !!judge)}
                   <div style={{ borderTop: "1px solid #262626", margin: "3px 0" }} />
-                  {row("iou", judge.reproIou === null ? "\u2013" : judge.reproIou.toFixed(3))}
-                  {row("smooth", judge.smooth.toFixed(2))}
+                  {row("iou", judge && judge.reproIou !== null ? judge.reproIou.toFixed(3) : dash)}
+                  {row("smooth", judge ? judge.smooth.toFixed(2) : dash)}
                   {row(
                     "kinks",
-                    String(judge.kinkedJoins),
-                    judge.kinkedJoins === 0 ? undefined : "#e8b73a",
+                    judge ? String(judge.kinkedJoins) : dash,
+                    judge && judge.kinkedJoins !== 0 ? "#e8b73a" : undefined,
                   )}
-                  {row("h/v handles", `${(judge.hvFrac * 100).toFixed(0)}%`)}
+                  {row("h/v handles", judge ? `${(judge.hvFrac * 100).toFixed(0)}%` : dash)}
                   {row(
                     "micro segs",
-                    String(judge.microSegs),
-                    judge.microSegs === 0 ? undefined : "#e8b73a",
+                    judge ? String(judge.microSegs) : dash,
+                    judge && judge.microSegs !== 0 ? "#e8b73a" : undefined,
                   )}
-                  {row("points", `${onPts} / ${allPts}`)}
+                  {row("points", onPts !== null ? `${onPts} / ${allPts}` : dash)}
                 </>
               );
             })()}
-          </div>
-        )}
+        </div>
 
         {/* Settings: same axes as Runebender, Style last. */}
         <div>
@@ -787,27 +795,27 @@ export default function TraceDemo({ image = "/demos/img2bez/a.png", glyph = "a",
           </select>
         </div>
 
-        {contours && (
-          <div>
-            <span style={fieldLabel}>View</span>
-            <div style={segWrap}>
-              <button
-                style={seg(showImage)}
-                onClick={() => setShowImage((v) => !v)}
-                title="Show the source image under the trace"
-              >
-                Image
-              </button>
-              <button
-                style={seg(showStructure)}
-                onClick={() => setShowStructure((v) => !v)}
-                title="Points and handles vs filled preview (hold space to peek)"
-              >
-                Points
-              </button>
-            </div>
+        <div style={{ opacity: contours ? 1 : 0.45 }}>
+          <span style={fieldLabel}>View</span>
+          <div style={segWrap}>
+            <button
+              style={{ ...seg(showImage), cursor: contours ? "pointer" : "default" }}
+              disabled={!contours}
+              onClick={() => setShowImage((v) => !v)}
+              title="Show the source image under the trace"
+            >
+              Image
+            </button>
+            <button
+              style={{ ...seg(showStructure), cursor: contours ? "pointer" : "default" }}
+              disabled={!contours}
+              onClick={() => setShowStructure((v) => !v)}
+              title="Points and handles vs filled preview (hold space to peek)"
+            >
+              Points
+            </button>
           </div>
-        )}
+        </div>
 
         {/* Open + Reset, pinned to the bottom as quiet secondary actions. */}
         <div
