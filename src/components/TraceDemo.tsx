@@ -478,11 +478,9 @@ export default function TraceDemo({ image = "/demos/img2bez/a.png", glyph = "a",
     background: "#101010",
   };
   const fieldLabel: React.CSSProperties = {
-    fontSize: 10,
-    fontWeight: 600,
-    letterSpacing: "0.08em",
-    textTransform: "uppercase",
-    color: "#767676",
+    fontSize: 11.5,
+    fontWeight: 500,
+    color: "#8a8a8a",
     display: "block",
     marginBottom: 6,
   };
