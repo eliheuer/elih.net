@@ -150,6 +150,7 @@ export default function TraceDemo({ image = "/demos/img2bez/a.png", glyph = "a",
   const [traceProfile, setTraceProfile] = useState<"auto" | "photo" | "clean">("auto");
   const [traceStyle, setTraceStyle] = useState("basic");
   const [traceMode, setTraceMode] = useState<"default" | "smooth" | "line">("default");
+  const [cornerHead, setCornerHead] = useState(false);
   const drag = useRef<{ x: number; y: number } | null>(null);
 
   // Load the current image and measure its glyph box.
@@ -187,6 +188,7 @@ export default function TraceDemo({ image = "/demos/img2bez/a.png", glyph = "a",
             profile: traceProfile === "auto" ? "wild" : traceProfile,
             style: traceStyle,
             mode: traceMode,
+            cornerHead,
           }),
         ),
       );
@@ -199,7 +201,7 @@ export default function TraceDemo({ image = "/demos/img2bez/a.png", glyph = "a",
     } finally {
       setBusy(false);
     }
-  }, [src, glyph, unicode, traceProfile, traceStyle, traceMode]);
+  }, [src, glyph, unicode, traceProfile, traceStyle, traceMode, cornerHead]);
 
   const draw = useCallback(() => {
     const canvas = canvasRef.current;
@@ -793,6 +795,21 @@ export default function TraceDemo({ image = "/demos/img2bez/a.png", glyph = "a",
               </option>
             ))}
           </select>
+        </div>
+
+        <div>
+          <span style={fieldLabel}>Corners</span>
+          <div style={segWrap}>
+            {([false, true] as const).map((on) => (
+              <button
+                key={String(on)}
+                style={seg(cornerHead === on)}
+                onClick={() => setCornerHead(on)}
+              >
+                {on ? "Learned" : "Rules"}
+              </button>
+            ))}
+          </div>
         </div>
 
         <div style={{ opacity: contours ? 1 : 0.45 }}>
