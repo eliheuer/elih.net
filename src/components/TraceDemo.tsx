@@ -568,8 +568,10 @@ export default function TraceDemo({ image = "/demos/img2bez/a.png", glyph = "a",
               position: "relative",
               width: "100%",
               // Phones stack (canvas + controls, auto height); wide screens
-              // keep the fixed 4:3 editor rectangle.
-              ...(narrow ? {} : { aspectRatio: "4 / 3" }),
+              // keep a fixed editor rectangle. 6:5 fits every sidebar
+              // section without scrolling (4:3 overflowed once the
+              // Corners control landed).
+              ...(narrow ? {} : { aspectRatio: "6 / 5" }),
               margin: "1.5rem 0",
               // Match the code snippets' border exactly (Expressive Code:
               // 1px solid var(--border), radius calc(--ec-brdRad + --ec-brdWd)).
@@ -666,6 +668,7 @@ export default function TraceDemo({ image = "/demos/img2bez/a.png", glyph = "a",
           style={{
             ...sideBtn,
             height: 34,
+            flexShrink: 0,
             fontSize: 13,
             fontWeight: 600,
             border: "1px solid #2f7d4f",
