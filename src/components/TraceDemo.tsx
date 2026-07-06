@@ -6,7 +6,8 @@
  * you trace over an image in Runebender), a Trace button runs img2bez
  * (compiled to WASM) on it, and the resulting outline is drawn on top with its
  * structure points: smooth on-curve (green circle), corner on-curve (orange
- * square), off-curve (purple circle). Drop your own image onto the
+ * square), off-curve (purple circle), and an orange triangle around each
+ * contour start point pointing in the draw direction. Drop your own image onto the
  * app to trace it instead. Scroll to zoom, drag to pan.
  *
  * Reuses only the trace core (one WASM call); the viewer is custom so it fits
@@ -388,6 +389,28 @@ export default function TraceDemo({ image = "/demos/img2bez/a.png", glyph = "a",
         ctx.lineWidth = 1.8;
         ctx.stroke();
       }
+    // start-point indicator: an orange triangle around each contour's
+    // first point, one vertex pointing along the draw direction (toward
+    // the next point). Larger than the point marker so it surrounds it
+    // without covering it: the green/orange marker inside still shows
+    // whether the start is smooth or a corner.
+    for (const pts of contours) {
+      if (pts.length < 2) continue;
+      const s = pts[0];
+      const X = FX(s.x), Y = FY(s.y);
+      const ang = Math.atan2(FY(pts[1].y) - Y, FX(pts[1].x) - X);
+      const R = 14; // clears the point marker; sized to read at a glance
+      ctx.beginPath();
+      for (let k = 0; k < 3; k++) {
+        const a = ang + (k * 2 * Math.PI) / 3;
+        const px = X + R * Math.cos(a), py = Y + R * Math.sin(a);
+        if (k === 0) ctx.moveTo(px, py); else ctx.lineTo(px, py);
+      }
+      ctx.closePath();
+      ctx.strokeStyle = ORANGE;
+      ctx.lineWidth = 1.5;
+      ctx.stroke();
+    }
   }, [box, contours, zoom, pan, showImage, showStructure, spaceHeld, placeReport]);
 
   useEffect(() => {
