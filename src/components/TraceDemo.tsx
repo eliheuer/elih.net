@@ -153,7 +153,7 @@ export default function TraceDemo({ image = "/demos/img2bez/a.png", glyph = "a",
   const [traceMode, setTraceMode] = useState<"default" | "smooth" | "line">("default");
   // Corner decision source: procedural rules, the candidate-level
   // learned gate (v1), or the zone-level 5-class site head (v2).
-  const [cornerModel, setCornerModel] = useState<"rules" | "cands" | "zones">("rules");
+  const [cornerModel, setCornerModel] = useState<"rules" | "learned">("rules");
   const drag = useRef<{ x: number; y: number } | null>(null);
 
   // Load the current image and measure its glyph box.
@@ -191,10 +191,8 @@ export default function TraceDemo({ image = "/demos/img2bez/a.png", glyph = "a",
             profile: traceProfile === "auto" ? "wild" : traceProfile,
             style: traceStyle,
             mode: traceMode,
-            // Candidate-level learned gate (v1) vs zone-level 5-class
-            // site head (v2); the site head supersedes the gate when on.
-            cornerHead: cornerModel === "cands",
-            siteHead: cornerModel === "zones",
+            // "Learned" drives the zone-level 5-class site head.
+            siteHead: cornerModel === "learned",
           }),
         ),
       );
@@ -838,8 +836,7 @@ export default function TraceDemo({ image = "/demos/img2bez/a.png", glyph = "a",
           <div style={segWrap}>
             {([
               ["rules", "Rules"],
-              ["cands", "Learned v1"],
-              ["zones", "Learned v2"],
+              ["learned", "Learned"],
             ] as const).map(([key, label]) => (
               <button
                 key={key}
@@ -848,9 +845,7 @@ export default function TraceDemo({ image = "/demos/img2bez/a.png", glyph = "a",
                 title={
                   key === "rules"
                     ? "Procedural corner gate (the default pipeline)"
-                    : key === "cands"
-                      ? "Per-candidate learned gate, trained on 27 masters"
-                      : "5-class curvature-zone classifier (corner / pair / bracket / point / smooth)"
+                    : "5-class curvature-zone site head (corner / pair / bracket / point / smooth)"
                 }
               >
                 {label}
