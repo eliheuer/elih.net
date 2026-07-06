@@ -188,7 +188,9 @@ export default function TraceDemo({ image = "/demos/img2bez/a.png", glyph = "a",
             profile: traceProfile === "auto" ? "wild" : traceProfile,
             style: traceStyle,
             mode: traceMode,
-            cornerHead,
+            // "Learned" drives the 5-class site head (the better model);
+            // it supersedes the corner gate in the tracer.
+            siteHead: cornerHead,
           }),
         ),
       );
