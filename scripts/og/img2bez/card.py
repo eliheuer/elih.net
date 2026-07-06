@@ -23,7 +23,8 @@ from PIL import Image
 
 W, H = 2400, 1260
 CELL = 60  # raster pixel block size (the "low resolution")
-LINE_WIDTH = 6  # one stroke weight for the outline, handles, and point rings
+LINE_WIDTH = 6  # stroke weight for the outline and handle lines
+POINT_WIDTH = 9  # thicker stroke for the point rings/squares so they read better
 
 # colours, 0-1 floats. Dark-mode editor palette (matches the demo island).
 BG = (0.047, 0.047, 0.047)
@@ -189,7 +190,7 @@ def main():
 
     # points match Runebender-Web: smooth on-curve = green circle,
     # corner on-curve = orange square, off-curve = purple circle.
-    db.strokeWidth(LINE_WIDTH)
+    db.strokeWidth(POINT_WIDTH)
     for pts in cs:
         for p in pts:
             x, y = tx(p[0], p[1])

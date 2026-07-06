@@ -20,7 +20,7 @@ scripts/img2bez/
   fig_g_compare.py   figure: vtracer vs img2bez side by side, morphing
                      Regular <-> Bold                        (section 03)
   fig_g_interp.py    figure: the img2bez G morphing alone    (unused today)
-  inputs/            normalized source rasters (Helvetica G Regular/Bold,
+  inputs/            normalized source rasters (neo-grotesk G Regular/Bold,
                      autocropped to identical 1200px framing)
   g-masters.json     img2bez joint masters trace (geometry source of truth)
   build/             frame + SVG scratch (gitignored)

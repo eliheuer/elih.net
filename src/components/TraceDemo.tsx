@@ -229,10 +229,15 @@ export default function TraceDemo({ image = "/demos/img2bez/a.png", glyph = "a",
     // pixels -> canvas pixels.
     const gW = box.maxX - box.minX || 1;
     const gH = box.maxY - box.minY || 1;
-    const base = Math.min((W * 0.64) / gW, (H * 0.64) / gH); // scale at zoom 1
+    // Fit the whole source image to 6 of the 8 grid columns (0.75 of the
+    // width) and anchor on the image centre. The image is square, so all four
+    // of its edges land on major grid lines, leaving a clean one-cell margin.
+    // Clamp so it never overflows a short canvas. User zoom/pan compose on top.
+    const imgSpan = Math.max(img.width, img.height) || 1;
+    const base = Math.min((W * 0.75) / imgSpan, (H * 0.86) / imgSpan);
     const s = base * zoom;
-    const gcx = (box.minX + box.maxX) / 2;
-    const gcy = (box.minY + box.maxY) / 2;
+    const gcx = img.width / 2;
+    const gcy = img.height / 2;
     const IX = (x: number) => (x - gcx) * s + W / 2 + pan.x;
     const IY = (y: number) => (y - gcy) * s + H / 2 + pan.y;
     const invX = (c: number) => (c - W / 2 - pan.x) / s + gcx;

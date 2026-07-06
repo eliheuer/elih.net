@@ -14,7 +14,9 @@ img2bez is a Rust crate that traces raster images into bézier outlines and writ
 
 ![img2bez: a low-resolution pixelated "a" with the vector outline img2bez traces from it.](./share-card.png)
 
-Below is an interactive demo of img2bez compiled from Rust to WASM. Click "Trace" to vectorize a raster image and see the outline it produces, and drop an image onto the application to try your own glyph. The settings change the output when you click "Trace", but the ones to watch are the **Rules vs Learned** toggles, which swap a structural decision from the procedural rule to a trained ML model. Flipping one lets you watch a small learned model change a structural call live, running client-side and deterministically with no server in the loop.
+Below is an interactive demo of img2bez compiled from Rust to WASM. Click "Trace" to vectorize a raster image and see the outline it produces, and drop an image onto the application to try your own glyph. The settings change the output when you click "Trace", but the ones to watch are the **Rules vs Learned** toggles, which swap a structural decision from the procedural rule to a trained ML model. These are tiny, task-specific models small enough to compile straight into the binary and run client-side in your browser. Flipping one lets you watch a model change a structural call live, deterministically and with no server in the loop.
+
+Note: img2bez is built for tracing high-resolution AI-generated raster images, so a 1024x1024 generated glyph is what it handles best. Scans and photos work too, and a few settings help with them, but they are not what the tool is tuned for.
 
 <TraceDemo image="/demos/img2bez/a.png" glyph="a" unicode="0061" />
 
@@ -24,20 +26,16 @@ Below is an interactive demo of img2bez compiled from Rust to WASM. Click "Trace
 <ol>
 <li><a href="#01-installation--setup"><span class="n">01</span>Installation &amp; Setup</a></li>
 <li><a href="#02-the-problem-structure-not-just-silhouette"><span class="n">02</span>The Problem: Structure, Not Just Silhouette</a></li>
-<li><a href="#03-why-structure-matters-with-no-human-in-the-loop"><span class="n">03</span>Why Structure Matters With No Human in the Loop</a></li>
-<li><a href="#04-existing-approaches-and-why-they-solve-a-different-problem"><span class="n">04</span>Existing Approaches, and Why They Solve a Different Problem</a></li>
-<li><a href="#05-how-img2bez-works"><span class="n">05</span>How img2bez Works</a></li>
-<li><a href="#06-tuning-for-different-inputs"><span class="n">06</span>Tuning for Different Inputs</a></li>
-<li><a href="#07-design-constraint-modes"><span class="n">07</span>Design-Constraint Modes</a></li>
-<li><a href="#08-variable-fonts-masters-that-interpolate"><span class="n">08</span>Variable Fonts: Masters that Interpolate</a></li>
-<li><a href="#09-an-api-for-other-peoples-tools"><span class="n">09</span>An API for Other People's Tools</a></li>
-<li><a href="#10-measuring-draws-like-a-designer"><span class="n">10</span>Measuring &ldquo;Draws Like a Designer&rdquo;</a></li>
-<li><a href="#11-judging-a-trace-without-a-reference"><span class="n">11</span>Judging a Trace Without a Reference</a></li>
-<li><a href="#12-how-small-is-the-model"><span class="n">12</span>How Small Is the Model?</a></li>
-<li><a href="#13-learning-the-cleanup-from-designers"><span class="n">13</span>Learning the Cleanup From Designers</a></li>
-<li><a href="#14-the-data-engine"><span class="n">14</span>The Data Engine</a></li>
-<li><a href="#15-what-the-first-training-runs-found"><span class="n">15</span>What the First Training Runs Found</a></li>
-<li><a href="#16-early-days-and-an-invitation"><span class="n">16</span>Early Days, and an Invitation</a></li>
+<li><a href="#03-existing-approaches-and-why-they-solve-a-different-problem"><span class="n">03</span>Existing Approaches, and Why They Solve a Different Problem</a></li>
+<li><a href="#04-how-img2bez-works"><span class="n">04</span>How img2bez Works</a></li>
+<li><a href="#05-tuning-for-different-inputs"><span class="n">05</span>Tuning for Different Inputs</a></li>
+<li><a href="#06-design-constraint-modes"><span class="n">06</span>Design-Constraint Modes</a></li>
+<li><a href="#07-variable-fonts-masters-that-interpolate"><span class="n">07</span>Variable Fonts: Masters that Interpolate</a></li>
+<li><a href="#08-an-api-for-other-peoples-tools"><span class="n">08</span>An API for Other People's Tools</a></li>
+<li><a href="#09-measuring-draws-like-a-designer"><span class="n">09</span>Measuring &ldquo;Draws Like a Designer&rdquo;</a></li>
+<li><a href="#10-judging-a-trace-without-a-reference"><span class="n">10</span>Judging a Trace Without a Reference</a></li>
+<li><a href="#11-how-small-is-the-model"><span class="n">11</span>How Small Is the Model?</a></li>
+<li><a href="#12-early-days-and-an-invitation"><span class="n">12</span>Early Days, and an Invitation</a></li>
 </ol>
 </nav>
 
@@ -66,7 +64,7 @@ for path in outline.to_bezpaths() {
 }
 ```
 
-You can also use it inside a font editor like [Runebender-Xilem](https://github.com/eliheuer/runebender-xilem) or [Runebender-Web](https://github.com/eliheuer/runebender-web). The simplest path is the browser. Open [runebender.org](https://runebender.org), drag and drop an image into the edit view, then right-click it and choose **Trace Image**.
+You can also use it inside a font editor like [Runebender-Xilem](https://github.com/eliheuer/runebender-xilem) or [Runebender-Web](https://github.com/eliheuer/runebender-web). The simplest path is the browser. Open [runebender.org](https://runebender.org), drag and drop an image into the edit view, then right-click it and choose **Trace Image**. Runebender supports generative tracing too, through the QuiverAI API and [runebender-comfy](https://github.com/eliheuer/runebender-comfy), a ComfyUI-node version of runebender-web that wires it to local models; img2bez is the default procedural path alongside them.
 
 ![Runebender-Web with a raster "a" placed in the glyph view and the right-click "Trace Image" command, which runs img2bez to insert the outline, highlighted.](./rb-web-001.png)
 
@@ -79,332 +77,101 @@ The reason is that a font source's *structure*, not just its silhouette, is what
 
 Most existing autotracers optimize for the silhouette and leave the structure to a human, and cleaning that up is sometimes more work than drawing the glyph from scratch. They work this way because the software has historically been built by engineers solving the general tracing problem, and type-design conventions are specialized knowledge well outside that scope. Those conventions are also easy to dismiss: a lot of design dogma really is nonsense, and it can take years to sort the wheat from the chaff.
 
-AI generation raises a sharper version of this problem. An image model makes one raster at a time, so a variable font means generating several related rasters (a glyph's weights or styles) and tracing each. To interpolate, those masters must be *compatible*: the same points, in the same order, each on the same feature. img2bez produces this by construction: it places points only at structural features (extrema, corners, inflections) by a fixed rule, so masters of the same glyph come out compatible. When they don't, a reconciliation pass aligns the contours and fills in any missing points.
+Variable fonts are where structure matters most, and img2bez is designed specifically for creating variable fonts from AI-generated raster images. An image model makes one raster at a time, so you generate a raster for each master (a glyph's weights or styles) and trace them into sources. To interpolate, the masters have to be *compatible*: the same points in the same order. Because img2bez always puts points at the same structural features (extrema, corners, inflections), masters of one glyph usually come out compatible on their own. For the cases that don't, img2bez has a multi-master mode: you tell it a set of images are the masters of one variable font, and it traces them together, deciding on one point structure across the whole set and running an interpolation-reconciliation pass that aligns the contours and fills in any missing points (more below).
 
-img2bez is designed to be fast and cheap enough to embed directly in a font editor or a SaaS product. You could instead hand the whole job to a large AI model, and pure generative approaches are getting better, but they are slow and expensive to run. A procedural tracer is the opposite: fast, cheap, and deterministic. So img2bez does the bulk of the work up front: the tracer gets roughly 90% of the way, a lightweight AI harness the harder 9%, and a human designer the final 1%. The AI stays small and local: small discriminative models for the cleanup, the first of which now ships (more below), with img2bez-specific LoRAs for open-weight image models planned next.
+<video src="/demos/img2bez/g-compare.mp4" autoplay loop muted playsinline aria-label="A capital G, at Regular and Bold weights, traced two ways and interpolated between them, both shown in the same point language. Left: vtracer, a general-purpose tracer at its cleanest settings, produces a smooth outline but scatters a couple hundred points along the pixels (210 for this frame), none on the letter's structure, so its corners soften. Right: img2bez places 32 points on the extrema and corners, keeping the crossbar and terminal crisp and the two masters interpolation-compatible." style="display:block;margin-inline:auto;width:100%;"></video>
 
-### 03. Why Structure Matters With No Human in the Loop
+img2bez is designed to be fast and cheap enough to embed directly in a font editor or a SaaS product. You could instead hand the whole job to a large generative model, and pure generative approaches are getting better, but they are slow and expensive to run. img2bez is built to be the opposite: fast, cheap, and deterministic even where it uses ML. Most of it is a procedural tracer, and where a call is too subtle for a fixed rule a small learned model makes it instead. Those models are tiny and compiled into the binary, so they keep the same properties as the procedural code: the same input gives the same output, in milliseconds, with no GPU and no server. So img2bez does the bulk of the work up front: the tracer gets roughly 90% of the way, small learned models and a refinement pass the harder 9%, and a human designer the final 1%. The AI stays small and local: discriminative models that decide rather than generate, the first of which now ships (more below), with img2bez-specific LoRAs for open-weight image models planned next.
 
-Interpolation is where structure matters most. A variable font does not store a separate drawing for each weight. It stores one master outline plus, for each point, a delta to the next master, and it renders an intermediate weight by moving every point independently along the line between the two masters. Nothing in that process looks at the curve as a whole. So matching point counts is only the precondition for interpolation, not a guarantee: compatible masters fix which points correspond, but not where each one travels, and they can still produce broken instances.
+### 03. Existing Approaches, and Why They Solve a Different Problem
 
-<video src="/demos/img2bez/g-compare.mp4" autoplay loop muted playsinline aria-label="A capital G, at Regular and Bold weights, traced two ways and interpolated between them, both shown in the same point language. Left: vtracer, a general-purpose tracer at its cleanest settings, produces a smooth outline but scatters a couple hundred points along the pixels (210 for this frame), none on the letter's structure, so its corners soften. Right: img2bez places 34 points on the extrema and corners, keeping the crossbar and terminal crisp and the two masters interpolation-compatible." style="display:block;margin-inline:auto;width:100%;"></video>
+**Classical tracers.** [Potrace](https://potrace.sourceforge.net/potrace.pdf) (2003, used in Inkscape and FontForge) and its faster Rust successor [vtracer](https://github.com/visioncortex/vtracer) both reconstruct a shape's silhouette: they trace the pixel boundary and fit curves to it, with no notion of glyph structure, no points at extrema, no horizontal or vertical handles, nothing placed for interpolation. vtracer even says it "favours fidelity over simplification." They are built to reproduce an image; img2bez is built to produce a font source.
 
-The same G traced two ways and interpolated between Regular and Bold, both drawn in the same point language: smooth on-curve points are green circles, corners orange squares, off-curve handles purple. On the left, vtracer at its cleanest settings still needs a couple hundred points scattered around the outline, none of them on the letter's structure, so its corners soften and the two weights do not even trace to the same number of points. On the right, img2bez traces the masters jointly: the structure is decided once across the set, so both masters share one point structure with every point on an extremum or a corner, and the crossbar and terminal stay crisp through every intermediate weight.
+**Curve fitting.** Reducing a dense run of points to a few Bézier segments is a well-understood step, from Philip Schneider's fitter in *Graphics Gems* (1990) to Raph Levien's [work](https://raphlinus.github.io/curves/2021/03/11/bezier-fitting.html) in kurbo that img2bez builds on. But a fitter adds a point wherever a curve strays too far, which are rarely the points type wants (the extrema and inflections, handles on-axis). Even [Spiro](http://levien.com/spiro/), the closest tool to this problem, smooths curves for a designer tracing by hand; it does not find them in the pixels. Deciding the structure is the part none of these do, and where img2bez begins.
 
-The canonical failure is a kink: a smooth join collapses into a corner at some intermediate weight when three collinear points differ in both angle and spacing ratio between the masters. A point at a true extremum is immune. Its tangent is horizontal or vertical, a direction identical in every master, so the angle cannot differ. The extremum also stays on a real point instead of drifting off the curve as the geometry around it interpolates. This is the reasoning behind the drawing conventions: points sit on extrema to pin those tangents, point counts stay minimal because every extra point is one more motion that can disagree with its neighbors, and lines and inflections stay clean because they are the same three-in-a-line case the kink rule governs. Point placement is the only thing holding the shape together across the whole design space, including the in-between weights that ship without ever being drawn or reviewed.
+Newer, learning-based methods come in two kinds, and both miss what type needs. **Optimization** methods move control points by gradient descent until the rendered curves match the target image, using the differentiable rasterizer [diffvg](https://github.com/BachiLi/diffvg) (whose pixel-scoring objective img2bez borrows). But they run on a GPU with a stochastic solver, the opposite of the fast, deterministic, embeddable trace an editor needs. **Generation** methods have a model emit SVG directly ([StarVector](https://github.com/joanrod/star-vector), [OmniSVG](https://github.com/OmniSVG/OmniSVG)), aiming for image fidelity rather than the conventions type requires. Tellingly, the newest generative pipelines still hand the actual conversion to a classical tracer: [LayerTracer](https://arxiv.org/abs/2502.01105) (2025) generates a raster and then passes it to vtracer, inheriting its limitations. That is the gap img2bez addresses.
 
-The other reasons are secondary but real. Hinting needs an on-curve point at each extreme to snap it to the pixel grid. The cubic-to-quadratic conversion that ships TrueType fonts preserves whatever structure it is given and never adds a missing extremum. Integer rounding on export displaces a near-straight segment unevenly at its two ends, producing a kink. And every point is another delta in gvar, the largest table in a variable font. None of these is as strict as interpolation, and some matter less on high-resolution displays, but in a fully automated pipeline nothing reviews the result before it ships. Every stage that consumes the outline reads its point structure, not its silhouette.
+### 04. How img2bez Works
 
-The conventions do have exceptions. Marking inflection points is the most contested: some editors restructure a curve to avoid an inflection node rather than add one. Others break down in edge cases, like a segment so short that forcing an extremum just rounds onto its endpoint, which is why img2bez collapses vestigial micro-lines instead of pinning extrema everywhere. But the core holds regardless of what drew the outline: interpolation compatibility, lines that stay straight under rounding, and structure that survives conversion.
+img2bez works in four stages. (Fuller detail, including the point-classification model at the core of stage 2, is in the [git repo](https://github.com/eliheuer/img2bez).)
 
-### 04. Existing Approaches, and Why They Solve a Different Problem
+**1. Find the edge precisely.** Most tracers first flatten the image to pure black and white, throwing away the soft edge pixels. img2bez reads the edge straight from the gray, following the line where the pixels cross from ink to paper, like a contour line on a map. That locates it to a fraction of a pixel.
 
-**Potrace.** Peter Selinger's [Potrace](https://potrace.sourceforge.net/potrace.pdf) (2003) is the best-known classical tracer, used in Inkscape and FontForge. Its pipeline thresholds the image to black and white, traces the pixel boundary, approximates it with an optimal polygon, classifies each polygon vertex as a sharp corner or a smooth point (thresholded by the *alphamax* parameter), then fits Bézier curves.
+**2. Place the points, then fit the curves.** It walks the edge and marks the points that matter: corners where the direction snaps, the extremes of each curve (the top of an "o", the sides of a bowl), and the inflections where an "s" changes direction. At each one it locks the handle horizontal or vertical the way a type designer would, then fits curves between them. Deciding the structure first is the whole trick: the outline follows type-drawing conventions by default, instead of needing a human to fix it afterward.
 
-**vtracer.** [vtracer](https://github.com/visioncortex/vtracer) (VisionCortex) is the fast, modern successor to Potrace, and, like img2bez, it is written in Rust: it runs in linear time and handles full color and high-resolution input. But it is built for general images (photographs, scans, logos, pixel art), and by design it "favours fidelity over simplification," tracing each region's silhouette into dense points that follow the pixels. It has no notion of glyph structure: no points at extrema, no horizontal or vertical handles, nothing placed for interpolation. For general artwork that is the right trade-off; for a font source it is the wrong one, and the contours would need structural cleanup before they behave like type. vtracer is built to reproduce an image; img2bez is built to produce a font source.
+**3. Refine against the image.** An optional pass compares the curves back to the original pixels and nudges the ones that are off, merges two timid curves into the single one a designer would draw, and restores small details like the flats where strokes meet. Turn it off with `--no-refine`.
 
-**The curve-fitting literature.** Curve fitting reduces a dense run of traced points to a few cubic Bézier segments, each fit to within a tolerance. This step is well understood, with reliable algorithms from Philip Schneider's fitter in *Graphics Gems* (1990) to Raph Levien's [fitting work](https://raphlinus.github.io/curves/2021/03/11/bezier-fitting.html) in kurbo, which img2bez uses as a fallback. But a fitter places its points to minimize error, adding one wherever a single cubic strays too far from the outline. Those are rarely the points type design needs: on-curve points at the extrema and inflections, with handles leaving horizontal or vertical. Deciding that structure is the hard part of tracing type.
+**4. Clean up for a font.** Last comes the housekeeping a font source needs: winding directions set so counters cut holes, points snapped to a clean integer grid, and near-vertical or near-horizontal handles made exact.
 
-Levien's contribution extends beyond fitting. He has produced much of the underlying curve work in this area: [path simplification](https://raphlinus.github.io/curves/2023/04/18/bezpath-simplify.html), [parallel curves](https://raphlinus.github.io/curves/2022/09/09/parallel-beziers.html), and the [Spiro](http://levien.com/spiro/) curve-design system. All of it operates on curves that already exist, or assists a designer drawing new ones. Spiro, the closest to this problem, assumes a designer tracing over a scanned glyph by hand: it smooths the curves but does not locate them in the pixels. None of this work crosses from a raster to a structured outline, which is where img2bez begins.
+Almost none of the thresholds behind these stages were tuned by hand. They came out of an eval harness that scores every candidate change against a reference font and is built to be driven by coding agents like Codex, Claude Code, and Hermes. (The harness gets its own section below.)
 
-Classical tracing and curve fitting are the established approaches, and they share a limitation: each reconstructs the silhouette but leaves the structure to a human. The newer, learning-based approaches fall into two categories: optimization and generation.
+### 05. Tuning for Different Inputs
 
-**Optimization.** The first family treats vectorization as an optimization problem, enabled by the *differentiable rasterizer*: a renderer you can backpropagate through, so it reports how to move each control point of an outline to render closer to a target image. That turns the control points into parameters gradient descent can optimize, or that a neural network can learn to produce. [diffvg](https://github.com/BachiLi/diffvg) (2020) is the standard implementation, shipped as a PyTorch operator; img2bez adopts its objective of scoring a candidate outline against the pixels (more below). [LIVE](https://github.com/Picsart-AI-Research/LIVE-Layerwise-Image-Vectorization) builds on diffvg to add paths layer by layer, and newer rasterizers such as [Bézier Splatting](https://arxiv.org/abs/2503.16424) run more than an order of magnitude faster.
+A trace is tuned along three independent axes: the **profile** (what the source image is), the **style** (what the drawing is), and the output **mode** (a point-style constraint forced onto the finished outline, like making every point smooth).
 
-None of this fits a font editor like Runebender. Differentiable optimization runs on a GPU with an iterative, stochastic solver, where an editor needs a trace that is fast, deterministic, and embeddable. img2bez is a pure-Rust crate Runebender calls directly, with no GPU or Python in the loop. It even runs client-side in the browser, which is what the demo at the top of this page does.
+The profile matches image quality, and img2bez ships three. **`wild`** (the default) is for unknown rasters like an AI image API's output, the case the demo runs; it fits loosely so it does not chase anti-aliasing noise. **`clean`** is for sharp renders of existing fonts and fits tightly. **`photo`** is for soft scans of printed type; it blurs the image first so the trace follows a clean edge instead of every wobble of the ink. The profile is auto-detected and can be forced with `--profile`.
 
-**Generation.** The second family has the model emit SVG directly. Vision-language models now generate SVG code from an image; [StarVector](https://github.com/joanrod/star-vector) and [OmniSVG](https://github.com/OmniSVG/OmniSVG) are the strongest open-source examples, and [PyTorch-SVGRender](https://github.com/ximinng/PyTorch-SVGRender) collects most of the diffusion-based methods in one library. These optimize for image fidelity and general compactness, not for what a font requires: points at extrema with horizontal or vertical handles, straight lines kept straight, and minimal points placed for interpolation. Even the newest pipelines rely on a fast classical tracer for the conversion itself: [LayerTracer](https://arxiv.org/abs/2502.01105) (2025) generates layered rasters with a diffusion transformer, then passes them to vtracer to produce the paths, and notes that it inherits vtracer's limitations. That is the gap img2bez addresses.
+The style is the drawing style of the letterform (`grotesk`, `old-style`, `geometric`, `brush`, `nib`, `qalam`), layered on a base that already traces a neo-grotesk sans well. Unlike the profile, style is declared, not detected.
 
-Runebender supports the generative side too: it can trace through the QuiverAI API, and [runebender-comfy](https://github.com/eliheuer/runebender-comfy), a version of runebender-web that runs as a ComfyUI node, wires it up to local models. img2bez is the default procedural path, and these generative options sit alongside it for the jobs that want them.
+### 06. Design-Constraint Modes
 
-### 05. How img2bez Works
+Sometimes the constraint is not the input but the *output*. A design may call for one point style throughout, regardless of what the source suggests, so img2bez has trace modes that re-shape the finished outline under a constraint. `--mode smooth` makes every on-curve point smooth and every segment a curve: it keeps the fitted curve and only aligns the handles to a continuous tangent, so the outline comes out worn smooth, like a stone in a river, every corner rounding into the flow. It's the organic look a soft or rounded design wants. `--mode line` does the opposite, flattening every curve to straight segments for a polygonal outline. Both run as a post-pass on the finished trace, so they compose with everything else.
 
-img2bez works in four stages. (Fuller detail is in the [img2bez git repo](https://github.com/eliheuer/img2bez).)
+### 07. Variable Fonts: Masters that Interpolate
 
-**1. Find the edge precisely.** Most tracers first threshold the image to pure black and white, which throws away the soft anti-aliased pixels along the edge. img2bez runs marching squares at the threshold's iso-level instead, reading the boundary straight from the gray pixels, which recovers it to a fraction of a pixel. Contours that span the whole image frame or are too small to be ink are discarded as artifacts.
+A variable font interpolates between masters, which only works if the masters are *compatible*: the same points, in the same order. Tracing each master from a separate image gives no guarantee of that.
 
-**2. Place the points, then fit the curves.** First it resamples the boundary to even ~1px spacing and applies a light Gaussian smooth: the marching-squares boundary is accurate to ~0.1px, so a small smooth removes sampling jitter without moving features, and the amount rises adaptively for noisy sources. This stabilizes the curvature signal the next step reads. It then walks the boundary and uses the way it turns to decide where the structural points go: sharp corners where the direction snaps, straight runs where the edge is genuinely straight, and smooth points at the extrema (the top of an "o" for example) and inflections (the spine of an "s"). Then it fits cubic curves between those points, with the handles pinned horizontal or vertical at the extrema, with some basic logic for exceptions. Because the directions are fixed up front, the outline follows type-drawing conventions by construction, not by a cleanup pass afterward.
+Usually it works out anyway. Because img2bez places points by rule, the same letter traced at two weights normally comes out with the same structure already. When it doesn't, a reconcile pass matches the masters up and inserts the points one is missing.
 
-That constraint is what separates it from a general-purpose fitter. kurbo derives each endpoint tangent straight from the curve data, whatever direction the outline happens to have at that parameter:
+It also reports its confidence: exact where the points already matched, low where it had to guess. That flag is what lets an unsupervised pipeline trust the clean cases and route the doubtful ones back for review, instead of shipping a master that interpolates into a mess. Headlessly it is one command per glyph, reading the masters from the font's designspace; a non-zero exit means they could not be reconciled, so the pipeline regenerates the failing image and retries.
 
-```rust
-// in kurbo/src/fit.rs, fit_to_cubic reads the endpoint tangents from source:
-pub fn fit_to_cubic(source: &impl ParamCurveFit, range: Range<f64>, accuracy: f64)
-    -> Option<(CubicBez, f64)>
-{
-    let start = source.sample_pt_tangent(range.start, 1.0); // tangent from the data
-    let end = source.sample_pt_tangent(range.end, -1.0);    // tangent from the data
-    let d = end.p - start.p;
-    // ...solve for the cubic through those points in those directions...
-}
-```
+### 08. An API for Other People's Tools
 
-img2bez overrides that direction at each structural point, forcing it to the axis at an extremum *before* any cubic is fit:
+img2bez is most useful inside something else: a font editor, a SaaS product, a production script, or an AI agent building sources on its own. So it is built around one rule: **tracing a shape and placing it into a font are two separate jobs.** `trace()` tells you what contours are in the image; `place()` puts them in a font, and it never guesses, you tell it where the glyph sits and how to set its spacing. That split lets a browser editor place against its open document while an agent copies the fit from a neighboring glyph. It also handles the case that breaks naive tracers: a generated image with arbitrary padding, which img2bez fits by detected ink rather than raw canvas, so the letter lands right whether it arrives cropped or floating in whitespace.
 
-```rust
-// in img2bez/src/vectorize/fit.rs, constrained_end_tangent pins the tangent:
-fn constrained_end_tangent(
-    samples: &[Point],
-    kind: SplitKind,
-    at_start: bool,
-) -> Vec2 {
-    // ...measure the raw outgoing direction from the section's samples...
-    match kind {
-        // left/right extremum -> tangent forced vertical
-        SplitKind::ExtremumX => Vec2::new(0.0, raw.y.signum()),
-        // top/bottom extremum -> tangent forced horizontal
-        SplitKind::ExtremumY => Vec2::new(raw.x.signum(), 0.0),
-        // corner or inflection -> tangent kept as measured
-        _ => raw,
-    }
-}
+Everything it produces is one data model that mirrors the [UFO point model](https://unifiedfontobject.org/): plain contours of points, no library-specific types, so it serializes straight to JSON and converts losslessly to kurbo paths, GLIF, or SVG. The same core is exposed four ways, all running the identical pipeline for byte-for-byte identical output: a Rust crate, a WASM build with JavaScript bindings (what the demo above calls), a CLI, and an [MCP](https://modelcontextprotocol.io) server so an agent can call the tracer natively ("trace this image, fit it like the *b*").
 
-// the directions are fixed; the fit solves only the handle lengths:
-let (single, err) = constrained_cubic_fit(&samples, start_tangent, end_tangent);
-```
+One model behind four surfaces is more to maintain than a function that returns whatever is convenient. The bet is that the alternative, a tracer welded to one app's coordinate system, is exactly why every tool writes its own instead of sharing one. img2bez is open under the permissive Apache-2.0/MIT license of the [Linebender](https://linebender.org) ecosystem it builds on. It is one piece of the AI type-design startup I am building, and it improves for everyone's glyphs as it improves for any one tool's, so if you are building something serious on it, I would rather build the parts you need with you than have you fork it.
 
-The `match` is the type-design model itself. Each arm dispatches on a `SplitKind` (corner, X-extremum, Y-extremum, inflection) that the structure pass assigned upstream. kurbo's fitter has no such notion, so there is nothing for it to switch on; it reads the tangent uniformly from the data. This is also why the constraint cannot be a flag on a general-purpose fitter: forcing handles horizontal or vertical at extrema presupposes the extrema have already been found and labeled, which is the upstream work a general fitter does not do.
+### 09. Measuring "Draws Like a Designer"
 
-Only when a section cannot be represented that way (even after splitting at an inflection) does img2bez fall back to kurbo's `fit_to_bezpath_opt`, which returns the fewest cubics for a given accuracy but does not constrain the tangents. img2bez exposes its traced points to kurbo through the `ParamCurveFit` trait; that fallback is a few lines in [`fit.rs`](https://github.com/eliheuer/img2bez/blob/main/src/vectorize/fit.rs):
+Evaluation, not the tracer, is the hard part of this project. "Draws like a designer" resists a single number, so the eval measures it directly: take a font a designer already drew, render each glyph to a bitmap, trace it back, and compare the trace to the original *structurally* (point counts and placement, lines versus curves, on-axis handles). The designer's outline already records where every point should go, so it is ground truth for free.
 
-```rust
-// img2bez exposes its traced polyline to kurbo's fitter (Raph's algorithm)...
-impl ParamCurveFit for PolylineSource<'_> {
-    fn sample_pt_tangent(&self, t: f64, _sign: f64) -> CurveFitSample {
-        let (p, tangent) = self.eval(t);
-        CurveFitSample { p, tangent }
-    }
-    // ...plus sample_pt_deriv and break_cusp
-}
+The tool that does this is `structure-compare`. Point it at any font and it renders every glyph, traces the renders with the img2bez library in-process, and writes a side-by-side sheet per glyph: the source outline on the left, img2bez's trace on the right, with point structure, counts, and handle scans on both. Where they disagree is a lead on a tracer bug.
 
-// ...and kurbo returns the minimal set of cubics for the accuracy:
-let path = fit_to_bezpath_opt(&source, accuracy);
-```
+![A structure-compare sheet for a lowercase g: the source outline on the left against img2bez's trace of its render on the right, both showing point structure and counts.](./structure-compare-g.png)
 
-A cleanup pass then conforms the joins to type-design rules. Collinear line segments are merged, and a sharp corner that anti-aliasing rounded off is rebuilt. At each smooth (non-corner) join the two handles are made colinear so the tangent is continuous (G1), and the on-curve point is nudged to the position where curvature matches on both sides (G2), the "harmonize" operation Glyphs and FontLab expose as a manual command. Corners, extrema, and lines are left fixed.
-
-**3. Refine against the image.** An optional pass re-scores the curves against the original pixels, the same idea diffvg uses, but with no training and no GPU: it just searches the few remaining degrees of freedom for the closest match. This nudges handles that are clearly off, merges two timid curves into the single one a designer would have drawn, and restores small design details like the tiny flats at stroke junctions.
-
-Turn this pass off with `--no-refine`:
-
-```bash
-img2bez --input glyph.png --output MyFont.ufo --name A --no-refine
-```
-
-**4. Snap to font conventions.** Finally the outline is conformed to what a font source expects. Contour directions are set so outer contours and counters wind in opposite directions, which the fill rule requires. On-curve points are snapped to an even-integer grid and the handles rounded to integers, so the coordinates stay clean; any handle left within a few degrees of an axis is snapped exactly horizontal or vertical. An optional chamfer can cut inktrap-style flats at sharp line corners.
-
-These stages have a lot of knobs: how sharp a turn has to be to count as a corner, how tight a fit has to be, the margins that gate the refinement pass. I tuned almost none of them by hand. They came out of an eval harness that scores every candidate change against a reference font and is built to be driven by coding agents like Codex, Claude Code, and Hermes. (The harness gets its own section below.)
-
-### 06. Tuning for Different Inputs
-
-A trace is tuned along three independent axes that compose freely: the **profile** (what the source image is), the **style** (what the drawing is), and the output **mode** (the next section).
-
-The **profile** matches the input's image quality. img2bez ships three:
-
-- **`wild`** (the default) targets unknown rasters, such as a ~1024×1024 image from an AI image API, the case the demo above runs. It uses a looser curve-fit tolerance, which avoids adding extra on-curve points to track anti-aliasing noise in the source.
-- **`clean`** targets high-resolution renders of existing fonts. It uses a tighter tolerance so the trace follows sharp edges closely.
-- **`photo`** targets soft, low-contrast scans of printed type. It blurs the *image* before the boundary is extracted, so a rough inky edge is traced through a clean edge instead of through every wobble of the ink.
-
-The profile is **auto-detected** by default, and forced with `--profile`. Detection reads a few cheap, no-reference features from the image (resolution, an edge-sharpness measure like the [variance of the Laplacian](https://opencv.org/blog/autofocus-using-opencv-a-comparative-study-of-focus-measures-for-sharpness-assessment/), a noise estimate, and how close to bilevel it is, all printed by `img2bez stats <image>`) and recognizes the soft-scan class by its low sharpness and low contrast, far from the crisp-render regime. The effect is concrete: a soft letterpress `a` traces to about 69 on-curve points under the base settings, and to a clean 23 once it is detected as `photo`.
-
-The **style** is the drawing style of the letterform, layered on top of the base. The base already traces a grotesk (a Helvetica-class monolinear sans) well, since that is the most common and important case, and the named styles (`grotesk`, `old-style`, `geometric`, `brush`, `nib`, `qalam`) add design-specific refinements on top as each is developed. Unlike the profile, the style is **declared, not detected**: a drawing style is design intent, not something measurable from one raster.
-
-```bash
-img2bez --input glyph.png --output MyFont.ufo --name a --profile photo --style old-style
-```
-
-In Runebender the same controls sit in the image's trace menu (a Profile selector, a Style dropdown, and an output Mode), so a trace is tuned and re-run without leaving the editor.
-
-Independent of the profile, the pipeline normalizes two common input conditions before fitting:
-
-- **Nearest-neighbor upscales.** An image enlarged with nearest-neighbor sampling has its anti-aliasing quantized into uniform pixel blocks. img2bez detects this and downscales to the original resolution before tracing.
-- **Low-resolution glyphs.** A small glyph is smooth-upscaled first, so the sub-pixel tracer reads anti-aliased edges rather than hard pixel steps.
-
-The individual settings behind the profiles stay exposed as knobs, for tuning by hand or by an agent: `--smoothing` and `--corner-threshold` adjust how hard the boundary is smoothed and how sharp a turn must be to count as a corner, and `--pre-blur` sets the image blur the `photo` profile applies automatically. Raise them for noisy or degraded sources, lower them to track clean art tightly.
-
-The soft-scan detection is the first piece of a broader `auto` mode, and widening it across the whole space of inputs is the next real piece of research. The plan rests on one observation: choosing settings well requires a way to *measure* the choice, which means a corpus with known answers. The eval harness already scores traces against a hand-drawn reference; extending it with controlled *degradation* (taking known-good outlines and rendering them downscaled, blurred, JPEG-compressed, noised, bilevel, and halftoned) produces (degraded image → known-correct outline) pairs across the whole space of input quality. Because each image is generated from a known outline, the right answer is known, which is exactly what lets a setting-selector be tuned and validated.
-
-On that foundation a default `auto` mode reads a few cheap, no-reference signals from the image (glyph resolution, an edge-sharpness measure like the [variance of the Laplacian](https://opencv.org/blog/autofocus-using-opencv-a-comparative-study-of-focus-measures-for-sharpness-assessment/), a noise estimate, and how close to bilevel it is) and maps them to the fit tolerance, smoothing, and corner sensitivity that scored best for that kind of input. The mapping starts as plain rules derived from the corpus (not hand-guessed) and graduates to a tiny learned selector (the [small parameter-prediction networks](https://arxiv.org/pdf/2112.09318) used in camera pipelines are the same shape) only if rules leave quality on the table. Either way it stays a *selector*: it chooses settings for the deterministic tracer; it never becomes a model that draws the outline. That keeps img2bez fast, deterministic, and embeddable: the properties the whole tool is built on, and the reason it can run client-side in the browser.
-
-Two honest limits. At production time there is no reference, so the selector predicts from measured features and self-checks against the input raster (does the trace reproduce it?) plus intrinsic structure (point count, horizontal/vertical handles), a confidence signal, not a guarantee. And *drawing style* (inktraps, sharp versus rounded terminals) is design intent, not image quality, which is why it is a declared *style* rather than something inferred from a single raster. The AI harness does the heavy thinking offline (searching the settings space, tuning the rules against the corpus); the tracer in the loop stays a fast procedural step.
-
-### 07. Design-Constraint Modes
-
-Sometimes the constraint is not the input but the *output*. A design may call for one point style throughout, regardless of what the source suggests, so img2bez has trace modes that re-shape the finished outline under a constraint.
-
-`--mode smooth` makes every on-curve point a smooth point and every segment a curve: no corners, no straight lines. The trick is that it keeps the *fitted* curve and only aligns the two handles at each vertex to a continuous tangent, so corners round into the flow instead of the shape distorting into a wavy blob. The result is the consistent, organic outline a soft or rounded design wants, drawn the same way everywhere.
-
-`--mode line` does the opposite: it flattens every curve to straight line segments with no off-curve points, for a polygonal outline.
-
-Both run as a post-pass on the finished trace, so they compose with everything else, like `--mode smooth` on a pre-blurred old-style scan. More modes are the same shape of transform (all-quadratic for TrueType, or monoline), and a mode pairs naturally with a per-design-class style preset.
-
-### 08. Variable Fonts: Masters that Interpolate
-
-A variable font is built from masters (a Regular and a Bold drawing of each glyph, say) and the renderer interpolates between them by moving every point independently along its delta. That only works if the masters are *compatible*: the same contours, the same number of points, in the same order, of the same type. Generating a variable font from images means producing one raster per master and tracing each, and those traces are made independently, so nothing guarantees they line up.
-
-Most of the time they do. Because img2bez places points by structural rule (extrema, corners, inflections, in a consistent order), the same letter traced at two weights usually comes out with the same point structure already; an `o` or an `a` needs no further work. The cases that don't line up are the ones where the shape itself changed: an inflection present at one weight and flat at another, a feature one master picks up that the other lacks.
-
-For those, img2bez has an explicit reconcile pass. Given a set of independently traced outlines, it matches their contours, normalizes the winding direction and start point, and where one master is missing an on-curve point another has, inserts the corresponding point by splitting that segment at the same position along the outline. It also unifies segment types (if a side is a straight line in one weight and a slight curve in another, both become curves), so the on/off-curve pattern matches everywhere. The one thing it will not do is bridge a different *number* of contours: that would mean inventing a counter, which is a generation error rather than a reconciliation, so it is reported incompatible instead.
-
-The pass always emits compatible structure, but it also reports its confidence. When the point counts already match, the correspondence is exact. When it has to insert points, it is guessing correspondence by position, so it flags those contours low-confidence. That flag is the point for an unsupervised pipeline: an agent can trust the clean cases and route the flagged ones back for review or regeneration, instead of silently shipping a master that interpolates into a mess at the in-between weights.
-
-Headlessly it is one command per glyph, no editor in the loop. It reads the masters and their metrics from the font's [designspace](https://fonttools.readthedocs.io/en/latest/designspaceLib/index.html), so you hand it a folder with one image per master (each file named for its master) and the target band in the font's own terms:
-
-```bash
-img2bez masters VirtuaGrotesk.designspace \
-  --glyph germandbls --unicode 00DF \
-  --images germandbls/ \
-  --fit descender:cap
-```
-
-It matches each master to its image (`Regular.png`, `Bold.png`, and so on, by the master's name, so the same flag works whether a font has two masters or twenty), fits each into the `descender:cap` band the font's metrics define, reconciles them into one shared point structure, and writes the glyph into every master UFO with that weight's own advance width: interpolation-compatible, ready to compile. Pass `--format json` and it returns the outlines and the compatibility report instead of writing, for a pipeline that wants to place them itself; and a sibling `new-font` command scaffolds the designspace and master sources from scratch, so an agent can take a font from nothing to interpolating masters without opening an editor.
-
-For an automated loop the exit status and report are the contract: a non-zero exit means the masters could not be reconciled (a different contour count, say): regenerate the failing image and retry; a `lowConfidence` flag in the report means a point was placed by a guessed correspondence: accept but review, or regenerate; otherwise the masters are compatible and ready to compile.
-
-### 09. An API for Other People's Tools
-
-img2bez is most useful as a dependency inside something else: a desktop or web font editor, a font-production script, or an AI agent building sources on its own. So the API is built around one rule: **tracing a shape and placing it into a font are two separate jobs, and you should be able to do the first without committing to the second.**
-
-The pipeline is three explicit stages. `trace()` answers *what contours are in this image?* and returns just the outline, drawn at a standard em scale but not yet positioned. `place()` answers *where does it belong in this font?* It never guesses: you tell it which part of the image is the glyph (the whole canvas, or just the detected ink), which vertical band the ink should fill (baseline-to-cap, descender-to-ascender, or a custom range), and how to set the sidebearings and advance (explicit numbers, a fixed advance, centered, or copied from a neighboring glyph). A final stage attaches the name and codepoints and hands back a UFO-faithful glyph. img2bez never infers typography from a codepoint; placement is a decision, and it stays yours.
-
-Keeping the stages apart is what lets each caller place in its own terms. A font editor positions glyphs against the metrics already open in the document; an agent regenerating one glyph copies the vertical fit and sidebearings from its neighbors. It also fixes the case that breaks a naive tracer: a generated image arrives with arbitrary padding around the letter, so mapping the whole canvas into the em puts the glyph at the wrong size and off the baseline. Fitting *detected ink* into an explicit band instead is resolution- and padding-independent (the same letter lands in the same place whether it came in tightly cropped or floating in whitespace), and every placement returns a report (the ink box it found, the scale and offset it applied, the resulting bounds and sidebearings) so a headless caller can check the result without rendering it.
-
-Everything the tracer produces is one type that follows the [UFO point model](https://unifiedfontobject.org/). UFO is the core open font-source format, and img2bez is font-specific, so parity with it is the goal. A glyph is just contours of points, each with a position, a UFO point type, and a smoothness flag. It's plain data with no library-specific types, so it serializes straight to JSON and converts losslessly to whatever a consumer needs: `kurbo` paths for Rust, GLIF for font pipelines, an SVG path for a preview. One model, many front ends, and it keeps the smoothness flag a raw bézier path can't.
-
-The same core is exposed four ways, running the identical pipeline so the output is byte-for-byte the same no matter how you reach it:
-
-- a **Rust crate** for native tools,
-- a **WASM build** with JavaScript bindings (`traceToJson`, `traceToSvg`, `traceToGlif`, `tracePlaceToJson` for the trace-and-place path, and `traceWithJudge` for the reference-free quality score the demo above prints) for the browser,
-- a **CLI** that can emit UFO, GLIF, JSON, or SVG to a file or stdout, with flags to fit detected ink into a target band and copy metrics from a reference glyph, for scripts, and
-- an **[MCP](https://modelcontextprotocol.io) server** (in [`mcp/`](https://github.com/eliheuer/img2bez/tree/main/mcp), stdio JSON-RPC) exposing a `trace_glyph` tool, so an AI agent can call the tracer natively ("trace this image, fit it like the *b*, and give me the outline").
-
-For a web editor the integration is small. You hand the WASM the image bytes and get back the glyph as JSON, with codepoints as a `unicodes` array, an `advance`, and an `outline` of contours of points, where on-curve points carry a `type` and off-curve points omit it:
-
-```json
-{
-  "name": "Q",
-  "unicodes": ["0051"],
-  "advance": { "width": 896 },
-  "unitsPerEm": 1024,
-  "outline": {
-    "contours": [
-      { "points": [
-        { "x": 448, "y": 752, "type": "curve", "smooth": true },
-        { "x": 208, "y": 752 },
-        { "x": 64,  "y": 576 },
-        { "x": 64,  "y": 336, "type": "curve" }
-      ] }
-    ]
-  }
-}
-```
-
-Map those points into your editor's own point model, place the glyph with your own metrics, and you are done: no XML parsing, no bézier math, no UFO dependency on the client. And because the JSON is a one-to-one projection of UFO, anything you build against it speaks the same structure as the rest of the font ecosystem.
-
-None of this is free. One canonical model plus four surfaces is more to maintain than a single function that returns whatever was convenient, and the indirection costs a little ceremony for the simplest "just trace a file" case. The bet is that the alternative, a tracer welded to one application's coordinate system and one output format, is exactly what makes every other tool write its own tracer instead of adopting yours. The whole point of img2bez is to be the shared one, so it is worth the extra surface to make it embeddable everywhere.
-
-That is also the pitch to anyone building a font tool. img2bez is open source under the permissive Apache-2.0/MIT license shared by the [`kurbo`](https://github.com/linebender/kurbo) and [Linebender](https://linebender.org) ecosystem it builds on, so adopting it carries no lock-in. The tracer is one piece of the AI type-design startup I'm building, and it gets better for everyone's glyphs as it gets better for any one tool's, so if you're building something serious on it, I'd rather build the parts you need with you than have you fork it.
-
-### 10. Measuring "Draws Like a Designer"
-
-Evaluation, not the tracer, is the hard part of this project. "Draws like a designer" is hard to quantify, so the eval harness measures it: it scores each traced outline against a hand-drawn reference font.
-
-img2bez is developed against a reference font I drew, [Virtua Grotesk](https://github.com/eliheuer/virtua-grotesk) (the typeface this post is set in), in a loop: render each hand-drawn glyph to a bitmap, trace it back, and compare the result to the original *structurally* (point counts and placement, lines vs. curves, H/V handles, how many reference points the trace hit). The specimen sheet below is that comparison made visible and is used for human review of the eval loop. An automated gate rejects any change that drops a glyph's structural score below its baseline.
-
-![An img2bez specimen sheet: the reference outlines (top row) against the traced output (bottom row), with point structure, rendered previews, and overlay diffs.](./specimen-a.png)
-
-Across basic Latin (a–z, A–Z, 0–9) the mean structural score is currently **0.967**, with 14 glyphs reproducing their reference outlines exactly and all 62 passing the gate. Per-glyph numbers are in [docs/quality.md](https://github.com/eliheuer/img2bez/blob/main/docs/quality.md).
-
-That single font is where the tracer is tuned tightest, but it is no longer the only thing it is measured against. A separate font-corpus eval renders real, open-licensed fonts to bitmaps, traces them, and scores each trace against the font's *own* outline. The corpus spans 27 masters across more than a dozen families and three scripts (Latin, Arabic, and Hebrew: Rubik, Inter, Amiri, Spectral, Source Serif and Sans, EB Garamond, and more), under a hard rule that no change may improve one family by trading away another. A real font's outline already records where the designer put every point, so this yields ground-truth structure for free, at a scale no hand-drawn reference can reach; per-font mean shape overlap (IoU) currently runs in the high 0.90s. It is also the corpus that trained the first learned head, below.
-
-The eval harness is also what makes agentic development work, and most of the recent progress came from running it in a loop. An agent proposes one change (a new threshold, or a tweak to the fitting code), a script re-scores the whole reference font on raster overlap and structural match, and the change is committed if the mean improves or reverted if it regresses. The junction-flat idea took about a dozen of these rounds in an afternoon. Two of them scored well for the wrong reasons and were caught by the per-glyph diff; without the harness I would have shipped those bad versions.
-
-Because the loop is fully automated, you can point an AI agent at it (cloud tokens or a local model) and let it run overnight or on a cloud machine, improving the tracer while you work on something else. I had been developing img2bez for a while before Fable 5 was briefly available, and running these loops with it overnight produced some of the biggest gains.
-
-Running it yourself is a few commands from the repo root:
+Running it on one font takes two commands, from an img2bez checkout (with a [designbot](https://github.com/eliheuer/designbot) checkout alongside it for the drawing):
 
 ```sh
-./eval-harness/setup.sh            # one-time env setup
-./eval-harness/run_experiment.sh   # score all glyphs
-./render-specimen.sh --text "a"    # specimen for one glyph
+cargo install --path eval-harness/structure-compare
+structure-compare path/to/Font.ufo
 ```
 
-Because the harness reports a single score, it makes a good target for agentic goal-setting like Codex's `/goal` command, which can run the loop toward it on its own.
+The sheets and a machine-readable `summary.tsv` (per-glyph point counts, plus kink, shallow-corner, and handle-geometry scans) land in `~/Desktop/structure-compare/<font>/`, ranked worst-first so the biggest structural misses sit at the top.
 
-### 11. Judging a Trace Without a Reference
+That ranking is what makes agentic development work, and most of the recent progress came from running it in a loop. The summary is just text, so you point an AI agent at it: read the worst rows, change one thing in the tracer, re-install, re-run, and keep the change only if the structure scores improve. An agent can grind that loop overnight while you work on something else. It runs against any OFL or CC0 font, or your own private synthetic data, spanning as many families and scripts (Latin, Arabic, Hebrew) as you point it at, under a hard rule that no change may improve one family by trading away another. This same eval is also what trained img2bez's first shipped ML model: a tiny model that makes one structural call too subtle for a fixed rule, described below.
 
-The eval harness scores a trace by comparing it to a known reference outline. At production time there is no reference: the input is an arbitrary image, and the question is still "is this trace good?" Answering that without a ground truth is what makes input adaptation possible, because choosing settings well requires a way to measure the choice.
+### 10. Judging a Trace Without a Reference
 
-img2bez scores a candidate trace two ways, both reference-free. The first is reproduction: render the traced outline back to a bitmap and take its intersection-over-union against the thresholded input. This is the same objective the refinement pass uses, and it measures whether the outline covers the right pixels. The second is structure: regularizers that encode the type-design rules with no reference needed. The fraction of handles leaving exactly horizontal or vertical, a penalty for vestigial micro-segments (the cluster of points that litters an over-traced terminal), and a parsimony term against too many points per unit of outline.
+The eval harness scores a trace against a known reference. At production time there is no reference, just an arbitrary image, and the question is still "is this trace good?" img2bez answers it two ways, both reference-free. Reproduction: render the traced outline back to a bitmap and measure how well it covers the input's pixels. Structure: regularizers that encode the type-design rules directly, like the fraction of handles leaving horizontal or vertical and a penalty for the cluster of stray points that litters an over-traced terminal.
 
-The two have to be balanced, because the interesting failure mode scores well on one and badly on the other. A trace that chases every wobble in a soft scan reproduces the pixels almost perfectly, but with three times the points a designer would use. On a soft photographic `a`, the over-segmented 69-point trace scores *higher* on reproduction than the clean 23-point one, and lower overall, because the structure terms catch what the pixel score rewards. That combined score is the judge, and it now ships in the binary (a port of the eval harness's `score_wild.py`) with a WASM binding the demo at the top of this page calls on every trace: the `judge` value printed under each result is exactly this score.
+The two have to be balanced, because the interesting failure scores well on one and badly on the other. A trace that chases every wobble in a soft scan reproduces the pixels almost perfectly with far more points than a designer would use: it wins on reproduction but loses on structure, so the combined score catches it. That combined score is the **judge**, and it ships in the binary and the browser; the `judge` value under the demo above is exactly this. A reference-free score also changes how settings get chosen: rather than predict the right preset, the tracer can try a few, judge each, and keep the best, since a deterministic trace is cheap to run.
 
-A reference-free judge changes how settings get chosen. Instead of predicting the right preset from image features, the tracer can trace under a few candidate presets, judge each, and keep the best. Search beats prediction when the search is cheap, and a deterministic trace is cheap. The judge also runs offline against a corpus of degraded glyphs with known answers, which is how the fast procedural rule that ships in the hot path gets calibrated: the expensive search happens during development, not on every trace.
+### 11. How Small Is the Model?
 
-None of this puts a model in the loop that draws the outline. The judge, and any learned selector built on it, only scores results or picks settings for the deterministic tracer. A selector small enough for this job is a few kilobytes of weights and a short matrix multiply, which compiles to the same fast, dependency-free code as a hand-written rule. The distinction that matters is not procedural versus learned, it is whether the model draws or only decides. Here it only decides.
+When people hear "machine learning" next to "AI image to font" they picture something large. img2bez's models are the opposite: small enough to count the parameters by hand, shipped as constants inside the binary rather than files loaded at runtime, a few nanoseconds per call and bit-for-bit deterministic, with no GPU and no ML runtime dependency. They are tiny decision heads, one at each pipeline gate that used to be a bare threshold: keep or drop a corner, weld a cusp or leave it, anchor a point at an inflection or not. Each is a few thousand parameters at most, and the whole set is budgeted under 100 KB. Each ships opt-in behind a flag while it is measured against the rule it might replace, and with every head off the output is byte-identical to the hand-tuned pipeline.
 
-### 12. How Small Is the Model?
+The first now ships: a corner keep/drop head, trained offline against real font outlines and exported as a `const` array of shallow trees. "The model" is a header file. You can compare it to the rule yourself, since the demo above has a **Corners** control that switches between them on every trace, and the structure view shows where they disagree.
 
-When people hear "machine learning" next to "AI image to font," they reasonably picture something large. The models img2bez trains are the opposite. They are small enough to count the parameters by hand, and they ship as constants inside the binary rather than as files loaded at runtime: hand-rolled tree-walks and matrix multiplies over features the pipeline has already computed, with no ONNX runtime and no `candle` or `tch` dependency, a few nanoseconds per call and bit-for-bit deterministic.
+The point of keeping them this small is the line it draws. The image you drop in may have come from a model with billions of parameters; the models that decide how to trace it have a few thousand. One is a probabilistic artist, the others are deterministic dispatchers that only ever decide, never draw. A network that emits curves would be stochastic and heavy, the opposite of what a tracing tool needs, so the drawing stays procedural and the learned parts only choose. They can be that small because the hard work is already done: the tracer turns pixels into clean curves on its own, and all that is left for a model is a low-dimensional nudge.
 
-The design is a set of tiny task-specific heads, one at each pipeline gate that used to be a bare threshold comparison: keep or drop a corner candidate, resolve a cusp as a weld or a flat or a smooth point, anchor a point at an inflection or not, read a straight run as a designed line or a curve fragment. Each is a gradient-boosted tree ensemble or a two-layer network of at most a few thousand parameters; the whole set is budgeted to fit in well under 100 KB. Each ships opt-in behind a flag while it is measured against the procedural rule it might replace, and with every head off the output is byte-identical to the hand-tuned pipeline.
+### 12. Early Days, and an Invitation
 
-The first of these now ships. The corner keep/drop head is trained offline against real font outlines and exported as a `const` array of a couple hundred shallow trees; it rides in the binary behind `IMG2BEZ_CORNER_HEAD`, takes seven precomputed features in and returns one score, and walks its trees in a few nanoseconds. A golden test checks that the Rust tree-walk reproduces the Python model it was trained from to within float noise. It is small enough that "the model" is a header file, and it is the whole thesis made concrete: a learned decision shipped as data inside a deterministic tracer, with no runtime, no GPU, and no change to how the tool is deployed. You can compare the two yourself: the demo at the top of this page has a Corners control that switches between the hand-tuned rule and the learned head on every trace, and the structure view shows where they disagree about points.
+img2bez is early, alpha-stage software, and the ML is new: a couple of small models ship so far, each behind a flag while it proves itself against the rule it might replace. I'm also training img2bez-specific LoRAs for open-weight image models, so by the end of the summer this should be a fully open-source pipeline you can run locally on a high-end gaming GPU: generate the glyph rasters and trace them into a font source, with no cloud in the loop, fully ready to be onboarded to Google Fonts and passing all the QA requirements.
 
-The selector is the same shape, still procedural for now. It reads a cheap summary of the input image (edge sharpness, noise, how anti-aliased the edges are, the glyph's size in pixels) and chooses the trace settings. Mapping four numbers to four is a tiny function: as a rule it is a handful of thresholds; learned, it is a two-layer network of about seventy-five weights, a few hundred bytes. The judge from the previous section is the same scale again, a handful of weights balancing reproduction against structure. The corner head is simply the first of these gates where a learned model took over from the rule.
+I plan to keep pushing it. I'm building a startup in AI type design, and this Rust library is the core of its data pipeline. I'm also currently unemployed, so if your company wants font AI tech built, you can hire me to build it.
 
-Only one role would ever be large: a model that draws the outline itself, and it is exactly the one img2bez keeps out of the loop. A network that emits curves is stochastic and heavy, the opposite of what a type designer needs from a tracing tool, where the same input has to give the same output every time and run locally. So the drawing stays procedural and the learned parts only decide.
+A note on the obvious objection: I have no moral qualms about automating type design with AI. Type design as a profession was itself created by a world changing automation machine. The printing press put the manuscript scribes out of work five hundred years ago; anyone who takes the craft of type design seriously has to have some appreciation for disruptive technology. I've argued at length that this kind of disruption spreads value out rather than erasing it in [Diffuse Value Capture](/blog/diffuse-value-capture).
 
-The deciders can be small because the hard work is already done. The tracer turns pixels into clean curves on its own; what is left for a model is a low-dimensional nudge (keep this point or not, fit tighter or looser) from a cheap description of the image. The contrast is worth stating plainly: the image you drop in may have been generated by a model with billions of parameters, and the models that decide how to trace it have a few thousand. One is a probabilistic artist, the others deterministic dispatchers, and keeping them on opposite sides of that line is the point.
-
-There is a standard name for this distinction. A model that produces new content is generative; a model that takes content and returns a label, a score, or a choice is discriminative. The learned parts of img2bez are all discriminative. The selector reads image features and returns settings; the judge of the previous section reads a trace and returns a quality number. The judge is an instance of what the AI-engineering literature calls an AI judge or evaluator model, the familiar idea of using one model to grade another's output, scaled down here to a few weights and a fixed rubric. Naming it this way sets expectations: discriminative models are smaller, cheaper, and deterministic in a way generative ones are not, which is precisely what lets them ride inside a tracer that has to give the same answer every time. The shorthand for the whole approach is small discriminative models: a set of decision heads and a judge, never a generator.
-
-What is left is data, not model size. The corner head could ship because its labels were free: a real font's outline already says where the corners are (the next sections). But the labels that matter most, and are hardest to come by, are the judgment calls on soft scans of printed type where the edge is textured rather than clean, which no font outline and no synthetic degradation reproduces. So the current work is deliberately unglamorous: trace real images under a range of settings, keep the ones that come out right, and let each kept result become one row of the table the next head will fit. Until the selector's table is that full, the procedural rule stands in for it, and making that rule better is its own reward.
-
-### 13. Learning the Cleanup From Designers
-
-Tracing a clean printed letter is easy. The judgment comes in on a rough one. When the source is a soft scan, its inked edge is bumpy, and the tracer faithfully puts a point at every bump. A cleanup pass removes the obvious noise, but the last point or two are a real decision: a redundant point that should go and a useful point that should stay can look identical to the math. Both are smooth, both sit about the same tiny distance off the ideal curve. The only thing that tells them apart is what a designer intends, and no fixed rule can see intent.
-
-So the plan is to learn that intent from designers instead of guessing at it. The mechanism is already proven: the corner keep/drop head from the previous section is exactly this kind of model, shipping today on labels a font's own outline supplies for free, and designer cleanup is how a head learns the calls those clean outlines cannot teach, the keep-or-drop decisions on a rough scan that come down to taste. When you trace an image and then clean up the result by hand, your cleaned version is an example: every point you kept is a "keep," every point you removed is a "remove." A small model can learn from those examples to answer one narrow question. Given a point like this, in a context like this, would a designer keep it? It reads the same simple measurements the cleanup already computes, how far off the curve the point sits, how sharp the turn is, where it falls in the letter, and predicts the call.
-
-In practice the loop is small. You trace an image, open the result in a font editor, and fix the points the way you would want them, dropping the few the tracer left behind and nudging any that sit wrong. Save, and that cleaned outline is one example. There is no separate labelling step, because the cleanup is the label. A few dozen of these, across a range of letters and scan qualities, is enough for the model to start predicting the call.
-
-This keeps the same shape as everything else in the tool. The model decides which points to keep; it never draws the letter. It stays tiny and runs locally, and it learns from your own work rather than from a guess baked into the code. It is the opposite of the generative approach, where a large model tries to draw the whole glyph and, for Latin type at least, mostly produces something blurry. We leave the drawing to the procedural tracer, which is good at it, and only learn the small decisions it cannot make on its own.
-
-The data comes for free. Every time a designer cleans up a trace, that is a new example, and the tool gets a little better at the kind of letters that designer works on. The hard part a fixed rule cannot reach is exactly what a few dozen hand-cleaned examples can teach.
-
-### 14. The Data Engine
-
-Every learned part of the tool, the selector that picks settings, the judge that scores a trace, the classifier that decides which points to keep, is only as good as the examples it learns from. Early on I assumed those examples could be synthetic: take a clean reference glyph, degrade it with blur and noise and low contrast, and trace the result. It did not work. The degradations a script can apply are smooth, and a real scan of printed type is not. Its edge carries ink texture and paper grain, and that texture is exactly what makes the hard cases hard. A synthetic corpus taught the model to handle problems it would never meet and to miss the one it always would. The bottleneck was never the model. It was the data.
-
-There is, though, one source of correct answers that costs nothing and involves no scanning at all: a real font's own outline. Render an existing open-licensed font to a bitmap, trace it, and align the trace back to the font's true contours, and every decision the tracer made has a ground-truth label for free: the designer already placed the corners, the extrema, and the handles, and the outline records exactly where each one goes. img2bez-data does this across 27 masters spanning more than a dozen families and three scripts, turning each font into millions of labeled decisions with no human in the loop. This is not the smooth synthetic degradation that failed; it is real type, drawn by designers, used as its own answer key. It is the corpus that trained the corner head that now ships, and the pretraining set every later head will start from.
-
-The font corpus gives structure at scale, but not taste: it records where Rubik's designer put a point, not which point a human would keep on a rough scan of type it has never seen. For that the tool also collects real data as a side effect of being used, in three streams that feed each other.
-
-The first is a trace log. Every trace can append one line recording what it saw and what it did: the cheap image measurements (edge sharpness, noise, how anti-aliased the edges are, the glyph's size in pixels), the settings it ran with, and the resulting point counts. Across a real tracing session this builds a record of which kinds of input got which treatment, the raw material for learning the selector. It stays opt-in and off by default; the aim is to learn from real work, not to record everything.
-
-The second is hand-cleaned targets. When a designer traces an image and cleans up the outline, that cleaned version is a labeled example, as the previous section described. These are the gold data: a human's judgment of what the trace should have been, on a specific real image. A few dozen, spread across letters and scan qualities, is enough to start training the keep classifier, and they are the only source for the judgment a fixed rule cannot encode.
-
-The third is an eval loop that measures progress against those targets. Given a target, the harness scores any trace against it: how close the point count is, how far each point sits from where the designer put it, how well the two filled shapes overlap. That turns "is this better?" from an argument into a number, and every change to the tracer or the cleanup is scored against the whole set, so a tweak that helps one letter and quietly breaks another is caught instead of shipped. It is the same loop that drove the development above; pointing it at human targets instead of a reference font only changes what "correct" means.
-
-Together these are a flywheel. Using the tool produces traces and cleanups, those become data, the data improves the models, and better models mean less cleanup, which makes the tool more useful, which brings more use. None of it changes the shape of the system. The models that come out the far end are still tiny, still deterministic, and still only decide. The data engine is just how they learn what a designer would do, from designers doing it.
-
-### 15. What the First Training Runs Found
-
-The corpus described above stopped being a plan and became data: overnight runs now trace every glyph of 26 masters and label every gate decision against the font's own outline, about 2.4 million labeled corner decisions so far, plus smaller sets for the inflection, line, and merge gates. Training against it taught five things worth writing down, and not all of them are flattering.
-
-First, scale did more than tuning. The first corner head, trained on one label pass, actually made real-world images worse: on a 104-image corpus of wild inputs (photos, scans, screenshots) it cost a hundredth of a point of quality. Retraining the identical model on 54 times the data flipped the sign, and the head now beats the hand-tuned rule on exactly the inputs the tool is named for. Nothing else changed. Same seven features, same 60 KB of trees.
-
-Second, the learned boundaries transfer across designs. Held out entirely from training, Source Serif's corner decisions are predicted at 99.6 percent where the procedural rule manages 46.7; Merriweather and Inter behave the same way. The failures cluster too: hand-drawn and brushy designs (Shantell Sans, Recursive Casual) sit ten points behind everything else in every experiment. That tail is the concrete case for the style-conditioning stage, a small embedding that tells every head what kind of design it is looking at, because no amount of additional serif data will teach a model what a marker pen intends.
-
-Third, the most important result was about measurement, not models. The per-candidate numbers said the procedural gate agreed with reference fonts only 46 percent of the time, which made the rule look broken. Clustering candidates into curvature zones, one decision per zone the way a designer sees it, put the same gate at 93 percent. The rule was never as bad as the metric claimed; the metric was counting each disputed zone ten times. The honest target is also richer than keep-or-drop: each zone in a real font is one of four designed structures, a sharp corner, a rounded corner drawn as two smooth points bracketing a tight arc, a single smooth point, or nothing. A quarter of all the labels collected are those bracketed round corners, which the binary framing simply discarded. The next head classifies the zone, not the candidate.
-
-Fourth, a negative result: the inflection gate refused to be learned, and the reason matters. Only four percent of curvature crossings get an anchored point from a designer, and neither the rule nor a model can predict which from the features logged today (both score under 0.2 on the metric that matters for a rare class). The lesson is that a label has to match a decision's purpose. "Is a designer's point near here" is the right question for corners; for inflections the honest question is whether anchoring improves the fit, which is not something a reference lookup can answer. Not everything in the pipeline is a learning problem yet, and pretending otherwise would just launder thresholds through a model.
-
-Fifth, evaluating at this scale is a bug-finder in its own right. Full-font runs hung the tracer on six glyphs out of tens of thousands, which turned out to be two independent non-termination bugs in the optimal curve fitter of the excellent geometry library underneath img2bez, both reproducible on its latest release with clean, well-formed input. The fitter that replaced it is internal, bounded by construction, and scored slightly better on the structural gates than the one it replaced. A deterministic, inspectable pipeline is what made that diagnosis a morning's work instead of a mystery; it is the same property that makes the learned heads safe to ship.
-
-The bar for the next step is set in advance: the zone classifier replaces the procedural gate as the default only when it worsens zero glyphs on the structural gate and improves the wild corpus at the same time. Until a head clears that bar it stays opt-in, the rules stay the default, and every run that misses publishes its per-glyph failure table to the data repo instead of a threshold tweak to the tracer.
-
-### 16. Early Days, and an Invitation
-
-img2bez is early, alpha-stage software. It still over-segments low-resolution sources and is tuned against a single reference font, so how much of what it has learned generalizes is unproven. Its scope is also deliberately narrow: it traces one glyph from a single luma channel, with no color, no composite glyphs (accented letters assembled from component references), and no hinting. I plan to keep improving it: I'm building a startup in AI type design, and this Rust library is a core part of its data-engineering pipeline. If you work on font tooling, curve fitting, or tracing, I'd welcome your feedback. The repo is [github.com/eliheuer/img2bez](https://github.com/eliheuer/img2bez), issues and PRs are welcome, and I'm on the [Linebender Zulip](https://xi.zulipchat.com); this post is [a file on GitHub](https://github.com/eliheuer/elih.net/blob/main/src/content/blog/img2bez/index.mdx) too, so suggestions can come as a PR.
+If you work on font tooling, curve fitting, or tracing, I'd genuinely like your feedback. The repo is [github.com/eliheuer/img2bez](https://github.com/eliheuer/img2bez); issues and PRs are welcome, I'm on the [Linebender Zulip](https://xi.zulipchat.com), and this post is itself [a file on GitHub](https://github.com/eliheuer/elih.net/blob/main/src/content/blog/img2bez/index.mdx), so a suggestion can come as a PR.

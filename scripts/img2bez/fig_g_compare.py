@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Figure: vtracer vs img2bez, side by side, morphing Regular <-> Bold.
 
-Section 03 of the img2bez post. Both panels trace the same Helvetica G pair
+Section 03 of the img2bez post. Both panels trace the same neo-grotesk G pair
 (inputs/G-{regular,bold}.png) and render in the same Runebender point
 language; the difference on screen is purely where the points sit. Left:
 vtracer at its cleanest settings — a smooth silhouette, but a couple hundred
