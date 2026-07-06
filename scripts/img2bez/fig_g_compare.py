@@ -28,7 +28,9 @@ from drawbot_skia.drawing import Drawing
 HERE = Path(__file__).resolve().parent
 REPO = HERE.parents[1]
 BUILD = HERE / "build" / "g-compare"
-OUT = REPO / "public" / "demos" / "img2bez" / "g-compare.mp4"
+# Lives next to the post so Astro content-hashes it (cache-busts on change),
+# not in public/ where it would sit at a stable, cacheable URL.
+OUT = REPO / "src" / "content" / "blog" / "img2bez" / "g-compare.mp4"
 
 W, H, BOX = 1300, 748, 600
 PANEL_Y = 66
