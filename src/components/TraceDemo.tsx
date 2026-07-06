@@ -151,7 +151,9 @@ export default function TraceDemo({ image = "/demos/img2bez/a.png", glyph = "a",
   const [traceProfile, setTraceProfile] = useState<"auto" | "photo" | "clean">("auto");
   const [traceStyle, setTraceStyle] = useState("basic");
   const [traceMode, setTraceMode] = useState<"default" | "smooth" | "line">("default");
-  const [cornerHead, setCornerHead] = useState(false);
+  // Corner decision source: procedural rules, the candidate-level
+  // learned gate (v1), or the zone-level 5-class site head (v2).
+  const [cornerModel, setCornerModel] = useState<"rules" | "cands" | "zones">("rules");
   const drag = useRef<{ x: number; y: number } | null>(null);
 
   // Load the current image and measure its glyph box.
@@ -189,9 +191,10 @@ export default function TraceDemo({ image = "/demos/img2bez/a.png", glyph = "a",
             profile: traceProfile === "auto" ? "wild" : traceProfile,
             style: traceStyle,
             mode: traceMode,
-            // "Learned" drives the 5-class site head (the better model);
-            // it supersedes the corner gate in the tracer.
-            siteHead: cornerHead,
+            // Candidate-level learned gate (v1) vs zone-level 5-class
+            // site head (v2); the site head supersedes the gate when on.
+            cornerHead: cornerModel === "cands",
+            siteHead: cornerModel === "zones",
           }),
         ),
       );
@@ -204,7 +207,7 @@ export default function TraceDemo({ image = "/demos/img2bez/a.png", glyph = "a",
     } finally {
       setBusy(false);
     }
-  }, [src, glyph, unicode, traceProfile, traceStyle, traceMode, cornerHead]);
+  }, [src, glyph, unicode, traceProfile, traceStyle, traceMode, cornerModel]);
 
   const draw = useCallback(() => {
     const canvas = canvasRef.current;
@@ -833,13 +836,24 @@ export default function TraceDemo({ image = "/demos/img2bez/a.png", glyph = "a",
         <div>
           <span style={fieldLabel}>Corners</span>
           <div style={segWrap}>
-            {([false, true] as const).map((on) => (
+            {([
+              ["rules", "Rules"],
+              ["cands", "Learned v1"],
+              ["zones", "Learned v2"],
+            ] as const).map(([key, label]) => (
               <button
-                key={String(on)}
-                style={seg(cornerHead === on)}
-                onClick={() => setCornerHead(on)}
+                key={key}
+                style={seg(cornerModel === key)}
+                onClick={() => setCornerModel(key)}
+                title={
+                  key === "rules"
+                    ? "Procedural corner gate (the default pipeline)"
+                    : key === "cands"
+                      ? "Per-candidate learned gate, trained on 27 masters"
+                      : "5-class curvature-zone classifier (corner / pair / bracket / point / smooth)"
+                }
               >
-                {on ? "Learned" : "Rules"}
+                {label}
               </button>
             ))}
           </div>
