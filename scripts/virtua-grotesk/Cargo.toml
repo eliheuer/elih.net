@@ -1,0 +1,18 @@
+[package]
+name = "virtua-grotesk-figures"
+version = "0.1.0"
+edition = "2021"
+publish = false
+
+# Figures for the "Virtua Grotesk: Powers-of-Two Design Grids for Neural
+# Networks" post, drawn with designbot. One bin per figure.
+
+[dependencies]
+designbot = { git = "https://github.com/eliheuer/designbot", package = "designbot" }
+designbot-render = { git = "https://github.com/eliheuer/designbot", package = "designbot-render" }
+kurbo = "0.12"
+norad = "0.18"
+
+[[bin]]
+name = "card"
+path = "src/bin/card.rs"
