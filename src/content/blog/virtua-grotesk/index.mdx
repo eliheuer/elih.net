@@ -170,6 +170,15 @@ is quantized *after* the fact, snapping destroys the designer's intent by
 some unknowable amount. When the font was *drawn* on the grid, the tokens
 are the intent.
 
+A running theme in Andrej Karpathy's work — he wrote a whole minimal
+tokenizer, [minbpe](https://github.com/karpathy/minbpe), partly to make this
+point — is that much of what's strange about language models traces back to
+tokenization. Text has no native quantization, so we impose one after the
+fact with byte-pair encoding, and the seams show up as model weirdness. A
+grid-native font never has that problem: the quantization happened at design
+time, chosen by a designer for design reasons. The tokenizer here is not a
+learned compromise. It is a ruler.
+
 ### 06. A Small Model Learns to Draw
 
 The model is deliberately small: a 12M-parameter decoder-only transformer,
@@ -177,6 +186,35 @@ written in [MLX](https://github.com/ml-explore/mlx), trained on a MacBook.
 No cloud, no GPU cluster — an overnight run on an M4 Pro is about 30,000
 steps. The corpus is Virtua's two masters: 427 glyphs with their own
 contours, structurally identical between Regular and Bold.
+
+The lineage should be obvious to anyone who has followed Karpathy's
+from-scratch projects. In 2015,
+[char-rnn](https://karpathy.github.io/2015/05/21/rnn-effectiveness/)
+generated C code with balanced braces; watching this model learn to close
+contours is the same unreasonable effectiveness pointed at bézier space. His
+[makemore](https://github.com/karpathy/makemore) generates names character
+by character; this generates glyphs point by point. And his latest,
+[microgpt](https://karpathy.github.io/2026/02/12/microgpt/), trains a
+4,192-parameter GPT over a 27-token vocabulary — 32,000 names, one minute on
+a MacBook — as the distilled essence of the whole stack. This project is
+microgpt's cousin in another alphabet: 1,722 tokens, glyphs in, glyphs out,
+forty minutes on an M4 Pro. In fact the honest origin of this whole design
+system is that I got the powers-of-two idea while watching Karpathy videos
+and thinking about what a *typeface* would look like if it were designed to
+be tokenized.
+
+Training follows his
+[Recipe for Training Neural Networks](https://karpathy.github.io/2019/04/25/recipe/)
+more closely than I planned. The first-step loss lands where cross-entropy
+over a uniform distribution says it should — the recipe's first sanity
+check. The first overnight run drove training loss to 0.07, which at ~340
+epochs over a few thousand sequences is memorization, not learning; the fix
+was the recipe's: augment (continuous interpolation weights, contour-start
+rotation), add dropout, and hold out a validation split that gets the final
+say. The recipe step I still owe is the dumb baseline — for weight transfer,
+"add the average training delta to every point" is the number to beat, and I
+haven't measured it yet. When I publish the model, the baseline ships with
+it.
 
 The first test is glyph completion: give the model 40% of a held-out glyph's
 outline and ask it to finish. Below, the model completes the figure `2` —
@@ -236,6 +274,16 @@ a growing corpus of grid-native families, every one of them OFL, with a
 provenance manifest I can publish. No scraping, no gray areas — training
 data you could audit glyph by glyph.
 
+Karpathy's [Software 2.0](https://karpathy.medium.com/software-2-0-a64152b37c35)
+essay gives this a name. If the weights are the program and gradient descent
+is the compiler, then **the dataset is the source code** — and "grid as
+dataset" is what happens when you take that seriously from the source-code
+side. Write the data the way you'd write software: a style guide
+(`DESIGN.md`), a linter (the grid is mechanically checkable), code review
+(mark colors in the UFOs), version control (the masters live in git). A
+foundry that designs its own training data is just a software shop that
+keeps its codebase clean.
+
 ### 09. One Pipeline
 
 The pieces are converging into one system: [img2bez](/blog/img2bez) traces
@@ -259,6 +307,18 @@ weights, honest limitations, so anyone can reproduce the experiments.
 Third, the grid spec as a document other type designers could adopt, because
 the thesis only compounds if there is more than one grid-native family in
 the world.
+
+And a fourth deliverable is hiding inside this draft. Tariq Rashid's *Make
+Your Own Neural Network* taught a generation their first network with
+handwritten digits; Karpathy's
+[Zero to Hero](https://karpathy.ai/zero-to-hero.html) rebuilt GPT from atoms
+with a names dataset. I want to write the type-design version: a
+from-scratch introduction to neural networks where the "hello world" is a
+font — you train a small model on a laptop, it does real work finishing a
+real typeface, and at the end you *install the result*. Digits and names are
+good toy domains, but they evaporate when the lesson ends. A font is a toy
+domain that ships. As the model and Virtua converge, this draft becomes that
+piece.
 
 If any of this is interesting to you — the type design, the grid system, the
 tiny models — the repos are open, the font is OFL, and the draft you just
