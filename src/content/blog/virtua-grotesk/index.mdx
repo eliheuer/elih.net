@@ -53,7 +53,8 @@ free under the SIL Open Font License.
 A digital font is not a set of pictures. It is a small program: coordinates,
 curve operators, composition rules, executed by a rasterizer millions of times
 a day. Massimo Vignelli liked to say design is a language with rules
-(semantics, syntax, pragmatics), and he meant it as an analogy. In type the
+(semantics, syntax, pragmatics, a triad he adapted from Charles Morris's
+semiotics), and he meant it as an analogy. In type the
 analogy is literal. A glyph is a sentence in a formal language, and the
 question that started this project was simple: if a glyph is a sentence, what
 grammar makes the language easiest for a machine to learn?
@@ -71,9 +72,12 @@ Virtua Grotesk answers the question on purpose.
 
 The purest precedent is [LL Replica](https://lineto.com/typefaces/replica)
 (Norm: Dimitri Bruni and Manuel Krebs; Lineto, 2008). Norm took the drawing
-grid their font editor provided and made it ten times coarser: instead of
-placing points on a 700-unit grid, they allowed themselves 70. Fewer legal
-positions for every node and every bézier handle. Deliberately less freedom.
+grid their font editor provided and made it ten times coarser. FontLab's
+standard cap height is 700 units, and instead of drawing on that 700-grid
+they allowed themselves a 70-grid. In a region that would normally offer 121
+positions to place a point, an 11-by-11 square, the coarser grid left four.
+Fewer legal positions for every node and every bézier handle. Deliberately
+less freedom.
 
 Two details make Replica more than a constraint stunt. First, the bevels:
 Replica's corners are cut, and the cut is exactly one grid unit wide, so the
@@ -81,6 +85,16 @@ grid isn't just a discipline, it's *visible* in the letterforms. Second, the
 cut diagonals: A, K, R have no pointed apexes, so the letters can be set
 tight. The constraint produced the aesthetic; the aesthetic advertises the
 constraint.
+
+Replica has ancestors of its own. Wim Crouwel's New Alphabet (1967) built
+every letter on a strict grid of horizontals and verticals, grid-as-constraint
+decades before the bézier. What Replica added, and what matters here, is that
+the constraint lives in the vector outline itself. That is the line between
+this and pixel type: Emigre's Lo-Res or the screen-era faces of Matthew Carter
+are grid-bound too, but there the grid is the pixel, a raster cell, not a
+coordinate lattice the curves are drawn on. A coarse grid governing where the
+nodes and handles of a bézier may land is rarer, and it is the part Virtua
+inherits.
 
 This sits inside a longer lineage: Helvetica's neo-grotesk neutrality,
 Vignelli's conviction that discipline and restraint are what make design
@@ -176,10 +190,25 @@ is quantized *after* the fact, snapping destroys the designer's intent by
 some unknowable amount. When the font was *drawn* on the grid, the tokens
 are the intent.
 
-A running theme in Andrej Karpathy's work (he wrote a whole minimal
-tokenizer, [minbpe](https://github.com/karpathy/minbpe), partly to make this
-point) is that much of what's strange about language models traces back to
-tokenization. Text has no native quantization, so we impose one after the
+None of the machinery here is new, and it is worth being exact about what
+is. Tokenizing outlines as a sequence of drawing commands and learning them
+with a transformer is well-trodden: DeepSVG, DeepVecFont, IconShop, and
+StarVector all do a version of it, several quantizing coordinates to a small
+integer grid exactly as I do. What none of them can do is begin from data
+that was grid-native in the first place. They train on found fonts, drawn at
+full resolution and snapped down in preprocessing, so the quantization is
+lossy and the corpus is a scrape of a thousand disagreeing hands. [Simon
+Cozens](https://simoncozens.github.io/state-of-ai-font-generation/),
+surveying the field, names both problems directly: the models work on raster
+images with a post-hoc vectorization step, and the training corpora are
+polluted found data assembled by people without typographic expertise.
+Grid-as-dataset answers both. The representation is borrowed; the data is the
+contribution.
+
+A running theme in Andrej Karpathy's work (he built a whole minimal
+tokenizer, [minbpe](https://github.com/karpathy/minbpe), and gave a lecture
+making the point) is that much of what's strange about language models traces
+back to tokenization. Text has no native quantization, so we impose one after the
 fact with byte-pair encoding, and the seams show up as model weirdness. A
 grid-native font never has that problem: the quantization happened at design
 time, chosen by a designer for design reasons. The tokenizer here is not a
@@ -281,8 +310,8 @@ provenance manifest I can publish. No scraping, no gray areas: training
 data you could audit glyph by glyph.
 
 Karpathy's [Software 2.0](https://karpathy.medium.com/software-2-0-a64152b37c35)
-essay gives this a name. If the weights are the program and gradient descent
-is the compiler, then **the dataset is the source code**, and "grid as
+essay gives this a name. If the weights are the program and training is the
+compiler, then **the dataset is the source code**, and "grid as
 dataset" is what happens when you take that seriously from the source-code
 side. Write the data the way you'd write software: a style guide
 (`DESIGN.md`), a linter (the grid is mechanically checkable), code review
@@ -335,7 +364,7 @@ read wants criticism.
 This is a running log of the actual work, in plain language, newest entry
 last. The sections above describe the ideas; this section is what happened.
 
-**2026-07-08 — One glyph at a time, and a scoreboard.**
+**2026-07-08: One glyph at a time, and a scoreboard.**
 
 The early neural-net experiments taught me a lesson the hard way: when I
 pointed the model at all 147 glyphs it had never seen boldened, it produced
@@ -346,12 +375,12 @@ The task is bootstrapping the Bold master. Virtua has a finished Regular
 and a Bold that is mostly placeholder copies. The tool that is working now
 does **form transfer**: the Regular outline supplies the *structure and
 style* (which points exist, which edges are vertical), and a reference
-image — a picture of the glyph in some bold typeface, chosen by me, one
-glyph at a time — supplies the *form and weight*. The fitter is only
+image (a picture of the glyph in some bold typeface, chosen by me, one
+glyph at a time) supplies the *form and weight*. The fitter is only
 allowed to slide each edge in or out along its own perpendicular. It cannot
 rotate an edge, so verticals stay vertical. It cannot move anything off the
 baseline or the cap height, because those are pinned. The small corner cuts
-that give Virtua its character are never fitted to the image at all — they
+that give Virtua its character are never fitted to the image at all: they
 are re-cut at their designed size wherever two edges meet, because the
 design system outranks the pixel evidence. And everything lands on the
 grid, always.
@@ -359,7 +388,7 @@ grid, always.
 Before trusting the tool on a real image, it has to pass exams where the
 answer is known: scramble a glyph's edges by random amounts, render it,
 and ask the tool to recover the scramble from the picture alone. It
-recovers it exactly — zero error — or it doesn't ship. The exclamation
+recovers it exactly, zero error, or it doesn't ship. The exclamation
 mark passed first. The figure **4** passed second, and on the way it
 exposed a real bug the exams then verified fixed. Two glyphs sounds like
 nothing; two *correct* glyphs, with an exam system that catches
@@ -367,20 +396,20 @@ regressions, is the whole point.
 
 The other new thing is boring and important: a **skeleton and a
 scoreboard**. The skeleton is one command that runs the entire factory
-end to end — compile the fonts, run Google Fonts' QA suite, regenerate
-reports — today, while most of the font is still debt. The first time it
+end to end (compile the fonts, run Google Fonts' QA suite, regenerate
+reports) today, while most of the font is still debt. The first time it
 ran it caught a broken draft glyph that would have silently blocked the
 variable font build. The scoreboard reduces the project to one number:
 **glyphs finished in both masters, currently 7 of 690**. Every work
 session should move that number. When it reads 690, Virtua ships to
 Google Fonts, and its sources become the first grid-native training set.
 
-**2026-07-08 — Two grids, two species.**
+**2026-07-08: Two grids, two species.**
 
 Grading machine drafts in Runebender surfaced the clearest statement yet
 of what this design system is: **the 8-unit grid belongs to the machine,
 the 2-unit grid belongs to the human.** Advance widths, stem widths,
-chamfer sizes — the measurable skeleton of a glyph — should always land
+chamfer sizes (the measurable skeleton of a glyph) should always land
 on multiples of 8, and putting them there is rule-following that software
 must do perfectly. Dropping from the 8-grid to the 2-grid is something
 else entirely: an *optical correction*, a 2-unit nudge made because a
@@ -388,28 +417,28 @@ shape looks wrong to a trained eye even though the math says it's right.
 That judgment is what the biological human is for.
 
 I was spending grading time snapping machine output back onto the
-8-grid — janitorial work that proves a tool is broken. So now the whole
+8-grid: janitorial work that proves a tool is broken. So now the whole
 stack enforces the split: the fitting tool only moves things in 8-unit
 steps, a lint screams if a machine draft contains 2-grid noise, and my
 time in the editor is reserved for the corrections only eyes can make.
 
 The machine-learning consequence is the best part. Because drafts arrive
 on the 8-grid, every 2-unit deviation in a glyph I've approved is, by
-definition, a human optical decision — recorded, labeled, and sitting in
+definition, a human optical decision: recorded, labeled, and sitting in
 git. The difference between what the machine proposed and what I
 approved is a growing dataset of pure typographic judgment. That's the
 thing you can't scrape.
 
 And to be clear about where this is going: the split is a curriculum,
-not a permanent wall. The goal is automated type design — a model that
+not a permanent wall. The goal is automated type design: a model that
 learns *how, why, and where* I make optical corrections and starts
 making them itself, staying on the 8-grid except where the training
 data shows a correction is needed. Realistically, that happens in
 stages: first the model just learns to *point* ("these four points
-probably need your eyes" — useful even with a small corpus), then it
+probably need your eyes", useful even with a small corpus), then it
 proposes corrections and we measure how often I accept them, and only
 the categories it reliably gets right graduate to automatic. Two things
 never automate: final approval, and corrections with no precedent in
 the data. The honest test it has to beat first: a model that predicts
-"no correction anywhere" is right about most points — so it has to
+"no correction anywhere" is right about most points, so it has to
 prove it knows *where* the exceptions are, not just play the averages.
