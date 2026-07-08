@@ -399,3 +399,17 @@ definition, a human optical decision — recorded, labeled, and sitting in
 git. The difference between what the machine proposed and what I
 approved is a growing dataset of pure typographic judgment. That's the
 thing you can't scrape.
+
+And to be clear about where this is going: the split is a curriculum,
+not a permanent wall. The goal is automated type design — a model that
+learns *how, why, and where* I make optical corrections and starts
+making them itself, staying on the 8-grid except where the training
+data shows a correction is needed. Realistically, that happens in
+stages: first the model just learns to *point* ("these four points
+probably need your eyes" — useful even with a small corpus), then it
+proposes corrections and we measure how often I accept them, and only
+the categories it reliably gets right graduate to automatic. Two things
+never automate: final approval, and corrections with no precedent in
+the data. The honest test it has to beat first: a model that predicts
+"no correction anywhere" is right about most points — so it has to
+prove it knows *where* the exceptions are, not just play the averages.
