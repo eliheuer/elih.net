@@ -44,6 +44,7 @@ free under the SIL Open Font License.
 <li><a href="#08-the-designspace-is-a-data-factory"><span class="n">08</span>The Designspace Is a Data Factory</a></li>
 <li><a href="#09-one-pipeline"><span class="n">09</span>One Pipeline</a></li>
 <li><a href="#10-what-ships-next"><span class="n">10</span>What Ships Next</a></li>
+<li><a href="#11-build-log"><span class="n">11</span>Build Log</a></li>
 </ol>
 </nav>
 
@@ -328,3 +329,48 @@ piece.
 If any of this is interesting to you (the type design, the grid system, the
 tiny models), the repos are open, the font is OFL, and the draft you just
 read wants criticism.
+
+### 11. Build Log
+
+This is a running log of the actual work, in plain language, newest entry
+last. The sections above describe the ideas; this section is what happened.
+
+**2026-07-08 — One glyph at a time, and a scoreboard.**
+
+The early neural-net experiments taught me a lesson the hard way: when I
+pointed the model at all 147 glyphs it had never seen boldened, it produced
+mangled garbage. So I simplified. The current rule is: *do one glyph
+correctly, then build on it.*
+
+The task is bootstrapping the Bold master. Virtua has a finished Regular
+and a Bold that is mostly placeholder copies. The tool that is working now
+does **form transfer**: the Regular outline supplies the *structure and
+style* (which points exist, which edges are vertical), and a reference
+image — a picture of the glyph in some bold typeface, chosen by me, one
+glyph at a time — supplies the *form and weight*. The fitter is only
+allowed to slide each edge in or out along its own perpendicular. It cannot
+rotate an edge, so verticals stay vertical. It cannot move anything off the
+baseline or the cap height, because those are pinned. The small corner cuts
+that give Virtua its character are never fitted to the image at all — they
+are re-cut at their designed size wherever two edges meet, because the
+design system outranks the pixel evidence. And everything lands on the
+grid, always.
+
+Before trusting the tool on a real image, it has to pass exams where the
+answer is known: scramble a glyph's edges by random amounts, render it,
+and ask the tool to recover the scramble from the picture alone. It
+recovers it exactly — zero error — or it doesn't ship. The exclamation
+mark passed first. The figure **4** passed second, and on the way it
+exposed a real bug the exams then verified fixed. Two glyphs sounds like
+nothing; two *correct* glyphs, with an exam system that catches
+regressions, is the whole point.
+
+The other new thing is boring and important: a **skeleton and a
+scoreboard**. The skeleton is one command that runs the entire factory
+end to end — compile the fonts, run Google Fonts' QA suite, regenerate
+reports — today, while most of the font is still debt. The first time it
+ran it caught a broken draft glyph that would have silently blocked the
+variable font build. The scoreboard reduces the project to one number:
+**glyphs finished in both masters, currently 7 of 690**. Every work
+session should move that number. When it reads 690, Virtua ships to
+Google Fonts, and its sources become the first grid-native training set.
