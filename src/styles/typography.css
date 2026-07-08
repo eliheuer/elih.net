@@ -184,6 +184,14 @@
   inset-block-start: calc(var(--ec-brdWd) + var(--ec-uiPadInl) / 2);
 }
 
+/* Public-draft notice: red text to set it apart. Unlayered so it beats the
+   base `.prose blockquote` color; the `*` catches the bold lead-in and link,
+   which carry their own color rules. */
+.draft-notice,
+.draft-notice * {
+  color: var(--destructive);
+}
+
 /* Single-column section index (the contents box under the hero). Unlayered so
    its link styling beats the layered `.prose a` rules. */
 .section-index {
