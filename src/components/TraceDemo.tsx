@@ -603,7 +603,14 @@ export default function TraceDemo({ image = "/demos/img2bez/a.png", glyph = "a",
               // section without scrolling (4:3 overflowed once the
               // Corners control landed).
               ...(narrow ? {} : { aspectRatio: "6 / 5" }),
-              margin: "1.5rem 0",
+              // No own block margin: overflow:hidden makes this a block
+              // formatting context, so a margin here can't collapse with the
+              // neighbours' and would stack (e.g. add on top of a following
+              // heading's margin-top, leaving far more space above the heading
+              // than below). Zeroing it lets the surrounding prose rhythm
+              // govern: ~2 units next to paragraphs, a 4-unit section break
+              // before a heading, same as every other block.
+              margin: 0,
               // Match the code snippets' border exactly (Expressive Code:
               // 1px solid var(--border), radius calc(--ec-brdRad + --ec-brdWd)).
               borderRadius: "calc(0.3rem + 1px)",
