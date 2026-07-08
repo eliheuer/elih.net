@@ -374,3 +374,28 @@ variable font build. The scoreboard reduces the project to one number:
 **glyphs finished in both masters, currently 7 of 690**. Every work
 session should move that number. When it reads 690, Virtua ships to
 Google Fonts, and its sources become the first grid-native training set.
+
+**2026-07-08 — Two grids, two species.**
+
+Grading machine drafts in Runebender surfaced the clearest statement yet
+of what this design system is: **the 8-unit grid belongs to the machine,
+the 2-unit grid belongs to the human.** Advance widths, stem widths,
+chamfer sizes — the measurable skeleton of a glyph — should always land
+on multiples of 8, and putting them there is rule-following that software
+must do perfectly. Dropping from the 8-grid to the 2-grid is something
+else entirely: an *optical correction*, a 2-unit nudge made because a
+shape looks wrong to a trained eye even though the math says it's right.
+That judgment is what the biological human is for.
+
+I was spending grading time snapping machine output back onto the
+8-grid — janitorial work that proves a tool is broken. So now the whole
+stack enforces the split: the fitting tool only moves things in 8-unit
+steps, a lint screams if a machine draft contains 2-grid noise, and my
+time in the editor is reserved for the corrections only eyes can make.
+
+The machine-learning consequence is the best part. Because drafts arrive
+on the 8-grid, every 2-unit deviation in a glyph I've approved is, by
+definition, a human optical decision — recorded, labeled, and sitting in
+git. The difference between what the machine proposed and what I
+approved is a growing dataset of pure typographic judgment. That's the
+thing you can't scrape.
