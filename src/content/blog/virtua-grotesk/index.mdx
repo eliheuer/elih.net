@@ -10,11 +10,10 @@ draft: false
 
 <blockquote class="draft-notice">
 
-**This is a public draft.** I publish drafts to get feedback while the
-thinking is still wet. The type design is unfinished, the model is a
-prototype, and some figures are placeholder renders from the lab. If you
-have opinions about any of this I want to hear them; my contact info is on
-the [about page](/about).
+**This is a public draft**, published early for feedback. The type design is
+unfinished, the model is a prototype, and some figures are placeholder renders.
+If you have opinions about any of this, I want to hear them; my contact info is
+on the [about page](/about).
 
 </blockquote>
 
@@ -52,21 +51,12 @@ free under the SIL Open Font License.
 
 ### 01. A Font Is a Program
 
-A digital font is not a set of pictures, it is a small program. Massimo
-Vignelli called design a language and meant it as an analogy. In type the
-analogy is literal: a glyph is a sentence in a formal language, built from
-points and curves the way a sentence is built from words.
+A digital font is not a set of pictures, it is a small program you can read.
+Each glyph is text, a short list of drawing instructions (start here, curve to
+there, close the path), wrapped in layers that substitute and reposition glyphs
+and interpolate new weights.
 
-And the source is code you can read. A glyph is stored as text, a short list of
-instructions: start here, curve to there, close the path. Around the outlines
-sit layers that are unambiguously programs, a rule language that substitutes and
-repositions glyphs in context, an interpolation system that computes the
-in-between weights on demand. The whole thing is compiled from plain-text
-sources by a build tool, kept in git, and executed by the shaper and rasterizer
-every time a letter appears on screen. Program is not a metaphor, it is the file
-format.
-
-This is not a new idea, and its clearest early form is a book. In 1964 Karl
+In 1964 Karl
 Gerstner published Designing Programmes, whose first essay is titled "Programme
 as Typeface" and whose thesis was "instead of solutions for problems, programmes
 for solutions": design the system that generates the forms, not the forms one at
@@ -80,15 +70,14 @@ as Programme](https://www.typotheque.com/articles/typeface-as-programme).
 
 What most of them wanted from the program was generative letterforms, strokes as
 functions. I want something narrower and stranger: not to program the letters,
-but to draw them regularly enough that a program can learn them.
+but to draw them regularly enough that a neural network can learn them.
 
 Most fonts don't really think about any of this. Their coordinates land wherever
 a designer's hand put them, at whatever unit resolution their editor
 defaulted to, with contour structures as individual as handwriting. That's
 fine, the rasterizer doesn't care. But a neural network does, and the whole
 current wave of font AI is trained on exactly that accidental data: scraped
-fonts, or Google Fonts, heterogeneous in every dimension that matters. Virtua
-Grotesk is designed the other way, on purpose.
+fonts, or Google Fonts, heterogeneous in every dimension that matters.
 
 ### 02. Replica and the Coarse Grid
 
