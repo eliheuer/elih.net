@@ -482,10 +482,11 @@ checksum = "7cd812cc2bc1d69d4764bd80df88b4317eaef9e773c75226407d9bc0876b211c"
 [[package]]
 name = "designbot"
 version = "0.1.0"
-source = "git+https://github.com/eliheuer/designbot#8fe92ace1c41db7abe4975159f1eb52cdb681160"
+source = "git+https://github.com/eliheuer/designbot#ce5032ab826622225673193fdfe470250c3def24"
 dependencies = [
  "designbot-core",
  "designbot-render",
+ "image",
  "kurbo 0.12.0",
  "norad",
 ]
@@ -493,7 +494,7 @@ dependencies = [
 [[package]]
 name = "designbot-core"
 version = "0.1.0"
-source = "git+https://github.com/eliheuer/designbot#8fe92ace1c41db7abe4975159f1eb52cdb681160"
+source = "git+https://github.com/eliheuer/designbot#ce5032ab826622225673193fdfe470250c3def24"
 dependencies = [
  "anyhow",
  "kurbo 0.12.0",
@@ -505,17 +506,19 @@ dependencies = [
 [[package]]
 name = "designbot-render"
 version = "0.1.0"
-source = "git+https://github.com/eliheuer/designbot#8fe92ace1c41db7abe4975159f1eb52cdb681160"
+source = "git+https://github.com/eliheuer/designbot#ce5032ab826622225673193fdfe470250c3def24"
 dependencies = [
  "anyhow",
  "anyrender",
  "anyrender_vello_cpu",
  "color",
  "designbot-core",
+ "flate2",
  "futures-intrusive",
  "image",
  "kurbo 0.12.0",
  "parley",
+ "pdf-writer",
  "peniko 0.5.0",
  "pollster",
  "swash",
@@ -1036,6 +1039,12 @@ dependencies = [
 ]
 
 [[package]]
+name = "itoa"
+version = "1.0.18"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "8f42a60cbdf9a97f5d2305f08a87dc4e09308d1276d28c869c684d7777685682"
+
+[[package]]
 name = "jni-sys"
 version = "0.3.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1527,6 +1536,18 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "35fb2e5f958ec131621fdd531e9fc186ed768cbe395337403ae56c17a74c68ec"
 
 [[package]]
+name = "pdf-writer"
+version = "0.15.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "f5e456864a7a304047bff84977dc6fb162bd956475d40ba50b2dcecaada7f753"
+dependencies = [
+ "bitflags 2.13.0",
+ "itoa",
+ "memchr",
+ "ryu",
+]
+
+[[package]]
 name = "peniko"
 version = "0.2.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1894,6 +1915,12 @@ name = "rustversion"
 version = "1.0.23"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "cf54715a573b99ac80df0bc206da022bcd442c974952c7b9720069370852e21f"
+
+[[package]]
+name = "ryu"
+version = "1.0.23"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "9774ba4a74de5f7b1c1451ed6cd5285a32eddb5cccb8cc655a4e50009e06477f"
 
 [[package]]
 name = "scopeguard"

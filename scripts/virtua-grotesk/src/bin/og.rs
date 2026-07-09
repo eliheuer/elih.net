@@ -1,18 +1,32 @@
-//! OG / share card for the Virtua Grotesk post, in the manner of Norm's
-//! Replica specimen dimension sheets, translated to dark mode with the
-//! runebender-web theme palette: the word "Grid" from the Regular master
-//! filled in mark-red over the 16-unit design grid, blue vertical-metric
-//! lines with values, per-glyph advance widths and hatched side bearings
-//! in staggered dimension rows below. 2400x1260 (2x of 1200x630).
+//! OG / share card for the Virtua Grotesk post on elih.net: a Replica-style
+//! dimension sheet in dark mode with the runebender-web palette. The word
+//! "Grid" from the Regular master is filled in mark-red over the 16-unit
+//! design grid, with blue vertical-metric lines with values, and per-glyph
+//! advance widths and hatched side bearings in staggered dimension rows
+//! below. 2400x1260 (2x of 1200x630).
 //!
-//! At this size one font unit = one canvas pixel, so the drawing grid IS
-//! the design grid. Reads glyphs from the sibling checkout
-//! ~/GH/repos/virtua-grotesk. Run from scripts/virtua-grotesk:
+//! Coordinates are DrawBot's (y-up, origin bottom-left), which at this size
+//! makes one font unit = one canvas pixel with the baseline at y=324: every
+//! font-space coordinate is just BASELINE_Y + value, and the UFO outlines
+//! draw with a plain translate. text() anchors the BASELINE at y;
+//! rect()/oval() anchor at their bottom-left corner.
 //!
-//!     cargo run --release --bin og
+//! REBUILD after editing this file (from the elih.net repo root):
 //!
-//! Writes ../../src/content/blog/virtua-grotesk/share-card.png and
-//! ../../public/og/virtua-grotesk.png.
+//!     cd scripts/virtua-grotesk && cargo run --release --bin og
+//!
+//! That one command recompiles and overwrites BOTH outputs:
+//!     src/content/blog/virtua-grotesk/share-card.png   (post hero)
+//!     public/og/virtua-grotesk.png                     (og:image)
+//! Rebuilds take about a second once deps are compiled; reload the post in
+//! the browser to see the new card (the Astro dev server serves it as a
+//! static asset, no restart needed).
+//!
+//! Inputs read at render time, from sibling checkouts:
+//!     ~/GH/repos/virtua-grotesk/sources/VirtuaGrotesk-Regular.ufo  (outlines,
+//!         advances, side bearings; edit the font and the numbers update)
+//!     ~/GH/repos/virtua-grotesk/fonts/variable/VirtuaGrotesk[wght].ttf
+//!     ~/GH/repos/google-fonts/ofl/geistmono/GeistMono[wght].ttf  (labels)
 
 use designbot::prelude::*;
 use designbot_render::Renderer;
@@ -21,12 +35,12 @@ use kurbo::{Affine, BezPath, Shape};
 const W: f64 = 2400.0;
 const H: f64 = 1260.0;
 
-const MARGIN: f64 = 96.0; // content runs MARGIN..W-MARGIN
-const BASELINE_Y: f64 = 936.0; // canvas y of font y=0
-const GRID_TOP: f64 = 152.0; // font y = 784 (cap overshoot line)
-const GRID_BOTTOM: f64 = 1016.0; // font y = -80
-const HEADER_RULE_Y: f64 = 110.0;
-const FOOTER_RULE_Y: f64 = 1204.0;
+const MARGIN: f64 = 96.0; // content runs MARGIN...W-MARGIN
+const BASELINE_Y: f64 = 324.0; // canvas y of font y=0
+const GRID_TOP: f64 = BASELINE_Y + 784.0; // cap overshoot line
+const GRID_BOTTOM: f64 = BASELINE_Y - 80.0;
+const HEADER_RULE_Y: f64 = 1150.0;
+const FOOTER_RULE_Y: f64 = 56.0;
 
 const GLYPHS: &[&str] = &["G_", "r", "i", "d"];
 
@@ -68,14 +82,10 @@ fn green() -> Color {
     Color::rgb(0x18, 0xb8, 0x6f)
 }
 
-// --- minimal sfnt readers (family name + baseline metrics) -----------------
+// --- minimal sfnt reader (family name for ctx.font()) ----------------------
 
 fn read_u16(data: &[u8], offset: usize) -> u16 {
     u16::from_be_bytes([data[offset], data[offset + 1]])
-}
-
-fn read_i16(data: &[u8], offset: usize) -> i16 {
-    i16::from_be_bytes([data[offset], data[offset + 1]])
 }
 
 fn read_u32(data: &[u8], offset: usize) -> u32 {
@@ -95,17 +105,22 @@ fn find_table(data: &[u8], tag: &[u8; 4]) -> Option<usize> {
         .map(|rec| read_u32(data, rec + 8) as usize)
 }
 
-/// Windows-platform UTF-16 name string (id 16 falling back to 1).
-fn family_name(data: &[u8]) -> String {
-    let name = find_table(data, b"name").expect("no name table");
-    let count = read_u16(data, name + 2) as usize;
-    let string_off = name + read_u16(data, name + 4) as usize;
+/// Load the font into the renderer and return its Windows-platform family
+/// name (id 16 falling back to 1) for ctx.font().
+fn load_family(renderer: &mut Renderer, path: &str) -> String {
+    let data = std::fs::read(path).unwrap_or_else(|e| panic!("read {path}: {e}"));
+    renderer
+        .load_font(path)
+        .unwrap_or_else(|e| panic!("load {path}: {e:?}"));
+    let name = find_table(&data, b"name").expect("no name table");
+    let count = read_u16(&data, name + 2) as usize;
+    let string_off = name + read_u16(&data, name + 4) as usize;
     for want in [16u16, 1] {
         for i in 0..count {
             let rec = name + 6 + i * 12;
-            if read_u16(data, rec) == 3 && read_u16(data, rec + 6) == want {
-                let len = read_u16(data, rec + 8) as usize;
-                let off = string_off + read_u16(data, rec + 10) as usize;
+            if read_u16(&data, rec) == 3 && read_u16(&data, rec + 6) == want {
+                let len = read_u16(&data, rec + 8) as usize;
+                let off = string_off + read_u16(&data, rec + 10) as usize;
                 let units: Vec<u16> = data[off..off + len]
                     .chunks_exact(2)
                     .map(|c| u16::from_be_bytes([c[0], c[1]]))
@@ -114,45 +129,13 @@ fn family_name(data: &[u8]) -> String {
             }
         }
     }
-    panic!("no Windows family name record");
-}
-
-struct LabelFont {
-    family: String,
-    asc: f64,  // em fraction
-    desc: f64, // em fraction, positive down
-}
-
-impl LabelFont {
-    fn load(renderer: &mut Renderer, path: &str) -> LabelFont {
-        let data = std::fs::read(path).unwrap_or_else(|e| panic!("read {path}: {e}"));
-        renderer
-            .load_font(path)
-            .unwrap_or_else(|e| panic!("load {path}: {e:?}"));
-        let hhea = find_table(&data, b"hhea").expect("no hhea");
-        let head = find_table(&data, b"head").expect("no head");
-        let upm = read_u16(&data, head + 18) as f64;
-        LabelFont {
-            family: family_name(&data),
-            asc: read_i16(&data, hhea + 4) as f64 / upm,
-            desc: -read_i16(&data, hhea + 6) as f64 / upm,
-        }
-    }
-
-    /// Distance from designbot's text() y (top of line) down to the first
-    /// baseline, matching parley's rounding (see social_images.rs).
-    fn baseline_offset(&self, size: f64) -> f64 {
-        let asc = (self.asc * size).round();
-        let desc = (self.desc * size).round();
-        let lh = size.round();
-        (asc + (lh - asc - desc) * 0.5).round()
-    }
+    panic!("no Windows family name record in {path}");
 }
 
 // --- UFO outlines -----------------------------------------------------------
 
 struct Outline {
-    path: BezPath, // font units, y-up
+    path: BezPath, // font units, y-up, same as the canvas
     width: f64,
     lsb: f64,
     rsb: f64,
@@ -201,16 +184,15 @@ fn load_outline(glif: &std::path::Path) -> Outline {
 struct Sheet<'a> {
     ctx: Canvas,
     renderer: &'a Renderer,
-    mono: &'a LabelFont,
+    mono: String,
 }
 
 impl Sheet<'_> {
     fn mono_width(&self, txt: &str, size: f64) -> f64 {
-        self.renderer
-            .text_width(txt, Some(&self.mono.family), size, &[])
+        self.renderer.text_width(txt, Some(&self.mono), size, &[])
     }
 
-    /// Mono label with its BASELINE at y. align: -1 left, 0 center, 1 right.
+    /// Mono label with its baseline at y. align: -1 left, 0 center, 1 right.
     fn label(&mut self, txt: &str, x: f64, y: f64, size: f64, color: Color, align: i8) {
         let w = self.mono_width(txt, size);
         let x = match align {
@@ -219,16 +201,15 @@ impl Sheet<'_> {
             _ => x - w,
         };
         self.ctx
-            .font(&self.mono.family)
+            .font(&self.mono)
             .clear_font_variations()
             .font_size(size)
             .fill(color)
             .text_align(TextAlign::Left)
-            .text(txt, x, y - self.mono.baseline_offset(size));
+            .text(txt, x, y);
     }
 
     /// Label over a background patch so it stays legible on the grid.
-    /// Returns the padded background width.
     fn label_padded(&mut self, txt: &str, x: f64, y: f64, size: f64, color: Color, align: i8) {
         let w = self.mono_width(txt, size);
         let pad = 10.0;
@@ -239,7 +220,7 @@ impl Sheet<'_> {
         };
         self.ctx.no_stroke().fill(bg());
         self.ctx
-            .rect(x0 - pad, y - size * 0.86, w + pad * 2.0, size * 1.14);
+            .rect(x0 - pad, y - size * 0.28, w + pad * 2.0, size * 1.14);
         self.label(txt, x0, y, size, color, -1);
     }
 
@@ -250,11 +231,11 @@ impl Sheet<'_> {
         let step = 6.0;
         let mut t = x0 - h;
         while t < x1 {
-            // segment from (t, y1) to (t + h, y0), clipped to [x0, x1]
+            // segment from (t, y0) to (t + h, y1), clipped to [x0, x1]
             let sx = t.max(x0);
             let ex = (t + h).min(x1);
             if ex > sx {
-                self.ctx.line(sx, y1 - (sx - t), ex, y1 - (ex - t));
+                self.ctx.line(sx, y0 + (sx - t), ex, y0 + (ex - t));
             }
             t += step;
         }
@@ -281,13 +262,13 @@ fn main() {
     let total_advance: f64 = outlines.iter().map(|o| o.width).sum();
 
     let mut renderer = Renderer::new(W as u32, H as u32);
-    let mono = LabelFont::load(&mut renderer, &mono_path);
-    let virtua = LabelFont::load(&mut renderer, &vf_path);
+    let mono = load_family(&mut renderer, &mono_path);
+    let virtua = load_family(&mut renderer, &vf_path);
 
     let mut sheet = Sheet {
         ctx: Canvas::new(W, H),
         renderer: &renderer,
-        mono: &mono,
+        mono,
     };
     sheet.ctx.background(bg());
 
@@ -314,11 +295,11 @@ fn main() {
             ctx.stroke(color).stroke_width(1.0);
             let mut x = x0 - (((x0 - MARGIN) / step).floor()) * step;
             while x <= W - MARGIN {
-                ctx.line(x, GRID_TOP, x, GRID_BOTTOM);
+                ctx.line(x, GRID_BOTTOM, x, GRID_TOP);
                 x += step;
             }
-            let mut y = BASELINE_Y - (((BASELINE_Y - GRID_TOP) / step).floor()) * step;
-            while y <= GRID_BOTTOM {
+            let mut y = BASELINE_Y - (((BASELINE_Y - GRID_BOTTOM) / step).floor()) * step;
+            while y <= GRID_TOP {
                 ctx.line(MARGIN, y, W - MARGIN, y);
                 y += step;
             }
@@ -336,32 +317,32 @@ fn main() {
         }
         ctx.stroke(rule()).stroke_width(1.6);
         for &b in &bounds {
-            ctx.line(b, GRID_TOP, b, GRID_BOTTOM);
+            ctx.line(b, GRID_BOTTOM, b, GRID_TOP);
         }
     }
 
-    // ── glyphs, mark-red ──
+    // ── glyphs, mark-red; canvas and font agree on y-up, so placement is a
+    //    plain translate ──
     for (o, w) in outlines.iter().zip(bounds.windows(2)) {
-        let to_canvas = Affine::new([1.0, 0.0, 0.0, -1.0, w[0], BASELINE_Y]);
         sheet.ctx.no_stroke().fill(red());
-        sheet.ctx.draw_path(to_canvas * o.path.clone());
+        sheet
+            .ctx
+            .draw_path(Affine::translate((w[0], BASELINE_Y)) * o.path.clone());
     }
 
-    // ── vertical metrics: overshoots dashed, cap/x-height/baseline solid ──
+    // ── vertical metrics over the glyphs, Replica-style:
+    //    overshoots dashed, cap/x-height/baseline solid ──
     {
         let ctx = &mut sheet.ctx;
         ctx.stroke(blue()).stroke_width(1.6).no_fill();
-        for y in [BASELINE_Y - 784.0, BASELINE_Y + 16.0] {
-            let (dash, gap) = (10.0, 10.0);
-            let mut x = MARGIN;
-            while x < W - MARGIN {
-                ctx.line(x, y, (x + dash).min(W - MARGIN), y);
-                x += dash + gap;
-            }
+        ctx.line_dash(&[10.0, 10.0]);
+        for y in [784.0, -16.0] {
+            ctx.line(MARGIN, BASELINE_Y + y, W - MARGIN, BASELINE_Y + y);
         }
+        ctx.line_dash(&[]);
         ctx.stroke_width(2.2);
         for y in [768.0, 576.0, 0.0] {
-            ctx.line(MARGIN, BASELINE_Y - y, W - MARGIN, BASELINE_Y - y);
+            ctx.line(MARGIN, BASELINE_Y + y, W - MARGIN, BASELINE_Y + y);
         }
     }
 
@@ -373,16 +354,16 @@ fn main() {
 
     // ── metric labels, left, over background patches ──
     for (txt, y) in [
-        ("CAP 768", BASELINE_Y - 768.0 + 34.0),
-        ("X-HEIGHT 576", BASELINE_Y - 576.0 - 12.0),
-        ("BASELINE 0", BASELINE_Y - 12.0),
+        ("CAP 768", BASELINE_Y + 768.0 - 34.0),
+        ("X-HEIGHT 576", BASELINE_Y + 576.0 + 12.0),
+        ("BASELINE 0", BASELINE_Y + 12.0),
     ] {
         sheet.label_padded(txt, MARGIN + 8.0, y, 26.0, blue(), -1);
     }
     sheet.label_padded(
         "OVERSHOOT +16",
         W - MARGIN - 8.0,
-        BASELINE_Y - 784.0 - 10.0,
+        BASELINE_Y + 784.0 + 10.0,
         26.0,
         blue(),
         1,
@@ -390,14 +371,14 @@ fn main() {
     sheet.label_padded(
         "OVERSHOOT -16",
         W - MARGIN - 8.0,
-        BASELINE_Y + 16.0 + 34.0,
+        BASELINE_Y - 16.0 - 34.0,
         26.0,
         blue(),
         1,
     );
 
     // ── dimension zone: boundary ticks + staggered width / side-bearing rows ──
-    let tick_bottom = 1168.0;
+    let tick_bottom = 92.0;
     {
         let ctx = &mut sheet.ctx;
         ctx.stroke(subdued()).stroke_width(1.6).no_fill();
@@ -407,7 +388,7 @@ fn main() {
     }
     for (j, (o, w)) in outlines.iter().zip(bounds.windows(2)).enumerate() {
         let (bx0, bx1) = (w[0], w[1]);
-        let row_y = if j % 2 == 0 { 1064.0 } else { 1132.0 };
+        let row_y = if j % 2 == 0 { 196.0 } else { 128.0 };
         let ink0 = bx0 + o.lsb;
         let ink1 = bx1 - o.rsb;
 
@@ -425,7 +406,7 @@ fn main() {
         sheet.label_padded(
             &format!("{}", (ink1 - ink0).round()),
             (ink0 + ink1) / 2.0,
-            row_y + 11.0,
+            row_y - 11.0,
             32.0,
             text_bright(),
             0,
@@ -433,7 +414,7 @@ fn main() {
         sheet.label(
             &format!("{}", o.lsb.round()),
             ink0 + 10.0,
-            row_y - 22.0,
+            row_y + 22.0,
             24.0,
             red(),
             -1,
@@ -441,7 +422,7 @@ fn main() {
         sheet.label(
             &format!("{}", o.rsb.round()),
             ink1 - 10.0,
-            row_y - 22.0,
+            row_y + 22.0,
             24.0,
             red(),
             1,
@@ -450,7 +431,7 @@ fn main() {
 
     // ── header: Replica legend + section badge ──
     {
-        let base_y = 78.0;
+        let base_y = 1182.0;
         let size = 30.0;
         let mut x = MARGIN;
         let segments: [(&str, Color, Option<Color>); 4] = [
@@ -466,7 +447,7 @@ fn main() {
             }
             if let Some(sq) = square {
                 sheet.ctx.no_stroke().fill(*sq);
-                sheet.ctx.rect(x, base_y - 20.0, 20.0, 20.0);
+                sheet.ctx.rect(x, base_y, 20.0, 20.0);
                 x += 30.0;
             }
             sheet.label(txt, x, base_y, size, *color, -1);
@@ -476,21 +457,22 @@ fn main() {
         // badge: green box with a Virtua "a", sheet number beside it
         let box_s = 56.0;
         let bx = W - MARGIN - box_s - 66.0;
-        let by = base_y - 44.0;
+        let by = 1170.0; // box bottom, ~centered on the legend line
         sheet.ctx.no_stroke().fill(green());
         sheet.ctx.rect(bx, by, box_s, box_s);
         sheet
             .ctx
-            .font(&virtua.family)
+            .font(&virtua)
             .clear_font_variations()
             .font_variation("wght", 500.0)
             .font_size(40.0)
             .fill(bg())
             .text_align(TextAlign::Center)
+            // center the x-height (576/1024 em) box of the "a" in the badge
             .text(
                 "a",
                 bx + box_s / 2.0,
-                by + box_s / 2.0 + 15.0 - virtua.baseline_offset(40.0),
+                by + (box_s - 40.0 * 576.0 / 1024.0) / 2.0,
             );
         sheet.ctx.text_align(TextAlign::Left);
         sheet.label("01", W - MARGIN, base_y, size, text_primary(), 1);
@@ -506,7 +488,7 @@ fn main() {
     sheet.label(
         "VIRTUA GROTESK / REGULAR 400 / UPM 1024",
         MARGIN,
-        1240.0,
+        20.0,
         24.0,
         text_dim(),
         -1,
@@ -514,7 +496,7 @@ fn main() {
     sheet.label(
         "github.com/eliheuer/virtua-grotesk",
         W - MARGIN,
-        1240.0,
+        20.0,
         24.0,
         text_dim(),
         1,

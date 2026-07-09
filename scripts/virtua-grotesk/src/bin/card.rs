@@ -17,7 +17,7 @@ use kurbo::{Affine, BezPath};
 
 const W: f64 = 2400.0;
 const H: f64 = 1260.0;
-const BASELINE_Y: f64 = 960.0; // canvas y of font y=0 (y-down canvas)
+const BASELINE_Y: f64 = 300.0; // canvas y of font y=0 (y-up canvas)
 const LETTER_SPACE: f64 = 48.0;
 const GLYPHS: &[&str] = &["R_", "a", "two"];
 
@@ -118,7 +118,7 @@ fn main() {
     }
     let mut gy = BASELINE_Y % 16.0 - 16.0;
     while gy < H {
-        let u = ((BASELINE_Y - gy).round() as i64).rem_euclid(256);
+        let u = ((gy - BASELINE_Y).round() as i64).rem_euclid(256);
         let c = if u == 0 { 66 } else if u % 64 == 0 { 44 } else { 24 };
         ctx.stroke(Color::rgb(c, c, c)).stroke_width(2.0);
         ctx.line(0.0, gy, W, gy);
@@ -128,7 +128,7 @@ fn main() {
     // ── vertical metrics: ascender 832, cap 768, x-height 576, baseline 0,
     //    descender -256 — the power-of-two sums from DESIGN.md ──
     for (y, orange) in [(832.0, false), (768.0, false), (576.0, false), (0.0, true), (-256.0, false)] {
-        let py = BASELINE_Y - y;
+        let py = BASELINE_Y + y;
         if orange {
             ctx.stroke(Color::rgb(255, 78, 0)).stroke_width(3.0);
         } else {
@@ -139,11 +139,11 @@ fn main() {
 
     // ── glyph outlines + handles + points ──
     for outline in &outlines {
-        let to_canvas = Affine::new([1.0, 0.0, 0.0, -1.0, cursor, BASELINE_Y]);
+        let to_canvas = Affine::translate((cursor, BASELINE_Y));
 
         ctx.stroke(Color::rgb(120, 120, 120)).stroke_width(3.0);
         for ((x1, y1), (x2, y2)) in &outline.handles {
-            ctx.line(cursor + x1, BASELINE_Y - y1, cursor + x2, BASELINE_Y - y2);
+            ctx.line(cursor + x1, BASELINE_Y + y1, cursor + x2, BASELINE_Y + y2);
         }
 
         ctx.no_fill();
@@ -152,7 +152,7 @@ fn main() {
 
         ctx.no_stroke();
         for (x, y, role) in &outline.points {
-            let (px, py) = (cursor + x, BASELINE_Y - y);
+            let (px, py) = (cursor + x, BASELINE_Y + y);
             match role {
                 Role::Smooth => {
                     ctx.fill(Color::rgb(24, 184, 111));
