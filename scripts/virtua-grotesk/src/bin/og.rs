@@ -1,10 +1,5 @@
-//! OG / share card for the Virtua Grotesk post on elih.net: a Replica-style
-//! dimension sheet in dark mode with the runebender-web palette. The word
-//! "Grid" from the Regular master is filled in mark-red over the 16-unit
-//! design grid, with blue vertical-metric lines with values, and per-glyph
-//! advance widths and hatched side bearings in staggered dimension rows
-//! below. 2400x1260 (2x of 1200x630).
-//!
+//! OG / share card for the Virtua Grotesk post on elih.net: 
+//
 //! Coordinates are DrawBot's (y-up, origin bottom-left), which at this size
 //! makes one font unit = one canvas pixel with the baseline at y=324: every
 //! font-space coordinate is just BASELINE_Y + value, and the UFO outlines
@@ -12,21 +7,20 @@
 //! rect()/oval() anchor at their bottom-left corner.
 //!
 //! REBUILD after editing this file (from the elih.net repo root):
-//!
 //!     cd scripts/virtua-grotesk && cargo run --release --bin og
 //!
 //! That one command recompiles and overwrites BOTH outputs:
 //!     src/content/blog/virtua-grotesk/share-card.png   (post hero)
 //!     public/og/virtua-grotesk.png                     (og:image)
+//! 
 //! Rebuilds take about a second once deps are compiled; reload the post in
 //! the browser to see the new card (the Astro dev server serves it as a
 //! static asset, no restart needed).
 //!
 //! Inputs read at render time, from sibling checkouts:
-//!     ~/GH/repos/virtua-grotesk/sources/VirtuaGrotesk-Regular.ufo  (outlines,
-//!         advances, side bearings; edit the font and the numbers update)
+//!     ~/GH/repos/virtua-grotesk/sources/VirtuaGrotesk-Regular.ufo
 //!     ~/GH/repos/virtua-grotesk/fonts/variable/VirtuaGrotesk[wght].ttf
-//!     ~/GH/repos/google-fonts/ofl/geistmono/GeistMono[wght].ttf  (labels)
+//!     ~/GH/repos/google-fonts/ofl/geistmono/GeistMono[wght].ttf
 
 use designbot::prelude::*;
 use designbot_render::Renderer;
@@ -36,41 +30,30 @@ const W: f64 = 2400.0;
 const H: f64 = 1260.0;
 
 const MARGIN: f64 = 96.0; // content runs MARGIN...W-MARGIN
-const BASELINE_Y: f64 = 324.0; // canvas y of font y=0
+const BASELINE_Y: f64 = 308.0; // canvas y of font y=0
 const GRID_TOP: f64 = BASELINE_Y + 784.0; // cap overshoot line
 const GRID_BOTTOM: f64 = BASELINE_Y - 80.0;
-const HEADER_RULE_Y: f64 = 1150.0;
-const FOOTER_RULE_Y: f64 = 56.0;
+const HEADER_RULE_Y: f64 = 1160.0;
+const FOOTER_RULE_Y: f64 = 112.0;
 
 const GLYPHS: &[&str] = &["G_", "r", "i", "d"];
 
-// runebender-web theme tokens (themeTokens.ts / runebender.json)
+// Theme tokens
 fn bg() -> Color {
     Color::rgb(0x10, 0x10, 0x10)
 }
-fn grid_minor() -> Color {
-    Color::rgb(0x1f, 0x1f, 0x1f)
-}
-fn grid_major() -> Color {
-    Color::rgb(0x2d, 0x2d, 0x2d)
+fn grid() -> Color {
+    // dark gray, so the graph paper sits well behind the drawing
+    Color::rgb(0x32, 0x32, 0x32)
 }
 fn rule() -> Color {
-    Color::rgb(0x40, 0x40, 0x40)
-}
-fn diag() -> Color {
-    Color::rgb(0x38, 0x38, 0x38)
-}
-fn text_primary() -> Color {
-    Color::rgb(0x90, 0x90, 0x90)
+    Color::rgb(0x18, 0xb8, 0x6f)
 }
 fn text_bright() -> Color {
-    Color::rgb(0xf0, 0xf0, 0xf0)
-}
-fn text_dim() -> Color {
-    Color::rgb(0x70, 0x70, 0x70)
+    Color::rgb(0x18, 0xb8, 0x6f)
 }
 fn subdued() -> Color {
-    Color::rgb(0x50, 0x50, 0x50)
+    Color::rgb(0x18, 0xb8, 0x6f)
 }
 fn red() -> Color {
     Color::rgb(0xff, 0x4a, 0x3d)
@@ -78,8 +61,9 @@ fn red() -> Color {
 fn blue() -> Color {
     Color::rgb(0x45, 0x6f, 0xff)
 }
-fn green() -> Color {
-    Color::rgb(0x18, 0xb8, 0x6f)
+fn red_fill() -> Color {
+    // the mark red at ~40%, so grid and construction lines read through
+    Color::rgba(0xff, 0x4a, 0x3d, 104)
 }
 
 // --- minimal sfnt reader (family name for ctx.font()) ----------------------
@@ -134,16 +118,37 @@ fn load_family(renderer: &mut Renderer, path: &str) -> String {
 
 // --- UFO outlines -----------------------------------------------------------
 
+/// Point roles, drawn as red-outlined markers knocked out with the background
+/// color: smooth = circle, corner = square, off-curve = small circle.
+#[derive(Clone, Copy)]
+enum Role {
+    Smooth,
+    Corner,
+    Off,
+}
+
 struct Outline {
     path: BezPath, // font units, y-up, same as the canvas
+    points: Vec<(f64, f64, Role)>,
+    handles: Vec<((f64, f64), (f64, f64))>, // on-curve anchor -> off-curve
     width: f64,
     lsb: f64,
     rsb: f64,
 }
 
+fn push_on_curve(points: &mut Vec<(f64, f64, Role)>, p: &norad::ContourPoint, k: usize, n: usize) {
+    if k == n {
+        return; // the closing point is the start point, already recorded
+    }
+    let role = if p.smooth { Role::Smooth } else { Role::Corner };
+    points.push((p.x, p.y, role));
+}
+
 fn load_outline(glif: &std::path::Path) -> Outline {
     let glyph = norad::Glyph::load(glif).expect("failed to load glif");
     let mut path = BezPath::new();
+    let mut points = Vec::new();
+    let mut handles = Vec::new();
     for contour in &glyph.contours {
         use norad::PointType::*;
         let pts = &contour.points;
@@ -153,18 +158,30 @@ fn load_outline(glif: &std::path::Path) -> Outline {
         };
         let sp = &pts[start];
         path.move_to((sp.x, sp.y));
+        let role = if sp.smooth { Role::Smooth } else { Role::Corner };
+        points.push((sp.x, sp.y, role));
+        let mut prev_on = (sp.x, sp.y);
         let mut pending: Vec<(f64, f64)> = Vec::new();
         for k in 1..=n {
             let p = &pts[(start + k) % n];
             match p.typ {
-                OffCurve => pending.push((p.x, p.y)),
+                OffCurve => {
+                    pending.push((p.x, p.y));
+                    points.push((p.x, p.y, Role::Off));
+                }
                 Curve if pending.len() == 2 => {
                     path.curve_to(pending[0], pending[1], (p.x, p.y));
+                    handles.push((prev_on, pending[0]));
+                    handles.push(((p.x, p.y), pending[1]));
                     pending.clear();
+                    prev_on = (p.x, p.y);
+                    push_on_curve(&mut points, p, k, n);
                 }
                 _ => {
                     path.line_to((p.x, p.y));
                     pending.clear();
+                    prev_on = (p.x, p.y);
+                    push_on_curve(&mut points, p, k, n);
                 }
             }
         }
@@ -175,6 +192,8 @@ fn load_outline(glif: &std::path::Path) -> Outline {
         lsb: bounds.x0,
         rsb: glyph.width - bounds.x1,
         path,
+        points,
+        handles,
         width: glyph.width,
     }
 }
@@ -224,10 +243,33 @@ impl Sheet<'_> {
         self.label(txt, x0, y, size, color, -1);
     }
 
+    /// Metric-line tag: a background-filled, blue-outlined box snapped to the
+    /// 16-unit grid (32 high, width in whole cells), floating one grid unit
+    /// off the line at y_line (above or below it), with the text optically
+    /// centered. x_edge must be a grid line; align -1 grows the box
+    /// rightward, 1 leftward.
+    fn metric_tag(&mut self, txt: &str, x_edge: f64, y_line: f64, above: bool, align: i8) {
+        let size = 30.0;
+        let w = self.mono_width(txt, size);
+        let box_w = ((w + 16.0) / 16.0).ceil() * 16.0;
+        let box_h = 32.0;
+        let x0 = if align < 0 { x_edge } else { x_edge - box_w };
+        let y0 = if above {
+            y_line + 16.0
+        } else {
+            y_line - box_h - 16.0
+        };
+        self.ctx.fill(bg()).stroke(blue()).stroke_width(2.0);
+        self.ctx.rect(x0, y0, box_w, box_h);
+        // Geist Mono caps/figures are ~0.73 em tall; center that ink box
+        let baseline = y0 + (box_h - 0.73 * size) / 2.0;
+        self.label(txt, x0 + box_w / 2.0, baseline, size, blue(), 0);
+    }
+
     /// 45-degree hatching clipped to a rect, Replica side-bearing style.
     fn hatch(&mut self, x0: f64, y0: f64, x1: f64, y1: f64, color: Color) {
         let h = y1 - y0;
-        self.ctx.stroke(color).stroke_width(1.6).no_fill();
+        self.ctx.stroke(color).stroke_width(2.0).no_fill();
         let step = 6.0;
         let mut t = x0 - h;
         while t < x1 {
@@ -241,9 +283,10 @@ impl Sheet<'_> {
         }
     }
 
-    /// Small open circle node, Replica corner-marker style.
+    /// Small circle node at a blue-line crossing, knocked out with the
+    /// background color like the point markers.
     fn node(&mut self, x: f64, y: f64, r: f64) {
-        self.ctx.no_fill().stroke(text_primary()).stroke_width(1.6);
+        self.ctx.fill(bg()).stroke(blue()).stroke_width(2.0);
         self.ctx.oval(x - r, y - r, r * 2.0, r * 2.0);
     }
 }
@@ -252,7 +295,6 @@ fn main() {
     let home = std::env::var("HOME").unwrap();
     let glyphs_dir = std::path::PathBuf::from(&home)
         .join("GH/repos/virtua-grotesk/sources/VirtuaGrotesk-Regular.ufo/glyphs");
-    let vf_path = format!("{home}/GH/repos/virtua-grotesk/fonts/variable/VirtuaGrotesk[wght].ttf");
     let mono_path = format!("{home}/GH/repos/google-fonts/ofl/geistmono/GeistMono[wght].ttf");
 
     let outlines: Vec<Outline> = GLYPHS
@@ -263,7 +305,6 @@ fn main() {
 
     let mut renderer = Renderer::new(W as u32, H as u32);
     let mono = load_family(&mut renderer, &mono_path);
-    let virtua = load_family(&mut renderer, &vf_path);
 
     let mut sheet = Sheet {
         ctx: Canvas::new(W, H),
@@ -282,113 +323,107 @@ fn main() {
         bounds.push(cursor);
     }
 
-    // ── the 16-unit design grid, aligned to the glyph origin ──
+    // ── the 16-unit design grid, aligned to the glyph origin and snapped to
+    //    whole cells: the box starts and ends exactly on grid lines ──
+    let step = 16.0;
+    let grid_left = x0 - (((x0 - MARGIN) / step).floor()) * step;
+    let grid_right = grid_left + (((W - MARGIN - grid_left) / step).floor()) * step;
     {
         let ctx = &mut sheet.ctx;
         ctx.no_fill();
-        for major in [false, true] {
-            let (color, step) = if major {
-                (grid_major(), 64.0)
-            } else {
-                (grid_minor(), 16.0)
-            };
-            ctx.stroke(color).stroke_width(1.0);
-            let mut x = x0 - (((x0 - MARGIN) / step).floor()) * step;
-            while x <= W - MARGIN {
-                ctx.line(x, GRID_BOTTOM, x, GRID_TOP);
-                x += step;
-            }
-            let mut y = BASELINE_Y - (((BASELINE_Y - GRID_BOTTOM) / step).floor()) * step;
-            while y <= GRID_TOP {
-                ctx.line(MARGIN, y, W - MARGIN, y);
-                y += step;
-            }
+        ctx.stroke(grid()).stroke_width(2.0);
+        let mut x = grid_left;
+        while x <= grid_right {
+            ctx.line(x, GRID_BOTTOM, x, GRID_TOP);
+            x += step;
+        }
+        let mut y = GRID_BOTTOM;
+        while y <= GRID_TOP {
+            ctx.line(grid_left, y, grid_right, y);
+            y += step;
         }
     }
 
-    // ── per-glyph cells: boundary verticals, corner-to-corner diagonals ──
+    // ── per-glyph cells: advance-boundary verticals ──
     {
         let ctx = &mut sheet.ctx;
-        ctx.stroke(diag()).stroke_width(1.4).no_fill();
-        for w in bounds.windows(2) {
-            let (bx0, bx1) = (w[0], w[1]);
-            ctx.line(bx0, GRID_TOP, bx1, GRID_BOTTOM);
-            ctx.line(bx0, GRID_BOTTOM, bx1, GRID_TOP);
-        }
-        ctx.stroke(rule()).stroke_width(1.6);
+        ctx.stroke(blue()).stroke_width(2.0).no_fill();
         for &b in &bounds {
             ctx.line(b, GRID_BOTTOM, b, GRID_TOP);
         }
     }
 
-    // ── glyphs, mark-red; canvas and font agree on y-up, so placement is a
-    //    plain translate ──
+    // ── vertical metrics, behind the glyphs:
+    //    overshoots dashed, cap/x-height/baseline solid ──
+    {
+        let ctx = &mut sheet.ctx;
+        ctx.stroke(blue()).stroke_width(2.0).no_fill();
+        ctx.line_dash(&[10.0, 10.0]);
+        for y in [784.0, -16.0] {
+            ctx.line(grid_left, BASELINE_Y + y, grid_right, BASELINE_Y + y);
+        }
+        ctx.line_dash(&[]);
+        for y in [768.0, 576.0, 0.0] {
+            ctx.line(grid_left, BASELINE_Y + y, grid_right, BASELINE_Y + y);
+        }
+    }
+
+    // ── glyphs: half-transparent mark-red fill with a solid contour stroke,
+    //    Replica gauge-ball-page style; canvas and font agree on y-up, so
+    //    placement is a plain translate ──
     for (o, w) in outlines.iter().zip(bounds.windows(2)) {
-        sheet.ctx.no_stroke().fill(red());
+        sheet.ctx.fill(red_fill()).stroke(red()).stroke_width(2.0);
         sheet
             .ctx
             .draw_path(Affine::translate((w[0], BASELINE_Y)) * o.path.clone());
     }
 
-    // ── vertical metrics over the glyphs, Replica-style:
-    //    overshoots dashed, cap/x-height/baseline solid ──
-    {
-        let ctx = &mut sheet.ctx;
-        ctx.stroke(blue()).stroke_width(1.6).no_fill();
-        ctx.line_dash(&[10.0, 10.0]);
-        for y in [784.0, -16.0] {
-            ctx.line(MARGIN, BASELINE_Y + y, W - MARGIN, BASELINE_Y + y);
+    // ── bezier handles and points over everything, Runebender palette ──
+    for (o, w) in outlines.iter().zip(bounds.windows(2)) {
+        let (gx, gy) = (w[0], BASELINE_Y);
+        sheet.ctx.stroke(red()).stroke_width(2.0).no_fill();
+        for ((x1, y1), (x2, y2)) in &o.handles {
+            sheet.ctx.line(gx + x1, gy + y1, gx + x2, gy + y2);
         }
-        ctx.line_dash(&[]);
-        ctx.stroke_width(2.2);
-        for y in [768.0, 576.0, 0.0] {
-            ctx.line(MARGIN, BASELINE_Y + y, W - MARGIN, BASELINE_Y + y);
+        // red markers knocked out with the background color so they stay
+        // readable over the fill and grid
+        sheet.ctx.fill(bg()).stroke(red()).stroke_width(2.0);
+        for (x, y, role) in &o.points {
+            let (px, py) = (gx + x, gy + y);
+            match role {
+                Role::Smooth => {
+                    sheet.ctx.oval(px - 7.0, py - 7.0, 14.0, 14.0);
+                }
+                Role::Corner => {
+                    sheet.ctx.rect(px - 6.0, py - 6.0, 12.0, 12.0);
+                }
+                Role::Off => {
+                    sheet.ctx.oval(px - 7.0, py - 7.0, 14.0, 14.0);
+                }
+            }
         }
     }
 
-    // ── cell corner nodes over the glyphs ──
-    for &b in &bounds {
-        sheet.node(b, GRID_TOP, 6.0);
-        sheet.node(b, GRID_BOTTOM, 6.0);
-    }
+    // ── metric tags, snapped to the grid and docked onto their lines ──
+    sheet.metric_tag("CAP 768", grid_left, BASELINE_Y + 768.0, false, -1);
+    sheet.metric_tag("X-HEIGHT 576", grid_left, BASELINE_Y + 576.0, true, -1);
+    sheet.metric_tag("BASELINE 0", grid_left, BASELINE_Y, true, -1);
+    sheet.metric_tag("OVERSHOOT +16", grid_right, BASELINE_Y + 784.0, true, 1);
+    sheet.metric_tag("OVERSHOOT -16", grid_right, BASELINE_Y - 16.0, false, 1);
 
-    // ── metric labels, left, over background patches ──
-    for (txt, y) in [
-        ("CAP 768", BASELINE_Y + 768.0 - 34.0),
-        ("X-HEIGHT 576", BASELINE_Y + 576.0 + 12.0),
-        ("BASELINE 0", BASELINE_Y + 12.0),
-    ] {
-        sheet.label_padded(txt, MARGIN + 8.0, y, 26.0, blue(), -1);
-    }
-    sheet.label_padded(
-        "OVERSHOOT +16",
-        W - MARGIN - 8.0,
-        BASELINE_Y + 784.0 + 10.0,
-        26.0,
-        blue(),
-        1,
-    );
-    sheet.label_padded(
-        "OVERSHOOT -16",
-        W - MARGIN - 8.0,
-        BASELINE_Y - 16.0 - 34.0,
-        26.0,
-        blue(),
-        1,
-    );
-
-    // ── dimension zone: boundary ticks + staggered width / side-bearing rows ──
-    let tick_bottom = 92.0;
-    {
-        let ctx = &mut sheet.ctx;
-        ctx.stroke(subdued()).stroke_width(1.6).no_fill();
-        for &b in &bounds {
-            ctx.line(b, GRID_BOTTOM, b, tick_bottom);
+    // ── dimension zone: staggered width / side-bearing rows, then boundary
+    //    ticks whose end nodes land on the bottom corner of the deepest
+    //    adjacent hatch block ──
+    fn row_y(j: usize) -> f64 {
+        if j % 2 == 0 {
+            188.0
+        } else {
+            152.0
         }
     }
     for (j, (o, w)) in outlines.iter().zip(bounds.windows(2)).enumerate() {
         let (bx0, bx1) = (w[0], w[1]);
-        let row_y = if j % 2 == 0 { 196.0 } else { 128.0 };
+        let row_y = row_y(j);
         let ink0 = bx0 + o.lsb;
         let ink1 = bx1 - o.rsb;
 
@@ -396,7 +431,7 @@ fn main() {
         sheet
             .ctx
             .stroke(subdued())
-            .stroke_width(1.6)
+            .stroke_width(2.0)
             .no_fill()
             .line(bx0, row_y, bx1, row_y);
         sheet.hatch(bx0, row_y - 14.0, ink0, row_y + 14.0, red());
@@ -407,7 +442,7 @@ fn main() {
             &format!("{}", (ink1 - ink0).round()),
             (ink0 + ink1) / 2.0,
             row_y - 11.0,
-            32.0,
+            30.0,
             text_bright(),
             0,
         );
@@ -415,7 +450,7 @@ fn main() {
             &format!("{}", o.lsb.round()),
             ink0 + 10.0,
             row_y + 22.0,
-            24.0,
+            30.0,
             red(),
             -1,
         );
@@ -423,59 +458,49 @@ fn main() {
             &format!("{}", o.rsb.round()),
             ink1 - 10.0,
             row_y + 22.0,
-            24.0,
+            30.0,
             red(),
             1,
         );
+    }
+
+    // ── boundary ticks + nodes, over the hatches ──
+    for (i, &b) in bounds.iter().enumerate() {
+        // deepest hatch touching this boundary: the cells to its left/right
+        let mut tick_end = f64::INFINITY;
+        if i > 0 {
+            tick_end = tick_end.min(row_y(i - 1) - 14.0);
+        }
+        if i < outlines.len() {
+            tick_end = tick_end.min(row_y(i) - 14.0);
+        }
+        sheet
+            .ctx
+            .stroke(blue())
+            .stroke_width(2.0)
+            .no_fill()
+            .line(b, GRID_BOTTOM, b, tick_end);
+        sheet.node(b, tick_end, 6.0);
+        // nodes where the boundary crosses the blue metric lines
+        for y in [784.0, 768.0, 576.0, 0.0, -16.0] {
+            sheet.node(b, BASELINE_Y + y, 6.0);
+        }
     }
 
     // ── header: Replica legend + section badge ──
     {
         let base_y = 1182.0;
         let size = 30.0;
-        let mut x = MARGIN;
-        let segments: [(&str, Color, Option<Color>); 4] = [
-            ("POWERS-OF-TWO GRID", text_bright(), None),
-            ("WIDTH", text_primary(), Some(text_bright())),
-            ("SIDE BEARINGS", text_primary(), Some(red())),
-            ("METRICS", text_primary(), Some(blue())),
-        ];
-        for (i, (txt, color, square)) in segments.iter().enumerate() {
-            if i > 0 {
-                sheet.label("/", x, base_y, size, subdued(), -1);
-                x += sheet.mono_width("/", size) + 6.0;
-            }
-            if let Some(sq) = square {
-                sheet.ctx.no_stroke().fill(*sq);
-                sheet.ctx.rect(x, base_y, 20.0, 20.0);
-                x += 30.0;
-            }
-            sheet.label(txt, x, base_y, size, *color, -1);
-            x += sheet.mono_width(txt, size) + 22.0;
-        }
+        sheet.label("VIRTUA GROTESK", MARGIN, base_y, size, text_bright(), -1);
 
-        // badge: green box with a Virtua "a", sheet number beside it
-        let box_s = 56.0;
-        let bx = W - MARGIN - box_s - 66.0;
-        let by = 1170.0; // box bottom, ~centered on the legend line
-        sheet.ctx.no_stroke().fill(green());
-        sheet.ctx.rect(bx, by, box_s, box_s);
-        sheet
-            .ctx
-            .font(&virtua)
-            .clear_font_variations()
-            .font_variation("wght", 500.0)
-            .font_size(40.0)
-            .fill(bg())
-            .text_align(TextAlign::Center)
-            // center the x-height (576/1024 em) box of the "a" in the badge
-            .text(
-                "a",
-                bx + box_s / 2.0,
-                by + (box_s - 40.0 * 576.0 / 1024.0) / 2.0,
-            );
-        sheet.ctx.text_align(TextAlign::Left);
-        sheet.label("01", W - MARGIN, base_y, size, text_primary(), 1);
+        sheet.label(
+            "SIL OPEN FONT LICENSE (OFL) VERSION 1.1",
+            W - MARGIN,
+            base_y,
+            size,
+            text_bright(),
+            1,
+        );
     }
 
     // ── rules and footer captions ──
@@ -486,19 +511,19 @@ fn main() {
         ctx.line(MARGIN, FOOTER_RULE_Y, W - MARGIN, FOOTER_RULE_Y);
     }
     sheet.label(
-        "VIRTUA GROTESK / REGULAR 400 / UPM 1024",
+        "POWERS OF TWO GRID / REGULAR 400 / UPM 1024",
         MARGIN,
-        20.0,
-        24.0,
-        text_dim(),
+        64.0,
+        30.0,
+        text_bright(),
         -1,
     );
     sheet.label(
-        "github.com/eliheuer/virtua-grotesk",
+        "GITHUB.COM/ELIHEUER/VIRTUA-GROTESK",
         W - MARGIN,
-        20.0,
-        24.0,
-        text_dim(),
+        64.0,
+        30.0,
+        text_bright(),
         1,
     );
 
