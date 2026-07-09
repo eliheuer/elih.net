@@ -23,7 +23,8 @@ you are reading this on [elih.net](/) it is the typeface you are reading right n
 It is also a machine-learning
 experiment: the same grid that gives the font its aesthetic makes its source
 files unusually good training data, and a small neural network is now learning
-to draw it. This post is about both halves and why they are the same idea.
+to draw it. This post is about both the typeface and the neural network, and
+why they are the same idea.
 The font sources are on GitHub at
 [github.com/eliheuer/virtua-grotesk](https://github.com/eliheuer/virtua-grotesk),
 free under the SIL Open Font License.
@@ -44,29 +45,50 @@ free under the SIL Open Font License.
 <li><a href="#08-the-designspace-is-a-data-factory"><span class="n">08</span>The Designspace Is a Data Factory</a></li>
 <li><a href="#09-one-pipeline"><span class="n">09</span>One Pipeline</a></li>
 <li><a href="#10-what-ships-next"><span class="n">10</span>What Ships Next</a></li>
-<li><a href="#11-build-log"><span class="n">11</span>Build Log</a></li>
+<li><a href="#11-a-hidden-treasure-the-mysticism-of-2ⁿ"><span class="n">11</span>A Hidden Treasure: The Mysticism of 2ⁿ</a></li>
+<li><a href="#12-build-log"><span class="n">12</span>Build Log</a></li>
 </ol>
 </nav>
 
 ### 01. A Font Is a Program
 
-A digital font is not a set of pictures. It is a small program: coordinates,
-curve operators, composition rules, executed by a rasterizer millions of times
-a day. Massimo Vignelli liked to say design is a language with rules
-(semantics, syntax, pragmatics, a triad he adapted from Charles Morris's
-semiotics), and he meant it as an analogy. In type the
-analogy is literal. A glyph is a sentence in a formal language, and the
-question that started this project was simple: if a glyph is a sentence, what
-grammar makes the language easiest for a machine to learn?
+A digital font is not a set of pictures, it is a small program. Massimo
+Vignelli called design a language and meant it as an analogy. In type the
+analogy is literal: a glyph is a sentence in a formal language, built from
+points and curves the way a sentence is built from words.
 
-Most fonts answer that question by accident. Their coordinates land wherever
+And the source is code you can read. A glyph is stored as text, a short list of
+instructions: start here, curve to there, close the path. Around the outlines
+sit layers that are unambiguously programs, a rule language that substitutes and
+repositions glyphs in context, an interpolation system that computes the
+in-between weights on demand. The whole thing is compiled from plain-text
+sources by a build tool, kept in git, and executed by the shaper and rasterizer
+every time a letter appears on screen. Program is not a metaphor, it is the file
+format.
+
+This is not a new idea, and its clearest early form is a book. In 1964 Karl
+Gerstner published Designing Programmes, whose first essay is titled "Programme
+as Typeface" and whose thesis was "instead of solutions for problems, programmes
+for solutions": design the system that generates the forms, not the forms one at
+a time. He built one, too. Gerstner-Programm, begun that same year at GGK Basel
+and drawn by Christian Mengelt for the Berthold foundry, unified a whole type
+family by strict internal regularity rather than the inherited conventions of
+how the letters were supposed to look. Donald Knuth then carried the idea to its
+limit in Metafont, which turned letters into literal parametric code, and decades
+later Jürg Lehni and Peter Biľak collected the argument under the title [Typeface
+as Programme](https://www.typotheque.com/articles/typeface-as-programme).
+
+What most of them wanted from the program was generative letterforms, strokes as
+functions. I want something narrower and stranger: not to program the letters,
+but to draw them regularly enough that a program can learn them.
+
+Most fonts don't really think about any of this. Their coordinates land wherever
 a designer's hand put them, at whatever unit resolution their editor
 defaulted to, with contour structures as individual as handwriting. That's
 fine, the rasterizer doesn't care. But a neural network does, and the whole
 current wave of font AI is trained on exactly that accidental data: scraped
-fonts, or Google Fonts, heterogeneous in every dimension that matters.
-
-Virtua Grotesk answers the question on purpose.
+fonts, or Google Fonts, heterogeneous in every dimension that matters. Virtua
+Grotesk is designed the other way, on purpose.
 
 ### 02. Replica and the Coarse Grid
 
@@ -359,7 +381,35 @@ If any of this is interesting to you (the type design, the grid system, the
 tiny models), the repos are open, the font is OFL, and the draft you just
 read wants criticism.
 
-### 11. Build Log
+### 11. A Hidden Treasure: The Mysticism of 2ⁿ
+
+Everything above treats a font as a program and a glyph as a sentence. This is
+the part I can't put in a diagram. We taught sand to think: we melt quartz, etch
+it, and it holds a conversation with us in a language of two states, on and off,
+one and zero. Every glyph the model draws is that single distinction repeated,
+powers of two all the way down.
+
+The number is old, and it keeps returning. The I Ching is sixty-four hexagrams,
+two to the sixth, six stacked lines each broken or whole; the video game Animal
+Well hides exactly sixty-four eggs, the same completeness wearing a different
+mask; in 1701 Leibniz saw his own binary arithmetic in the hexagram diagram and
+took the coincidence as a glimpse of the mind of God. Terence McKenna said the
+spirit world is made not of matter but of a language you behold instead of hear,
+a logos you see rather than speak. Seekers have always hunted for God's
+arithmetic in scripture, the nineteens of the Quran, the letter-sums of the
+Kabbalah. My number is humbler than any of them. It is two.
+
+I can't defend this in English, and the failure is the point: some things are
+only sayable in form. An old hadith has God say he was "a hidden treasure" who
+loved to be known, and so made a world to be seen in, and I think that is the
+whole job of a typographer. The Báb taught that every thing should be raised to
+its highest beauty, that refinement is a form of worship, that a thing perfected
+is not deprived of its own paradise. So maybe a letter drawn cleanly enough on a
+grid of twos can carry what the sentence cannot. Maybe the aesthetics are the
+argument, and if the font is beautiful enough, it says the thing about God that I
+can't.
+
+### 12. Build Log
 
 This is a running log of the actual work, in plain language, newest entry
 last. The sections above describe the ideas; this section is what happened.
