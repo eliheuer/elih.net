@@ -5,14 +5,20 @@ Neural Networks" post, drawn with [designbot](https://github.com/eliheuer/design
 Assumes a sibling checkout of the font sources at `~/GH/repos/virtua-grotesk`.
 
 ```sh
-cargo run --release --bin card   # share-card.png + public/og/virtua-grotesk.png
+cargo run --release --bin og     # share-card.png + public/og/virtua-grotesk.png
+cargo run --release --bin card   # older hero: R a 2 outlines with point markers
 ```
 
 ## Figures
 
-- `card` — hero/OG: R a 2 outlines over the powers-of-two grid, Runebender
-  point palette (smooth = green, corner = orange, off-curve = purple),
-  baseline in orange.
+- `og` — hero/OG: "Grid" as a Replica-style dimension sheet in dark mode with
+  the runebender-web palette — red glyphs on the 16-unit design grid, blue
+  vertical-metric lines with values, advance widths and hatched side bearings
+  in staggered dimension rows. Labels in Geist Mono
+  (`~/GH/repos/google-fonts/ofl/geistmono`).
+- `card` — previous hero: R a 2 outlines over the powers-of-two grid,
+  Runebender point palette (smooth = green, corner = orange, off-curve =
+  purple), baseline in orange.
 
 ## TODO
 

@@ -16,3 +16,7 @@ norad = "0.18"
 [[bin]]
 name = "card"
 path = "src/bin/card.rs"
+
+[[bin]]
+name = "og"
+path = "src/bin/og.rs"
