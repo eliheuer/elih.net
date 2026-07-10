@@ -127,13 +127,13 @@ these are the load-bearing numbers:
 | measurement | value | note |
 | --- | --- | --- |
 | UPM | 1024 | 2^10 |
-| drawing grid | 2 units | even coordinates strongly preferred |
+| drawing grid | 2 units | prefer even coordinates |
 | ascender | 768 | shared with cap height |
 | cap height | 768 | 512 + 256 |
 | x-height | 576 | 512 + 64 |
-| descender | −256 | |
+| descender | −256 | −2^8 |
 | chamfers | 16 units | the signature corner cut |
-| favored measurements | 2, 4, 8, 16, 32, 64, 128, 256 | or short sums of them |
+| favored measurements | 2, 4, 8, 16, 32, 64, 128 | or short sums of them |
 
 Strokes are monolinear. Corners are chamfered: like Replica, the cut is a
 grid artifact made visible, sized to a power of two. And like Replica's
@@ -149,8 +149,23 @@ recoverable.
 
 ### 04. From Aesthetic Discipline to Machine Legibility
 
-Here is the new argument. Everything Norm did for design discipline turns
-out to be exactly what a neural network wants from training data:
+Andrej Karpathy likes to call a large
+language model [a zip file of the
+internet](https://www.youtube.com/watch?v=zjkBMFhNj_g): billions of parameters
+that compress terabytes of text into a lossy gestalt, keeping the patterns and
+discarding the surface. A trained model is a compression of its training data.
+
+Type designers already build compressors. A variable font is one: instead of
+shipping a separate file for every weight, you ship a base outline plus a set of
+interpolation deltas, the differences that bend it into every other weight, and
+the font reconstructs them on demand. A neural network trained on a
+typeface is that idea taken further, a lossy, learned compression of the design,
+except it interpolates through a space it discovered for itself rather than one a
+designer drew by hand. And a compressor is only as good as the regularity of what
+it feeds on.
+
+Everything Norm did for design discipline turns out to be exactly what a neural
+network wants from its training data:
 
 **Quantization shrinks the vocabulary.** On a 2-unit grid at UPM 1024, a
 coordinate takes one of roughly 900 values instead of effectively continuous
@@ -169,6 +184,28 @@ and every stem is a power-of-two sum, then a generated glyph can be
 wrong stem weights are measurable. Generation quality stops being vibes and
 becomes a test suite.
 
+Andrej Karpathy makes the sharpest version of this point about arithmetic.
+Language models are notoriously bad at it, and much of the reason is
+[tokenization](https://www.youtube.com/watch?v=zduSFxRajkE): numbers get split
+into tokens inconsistently, so `127` is a single token while `677` is two, and
+the model has to do math on a representation that changes shape for no reason.
+There is no canonical way to write a number down. Virtua's grid is the opposite.
+Every coordinate lands on the same power-of-two lattice and tokenizes exactly one
+way, a single canonical quantization with no arbitrariness for the model to
+fight. The discipline a designer imposed for the eye hands the machine the clean,
+regular number line that tokenizers never give it.
+
+I think this is where type is heading. An outline font is a compression scheme
+for the Latin idea of a letter, a fixed shape reused everywhere, and it strains
+at scripts that do not work that way. Arabic in its manuscript forms is not a kit
+of reusable shapes but a continuous, context-dependent stroke, and the current
+workaround is thousands of glyphs and substitution rules approximating what a
+hand does in a single motion. A generative font, a small neural network that has
+compressed the typeface and draws each glyph in context instead of looking it up,
+handles that natively. I would not be surprised if the first ones are built on a
+grid like this one, because the grid is what makes the drawing learnable in the
+first place.
+
 Replica made the grid visible to people. Virtua makes it legible to
 machines. It's the same modernist move (the system produces the form) with
 a 2026 justification stacked on the 1957 one. Sometimes I think of it as
@@ -177,10 +214,28 @@ audience includes the machines.
 
 ### 05. Glyphs as Sentences
 
-To train on the font, I serialize each glyph's UFO source into tokens. The
-whole vocabulary is 1,336 tokens: a handful of structural markers (`MOVE`,
-`LINE`, `CURVE`, `CLOSE`), weight and glyph-name conditioning tokens, and
-one token per legal grid coordinate. A glyph reads like this:
+The title is the whole method. A glyph is already a small program, a list of
+drawing commands, which makes it a sentence too: symbols in order, under a
+grammar. Sequences under a grammar are exactly what transformers are built to
+predict. So rather than show the model a picture of a letter, or a bag of points
+with no order, I write each glyph out as the sentence it already is and train a
+language model to speak outlines.
+
+The font's editable source is a [UFO](https://unifiedfontobject.org/): a folder
+of XML files, one per glyph, each storing the outline as a list of points on the
+grid. A transformer can't read that. It reads a flat sequence of tokens from a
+small fixed vocabulary, not a tree of XML with numbers buried in tags. So I wrote
+a small codec that reads a glyph's outline out of the UFO and rewrites it as one
+flat line of tokens, the drawing commands and their coordinates and nothing else.
+The format is mine, but it isn't arbitrary: it is the font's own drawing
+operations spelled out in order, the same moves a pen makes, with the XML thrown
+away.
+
+The vocabulary is 1,336 tokens of three kinds. The structural
+markers (`MOVE`, `LINE`, `CURVE`, `CLOSE`) are the drawing verbs. The
+conditioning tokens for weight and glyph name are the prompt, they tell the model
+what to draw before it draws. And there is one token per legal grid coordinate. The numeral **2** in the
+Regular weight comes out like this:
 
 ```
 BOS  N_two  W400  ADV 560
@@ -192,11 +247,39 @@ CLOSE
 EOS
 ```
 
-That's the entire trick. No rasterization, no image encoder, no diffusion:
-the font source itself, almost verbatim, is the training sequence. A median
-glyph is about 80 tokens. The tokenizer round-trips exactly: tokens back to
-UFO outlines with zero loss, because the grid already did the quantizing at
-design time.
+Read it top to bottom. `BOS` opens the sequence and `EOS` ends it. `N_two` names
+the glyph, `W400` sets the weight (Regular), and `ADV 560` is its advance width,
+how far the pen moves before the next character. The rest is the outline itself:
+`MOVE` starts a contour at a point, `LINE` draws a straight segment to the next,
+`CURVE` draws a cubic bézier through two control points to an endpoint, and
+`CLOSE` shuts the loop. Every bare number is a grid coordinate.
+
+That last part is where the grid earns its keep. Think of the coordinate axis as
+a number line from the descender up to the top of the ascender. A normal font at
+this same UPM of 1024 lets a point sit on any of the thousand-odd whole-number
+positions along it, and because outlines are drawn by hand, the same edge lands a
+unit or two off each time it recurs. Virtua's 2-unit grid keeps only every other
+position, about half as many, and the designer commits to them: a stem lands on
+exactly 96 every time, never 95 or 97. The tokenizer gives each legal position
+its own token, so the model sees a small alphabet of coordinates, each one common
+and always meaning the same place, instead of a wide scatter of near-duplicates
+it can never quite pin down. Same UPM, same em square; what the grid changes is
+how many positions are legal and whether the design reuses them exactly.
+
+The codec runs both ways, and that is the point. To train, it turns every glyph
+in the UFO into a sequence, and the model learns them the way a language model
+learns text: predict the next token, across every glyph in both weights. To draw
+a new glyph, you hand the model the opening tokens, the name and weight you want,
+let it finish the sequence, and run the codec backward into a UFO outline, a
+real, editable glyph you can open in a font editor. It round-trips with zero
+loss, because the grid already did the quantizing at design time.
+
+Why not train on the raw UFO files instead? Because most of a `.glif` is XML
+scaffolding the model would waste itself learning, and the bare coordinates would
+hit the inconsistent-tokenization problem from the last section. There is no
+rasterization, no image encoder, no diffusion anywhere in this: the font source
+itself, stripped to the drawing and almost verbatim, is the training data. A
+median glyph is about 80 tokens.
 
 This is the part that training on found fonts can never have. When the data
 is quantized *after* the fact, snapping destroys the designer's intent by
