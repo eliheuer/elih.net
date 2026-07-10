@@ -6,6 +6,7 @@ Assumes a sibling checkout of the font sources at `~/GH/repos/virtua-grotesk`.
 
 ```sh
 cargo run --release --bin og     # share-card.png + public/og/virtua-grotesk.png
+cargo run --release --bin figs   # fig-complete-two.png + fig-bolden-b.png
 cargo run --release --bin card   # older hero: R a 2 outlines with point markers
 ```
 
@@ -19,12 +20,15 @@ cargo run --release --bin card   # older hero: R a 2 outlines with point markers
 - `card` — previous hero: R a 2 outlines over the powers-of-two grid,
   Runebender point palette (smooth = green, corner = orange, off-curve =
   purple), baseline in orange.
+- `figs` — the two post comparison figures (`fig-complete-two`,
+  `fig-bolden-b`) in the OG dimension-sheet language. Parses the
+  font-garden-lab eval SVGs (`~/GH/repos/font-garden-lab/runs/night1/`),
+  flips them to y-up, and re-renders each panel color-coded by role:
+  gray = ground truth, green = the given input, red = the model output.
+  Re-run after a fresh eval to refresh the model panels.
 
 ## TODO
 
-- `fig-complete-two` and `fig-bolden-b` in the post are placeholder renders
-  from the font-garden-lab eval harness — redraw with designbot in the
-  post's dark visual language (grid + metrics + labeled panels).
 - planned: `fig-grid-ladder` (the 2/4/8/…/256 measurement ladder against the
   vertical metrics), `fig-tokens` (glyph outline with numbered points next
   to its token stream), `fig-interp` (Regular→Bold interpolation sweep as

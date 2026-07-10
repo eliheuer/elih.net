@@ -18,5 +18,9 @@ name = "card"
 path = "src/bin/card.rs"
 
 [[bin]]
+name = "figs"
+path = "src/bin/figs.rs"
+
+[[bin]]
 name = "og"
 path = "src/bin/og.rs"
