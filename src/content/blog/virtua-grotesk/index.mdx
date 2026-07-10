@@ -143,7 +143,7 @@ this time the audience includes the machines.
 
 ### 05. Glyphs as Sentences
 
-The title is the method. A glyph is already a small program, a list of drawing
+A glyph is already a small program, a list of drawing
 commands, which makes it a sentence: symbols in order under a grammar, exactly
 what transformers are built to predict. So instead of a picture of a letter or an
 unordered bag of points, I hand the model each glyph as the sentence it already
@@ -196,41 +196,21 @@ finish, and run the codec backward into a UFO outline, a real, editable glyph. I
 round-trips with zero loss, because the grid already did the quantizing at design
 time.
 
-Training on the raw `.glif` files would waste the model on XML scaffolding, and
-their bare coordinates would hit the tokenization problem from the last section.
 There is no rasterization, no image encoder, no diffusion here: the font source
-itself, stripped to the drawing, is the training data, about 80 tokens for a
-median glyph.
+itself, stripped to the drawing, is the training data, about 80 tokens a glyph.
+And this is what training on found fonts can never have. Quantize the data after
+the fact and you lose the designer's intent by some unknowable amount; draw on
+the grid, and the tokens *are* the intent.
 
-This is the part that training on found fonts can never have. When the data
-is quantized *after* the fact, snapping destroys the designer's intent by
-some unknowable amount. When the font was *drawn* on the grid, the tokens
-are the intent.
-
-None of the machinery here is new. Tokenizing outlines as drawing commands and
-learning them with a transformer is well-trodden: DeepSVG, DeepVecFont, IconShop,
-and StarVector all do a version, several quantizing coordinates to a small integer
-grid exactly as I do. What none of them can do is begin from data that was
-grid-native. They train on found fonts snapped down in preprocessing, so the
-quantization is lossy and the corpus is a scrape of a thousand disagreeing hands. [Simon
-Cozens](https://simoncozens.github.io/state-of-ai-font-generation/),
-surveying the field, names both problems in his own words. On the representation
-he finds that "vectorization of glyph images has been historically very bad." On
-the data, his own experiment is the evidence: he trained a model on the Google
-Fonts dataset and reports that "it completely failed," the tokenizer collapsing
-to a single all-white output. Of the field as a whole he writes that "nobody
-from type-world has had any input into this at all."
-Grid-as-dataset answers both. The representation is borrowed; the data is the
-contribution.
-
-A running theme in Andrej Karpathy's work (he built a whole minimal
-tokenizer, [minbpe](https://github.com/karpathy/minbpe), and gave a lecture
-making the point) is that much of what's strange about language models traces
-back to tokenization. Text has no native quantization, so we impose one after the
-fact with byte-pair encoding, and the seams show up as model weirdness. A
-grid-native font never has that problem: the quantization happened at design
-time, chosen by a designer for design reasons. The tokenizer here is not a
-learned compromise. It is a ruler.
+None of the machinery here is new. DeepSVG, DeepVecFont, IconShop, and StarVector
+all tokenize outlines and learn them with a transformer, several quantizing to a
+small integer grid exactly as I do. What none of them can do is begin from data
+that was grid-native; they train on found fonts snapped down in preprocessing, a
+lossy scrape of a thousand disagreeing hands. [Simon
+Cozens](https://simoncozens.github.io/state-of-ai-font-generation/), surveying
+the field, is blunt: "vectorization of glyph images has been historically very
+bad," and his own model trained on the Google Fonts dataset "completely failed."
+The representation is borrowed; the data is the contribution.
 
 ### 06. A Small Model Learns to Draw
 
