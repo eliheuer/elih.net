@@ -12,9 +12,9 @@
 //!
 //!     cd scripts/virtua-grotesk && cargo run --release --bin figs
 //!
-//! Inputs (sibling checkout):
-//!     ~/GH/repos/font-garden-lab/runs/night1/complete-two.svg
-//!     ~/GH/repos/font-garden-lab/runs/night1/bolden-B.svg
+//! Inputs (sibling checkout); repoint the glyphs in main() at a fresh run:
+//!     ~/GH/repos/font-garden-lab/runs/v02/complete-R.svg
+//!     ~/GH/repos/font-garden-lab/runs/night1/bolden-g.svg
 //!     ~/GH/repos/google-fonts/ofl/geistmono/GeistMono[wght].ttf
 
 use designbot::prelude::*;
@@ -338,7 +338,7 @@ fn render_figure(
 
 fn main() {
     let home = std::env::var("HOME").unwrap();
-    let runs = std::path::PathBuf::from(&home).join("GH/repos/font-garden-lab/runs/night1");
+    let lab = std::path::PathBuf::from(&home).join("GH/repos/font-garden-lab");
     let mono_path = format!("{home}/GH/repos/google-fonts/ofl/geistmono/GeistMono[wght].ttf");
 
     let mut renderer = Renderer::new(W as u32, H as u32);
@@ -352,23 +352,26 @@ fn main() {
         .unwrap()
         .join("src/content/blog/virtua-grotesk");
 
+    // (eval SVG under font-garden-lab, output PNG, header, footer caption).
+    // The model panels come from whichever eval run last covered the glyph;
+    // repoint these at a fresh run to refresh.
     let figures = [
         (
-            "complete-two.svg",
-            "fig-complete-two.png",
+            "runs/v02/complete-R.svg",
+            "fig-complete-r.png",
             "GLYPH COMPLETION",
             "MODEL FINISHES A HELD-OUT GLYPH FROM 40% OF ITS OUTLINE",
         ),
         (
-            "bolden-B.svg",
-            "fig-bolden-b.png",
+            "runs/night1/bolden-g.svg",
+            "fig-bolden-g.png",
             "WEIGHT TRANSFER",
             "MODEL PREDICTS THE BOLD WEIGHT FROM THE REGULAR",
         ),
     ];
 
     for (svg, png, title, caption) in figures {
-        let panels = parse_svg(&runs.join(svg));
+        let panels = parse_svg(&lab.join(svg));
         render_figure(&renderer, &mono, &panels, title, caption, &post.join(png));
     }
 }

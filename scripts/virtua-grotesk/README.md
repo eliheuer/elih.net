@@ -20,12 +20,13 @@ cargo run --release --bin card   # older hero: R a 2 outlines with point markers
 - `card` — previous hero: R a 2 outlines over the powers-of-two grid,
   Runebender point palette (smooth = green, corner = orange, off-curve =
   purple), baseline in orange.
-- `figs` — the two post comparison figures (`fig-complete-two`,
-  `fig-bolden-b`) in the OG dimension-sheet language. Parses the
-  font-garden-lab eval SVGs (`~/GH/repos/font-garden-lab/runs/night1/`),
-  flips them to y-up, and re-renders each panel color-coded by role:
-  gray = ground truth, green = the given input, red = the model output.
-  Re-run after a fresh eval to refresh the model panels.
+- `figs` — the two post comparison figures (`fig-complete-r` = glyph
+  completion of R, `fig-bolden-g` = Regular-to-Bold transfer of g) in the OG
+  dimension-sheet language. Parses the font-garden-lab eval SVGs (glyphs set
+  in `main()`, currently `runs/v02/complete-R.svg` and
+  `runs/night1/bolden-g.svg`), flips them to y-up, and re-renders each panel
+  color-coded by role: gray = ground truth, green = the given input,
+  red = the model output. Repoint the glyphs at a fresh run to refresh.
 
 ## TODO
 

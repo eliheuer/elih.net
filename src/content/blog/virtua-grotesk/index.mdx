@@ -351,11 +351,11 @@ haven't measured it yet. When I publish the model, the baseline ships with
 it.
 
 The first test is glyph completion: give the model 40% of a held-out glyph's
-outline and ask it to finish. Below, the model completes the figure `2`,
-a glyph it never saw in any weight during training. It gets the family's
-bowl, the proportions, the flat base:
+outline and ask it to finish. Below, the model completes the letter `R`,
+a glyph it never saw in any weight during training. It gets the stem, the
+bowl, and the overall proportions:
 
-![Glyph completion of the figure 2, drawn with designbot: gray reference, the green 40% given to the model, and the model's red completion on the powers-of-two grid. Preliminary model output, refreshed each training run.](./fig-complete-two.png)
+![Glyph completion of the letter R, drawn with designbot: gray reference, the green 40% given to the model, and the model's red completion on the powers-of-two grid. Preliminary model output, refreshed each training run.](./fig-complete-r.png)
 
 It is not production quality: interior counters come out mangled, and
 roughly one sample in three goes somewhere strange. But this is one font
@@ -380,13 +380,15 @@ model only fills the Bold slots, so the output Bold cannot structurally
 diverge from the Regular. Master compatibility isn't a QA check anymore;
 it's a property of the representation.
 
-![Regular-to-Bold weight transfer on a held-out B, drawn with designbot: the green Regular input, the model's red predicted Bold, and the gray actual Bold on the powers-of-two grid. Preliminary model output, refreshed each training run.](./fig-bolden-b.png)
+![Regular-to-Bold weight transfer on a held-out g, drawn with designbot: the green Regular input, the model's red predicted Bold, and the gray actual Bold on the powers-of-two grid. Preliminary model output, refreshed each training run.](./fig-bolden-g.png)
 
-Current state, honestly: the predicted Bold above has the right mass, stems,
-and bottom bowl, but a mangled top counter. Two days ago it was noise. The
-next lever is delta-encoding: predicting each Bold coordinate as a small
-offset from its Regular twin, which shrinks the effective vocabulary for the
-task to a few dozen offsets. On a grid, boldening is almost arithmetic.
+Current state, honestly: `g` is the hardest glyph in the set, and the
+predicted Bold above is still mostly noise. Simpler shapes already come out
+with the right mass and stems; the curves are where it breaks down. A few
+days ago all of it was noise. The next lever is delta-encoding: predicting
+each Bold coordinate as a small offset from its Regular twin, which shrinks
+the effective vocabulary for the task to a few dozen offsets. On a grid,
+boldening is almost arithmetic.
 
 ### 08. The Designspace Is a Data Factory
 
