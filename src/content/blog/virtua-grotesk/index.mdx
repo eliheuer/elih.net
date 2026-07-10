@@ -53,35 +53,25 @@ free under the SIL Open Font License.
 
 A digital font is not a set of pictures, it is a small program you can read.
 Each glyph is text, a short list of drawing instructions (start here, curve to
-there, close the path), wrapped in layers that substitute and reposition glyphs
-and interpolate new weights.
+there, close the path), wrapped in layers that substitute glyphs and interpolate
+new weights.
 
-In 1964 Karl
-Gerstner published Designing Programmes, whose first essay is titled "Programme
-as Typeface" and whose thesis was "instead of solutions for problems, programmes
-for solutions": design the system that generates the forms, not the forms one at
-a time. He built one, too. Gerstner-Programm, begun that same year at GGK Basel
-and drawn by Christian Mengelt for the Berthold foundry, unified a whole type
-family by strict internal regularity rather than the inherited conventions of
-how the letters were supposed to look. Donald Knuth then carried the idea to its
-limit in Metafont, which turned letters into literal parametric code, and decades
-later Jürg Lehni and Peter Biľak collected the argument under the title [Typeface
-as Programme](https://www.typotheque.com/articles/typeface-as-programme).
+Designing the system instead of the finished thing is an old idea in design.
+Karl Gerstner made the argument in 1964, in a book called Designing Programmes.
+Its opening essay was titled "Programme as Typeface." The program, not the
+individual letter drawings, is the work.
 
-What most of them wanted from the program was generative letterforms, strokes as
-functions. I want something narrower and stranger: not to program the letters,
-but to draw them regularly enough that a neural network can learn them.
-
-Most fonts don't really think about any of this. Their coordinates land wherever
-a designer's hand put them, at whatever unit resolution their editor
-defaulted to, with contour structures as individual as handwriting. That's
-fine, the rasterizer doesn't care. But a neural network does, and the whole
-current wave of font AI is trained on exactly that accidental data: scraped
-fonts, or Google Fonts, heterogeneous in every dimension that matters.
+Most fonts, until very recently, were not designed to be training data for
+neural networks or to work well in agentic AI harnesses. Their coordinates land
+wherever a designer's hand put them, at whatever resolution the editor defaulted
+to, contours as individual as handwriting. That's fine, the rasterizer doesn't care. But a
+neural network does, and the current wave of font AI trains on exactly that
+accidental data: scraped fonts, Google Fonts, heterogeneous in every dimension
+that matters.
 
 ### 02. Replica and the Coarse Grid
 
-The purest precedent is [LL Replica](https://lineto.com/typefaces/replica)
+The purest precedent to what I am doing with Virtua Grotesk is [LL Replica](https://lineto.com/typefaces/replica)
 (Norm: Dimitri Bruni and Manuel Krebs; Lineto, 2008). Norm took the drawing
 grid their font editor provided and made it ten times coarser. FontLab
 provides a 700-unit grid, and instead of drawing on that 700-grid they allowed
@@ -95,31 +85,9 @@ cut diagonals: A, K, R have no pointed apexes, so the letters can be set
 tight. The constraint produced the aesthetic; the aesthetic advertises the
 constraint.
 
-This sits inside a longer lineage: Helvetica's neo-grotesk neutrality, Wim
-Crouwel's New Alphabet (1967) building every letter on a strict grid, Vignelli's
-conviction that discipline and restraint are what make design intelligent, the
-Swiss idea that order is a kind of honesty, work laid out in service of the
-reader. I love that tradition. But
-every argument for it has been an argument about human perception and human
-craft. Replica constrained the grid because constraint focused the design.
-
-Modernist design was a reaction against design as personal performance, and a
-desire to live in harmony with a rapidly advancing technological society. It
-wanted anonymous, systematic form, the designer serving the
-message rather than signing it. The odd thing is the timing: the backlash
-against modernist type arrived just as the personal computer did, the very tool
-that could finally deliver it. A rule-based, reproducible typography is a
-program, and before the machine it could only be prototyped by hand, clumsily.
-The revolt was not against the idea but against that rough draft, thrown out just
-as the tool to finish it arrived.
-
-A hundred years later, we are living through a very similar moment. The excess it
-opposed is back as generated slop, endless type with no decision behind it. My argument is not nostalgia: the grid was always a way of
-thinking clearly, and now it is also what makes a font legible to a machine.
-
 ### 03. The Virtua Grotesk Design System
 
-Virtua Grotesk is drawn against powers of two, all the way down. The full
+Virtua Grotesk is drawn against powers of two, not the base-10 grid of Replica. The full
 normative spec lives in the repo as
 [`DESIGN.md`](https://github.com/eliheuer/virtua-grotesk/blob/main/DESIGN.md);
 these are the load-bearing numbers:
@@ -135,13 +103,7 @@ these are the load-bearing numbers:
 | chamfers | 16 units | the signature corner cut |
 | favored measurements | 2, 4, 8, 16, 32, 64, 128 | or short sums of them |
 
-Strokes are monolinear. Corners are chamfered: like Replica, the cut is a
-grid artifact made visible, sized to a power of two. And like Replica's
-70-unit grid, the point of the system is what it *forbids*: stems are 96
-units (64+32) or they are wrong; a counter is 128 wide or it has a reason
-not to be.
-
-One rule keeps it humane: **optical corrections win.** The grid is the
+One rule keeps it humane: **optical corrections.** The grid is the
 starting point, not a cage. When a curve needs a two-unit nudge to look
 right, the eye takes precedence, but corrections are understood as small,
 even-numbered deviations *from* a power-of-two intent, so the intent stays
@@ -149,23 +111,17 @@ recoverable.
 
 ### 04. From Aesthetic Discipline to Machine Legibility
 
-Andrej Karpathy likes to call a large
-language model [a zip file of the
+Andrej Karpathy calls a large language model [a zip file of the
 internet](https://www.youtube.com/watch?v=zjkBMFhNj_g): billions of parameters
-that compress terabytes of text into a lossy gestalt, keeping the patterns and
-discarding the surface. A trained model is a compression of its training data.
+that compress terabytes of text into a lossy gestalt. A trained model is a
+compression of its training data.
 
-Type designers already build compressors. A variable font is one: instead of
-shipping a separate file for every weight, you ship a base outline plus a set of
-interpolation deltas, the differences that bend it into every other weight, and
-the font reconstructs them on demand. A neural network trained on a
-typeface is that idea taken further, a lossy, learned compression of the design,
-except it interpolates through a space it discovered for itself rather than one a
-designer drew by hand. And a compressor is only as good as the regularity of what
-it feeds on.
-
-Everything Norm did for design discipline turns out to be exactly what a neural
-network wants from its training data:
+Type designers already build compressors. A variable font ships a base outline
+plus a set of interpolation deltas and reconstructs every weight on demand. A
+neural network trained on a typeface is that idea taken further, a learned
+compression of the design that moves through a space it found for itself rather
+than one a designer drew by hand. A compressor is only as good as the regularity
+of what it feeds on, and that regularity is exactly what the grid provides:
 
 **Quantization shrinks the vocabulary.** On a 2-unit grid at UPM 1024, a
 coordinate takes one of roughly 900 values instead of effectively continuous
@@ -184,33 +140,23 @@ and every stem is a power-of-two sum, then a generated glyph can be
 wrong stem weights are measurable. Generation quality stops being vibes and
 becomes a test suite.
 
-Andrej Karpathy makes the sharpest version of this point about arithmetic.
-Language models are notoriously bad at it, and much of the reason is
-[tokenization](https://www.youtube.com/watch?v=zduSFxRajkE): numbers get split
-into tokens inconsistently, so `127` is a single token while `677` is two, and
-the model has to do math on a representation that changes shape for no reason.
-There is no canonical way to write a number down. Virtua's grid is the opposite.
-Every coordinate lands on the same power-of-two lattice and tokenizes exactly one
-way, a single canonical quantization with no arbitrariness for the model to
-fight. The discipline a designer imposed for the eye hands the machine the clean,
-regular number line that tokenizers never give it.
+The clearest case is arithmetic. Language models are bad at it largely because
+[tokenization](https://www.youtube.com/watch?v=zduSFxRajkE) is arbitrary: `127`
+is one token, `677` is two, so the model does math on a representation that keeps
+changing shape. Virtua's grid is the opposite. Every coordinate tokenizes exactly
+one way, one canonical quantization with nothing for the model to fight.
 
 I think this is where type is heading. An outline font is a compression scheme
 for the Latin idea of a letter, a fixed shape reused everywhere, and it strains
-at scripts that do not work that way. Arabic in its manuscript forms is not a kit
-of reusable shapes but a continuous, context-dependent stroke, and the current
-workaround is thousands of glyphs and substitution rules approximating what a
-hand does in a single motion. A generative font, a small neural network that has
-compressed the typeface and draws each glyph in context instead of looking it up,
-handles that natively. I would not be surprised if the first ones are built on a
-grid like this one, because the grid is what makes the drawing learnable in the
-first place.
+at scripts built differently. Arabic in its manuscript forms is a continuous,
+context-dependent stroke, and today's workaround is thousands of glyphs and rules
+faking what a hand does in one motion. A generative font, a small network that
+has compressed the typeface and draws each glyph in context, handles that
+natively, and I would bet the first ones are built on a grid like this.
 
-Replica made the grid visible to people. Virtua makes it legible to
-machines. It's the same modernist move (the system produces the form) with
-a 2026 justification stacked on the 1957 one. Sometimes I think of it as
-neo-modernism in the most literal sense: the grid is back, and this time the
-audience includes the machines.
+Replica made the grid visible to people. Virtua makes it legible to machines, the
+same modernist move with a 2026 reason under the 1957 one. The grid is back, and
+this time the audience includes the machines.
 
 ### 05. Glyphs as Sentences
 
@@ -316,9 +262,9 @@ learned compromise. It is a ruler.
 ### 06. A Small Model Learns to Draw
 
 The model is deliberately small: a 12M-parameter decoder-only transformer,
-written in [MLX](https://github.com/ml-explore/mlx), trained on a MacBook.
-No cloud, no GPU cluster: an overnight run on an M4 Pro is about 30,000
-steps. The corpus is Virtua's two masters: 427 glyphs with their own
+written in [MLX](https://github.com/ml-explore/mlx), trained on an M4 Pro
+MacBook with 48 GB of RAM. No cloud, no GPU cluster: an overnight run is
+about 30,000 steps. The corpus is Virtua's two masters: 427 glyphs with their own
 contours, structurally identical between Regular and Bold.
 
 The lineage should be obvious to anyone who has followed Karpathy's
