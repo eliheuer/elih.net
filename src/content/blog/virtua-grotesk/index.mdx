@@ -295,9 +295,12 @@ that was grid-native in the first place. They train on found fonts, drawn at
 full resolution and snapped down in preprocessing, so the quantization is
 lossy and the corpus is a scrape of a thousand disagreeing hands. [Simon
 Cozens](https://simoncozens.github.io/state-of-ai-font-generation/),
-surveying the field, names both problems directly: the models work on raster
-images with a post-hoc vectorization step, and the training corpora are
-polluted found data assembled by people without typographic expertise.
+surveying the field, names both problems in his own words. On the representation
+he finds that "vectorization of glyph images has been historically very bad." On
+the data, his own experiment is the evidence: he trained a model on the Google
+Fonts dataset and reports that "it completely failed," the tokenizer collapsing
+to a single all-white output. Of the field as a whole he writes that "nobody
+from type-world has had any input into this at all."
 Grid-as-dataset answers both. The representation is borrowed; the data is the
 contribution.
 
