@@ -95,21 +95,27 @@ Newer, learning-based methods come in two kinds, and both miss what type needs. 
 
 img2bez works in four stages. (Fuller detail, including the point-classification model at the core of stage 2, is in the [git repo](https://github.com/eliheuer/img2bez).)
 
-**1. Find the edge precisely.** Most tracers first flatten the image to pure black and white, throwing away the soft edge pixels. img2bez reads the edge straight from the gray, following the line where the pixels cross from ink to paper, like a contour line on a map. That locates it to a fraction of a pixel.
+1. **Find the edge precisely.** Most tracers first flatten the image to pure black and white, throwing away the soft edge pixels. img2bez reads the edge straight from the gray, following the line where the pixels cross from ink to paper, like a contour line on a map. That locates it to a fraction of a pixel.
 
-**2. Place the points, then fit the curves.** It walks the edge and marks the points that matter: corners where the direction snaps, the extremes of each curve (the top of an "o", the sides of a bowl), and the inflections where an "s" changes direction. At each one it locks the handle horizontal or vertical the way a type designer would, then fits curves between them. Deciding the structure first is the whole trick: the outline follows type-drawing conventions by default, instead of needing a human to fix it afterward.
+2. **Place the points, then fit the curves.** It walks the edge and marks the points that matter: corners where the direction snaps, the extremes of each curve (the top of an "o", the sides of a bowl), and the inflections where an "s" changes direction. At each one it locks the handle horizontal or vertical the way a type designer would, then fits curves between them. Deciding the structure first is the whole trick: the outline follows type-drawing conventions by default, instead of needing a human to fix it afterward.
 
-**3. Refine against the image.** An optional pass compares the curves back to the original pixels and nudges the ones that are off, merges two timid curves into the single one a designer would draw, and restores small details like the flats where strokes meet. Turn it off with `--no-refine`.
+3. **Refine against the image.** An optional pass compares the curves back to the original pixels and nudges the ones that are off, merges two timid curves into the single one a designer would draw, and restores small details like the flats where strokes meet. Turn it off with `--no-refine`.
 
-**4. Clean up for a font.** Last comes the housekeeping a font source needs: winding directions set so counters cut holes, points snapped to a clean integer grid, and near-vertical or near-horizontal handles made exact.
+4. **Clean up for a font.** Last comes the housekeeping a font source needs: winding directions set so counters cut holes, points snapped to a clean integer grid, and near-vertical or near-horizontal handles made exact.
 
 Almost none of the thresholds behind these stages were tuned by hand. They came out of an eval harness that scores every candidate change against a reference font and is built to be driven by coding agents like Codex and Claude Code. (The harness gets its own section below.)
 
 ### 05. Tuning for Different Inputs
 
-A trace is tuned along three independent axes: the **profile** (what the source image is), the **style** (what the drawing is), and the output **mode** (a point-style constraint forced onto the finished outline, like making every point smooth).
+A trace is tuned along three independent axes:
 
-The profile matches image quality. It is auto-detected and can be forced with `--profile`:
+| Axis | Controls | Set by |
+| --- | --- | --- |
+| **profile** | what the source image is | auto-detected |
+| **style** | the drawing style of the letterform | declared |
+| **mode** | a point-style constraint on the output | declared |
+
+The profile matches image quality, auto-detected or forced with `--profile`:
 
 | Profile | Source image | Behavior |
 | --- | --- | --- |
@@ -121,9 +127,15 @@ The style is the drawing style of the letterform (`grotesk`, `old-style`, `geome
 
 ### 06. Design-Constraint Modes
 
-Sometimes the constraint is not the input but the *output*. A design may call for one point style throughout, regardless of what the source suggests, so img2bez has trace modes that re-shape the finished outline under a constraint. `--mode smooth` makes every on-curve point smooth and every segment a curve: it keeps the fitted curve and only aligns the handles to a continuous tangent, so the outline comes out worn smooth, like a stone in a river, every corner rounding into the flow. It's the organic look a soft or rounded design wants. `--mode line` does the opposite, flattening every curve to straight segments for a polygonal outline. Both run as a post-pass on the finished trace, so they compose with everything else.
+Sometimes the constraint is not the input but the *output*. A design may call for one point style throughout, regardless of what the source suggests, so img2bez has trace modes that re-shape the finished outline under a constraint. They run as a post-pass on the finished trace, so they compose with everything else.
 
-The most powerful of these modes is the grid. `--grid` snaps every on-curve point to a coordinate divisible by its spacing, and it defaults to `2`: an even-integer, power-of-two grid. This is the constraint I built [Virtua Grotesk](/blog/virtua-grotesk) on. Every point in that font lands on a power-of-two grid, which keeps the outlines quantized: every coordinate is a round number drawn from a small, fixed set of positions rather than an arbitrary float, so the letters are built from a compact vocabulary of values instead of a smear of decimals. That is what makes the whole family legible as training data for a neural network. The [Virtua Grotesk post](/blog/virtua-grotesk) is the long argument for why that grid matters and what it has to do with the way LLMs compress font sources.
+| Mode | Effect |
+| --- | --- |
+| `--mode smooth` | makes every on-curve point smooth and every segment a curve, so the outline comes out worn smooth, like a stone in a river; the organic look a soft or rounded design wants |
+| `--mode line` | flattens every curve to straight segments, for a polygonal outline |
+| `--grid N` | snaps every on-curve point to a coordinate divisible by N (default `2`, an even-integer, power-of-two grid) |
+
+The most powerful of these is the grid. It is the constraint I built [Virtua Grotesk](/blog/virtua-grotesk) on. Every point in that font lands on a power-of-two grid, which keeps the outlines quantized: every coordinate is a round number drawn from a small, fixed set of positions rather than an arbitrary float, so the letters are built from a compact vocabulary of values instead of a smear of decimals. That is what makes the whole family legible as training data for a neural network. The [Virtua Grotesk post](/blog/virtua-grotesk) is the long argument for why that grid matters and what it has to do with the way LLMs compress font sources.
 
 ### 07. Variable Fonts: Masters that Interpolate
 
@@ -183,4 +195,4 @@ I plan to keep pushing it. I'm building a startup in AI type design, and this Ru
 
 A note on the obvious question, whether type design should be automated at all: I find it helps to remember that type design as a profession was itself created by an automation machine. The printing press displaced the manuscript scribes five hundred years ago and created a new craft in their place, and every generation of type technology since, from pantographs to phototypesetting to digital outlines, has repeated the pattern. My hope is that open tools like this one spread the new capability widely rather than concentrating it; I've written about that idea at more length in [Diffuse Value Capture](/blog/diffuse-value-capture).
 
-If you work on font tooling, curve fitting, or tracing, I'd genuinely like your feedback. The repo is [github.com/eliheuer/img2bez](https://github.com/eliheuer/img2bez); issues and PRs are welcome, I'm on the [Linebender Zulip](https://xi.zulipchat.com), and this post is itself [a file on GitHub](https://github.com/eliheuer/elih.net/blob/main/src/content/blog/img2bez/index.mdx), so a suggestion can come as a PR.
+If you work on AI/ML engineering for vector graphics, I'd genuinely like your feedback. The repo is [github.com/eliheuer/img2bez](https://github.com/eliheuer/img2bez); issues and PRs are welcome, I'm on the [Linebender Zulip](https://xi.zulipchat.com), and this post is itself [a file on GitHub](https://github.com/eliheuer/elih.net/blob/main/src/content/blog/img2bez/index.mdx), so a suggestion can come as a PR.
