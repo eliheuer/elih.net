@@ -109,7 +109,13 @@ Almost none of the thresholds behind these stages were tuned by hand. They came 
 
 A trace is tuned along three independent axes: the **profile** (what the source image is), the **style** (what the drawing is), and the output **mode** (a point-style constraint forced onto the finished outline, like making every point smooth).
 
-The profile matches image quality. **`wild`** (the default) is for unknown rasters like an AI image API's output, the case the demo runs by default; it fits loosely so it does not chase anti-aliasing noise. **`clean`** is for sharp renders of existing fonts and fits tightly. **`photo`** is for soft scans of printed type; it blurs the image first so the trace follows a clean edge instead of every wobble of the ink. The profile is auto-detected and can be forced with `--profile`.
+The profile matches image quality. It is auto-detected and can be forced with `--profile`:
+
+| Profile | Source image | Behavior |
+| --- | --- | --- |
+| **`wild`** (default) | unknown rasters, like an AI image API's output (what the demo runs) | fits loosely, so it does not chase anti-aliasing noise |
+| **`clean`** | sharp renders of existing fonts | fits tightly |
+| **`photo`** | soft scans of printed type | blurs the image first, so the trace follows a clean edge instead of every wobble of the ink |
 
 The style is the drawing style of the letterform (`grotesk`, `old-style`, `geometric`, `brush`, `nib`, `qalam`), layered on a base that already traces a neo-grotesk sans well. Unlike the profile, style is declared, not detected.
 
@@ -150,11 +156,14 @@ structure-compare path/to/Font.ufo
 
 The sheets and a machine-readable `summary.tsv` (per-glyph point counts, plus kink, shallow-corner, and handle-geometry scans) land in `~/Desktop/structure-compare/<font>/`, ranked worst-first so the biggest structural misses sit at the top.
 
-That ranking is what makes agentic development work, and most of the recent progress came from running it in a loop. The summary is just text, so you point an AI agent at it: read the worst rows, change one thing in the tracer, re-install, re-run, and keep the change only if the structure scores improve. An agent can grind that loop overnight while you sleep. It runs against any OFL or CC0 font, or your own private synthetic data, spanning as many families and scripts (Latin, Arabic, Hebrew) as you point it at, under a hard rule that no change may improve one family by trading away another. This same eval is also what trained img2bez's first shipped ML model: a tiny model that makes one structural call too subtle for a fixed rule, described below.
+That ranking is what makes agentic development work, and most of the recent progress came from running it in a loop. The summary is just text, so you point an AI agent at it: read the worst rows, change one thing in the tracer, re-install, re-run, and keep the change only if the structure scores improve. An agent can grind that loop overnight while you sleep. It runs against any OFL or CC0 font, or your own private synthetic data, spanning as many families and scripts (Latin, Arabic, Hebrew, etc.) as you point it at, under a hard rule that no change may improve one family by trading away another. The same eval also produced the training data for img2bez's first shipped ML model, a tiny model that handles one structural decision too subtle for a fixed rule, described below.
 
 ### 10. Judging a Trace Without a Reference
 
-The eval harness scores a trace against a known reference. At production time there is no reference, just an arbitrary image, and the question is still "is this trace good?" img2bez answers it two ways, both reference-free. Reproduction: render the traced outline back to a bitmap and measure how well it covers the input's pixels. Structure: regularizers that encode the type-design rules directly, like the fraction of handles leaving horizontal or vertical and a penalty for the cluster of stray points that litters an over-traced terminal.
+The eval harness scores a trace against a known reference. At production time there is no reference, just an arbitrary image, and the question is still whether the trace is any good. img2bez answers it two ways, both reference-free:
+
+1. **Reproduction:** render the traced outline back to a bitmap and measure how well it covers the input's pixels.
+2. **Structure:** regularizers that encode the type-design rules directly, like the fraction of handles leaving horizontal or vertical and a penalty for the cluster of stray points that litters an over-traced terminal.
 
 The two have to be balanced, because the interesting failure scores well on one and badly on the other. A trace that chases every wobble in a soft scan reproduces the pixels almost perfectly with far more points than a designer would use: it wins on reproduction but loses on structure, so the combined score catches it. That combined score is the **judge**, and it ships in the binary and the browser; the `judge` value under the demo above is exactly this. A reference-free score also changes how settings get chosen: rather than predict the right preset, the tracer can try a few, judge each, and keep the best, since a deterministic trace is cheap to run.
 
