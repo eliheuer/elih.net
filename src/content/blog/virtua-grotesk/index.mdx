@@ -39,25 +39,20 @@ free under the SIL Open Font License v1.1.
 
 ### 01. The Modernist Impulse
 
-A digital font is not a set of pictures, it is a small program you can read.
-Each glyph is text, a short list of drawing instructions (start here, curve to
-there, close the path).
+Designing the system instead of the final object is an old modernist
+impulse; Karl Gerstner argued it in his 1964 book *Designing Programmes*, a foundational
+text of systematic Swiss design. But in practice it kept running into limits. Computers were procedural and strict rules are too rigid:
+type drawn by rule comes out stiff, missing the optical corrections the eye
+needs.
 
-Designing the system instead of the individual letters is an old modernist
-impulse; Karl Gerstner argued it in 1964 in Designing Programmes. But it kept
-failing in practice. The only tool was the procedural computer, and strict
-rules are too rigid: type drawn by rule comes out stiff, missing the optical
-corrections the eye needs, so hand-drawing never went away.
-
-Neural networks change that. A network is not really a program; it interpolates
-and tolerates nuance where a rule is brittle, a softness that went
-underexplored before the recent AI boom. It even answers a modernist ideal the
-rigid version betrayed: technology people can live in harmony with, not
+Neural networks might change that. A network is not really a program; it interpolates
+and tolerates nuance where a rule is brittle. It even answers a modernist ideal
+the rigid version betrayed: technology people can live in harmony with, not
 technology that extinguishes human sensibility. The old impulse is worth a
 fresh look.
 
-The catch is data. A network only knows what it is trained on, and until very
-recently no fonts were built as training data, or to be edited by an agent
+The problem is data. A network only knows what it is trained on, and until very
+recently most fonts were not built as training data, or to be edited by an agent
 through a harness rather than a person in a desktop editor. Their coordinates
 land wherever the designer's hand put them, contours as individual as
 handwriting. That's fine, the rasterizer doesn't care. But a neural network
