@@ -24,3 +24,7 @@ path = "src/bin/figs.rs"
 [[bin]]
 name = "og"
 path = "src/bin/og.rs"
+
+[[bin]]
+name = "optical"
+path = "src/bin/optical.rs"
