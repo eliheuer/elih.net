@@ -51,7 +51,7 @@ the rigid version betrayed: technology people can live in harmony with, not
 technology that extinguishes human sensibility. The old impulse is worth a
 fresh look.
 
-The problem is data. A network only knows what it is trained on, and until very
+The problem is data. A neural network only knows what it is trained on, and until very
 recently most fonts were not built as training data, or to be edited by an agent
 through a harness rather than a person in a desktop editor. Their coordinates
 land wherever the designer's hand put them, contours as individual as
@@ -236,12 +236,12 @@ bad," and his own model trained on the Google Fonts dataset "completely failed."
 
 ### 06. A Small Model Learns to Draw
 
-The model is deliberately small: a 12M-parameter decoder-only transformer that
-trains from scratch on a single machine. It has two implementations,
-[MLX](https://github.com/ml-explore/mlx) for an M4 Mac and PyTorch for a Linux
-box with a gaming GPU. No cloud, no GPU cluster: an overnight run is
-about 30,000 steps. The corpus is Virtua's two masters: 427 glyphs with their own
-contours, structurally identical between Regular and Bold.
+The model is deliberately small: a 12M-parameter decoder-only transformer
+trained from scratch on a single machine, no cloud and no GPU cluster. The work
+is early, and it runs on two setups: an [MLX](https://github.com/ml-explore/mlx)
+build on an M4 Mac and a PyTorch build on a Linux PC with a gaming GPU. An
+overnight run is about 30,000 steps. The corpus is Virtua's two masters, 427
+glyphs, structurally identical between Regular and Bold.
 
 Decoder-only is the GPT architecture. Each token becomes a vector, and a stack
 of transformer blocks refines those vectors through *attention*: every position
@@ -251,34 +251,21 @@ vocabulary, the model's guess at the following token. Training nudges that guess
 toward the true next token, glyph after glyph, until the model has learned the
 grammar of outlines.
 
-The lineage should be obvious to anyone who has followed Karpathy's
-from-scratch projects. In 2015,
-[char-rnn](https://karpathy.github.io/2015/05/21/rnn-effectiveness/)
-generated C code with balanced braces; watching this model learn to close
-contours is the same unreasonable effectiveness pointed at bézier space. His
-[makemore](https://github.com/karpathy/makemore) generates names character
-by character; this generates glyphs point by point. And his latest,
-[microgpt](https://karpathy.github.io/2026/02/12/microgpt/), trains a
-4,192-parameter GPT over a 27-token vocabulary (32,000 names, one minute on
-a MacBook) as the distilled essence of the whole stack. This project is
-microgpt's cousin in another alphabet: glyphs in, glyphs out, forty minutes on
-an M4 Pro or gaming GPU. In fact, the honest origin of this whole design
-system is that I got the powers-of-two idea while watching Karpathy videos
-and thinking about what a *typeface* would look like if it were designed to
-be tokenized.
+The lineage should be clear to anyone who has followed Karpathy's from-scratch
+projects: [char-rnn](https://karpathy.github.io/2015/05/21/rnn-effectiveness/)
+generating C with balanced braces,
+[makemore](https://github.com/karpathy/makemore) spelling names character by
+character, [microgpt](https://karpathy.github.io/2026/02/12/microgpt/) training
+a tiny GPT over a 27-token vocabulary. This project does the same for glyph outlines, generating a letter's drawing
+commands one token at a time, and a full run takes about forty minutes on an M4
+Pro or gaming GPU.
 
 Training follows his
 [Recipe for Training Neural Networks](https://karpathy.github.io/2019/04/25/recipe/)
-more closely than I planned. The first-step loss lands where cross-entropy
-over a uniform distribution says it should, the recipe's first sanity
-check. The first overnight run drove training loss to 0.07, which at ~340
-epochs over a few thousand sequences is memorization, not learning; the fix
-was the recipe's: augment (continuous interpolation weights, contour-start
-rotation), add dropout, and hold out a validation split that gets the final
-say. The recipe step I still owe is the dumb baseline: for weight transfer,
-"add the average training delta to every point" is the number to beat, and I
-haven't measured it yet. When I publish the model, the baseline ships with
-it.
+more closely than I planned. The first overnight run memorized the data (loss
+0.07 over a few thousand sequences); the fixes were the recipe's standard ones,
+augmentation, dropout, and a held-out validation set. The one step I still owe
+is a dumb baseline to beat, which ships with the model when I publish it.
 
 The first test is glyph completion: give the model 40% of a held-out glyph's
 outline and ask it to finish. Below, the model completes the letter `R`,
@@ -287,11 +274,10 @@ bowl, and the overall proportions:
 
 ![Glyph completion of the letter R, drawn with designbot: gray reference, the green 40% given to the model, and the model's red completion on the powers-of-two grid. Preliminary model output, refreshed each training run.](./fig-complete-r.png)
 
-It is not production quality: interior counters come out mangled, and
-roughly one sample in three goes somewhere strange. But this is one font
-family, a few thousand training sequences, and one night of laptop compute.
-The signal is unmistakable, and in machine learning, signal at toy scale is
-the thing you scale.
+It is not production quality: the interior counters come out mangled, and about
+one sample in three fails. But this is one font family, a few thousand
+sequences, and a single night of compute. The signal is clear, and a clear
+signal at small scale is the reason to scale up.
 
 ### 07. Boldening as Local Prediction
 
