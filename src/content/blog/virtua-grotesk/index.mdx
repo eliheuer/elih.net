@@ -78,12 +78,12 @@ constraint.
 ### 03. The Virtua Grotesk Design System
 
 Virtua Grotesk is drawn against powers-of-two, not the base-10 grid of Replica,
-down to the em square itself: 1024 (2^10) rather than the usual 1000. That is
+down to the UPM (units per em) itself: 1024 (2^10) rather than the usual 1000. That is
 less exotic than it sounds. A power-of-two em is the TrueType convention (2048
 is standard, and [Inter](https://rsms.me/inter/) uses it), so 1024 just extends
 the same logic to the rest of the system. The full spec lives in the repo as
 [`DESIGN.md`](https://github.com/eliheuer/virtua-grotesk/blob/main/DESIGN.md);
-these are the load-bearing numbers:
+the key measurements are:
 
 | Measurement | Value | Note |
 | --- | --- | --- |
@@ -120,11 +120,11 @@ correction, the small nudge the eye asks for and, for now, only a person can
 judge.
 
 The elegant part is that this labels itself. Because everything structural
-lives on 8, any point that sits on 2 but off 8 is, by construction, a
-deliberate optical correction, with nothing to annotate. The machine proposes
+lives on 8, any point on 2 but off 8 is a deliberate optical correction, with
+nothing to annotate. The machine proposes
 structure on 8, the human teaches optics on 2, and the difference between a
 draft and its corrected version is a clean training set for free, the raw
-material for a model that will one day make those corrections on its own.
+material for a model that will soon make those corrections on its own if given enough well-crafted example data.
 
 ![A cubic curve drawn in the Runebender point language over the powers-of-two grid: the green on-curve points and purple off-curve handles all land on the 8-unit grid, except one off-curve handle pulled 4 units off it, marked in red and labeled an optical correction.](./fig-optical-correction.png)
 
