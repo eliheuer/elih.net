@@ -131,11 +131,11 @@ internet](https://www.youtube.com/watch?v=zjkBMFhNj_g): billions of parameters
 that compress terabytes of text into a lossy gestalt. A trained model is a
 compression of its training data.
 
-Type designers already build compressors. A variable font ships a base outline
-plus a set of interpolation deltas and reconstructs every weight on demand. A
-neural network trained on a typeface is that idea taken further, a learned
-compression of the design that moves through a space it found for itself rather
-than one a designer drew by hand. The grid's discipline pays off two ways:
+Font engineers already build compression systems. A variable font is a base
+outline plus a set of interpolation deltas, and reconstructs every weight on
+demand. A neural network learns its own internal space for the design and can
+move through it in directions no one drew. The grid's discipline pays off two
+ways:
 
 **Consistency is signal.** Same stroke logic, same chamfer size, same
 start-point conventions across every glyph: the model spends its capacity
@@ -145,27 +145,17 @@ designers' bézier habits.
 **Constraints make outputs checkable.** If every legal coordinate is even
 and every stem is a power-of-two sum, then a generated glyph can be
 *verified* mechanically: off-grid points are detectable and snappable,
-wrong stem weights are measurable. Generation quality stops being vibes and
-becomes a test suite.
+wrong stem weights are measurable. Generation quality becomes
+measurable and an eval loop can grind at it overnight.
 
-The clearest case is arithmetic. Language models are bad at it largely because
-[tokenization](https://www.youtube.com/watch?v=zduSFxRajkE) is arbitrary: `127`
-is one token, `677` is two, so the model does math on a representation that keeps
-changing shape. Virtua's grid is the opposite. Every coordinate tokenizes exactly
-one way, one canonical quantization with nothing for the model to fight.
-
-I think this is where type is heading. An outline font is a compression scheme
-for the Latin idea of a letter, a fixed shape reused everywhere, and it strains
-at scripts built differently. Arabic in its manuscript forms is a continuous,
-context-dependent stroke, and today's workaround is thousands of glyphs and rules
-faking what a hand does in one motion. A generative font, a small network that
-has compressed the typeface and draws each glyph in context, handles that
-natively, and I would bet the first ones are built on a grid like this.
-
-Replica made the grid visible to people. Virtua makes it legible to machines, the
-same modernist move with a 2026 reason under the 1957 one, Helvetica's year. The
-grid is back, and
-this time the audience includes the machines.
+One honest caveat: the win here is mostly coarseness and regularity, not just base two. The
+model reads each coordinate as a token and never sees its digits, so it would
+learn just as well from Replica's decimal grid. A small set of legal values,
+each one recurring and meaning one place, is the whole trick. I draw on powers
+of two anyway because type design is aesthetic, and this is the grid I find
+beautiful: one that nests cleanly and echoes the powers of two the hardware and
+tensors are built around. The machine legibility comes from the grid being
+coarse and kept; the base is a matter of taste, and type design is an aesthetic craft.
 
 ### 05. Glyphs as Sentences
 
@@ -356,6 +346,14 @@ channel. The goal of the whole apparatus is unglamorous and concrete:
 **finish Virtua Grotesk and ship it to Google Fonts**, with the neural net
 doing real production work (the Bold companions, the tedious completions,
 the cleanup passes) and a human doing what humans are for.
+
+I think this is where type is heading. An outline font is a compression scheme
+for the Latin idea of a letter, a fixed shape reused everywhere, and it strains
+at scripts built differently. Arabic in its manuscript forms is a continuous,
+context-dependent stroke, and today's workaround is thousands of glyphs and rules
+faking what a hand does in one motion. A generative font, a small network that
+has compressed the typeface and draws each glyph in context, handles that
+natively, and I would bet the first ones are built on a grid like this.
 
 ### 09. A Hidden Treasure: The Mysticism of 2ⁿ
 
