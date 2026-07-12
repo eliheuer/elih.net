@@ -113,10 +113,11 @@ Stroke weights, in units, for each master:
 
 One rule keeps it humane: **optical corrections.** The grid is a starting
 point, not a cage, and it is hierarchical, with the two levels splitting the
-work. The 8-unit lattice is the machine's grid: stems, sidebearings, chamfers,
+work. The 8-unit grid is the machine's: stems, sidebearings, chamfers,
 and every offset a tool fits or generates has to land on a multiple of 8. The
-2-unit lattice is the human's grid: dropping from 8 to 2 is an optical
-correction, the small nudge the eye asks for and only a person can judge.
+2-unit grid is the human's: dropping from 8 to 2 is an optical
+correction, the small nudge the eye asks for and, for now, only a person can
+judge.
 
 The elegant part is that this labels itself. Because everything structural
 lives on 8, any point that sits on 2 but off 8 is, by construction, a
@@ -227,14 +228,12 @@ just an uncommon, high-information token.
 The codec runs both ways. To train, it turns every glyph into a sequence and the
 model learns to predict the next token. To generate, you give it the opening
 tokens (the name and weight you want), let it finish, and run the codec backward
-into a UFO outline: a real, editable glyph. The round trip is lossless: the
-coordinate tokens are exactly the grid's legal positions, and the designer drew
-every point on the grid, so each coordinate already equals one token, with no
-rounding either way. Tokenizing loses precision only when a point falls between
-two positions and gets snapped to the nearer one, and on a grid-native font
-nothing does, because the snapping happened by hand, at design time. (What makes
-it exact is committing to the grid, not how coarse it is: a 1-unit grid would
-round-trip just as cleanly, only with more tokens.)
+into a UFO outline: a real, editable glyph. The round trip is lossless. Tokenizing only loses precision when a point falls
+between two legal positions and gets snapped to the nearer one, and a
+grid-native font never has one: the designer drew every point on the grid. So
+each coordinate already equals a token exactly, with nothing rounded either way.
+(What makes it exact is committing to the grid, not how coarse it is; a 1-unit
+grid would round-trip just as cleanly.)
 
 There is no rasterization here, no image encoder, no diffusion. The font source
 itself, stripped to the drawing, is the training data, about 80 tokens a glyph.
@@ -279,8 +278,9 @@ Pro or gaming GPU.
 
 Training follows his
 [Recipe for Training Neural Networks](https://karpathy.github.io/2019/04/25/recipe/)
-more closely than I planned. The first overnight run memorized the data (loss
-0.07 over a few thousand sequences); the fixes were the recipe's standard ones,
+more closely than I planned. The first overnight run memorized the data: a few thousand sequences is small
+enough that the model fit them almost perfectly (training loss near zero, 0.07)
+without learning anything general. The fixes were the recipe's standard ones:
 augmentation, dropout, and a held-out validation set. The one step I still owe
 is a dumb baseline to beat, which ships with the model when I publish it.
 
@@ -300,8 +300,7 @@ signal at small scale is the reason to scale up.
 
 The second task is the one with immediate production value: given a Regular
 glyph, draw the Bold. In font production this is real, tedious work: every
-glyph drawn once must be drawn again heavier, with the same structure, or
-the variable font breaks.
+glyph drawn once must be drawn again heavier, with the same structure.
 
 The encoding is where the design system pays off again. Because Virtua's
 masters are point-compatible, I interleave them per point
@@ -425,7 +424,8 @@ refinement is a form of worship, is probably part of what pulled me into type
 design, along with the beautifully printed and typeset Bahá'í books I grew up
 around. When I studied type design at the Type@Cooper program in New York, I saw it as a
 way into two things at once, programming and Bahá'í book publishing, and never
-imagined a career in it. I lucked into contract work for Google Fonts during the
+imagined a career in it, since I was only interested in open-source fonts, having
+found proprietary fonts too difficult to use and work with. I lucked into contract work for Google Fonts during the
 shift to variable fonts, and even then I assumed someone would soon automate the
 whole job away. I guess, because of low self-esteem and the trauma of enduring
 math education in the US public school system, I thought this work was beyond my
@@ -440,9 +440,9 @@ seen in. Making a little more of that treasure visible is the whole job of
 typography and type design when practiced at the highest levels.
 
 It is easy to forget this if you are embedded in the font industry of the past
-decade, which is completely obsessed with individual ego and a kind of crass
-materialism. But for most of its history the impulse to glorify the sacred word
-has been the foundation of the craft of writing and typography. And while AI
+decade, which is completely obsessed with individual ego and identity and a kind of
+crass materialism. But for most of its history the impulse to glorify the sacred word
+has been the foundation of the craft of writing and typography when it is at its best. And while AI
 type design will, in the short term, bring an explosion of slop that makes
 Massimo Vignelli's warnings against visual vulgarity look prophetic, the
 inevitable backlash against it will bring a wave of aesthetic innovation, one
