@@ -221,8 +221,7 @@ which hands a data engineer labeled training data for free.
 
 The two-tier grid splits the tokens the way it splits the drawing. Structural
 points sit on the 8-grid, so their coordinate tokens are common; the optical
-corrections sit off it, so they stay rare. To the model, then, a correction is
-just an uncommon, high-information token.
+corrections sit off it, so they stay rare. To the model, a correction is just a rare, high-information token.
 
 The codec runs both ways. To train, it turns every glyph into a sequence and the
 model learns to predict the next token. To generate, you give it the opening
@@ -292,8 +291,8 @@ bowl, and the overall proportions:
 
 It is not production quality: the interior counters come out mangled, and about
 one sample in three fails. But this is one font family, a few thousand
-sequences, and a single night of compute. The signal is clear, and a clear
-signal at small scale is the reason to scale up.
+sequences, and a single night of compute. That it produces recognizable structure at all, on data and compute this small,
+is what justifies scaling both up.
 
 ### 07. Boldening as Local Prediction
 
@@ -308,8 +307,8 @@ after its Regular partner in the sequence. Boldening stops being a
 long-range translation problem and becomes local prediction. Better: at
 generation time the Regular coordinates are *forced* from the input, and the
 model only fills the Bold slots, so the output Bold cannot structurally
-diverge from the Regular. Master compatibility isn't a QA check anymore;
-it's a property of the representation.
+diverge from the Regular. The encoding guarantees master compatibility,
+so it never has to be checked.
 
 ![Regular-to-Bold weight transfer on a held-out g, drawn with designbot: the green Regular input, the model's red predicted Bold, and the gray actual Bold on the powers-of-two grid. Preliminary model output, refreshed each training run.](./fig-bolden-g.png)
 
@@ -318,28 +317,33 @@ predicted Bold above is still mostly noise. Simpler shapes already come out
 with the right mass and stems; the curves are where it breaks down. A few
 days ago all of it was noise. The next lever is delta-encoding: predicting
 each Bold coordinate as a small offset from its Regular twin, which shrinks
-the effective vocabulary for the task to a few dozen offsets. On a grid,
-boldening is almost arithmetic.
+the effective vocabulary for the task to a few dozen offsets.
 
 ### 08. The Designspace Is a Data Factory
 
 Two masters sounds like no data at all. But type design has been quietly
-synthesizing valid data for decades: every interpolation between compatible
+synthesizing valid data since Adobe's Multiple Master fonts in 1991: every interpolation between compatible
 masters is a legitimate instance of the family. Each training batch samples
 a continuous weight between Regular and Bold, snaps it back to the grid, and
 gets a "new" glyph, with its exact parameters attached as conditioning
 tokens, because synthetic data comes with labels found data can't have.
 Add contour-start rotation (any cyclic rotation of a closed contour draws
-the same shape) and one family amplifies to effectively unbounded training
-sequences.
+the same shape) and one family amplifies into a practically endless stream of
+distinct training batches, enough to keep the model from memorizing.
 
-This generalizes beyond one font. [img2bez](/blog/img2bez), my Rust
-autotracer, snaps traced outlines to a 2-unit grid and writes UFO sources,
-which makes it a *grid-ifier*: render any OFL font, trace it, and it comes
-out speaking Virtua's coordinate language. That is the long-term data plan:
+That covers volume, but every one of those batches is a variation on a single
+design. Real variety, other letterforms and other designers' hands, takes more
+source families, and that is where [img2bez](/blog/img2bez) comes in. My Rust
+autotracer traces any raster, a rendered OFL font, a scan, or an AI-generated
+glyph, into bézier outlines snapped to the 2-unit grid;
+[img2ufo](https://github.com/eliheuer/img2ufo), built on top of it, assembles
+those glyphs into a full UFO font source. Together they are a *grid-ifier*, and
+a fast one: I dropped a type specimen image into the pipeline today and had a
+grid-native font source about a minute later, already speaking Virtua's
+coordinate language. Pointed at OFL fonts, it becomes the long-term data plan:
 a growing corpus of grid-native families, every one of them OFL, with a
-provenance manifest I can publish. No scraping, no gray areas: training
-data you could audit glyph by glyph.
+provenance manifest I can publish. No scraping, no gray areas: training data you
+could audit glyph by glyph.
 
 Karpathy's [Software 2.0](https://karpathy.medium.com/software-2-0-a64152b37c35)
 essay gives this a name. If the weights are the program and training is the
@@ -361,7 +365,7 @@ against `DESIGN.md`, with mark colors in the UFO as the human control
 channel. The goal of the whole apparatus is unglamorous and concrete:
 **finish Virtua Grotesk and ship it to Google Fonts**, with the neural net
 doing real production work (the Bold companions, the tedious completions,
-the cleanup passes) and a human doing what humans are for.
+the cleanup passes) and a human doing what humans are good at.
 
 This is only a first step. What I hope it eventually allows is leaving OpenType
 behind entirely, and fonts that are models rather than tables of outlines, no
