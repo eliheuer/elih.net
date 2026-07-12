@@ -1,5 +1,5 @@
 ---
-title: 'Virtua Grotesk: Grid as Dataset'
+title: 'Virtua Grotesk: Grid System as Dataset'
 description: 'A geometric grotesk designed on a powers-of-two grid, and the small neural network learning to draw it.'
 date: 2026-07-07
 tags: ['fonts', 'design', 'ai', 'machine-learning', 'rust']
@@ -8,7 +8,7 @@ authors: ['elih']
 draft: false
 ---
 
-Virtua Grotesk is a typeface I am designing on a powers-of-two grid, and if
+Virtua Grotesk is a typeface I am designing on a powers-of-two grid system, and if
 you are reading this on [elih.net](/) it is the typeface you are reading right now.
 It is also a machine-learning
 experiment: the same grid that gives the font its aesthetic makes its source
@@ -165,13 +165,11 @@ what transformers are built to predict. So instead of a picture of a letter or a
 unordered bag of points, I hand the model each glyph as the sentence it already
 is and train it to speak outlines.
 
-The source is a [UFO](https://unifiedfontobject.org/), a folder of XML files, one
-per glyph, storing each outline as points on the grid. A transformer can't read a
-tree of XML; it reads a flat sequence of tokens from a small vocabulary. So a
-small codec reads each glyph's outline out of the UFO and rewrites it as one flat
-line: the drawing commands and their coordinates, nothing else. The format is
-mine but not arbitrary, just the font's own drawing operations in order, with the
-XML thrown away.
+The source is a [UFO](https://unifiedfontobject.org/), a folder of XML, one file
+per glyph, each outline stored as points on the grid. A transformer can't read a
+tree of XML, it reads a flat sequence of tokens, so a small codec rewrites each
+glyph's outline as one flat line: the font's own drawing commands and
+coordinates in order, with the XML thrown away.
 
 The vocabulary is 1,336 tokens of three kinds. The structural
 markers (`MOVE`, `LINE`, `CURVE`, `CLOSE`) are the drawing verbs. The
@@ -180,10 +178,10 @@ what to draw before it draws. And there is one token per legal grid coordinate. 
 Regular weight comes out like this:
 
 ```
-BOS  N_two  W400  ADV 560
+BOS N_two W400 ADV 560
 MOVE 64 0
 LINE 64 96
-CURVE 64 232  148 328  292 328
+CURVE 64 232 148 328 292 328
 ...
 CLOSE
 EOS
@@ -196,14 +194,12 @@ how far the pen moves before the next character. The rest is the outline itself:
 `CURVE` draws a cubic bézier through two control points to an endpoint, and
 `CLOSE` shuts the loop. Every bare number is a grid coordinate.
 
-That last part is where the grid earns its keep. At the same UPM of 1024, a
-normal font lets a point sit on any of a thousand-odd positions, and because
-outlines are drawn by hand, the same edge lands a unit or two off each time it
-recurs. Virtua's 2-unit grid keeps only every other position, and the designer
-commits to them: a stem is 96 every time, never 95 or 97. So the model sees a
-small alphabet of coordinates, each common and each meaning the same place,
-instead of a wide scatter of near-duplicates. Same em square; what the grid
-changes is how many positions are legal and whether the design reuses them.
+That last part is where the grid earns its keep. A normal font at UPM 1024 lets
+a point sit on any of a thousand-odd positions, and since outlines are drawn by
+hand, the same edge lands a unit or two off each time it recurs. Virtua keeps
+only every other position and commits to it: a stem is 96 every time, never 95
+or 97. So the model sees a small alphabet of coordinates, each common and each
+meaning one place, instead of a scatter of near-duplicates.
 
 The codec runs both ways. To train, it turns every glyph into a sequence and the
 model learns to predict the next token, across every glyph in both weights. To
