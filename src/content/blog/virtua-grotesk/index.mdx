@@ -175,23 +175,38 @@ rewrites each glyph's outline as a single line of text: the drawing commands and
 their coordinates, in order, and nothing else.
 
 A transformer works from a fixed *vocabulary*: the set of tokens it can read and
-write, like the words of a language. Here that set holds three kinds: drawing
+write, like the words of a language. Here that set holds three kinds of token: the four drawing
 verbs (`MOVE`, `LINE`, `CURVE`, `CLOSE`); conditioning tokens that name the glyph
 and set its weight (the prompt, what to draw); and one token for each legal
 position on the grid. Here is the numeral **2** in the Regular weight:
 
 ```
-BOS N_two W400 ADV 560
-MOVE 64 0
-LINE 64 96
-CURVE 64 232 148 328 292 328
-...
+BOS N_two W400 ADV 594
+MOVE 48 0
+LINE 528 0
+LINE 544 16
+LINE 544 72
+LINE 528 88
+LINE 160 88
+LINE 152 96
+CURVE 152 136 232 216 356 276
+CURVE 492 342 562 414 562 528
+CURVE 562 652 494 760 306 760
+CURVE 150 760 50 656 50 500
+LINE 66 484
+LINE 134 484
+LINE 150 500
+CURVE 150 596 210 668 306 668
+CURVE 402 668 462 608 462 528
+CURVE 462 452 394 390 280 336
+CURVE 116 258 32 146 32 32
+LINE 32 16
 CLOSE
 EOS
 ```
 
 Read it top to bottom. `BOS` opens the sequence and `EOS` ends it. `N_two` names
-the glyph, `W400` sets the weight (Regular), and `ADV 560` is its advance width,
+the glyph, `W400` sets the weight (Regular), and `ADV 594` is its advance width,
 how far the pen moves before the next character. The rest is the outline:
 `MOVE` starts a contour at a point, `LINE` draws a straight segment to the next,
 `CURVE` draws a cubic bézier through two control points to an endpoint, and
