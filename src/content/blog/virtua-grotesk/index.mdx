@@ -176,12 +176,13 @@ their coordinates, in order, and nothing else.
 
 A transformer works from a fixed *vocabulary*: the set of tokens it can read and
 write, like the words of a language. Here that set holds three kinds of token: the four drawing
-verbs (`MOVE`, `LINE`, `CURVE`, `CLOSE`); conditioning tokens that name the glyph
-and set its weight (the prompt, what to draw); and one token for each legal
+verbs (`MOVE`, `LINE`, `CURVE`, `CLOSE`); conditioning tokens that identify the glyph
+by name (and Unicode where it has one) and set its weight (the prompt, what to
+draw); and one token for each legal
 position on the grid. Here is the numeral **2** in the Regular weight:
 
 ```
-BOS N_two W400 ADV 594
+BOS N_two U_0032 W400 ADV 594
 MOVE 48 0
 LINE 528 0
 LINE 544 16
@@ -206,7 +207,8 @@ EOS
 ```
 
 Read it top to bottom. `BOS` opens the sequence and `EOS` ends it. `N_two` names
-the glyph, `W400` sets the weight (Regular), and `ADV 594` is its advance width,
+the glyph and `U_0032` gives its Unicode (U+0032, the digit two), `W400` sets
+the weight (Regular), and `ADV 594` is its advance width,
 how far the pen moves before the next character. The rest is the outline:
 `MOVE` starts a contour at a point, `LINE` draws a straight segment to the next,
 `CURVE` draws a cubic bézier through two control points to an endpoint, and
