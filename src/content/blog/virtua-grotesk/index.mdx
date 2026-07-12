@@ -77,27 +77,50 @@ constraint.
 
 ### 03. The Virtua Grotesk Design System
 
-Virtua Grotesk is drawn against powers of two, not the base-10 grid of Replica. The full
-normative spec lives in the repo as
+Virtua Grotesk is drawn against powers-of-two, not the base-10 grid of Replica. The full
+spec lives in the repo as
 [`DESIGN.md`](https://github.com/eliheuer/virtua-grotesk/blob/main/DESIGN.md);
 these are the load-bearing numbers:
 
-| measurement | value | note |
+| Measurement | Value | Note |
 | --- | --- | --- |
 | UPM | 1024 | 2^10 |
-| drawing grid | 2 units | prefer even coordinates |
-| ascender | 768 | shared with cap height |
-| cap height | 768 | 512 + 256 |
-| x-height | 576 | 512 + 64 |
-| descender | −256 | −2^8 |
-| chamfers | 16 units | the signature corner cut |
-| favored measurements | 2, 4, 8, 16, 32, 64, 128 | or short sums of them |
+| Drawing Grid | 2 units | prefer even coordinates |
+| Ascender | 768 | shared with cap height |
+| Cap Height | 768 | 512 + 256 |
+| X-Height | 576 | 512 + 64 |
+| Descender | −256 | −2^8 |
+| Chamfers | 16 units | the signature corner cut |
+| Favored Measurements | 2, 4, 8, 16, 32, 64, 128 | or short sums of them |
 
-One rule keeps it humane: **optical corrections.** The grid is the
-starting point, not a cage. When a curve needs a two-unit nudge to look
-right, the eye takes precedence, but corrections are understood as small,
-even-numbered deviations *from* a power-of-two intent, so the intent stays
-recoverable.
+Stroke weights, in units, for each master:
+
+| Stroke | Regular | Bold |
+| --- | --- | --- |
+| Lowercase Stem | 96 | 192 |
+| Lowercase Bar | 88 | 152 |
+| Uppercase Stem | 104 | 200 |
+| Uppercase Bar | 96 | 160 |
+| Lowercase Curve Vertical | 100 | 196 |
+| Lowercase Curve Horizontal | 92 | 156 |
+| Uppercase Curve Vertical | 110 | 192 |
+| Uppercase Curve Horizontal | 102 | 184 |
+| Arabic Stem | 96 | 192 |
+| Arabic Bar | 88 | 152 |
+
+One rule keeps it humane: **optical corrections.** The grid is a starting
+point, not a cage, and it is hierarchical, with the two levels splitting the
+work. The 8-unit lattice is the machine's grid: stems, sidebearings, chamfers,
+and every offset a tool fits or generates has to land on a multiple of 8. The
+2-unit lattice is the human's grid: dropping from 8 to 2 is an optical
+correction, the small nudge the eye asks for and only a person can judge.
+
+The elegant part is that this labels itself. Because everything structural
+lives on 8, any point that sits on 2 but off 8 is, by construction, a
+deliberate optical correction, with nothing to annotate. The machine proposes
+structure on 8, the human teaches optics on 2, and the difference between a
+draft and its corrected version is a clean training set for free, the raw
+material for a model that will one day make those corrections on its own.
 
 ### 04. From Aesthetic Discipline to Machine Legibility
 
@@ -364,12 +387,12 @@ Let me try to say it anyway, knowing I will kill it in the telling. I started my
 career in the tech industry making video games, where everything I did sat on a
 powers-of-two grid, and I found it deeply beautiful and satisfying. Swiss grids
 and modernist typography later scratched the same itch, and I kept wanting to
-pull them toward powers of two, which the tradition was never especially
+pull them toward powers-of-two, which the tradition was never especially
 concerned with, though not innocent of it either: its A-series paper halves at
 every size. I suspect that if computers had arrived a little earlier, many
-modernist typographers would have fallen for powers of two the way I have. Their
+modernist typographers would have fallen for powers-of-two the way I have. Their
 creed was truth to materials, and the true material of the computer is the bit:
-powers of two all the way down. That is as close as English gets me: there is something beautiful
+powers-of-two all the way down. That is as close as English gets me: there is something beautiful
 here that I can't quite put into words, so instead I try to make words on the
 grid, and hope the beauty is visible that way.
 
