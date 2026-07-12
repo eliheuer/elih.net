@@ -162,11 +162,11 @@ coarse and kept; the base is a matter of taste, and type design is an aesthetic 
 
 ### 05. Glyphs as Sentences
 
-A glyph is already a kind of sentence: an ordered list of drawing commands, read
-start to finish. That is exactly what a transformer is built to predict, a
-sequence of symbols where each one follows from the ones before. So instead of a
-picture of a letter or a loose set of points, I give the model each glyph as the
-sequence it already is and train it to predict the next token.
+A glyph is already a kind of sentence: an ordered list of drawing commands. That
+is exactly what a transformer predicts, a sequence where each symbol follows from
+the ones before. So instead of a picture of a letter or a loose set of points, I
+give the model each glyph as the sequence it already is and train it to predict
+the next token.
 
 The source files are a [UFO](https://unifiedfontobject.org/): a folder of XML,
 one file per glyph, each outline stored as points on the grid. A transformer
@@ -174,13 +174,11 @@ can't read a tree of XML, it reads a flat list of tokens. So a small codec
 rewrites each glyph's outline as a single line of text: the drawing commands and
 their coordinates, in order, and nothing else.
 
-A transformer works from a fixed *vocabulary*: the complete set of distinct
-tokens it is allowed to read and write, like the words available in a language.
-Every glyph sequence is spelled out of this one set. It holds tokens of three
-kinds: drawing verbs (`MOVE`, `LINE`, `CURVE`, `CLOSE`); conditioning
-tokens that name the glyph and set its weight (the prompt, what to draw); and
-one token for each legal position on the grid. Here is the numeral **2** in the
-Regular weight:
+A transformer works from a fixed *vocabulary*: the set of tokens it can read and
+write, like the words of a language. Here that set holds three kinds: drawing
+verbs (`MOVE`, `LINE`, `CURVE`, `CLOSE`); conditioning tokens that name the glyph
+and set its weight (the prompt, what to draw); and one token for each legal
+position on the grid. Here is the numeral **2** in the Regular weight:
 
 ```
 BOS N_two W400 ADV 560
@@ -194,7 +192,7 @@ EOS
 
 Read it top to bottom. `BOS` opens the sequence and `EOS` ends it. `N_two` names
 the glyph, `W400` sets the weight (Regular), and `ADV 560` is its advance width,
-how far the pen moves before the next character. The rest is the outline itself:
+how far the pen moves before the next character. The rest is the outline:
 `MOVE` starts a contour at a point, `LINE` draws a straight segment to the next,
 `CURVE` draws a cubic bézier through two control points to an endpoint, and
 `CLOSE` shuts the loop. Every bare number is a grid coordinate.
@@ -204,29 +202,22 @@ a stricter, systematic grid: every coordinate lands on it exactly, a stem is 96
 every time, never 95 or 97, and where a point lands carries semantic meaning,
 which hands a data engineer labeled training data for free.
 
-The two grid levels then sort those coordinates by role. Structure sits on the
-8-unit grid, so its coordinate tokens turn up constantly; the positions in
-between, on the 2-grid but off the 8, appear only where the eye asked for an
-optical correction, so they stay rare. The 2-grid decides how many coordinate
-tokens exist; the 8-grid decides which of them are common. And a coordinate off
-the 8-grid is, by construction, a correction, so in the token stream the
-corrections are simply the rare, off-8 tokens: the same self-labeling the grid
-gives a human reader, now visible to the model as low-frequency, high-information
-positions.
+The two-tier grid splits the tokens the way it splits the drawing. Structural
+points sit on the 8-grid, so their coordinate tokens are common; the optical
+corrections sit off it, so they stay rare. To the model, then, a correction is
+just an uncommon, high-information token.
 
-The codec runs both ways. To train, it turns every glyph into a sequence, and the
-model learns to predict the next token across every glyph in both weights. To
-generate, you give it the opening tokens (the name and weight you want), let it
-finish the sequence, and run the codec backward into a UFO outline: a real,
-editable glyph. The round trip is lossless, and here is why. The coordinate
-tokens are exactly the grid's legal positions, and the designer drew every point
-on the grid, so each coordinate already equals one token exactly: no rounding to
-encode it, none to decode it. The exactness comes from the design committing to
-the grid, not from how coarse the grid is; a 1-unit grid would round-trip just as
-cleanly, it would only need more tokens. Tokenizing loses precision only when a
-point falls between two legal positions and gets snapped to the nearer one, and
-on a grid-native font nothing falls between, because that snapping already
-happened, by hand, at design time.
+The codec runs both ways. To train, it turns every glyph into a sequence and the
+model learns to predict the next token. To generate, you give it the opening
+tokens (the name and weight you want), let it finish, and run the codec backward
+into a UFO outline: a real, editable glyph. The round trip is lossless: the
+coordinate tokens are exactly the grid's legal positions, and the designer drew
+every point on the grid, so each coordinate already equals one token, with no
+rounding either way. Tokenizing loses precision only when a point falls between
+two positions and gets snapped to the nearer one, and on a grid-native font
+nothing does, because the snapping happened by hand, at design time. (What makes
+it exact is committing to the grid, not how coarse it is: a 1-unit grid would
+round-trip just as cleanly, only with more tokens.)
 
 There is no rasterization here, no image encoder, no diffusion. The font source
 itself, stripped to the drawing, is the training data, about 80 tokens a glyph.
@@ -242,15 +233,23 @@ preprocessing, a lossy scrape of a thousand disagreeing hands. [Simon
 Cozens](https://simoncozens.github.io/state-of-ai-font-generation/), surveying
 the field, is blunt: "vectorization of glyph images has been historically very
 bad," and his own model trained on the Google Fonts dataset "completely failed."
-The representation is borrowed; the data is the contribution.
 
 ### 06. A Small Model Learns to Draw
 
-The model is deliberately small: a 12M-parameter decoder-only transformer,
-written in [MLX](https://github.com/ml-explore/mlx), trained on an M4 Pro
-MacBook with 48 GB of RAM. No cloud, no GPU cluster: an overnight run is
+The model is deliberately small: a 12M-parameter decoder-only transformer that
+trains from scratch on a single machine. It has two implementations,
+[MLX](https://github.com/ml-explore/mlx) for an M4 Mac and PyTorch for a Linux
+box with a gaming GPU. No cloud, no GPU cluster: an overnight run is
 about 30,000 steps. The corpus is Virtua's two masters: 427 glyphs with their own
 contours, structurally identical between Regular and Bold.
+
+Decoder-only is the GPT architecture. Each token becomes a vector, and a stack
+of transformer blocks refines those vectors through *attention*: every position
+looks back at the tokens before it and pulls in whatever helps predict what
+comes next. A final layer turns the last vector into a probability over the whole
+vocabulary, the model's guess at the following token. Training nudges that guess
+toward the true next token, glyph after glyph, until the model has learned the
+grammar of outlines.
 
 The lineage should be obvious to anyone who has followed Karpathy's
 from-scratch projects. In 2015,
@@ -263,7 +262,7 @@ by character; this generates glyphs point by point. And his latest,
 4,192-parameter GPT over a 27-token vocabulary (32,000 names, one minute on
 a MacBook) as the distilled essence of the whole stack. This project is
 microgpt's cousin in another alphabet: glyphs in, glyphs out, forty minutes on
-an M4 Pro. In fact, the honest origin of this whole design
+an M4 Pro or gaming GPU. In fact, the honest origin of this whole design
 system is that I got the powers-of-two idea while watching Karpathy videos
 and thinking about what a *typeface* would look like if it were designed to
 be tokenized.
