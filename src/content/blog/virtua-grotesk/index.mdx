@@ -77,8 +77,11 @@ constraint.
 
 ### 03. The Virtua Grotesk Design System
 
-Virtua Grotesk is drawn against powers-of-two, not the base-10 grid of Replica. The full
-spec lives in the repo as
+Virtua Grotesk is drawn against powers-of-two, not the base-10 grid of Replica,
+down to the em square itself: 1024 (2^10) rather than the usual 1000. That is
+less exotic than it sounds. A power-of-two em is the TrueType convention (2048
+is standard, and [Inter](https://rsms.me/inter/) uses it), so 1024 just extends
+the same logic to the rest of the system. The full spec lives in the repo as
 [`DESIGN.md`](https://github.com/eliheuer/virtua-grotesk/blob/main/DESIGN.md);
 these are the load-bearing numbers:
 
@@ -159,23 +162,25 @@ coarse and kept; the base is a matter of taste, and type design is an aesthetic 
 
 ### 05. Glyphs as Sentences
 
-A glyph is already a small program, a list of drawing
-commands, which makes it a sentence: symbols in order under a grammar, exactly
-what transformers are built to predict. So instead of a picture of a letter or an
-unordered bag of points, I hand the model each glyph as the sentence it already
-is and train it to speak outlines.
+A glyph is already a kind of sentence: an ordered list of drawing commands, read
+start to finish. That is exactly what a transformer is built to predict, a
+sequence of symbols where each one follows from the ones before. So instead of a
+picture of a letter or a loose set of points, I give the model each glyph as the
+sequence it already is and train it to predict the next token.
 
-The source is a [UFO](https://unifiedfontobject.org/), a folder of XML, one file
-per glyph, each outline stored as points on the grid. A transformer can't read a
-tree of XML, it reads a flat sequence of tokens, so a small codec rewrites each
-glyph's outline as one flat line: the font's own drawing commands and
-coordinates in order, with the XML thrown away.
+The source files are a [UFO](https://unifiedfontobject.org/): a folder of XML,
+one file per glyph, each outline stored as points on the grid. A transformer
+can't read a tree of XML, it reads a flat list of tokens. So a small codec
+rewrites each glyph's outline as a single line of text: the drawing commands and
+their coordinates, in order, and nothing else.
 
-The vocabulary is 1,336 tokens of three kinds. The structural
-markers (`MOVE`, `LINE`, `CURVE`, `CLOSE`) are the drawing verbs. The
-conditioning tokens for weight and glyph name are the prompt, they tell the model
-what to draw before it draws. And there is one token per legal grid coordinate. The numeral **2** in the
-Regular weight comes out like this:
+A transformer works from a fixed *vocabulary*: the complete set of distinct
+tokens it is allowed to read and write, like the words available in a language.
+Every glyph sequence is spelled out of this one set. It holds tokens of three
+kinds: drawing verbs (`MOVE`, `LINE`, `CURVE`, `CLOSE`); conditioning
+tokens that name the glyph and set its weight (the prompt, what to draw); and
+one token for each legal position on the grid. Here is the numeral **2** in the
+Regular weight:
 
 ```
 BOS N_two W400 ADV 560
@@ -194,31 +199,46 @@ how far the pen moves before the next character. The rest is the outline itself:
 `CURVE` draws a cubic bézier through two control points to an endpoint, and
 `CLOSE` shuts the loop. Every bare number is a grid coordinate.
 
-That last part is where the grid earns its keep. A normal font at UPM 1024 lets
-a point sit on any of a thousand-odd positions, and since outlines are drawn by
-hand, the same edge lands a unit or two off each time it recurs. Virtua keeps
-only every other position and commits to it: a stem is 96 every time, never 95
-or 97. So the model sees a small alphabet of coordinates, each common and each
-meaning one place, instead of a scatter of near-duplicates.
+Many carefully drawn fonts are already fairly regular. What sets Virtua apart is
+a stricter, systematic grid: every coordinate lands on it exactly, a stem is 96
+every time, never 95 or 97, and where a point lands carries semantic meaning,
+which hands a data engineer labeled training data for free.
 
-The codec runs both ways. To train, it turns every glyph into a sequence and the
-model learns to predict the next token, across every glyph in both weights. To
-generate, you hand it the opening tokens, the name and weight you want, let it
-finish, and run the codec backward into a UFO outline, a real, editable glyph. It
-round-trips with zero loss, because the grid already did the quantizing at design
-time.
+The two grid levels then sort those coordinates by role. Structure sits on the
+8-unit grid, so its coordinate tokens turn up constantly; the positions in
+between, on the 2-grid but off the 8, appear only where the eye asked for an
+optical correction, so they stay rare. The 2-grid decides how many coordinate
+tokens exist; the 8-grid decides which of them are common. And a coordinate off
+the 8-grid is, by construction, a correction, so in the token stream the
+corrections are simply the rare, off-8 tokens: the same self-labeling the grid
+gives a human reader, now visible to the model as low-frequency, high-information
+positions.
 
-There is no rasterization, no image encoder, no diffusion here: the font source
+The codec runs both ways. To train, it turns every glyph into a sequence, and the
+model learns to predict the next token across every glyph in both weights. To
+generate, you give it the opening tokens (the name and weight you want), let it
+finish the sequence, and run the codec backward into a UFO outline: a real,
+editable glyph. The round trip is lossless, and here is why. The coordinate
+tokens are exactly the grid's legal positions, and the designer drew every point
+on the grid, so each coordinate already equals one token exactly: no rounding to
+encode it, none to decode it. The exactness comes from the design committing to
+the grid, not from how coarse the grid is; a 1-unit grid would round-trip just as
+cleanly, it would only need more tokens. Tokenizing loses precision only when a
+point falls between two legal positions and gets snapped to the nearer one, and
+on a grid-native font nothing falls between, because that snapping already
+happened, by hand, at design time.
+
+There is no rasterization here, no image encoder, no diffusion. The font source
 itself, stripped to the drawing, is the training data, about 80 tokens a glyph.
-And this is what training on found fonts can never have. Quantize the data after
-the fact and you lose the designer's intent by some unknowable amount; draw on
-the grid, and the tokens *are* the intent.
+This is what training on found fonts can never have: quantize the data after the
+fact and you lose the designer's intent by some unknowable amount, but draw on
+the grid and the tokens *are* the intent.
 
-None of the machinery here is new. DeepSVG, DeepVecFont, IconShop, and StarVector
-all tokenize outlines and learn them with a transformer, several quantizing to a
-small integer grid exactly as I do. What none of them can do is begin from data
-that was grid-native; they train on found fonts snapped down in preprocessing, a
-lossy scrape of a thousand disagreeing hands. [Simon
+None of the machinery is new. DeepSVG, DeepVecFont, IconShop, and StarVector all
+tokenize outlines and learn them with a transformer, several quantizing to a
+small integer grid exactly as I do. What none of them can do is start from data
+that was grid-native; they train on found fonts snapped to a grid in
+preprocessing, a lossy scrape of a thousand disagreeing hands. [Simon
 Cozens](https://simoncozens.github.io/state-of-ai-font-generation/), surveying
 the field, is blunt: "vectorization of glyph images has been historically very
 bad," and his own model trained on the Google Fonts dataset "completely failed."
@@ -242,8 +262,8 @@ by character; this generates glyphs point by point. And his latest,
 [microgpt](https://karpathy.github.io/2026/02/12/microgpt/), trains a
 4,192-parameter GPT over a 27-token vocabulary (32,000 names, one minute on
 a MacBook) as the distilled essence of the whole stack. This project is
-microgpt's cousin in another alphabet: 1,722 tokens, glyphs in, glyphs out,
-forty minutes on an M4 Pro. In fact, the honest origin of this whole design
+microgpt's cousin in another alphabet: glyphs in, glyphs out, forty minutes on
+an M4 Pro. In fact, the honest origin of this whole design
 system is that I got the powers-of-two idea while watching Karpathy videos
 and thinking about what a *typeface* would look like if it were designed to
 be tokenized.
