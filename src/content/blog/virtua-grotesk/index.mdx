@@ -426,7 +426,9 @@ tiny units called sp. Since the wavelength of visible light is approximately
 TeX does all of its arithmetic very carefully so that identical results will
 be obtained on different computers.”</p>
 
-<p>—Donald Knuth, [The TeXbook](https://www-cs-faculty.stanford.edu/~knuth/abcde.html), 1984.</p>
+<p>—Donald Knuth, [The TeXbook](https://www-cs-faculty.stanford.edu/~knuth/abcde.html), 1984.
+The sp is the scaled point, TeX's atomic unit of distance:
+65,536 sp = 2¹⁶ sp = 1 printer's point.</p>
 </div>
 
 <div class="pl-6 my-8 [&>*]:text-muted-foreground">
@@ -437,40 +439,48 @@ even remains a secret because nobody ever believes you anyways”</p>
 <p>—roon ([@tszzl](https://x.com/tszzl)), 2026.</p>
 </div>
 
-When I shared this draft, the most common pushback was also the fairest one:
-why powers of two? Any grid shrinks the coordinate vocabulary. Replica's
-decimal grid would tokenize just as cleanly, so if the argument is
-consistency, the base looks like superstition. This section is my best
-attempt at an answer, and it starts with a concession: the transformer
-mostly does not care. A 10-unit grid on a 1000-unit em gives a small,
-consistent vocabulary too, and I can find no evidence that a network prefers
-binary-spaced bins to decimal ones. What the field shows is only habit:
-[PolyGen](https://arxiv.org/abs/2002.10880) quantizes mesh vertices into 256
-bins and [DeepSVG](https://arxiv.org/abs/2007.11301) does the same for
-outline coordinates, because 2⁸ is what an engineer reaches for. If the
-model were the whole story, the skeptics would be right.
+When I shared this draft, the most common pushback was also the fairest
+one: why powers of two? Any grid shrinks the coordinate vocabulary, so a
+decimal grid like Replica's would tokenize just as cleanly, and if the
+argument is consistency, the base looks like superstition. Concede the
+narrow point first: the transformer does not care. I can find no evidence
+that a network prefers binary-spaced bins to decimal ones, and when the
+field quantizes coordinates it reaches for
+[256 bins](https://arxiv.org/abs/2002.10880) out of habit, not conviction.
+If the model were the whole pipeline, the skeptics would be right.
 
-The grid is not for the model. It is for the arithmetic the design has to
-survive on its way to the model, and that arithmetic is binary all the way
-down. A binary computer can store a fraction exactly only when its
-denominator is a power of two. Mathematicians call these the dyadic
-rationals, and they are the machine's native numbers: floating point is
-dyadic, fixed point is dyadic, and everything else is stored as an
-approximation. Divide Virtua's 96-unit stem by its 1024-unit em and you get
-0.09375, which a float holds verbatim. Divide the same stem by a 1000-unit
-em and you get 0.096, which has no finite binary form; the machine keeps
-0.0959999… and rounds at every step after. Knuth hit exactly this in TeX,
+But the model is the middle of the pipeline, not the whole of it. The grid
+is for everything the design has to survive on the way in and the way out,
+and all of it runs on binary arithmetic. A binary computer stores a
+fraction exactly only when its denominator is a power of two.
+Mathematicians call these the dyadic rationals, and they are the machine's
+native numbers; everything else is stored as an approximation. Divide
+Virtua's 96-unit stem by its 1024-unit em: 0.09375, held verbatim. Divide
+the same stem by the industry's traditional 1000-unit em: 0.096 has no
+finite binary form, so the machine holds 0.09600000000000000200 instead.
+Print it to twenty places and check. Every coordinate in a font is
+normalized, interpolated, and scaled thousands of times before anyone sees
+a letter, and each of those operations is either exact or it quietly
+rounds.
+
+This is not a quirk to route around. It is the founding decision of
+digital typography. Knuth hit it in TeX,
 [watching 0.4 print back as 0.39999](https://research.swtch.com/fp-knuth),
-and rebuilt the whole system on scaled points of 2⁻¹⁶ of a printer's point,
-because dyadic fixed point was the only way to get the identical document
-on every machine. The font stack made the same choice at every layer:
-TrueType rasterizers compute in 26.6 fixed point, in sixty-fourths of a
-pixel; variable fonts store every axis position in
-[units of 2⁻¹⁴](https://learn.microsoft.com/en-us/typography/opentype/spec/otvarcommonformats);
-and the OpenType specification itself
+and rebuilt the whole system on scaled points of 2⁻¹⁶ of a printer's
+point, units so fine that "the wavelength of visible light is
+approximately 100 sp." He went further in METAFONT, his language for
+drawing type itself: every number METAFONT can express is a multiple of
+2⁻¹⁶, so a designer who types the decimal .1
+[gets 6554/65536](https://ctan.org/pkg/mfbook), the nearest binary
+fraction. The dyadic grid is not a convention there; it is the semantics
+of the language, and decimal values are the approximation. The modern
+formats agree: TrueType rasterizers compute in 26.6 fixed point, variable
+fonts store every axis position in
+[units of 2⁻¹⁴](https://learn.microsoft.com/en-us/typography/opentype/spec/otvarcommonformats),
+and the OpenType specification
 [recommends a power-of-two em](https://learn.microsoft.com/en-us/typography/opentype/spec/ttch01)
 because scaling then reduces to a bit shift. A design drawn on the dyadic
-grid is the only design this stack writes down exactly rather than
+grid is the only design this entire stack writes down exactly rather than
 approximates.
 
 | operation | em 1024, 2-unit grid | em 1000, 10-unit grid |
@@ -483,61 +493,91 @@ approximates.
 The last row is the honest one. Binary buys no thirds, and neither does
 decimal; the divisions that resist the base are exactly the ones the eye
 corrects anyway. The operations that must be exact in font production are
-halving, doubling, scaling, and interpolating, and those are the four things
-base two does perfectly.
+halving, doubling, scaling, and interpolating, and those are the four
+things base two does perfectly.
 
-Exactness compounds where the data factory runs. Interpolation is
-`a + t · (b − a)`. When the masters sit on the 2-unit grid and the weights
-are binary fractions, every intermediate value is dyadic, every machine
-computes the identical result, and the only rounding in the whole pipeline
-is the final snap back to the grid, the same snap everywhere. Run the same
-factory on a decimal em at arbitrary weights and float error enters every
-coordinate before the snap, differently on different hardware. One factory
-emits deterministic, noise-free training data; the other emits data with a
-faint hiss in it. There is even a right order to draw the samples: the
-base-2 [van der Corput sequence](https://en.wikipedia.org/wiki/Van_der_Corput_sequence),
+For the machine-learning pipeline this post is about, the exactness pays
+out four ways:
+
+**The synthetic data is noise-free.** The data factory of section 08 is
+interpolation, `a + t · (b − a)`. With masters on the 2-unit grid and
+weights that are binary fractions, every intermediate value is dyadic,
+every machine computes the identical result, and the only rounding in the
+whole pipeline is the final snap back to the grid, the same snap
+everywhere. Run the factory on a decimal em at arbitrary weights and float
+error enters every coordinate before the snap, differently on different
+hardware: the corpus comes out with a faint hiss in it, and a model
+trained on it learns the design plus the hiss. There is even a right order
+to draw the samples: the base-2
+[van der Corput sequence](https://en.wikipedia.org/wiki/Van_der_Corput_sequence),
 1/2, 1/4, 3/4, 1/8, 5/8, 3/8, 7/8, is dyadic at every step and evenly
-spread at every prefix, so the oldest low-discrepancy sequence in numerical
-analysis turns out to be a training schedule for fonts.
+spread at every prefix, so the oldest low-discrepancy sequence in
+numerical analysis turns out to be a training schedule for fonts.
 
-The raster world lines up too. Render a 1024-em glyph at 1024 pixels and
-one font unit is one pixel; the dimension sheet at the top of this post is
-drawn that way. The image models img2bez feeds on compress pictures through
-an autoencoder that downsamples by eight, so their latent space is a
-128 × 128 lattice in which each cell covers exactly an 8 × 8 block of font
-units. The machine grid from the build log reappears, uninvited, inside the
-diffusion model. Vector, raster, and latent are all counting in the same
-base, and 2¹⁰ gives the design ten nested grids to count on, each level
-containing the one below: the 64-grid of the metrics, the 8-grid of the
-machine skeleton, the 2-grid of the human hand. The split of labor between
-model and designer is a multiresolution decomposition, coarse structure and
-fine detail, and coarse-to-fine is precisely the direction generative
-models like to learn.
+**The outputs are checkable, and the taste comes labeled.** On this grid a
+wrong coordinate is a lintable defect: an odd number, a stem outside the
+favored set. Generation quality stops being vibes and becomes a test
+suite, which is what lets a pipeline reject bad samples mechanically
+instead of by eye. Better still, because machine drafts stay on the 8-unit
+grid, every 2-unit deviation in a glyph I approve is, by definition, a
+recorded human optical correction. The lattice is the labeling function
+for the judgment dataset in the build log; the annotation pass costs
+nothing because the grid is the annotator.
+
+**The differences are a small vocabulary.** Stems, sidebearings, chamfers,
+and the Regular-to-Bold deltas of section 07 are all drawn from 2, 4, 8,
+16, 32, 64, 128 and short sums of them, a set closed under halving and
+doubling, so making a glyph bolder moves its measurements within the same
+small set. Boldening collapses from predicting arbitrary integers to
+choosing among a few dozen familiar offsets.
+
+**Every modality shares the lattice.** Render a 1024-em glyph at 1024
+pixels and one font unit is one pixel; the dimension sheet at the top of
+this post is drawn that way. The image models img2bez feeds on compress
+pictures through an autoencoder that downsamples by eight, so their latent
+space is a 128 × 128 lattice in which each cell covers exactly an 8 × 8
+block of font units. The machine grid from the build log reappears,
+uninvited, inside the diffusion model. And 2¹⁰ gives the design ten nested
+grids, each level containing the one below, the 64-grid of the metrics,
+the 8-grid of the machine skeleton, the 2-grid of the human hand, where a
+decimal em offers three. Coarse-to-fine is the direction generative models
+like to learn, and binary builds the finest ladder.
 
 Knuth walked this exact ground forty years ago. METAFONT had to put ideal
 curves onto coarse pixel grids, and the chapter he wrote about it,
 ["Discreteness and Discretion,"](https://ctan.org/pkg/mfbook) opens by
 noting that the objection from analog purity is hollow: "the human eye is
-composed of discrete receptors, and visible light has a finite wavelength."
-Then he states the design goal for automated letterform work, and it is
-worth quoting at length because it is this project's build log written in
-1986: "our goal should not be to make hand-tuning obsolete; it should
-rather be to make hand-tuning tolerable. Let us try to create meta-designs
-so that we would never want to change more than a few pixels per character,
-say half a dozen, regardless of the resolution." A machine draft correct on
-the coarse grid, a human budget of a half-dozen touches on the fine one:
-that is the 8-grid and the 2-grid, except that in Virtua's pipeline every
-one of those touches is also recorded, labeled, and learned from.
+composed of discrete receptors, and visible light has a finite
+wavelength." Then he states the design goal for automated letterform work,
+and it is worth quoting at length because it is this project's build log
+written in 1986: "our goal should not be to make hand-tuning obsolete; it
+should rather be to make hand-tuning tolerable. Let us try to create
+meta-designs so that we would never want to change more than a few pixels
+per character, say half a dozen, regardless of the resolution." A machine
+draft correct on the coarse grid, a human budget of a half-dozen touches
+on the fine one: that is the 8-grid and the 2-grid, except that in
+Virtua's pipeline every one of those touches is also recorded, labeled,
+and learned from.
 
 So the claim, stated at its true size: great fonts shipped on decimal ems
 for forty years, and when humans run the pipeline the base hardly matters.
 Knuth himself thought base two was nothing special aesthetically; his
-*Art of Computer Programming* calls balanced ternary "perhaps the prettiest
-number system of all." But when he built typography systems that had to
-produce the identical page on every machine, he did not build them on the
-prettiest base. He built them on the base the machines speak.
-But once the pipeline is computational end to end, from interpolation to
+*Art of Computer Programming* calls balanced ternary "perhaps the
+prettiest number system of all." But when he built typography systems that
+had to produce the identical page on every machine, he did not build them
+on the prettiest base. He built them on the base the machines speak. Once
+the pipeline is computational end to end, from interpolation to
 augmentation to rasterization to latents, base two is the unique choice
 where the design's arithmetic and the machine's arithmetic are the same
-arithmetic. And on a binary machine, a design drawn in powers of two is not
-encoded. It is simply written down.
+arithmetic.
+
+And when the engineering is settled, the tiebreaker is the thing that
+rules type design anyway: aesthetics. The same taste is at work all the
+way down the stack; it is why these sources are UFO, a folder of plain,
+readable, one-glyph-per-file XML, rather than something tidier and more
+opaque. Aesthetics is the whole game. If it were not, system fonts exist,
+and there would be better things to do with a life. The powers of two
+would deserve this job on beauty alone; that they are also the machine's
+own numbers is the fact this whole post exists to point at. On a binary
+machine, a design drawn in powers of two is not encoded. It is simply
+written down.
