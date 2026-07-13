@@ -1,20 +1,9 @@
 ---
-import { SOCIAL_LINKS } from '@/consts'
 import FontToggle from './FontToggle.astro'
-import Link from './Link.astro'
 import ThemeToggle from './ThemeToggle.astro'
 ---
 
 <footer class="border-foreground text-muted-foreground flex flex-col gap-y-1 border-t py-2.5 text-sm">
-  <div class="flex w-full flex-wrap justify-between gap-y-1">
-    {
-      SOCIAL_LINKS.map((link) => (
-        <Link href={link.href} class="hover:text-foreground transition-colors">
-          {link.label}
-        </Link>
-      ))
-    }
-  </div>
   <div class="flex items-center justify-between">
     <p>&copy; {new Date().getFullYear()} Eli Heuer &middot; CC BY-SA 4.0</p>
     <div class="flex items-center gap-x-4">

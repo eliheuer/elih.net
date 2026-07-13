@@ -1,6 +1,29 @@
 ---
 import PageHead from '@/components/PageHead.astro'
+import Link from '@/components/Link.astro'
 import Layout from '@/layouts/Layout.astro'
+import { SOCIAL_LINKS } from '@/consts'
+
+const fonts = [
+  { name: 'Virtua Grotesk', href: '/virtua-grotesk/' },
+  { name: 'Hasubi Mono', href: '/fonts/hasubi-mono' },
+  { name: 'Mekorot', href: '/fonts/mekorot' },
+]
+
+const software = [
+  { name: 'Runebender', href: 'https://runebender.org' },
+  { name: 'DesignBot', href: '/software/designbot' },
+  { name: 'img2bez', href: '/software/img2bez' },
+  { name: 'img2ufo', href: '/software/img2ufo' },
+]
+
+const startups = [{ name: 'Font.Garden', href: 'https://font.garden' }]
+
+// Past clients, newest first.
+const clients = [
+  { name: 'Fuser', href: 'https://fuser.studio' },
+  { name: 'Google Fonts', href: 'https://fonts.google.com' },
+]
 ---
 
 <Layout>
@@ -9,7 +32,74 @@ import Layout from '@/layouts/Layout.astro'
   <section class="py-8">
     <p>Eli is an AI/ML/Design Engineer based in the US.</p>
     <p>He is available for hire and freelance projects.</p>
-    <p>He also runs a small vector-graphics AI neolab, open to investment and support from interested VCs.</p>
     <p>eli@elih.net</p>
+  </section>
+
+  <section class="grid grid-cols-2 gap-x-8 gap-y-10 pb-12 md:grid-cols-4">
+    <div class="flex flex-col gap-y-1">
+      <h2 class="border-foreground mb-1.5 border-b pb-1 font-semibold">Social</h2>
+      {
+        SOCIAL_LINKS.map((link) => (
+          <Link
+            href={link.href}
+            class="text-muted-foreground hover:text-foreground transition-colors"
+          >
+            {link.label}
+          </Link>
+        ))
+      }
+    </div>
+    <div class="flex flex-col gap-y-1">
+      <h2 class="border-foreground mb-1.5 border-b pb-1 font-semibold">Fonts</h2>
+      {
+        fonts.map((font) => (
+          <Link
+            href={font.href}
+            class="text-muted-foreground hover:text-foreground transition-colors"
+          >
+            {font.name}
+          </Link>
+        ))
+      }
+    </div>
+    <div class="flex flex-col gap-y-1">
+      <h2 class="border-foreground mb-1.5 border-b pb-1 font-semibold">Software</h2>
+      {
+        software.map((item) => (
+          <Link
+            href={item.href}
+            class="text-muted-foreground hover:text-foreground transition-colors"
+          >
+            {item.name}
+          </Link>
+        ))
+      }
+    </div>
+    <div class="flex flex-col gap-y-1">
+      <h2 class="border-foreground mb-1.5 border-b pb-1 font-semibold">Startups</h2>
+      {
+        startups.map((startup) => (
+          <Link
+            href={startup.href}
+            class="text-muted-foreground hover:text-foreground transition-colors"
+          >
+            {startup.name}
+          </Link>
+        ))
+      }
+      <h2 class="border-foreground mt-6 mb-1.5 border-b pb-1 font-semibold">
+        Past Clients
+      </h2>
+      {
+        clients.map((client) => (
+          <Link
+            href={client.href}
+            class="text-muted-foreground hover:text-foreground transition-colors"
+          >
+            {client.name}
+          </Link>
+        ))
+      }
+    </div>
   </section>
 </Layout>
