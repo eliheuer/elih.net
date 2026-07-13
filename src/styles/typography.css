@@ -1,10 +1,10 @@
 @reference './global.css';
 
 /* ── Design system: plain engineering-blog prose ───────────── */
-/* Three-size scale off the fluid 20px root: 64px post title,   */
-/* 40px (2em) section headings, 20px everything else (body,     */
-/* chrome, tables, section index). Inline code at 0.8em (16px)  */
-/* is an optical correction, not a tier. 1.5 line height.       */
+/* Three-size scale off the fluid 24px root: 64px post titles,  */
+/* 48px (2em) section headings, 24px everything else, chrome    */
+/* included. Inline code at 5/6em (20px) is an optical          */
+/* correction, not a tier. 1.5 line height.                     */
 /*                                                              */
 /* Vertical rhythm: every block gap is a multiple of one unit,  */
 /* --prose-space, so the whole post reads on a single cadence.  */
@@ -109,7 +109,7 @@
     code {
       @apply bg-muted/50;
       color: var(--foreground);
-      font-size: 0.8em; /* 16px */
+      font-size: calc(5em / 6); /* 20px */
       font-weight: 500;
       padding: 0.15em 0.3em;
       border-radius: 2px;

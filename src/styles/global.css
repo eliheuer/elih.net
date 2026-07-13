@@ -9,10 +9,10 @@
 /* ── Design tokens ── */
 
 @theme inline {
-  /* Three-size type scale: 64 title / 40 headings / 20 everything else.
-     text-sm is retuned to the body size so all chrome (header, footer,
-     dates, tags) sits on the same tier; inline code alone drops to 0.8em
-     (16px) as an optical correction for the mono's larger x-height. */
+  /* Three-size type scale: 64 titles / 48 headings / 24 everything else,
+     chrome included. text-sm is retuned to the body size so header, footer,
+     dates, and tags all sit on the same tier; inline code alone drops to
+     5/6em (20px) as an optical correction for the mono's larger x-height. */
   --text-sm: 1rem;
   --text-sm--line-height: 1.5;
 
@@ -179,11 +179,11 @@ html.use-geist-font {
     font-family: var(--font-sans);
     /* The whole layout is rem/em-based off this root, so scaling it shrinks
        type, headings, spacing, and gutters together and the phone keeps the
-       desktop proportions. Fluid root: 18px at a 400px viewport up to 20px
+       desktop proportions. Fluid root: 18px at a 400px viewport up to 24px
        at 1200px, interpolating between. The rem term keeps browser zoom and
-       user font-size preferences working (WCAG 1.4.4); the 20:18 range is
+       user font-size preferences working (WCAG 1.4.4); the 24:18 range is
        well inside the safe ratio. */
-    font-size: clamp(1.125rem, 1.0625rem + 0.25vw, 1.25rem);
+    font-size: clamp(1.125rem, 0.9375rem + 0.75vw, 1.5rem);
     line-height: 1.5;
     letter-spacing: 0.02em;
     text-rendering: optimizeLegibility;

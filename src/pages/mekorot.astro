@@ -1,0 +1,664 @@
+---
+// Standalone specimen page for Mekorot — same full-page treatment as
+// /virtua-grotesk, deliberately outside the site Layout.
+import glyphData from '@/data/mekorot-glyphs.json'
+
+const weights = [
+  { name: 'Regular', wght: 400 },
+  { name: 'Medium', wght: 500 },
+  { name: 'SemiBold', wght: 600 },
+  { name: 'Bold', wght: 700 },
+  { name: 'ExtraBold', wght: 800 },
+]
+
+const details: [string, string][] = [
+  ['Design', 'Eli Heuer, after Alan Hoenig’s Makor'],
+  ['Latin', 'Fork of Spectral (Production Type)'],
+  ['Released', '2023 · reengineered for Google Fonts'],
+  ['Version', '2.0'],
+  ['Classification', 'Rashi-style Hebrew serif'],
+  ['Glyphs', '820 per style'],
+  ['Styles', '10 instances · 2 variable fonts'],
+  ['Formats', 'Variable TTF · Static TTF · OTF · WOFF2'],
+  ['Scripts', 'Hebrew · Latin · Arabic'],
+  ['License', 'SIL Open Font License 1.1'],
+]
+---
+
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Mekorot</title>
+    <meta
+      name="description"
+      content="Mekorot — a Hebrew typeface in the Rashi style with a Spectral-based Latin and an Arabic Naskh. Variable weight 400–800, roman and italic. Free and open source under the SIL Open Font License 1.1."
+    />
+    <link rel="canonical" href="https://elih.net/mekorot" />
+    <link rel="icon" href="/favicon.ico" sizes="48x48" />
+    <meta property="og:title" content="Mekorot" />
+    <meta
+      property="og:description"
+      content="A Hebrew typeface in the Rashi style, with a Spectral-based Latin and an Arabic Naskh. Variable weight 400–800, free and open source."
+    />
+    <meta property="og:url" content="https://elih.net/mekorot" />
+  </head>
+
+  <body>
+    <nav id="top">
+      <span class="nav-title">Mekorot</span>
+      <div class="nav-links">
+        <a href="#information">Information</a>
+        <a href="#styles">Styles</a>
+        <a href="#tester">Tester</a>
+        <a href="#features">Features</a>
+        <a href="#glyphs">Glyphs</a>
+        <a class="nav-button" href="https://github.com/eliheuer/mekorot">Download fonts</a>
+      </div>
+    </nav>
+
+    <!-- Hero -->
+    <header
+      class="hero-text"
+      dir="rtl"
+      lang="he"
+      contenteditable="true"
+      spellcheck="false"
+    >
+      מְקוֹרוֹת
+    </header>
+
+    <!-- Information -->
+    <section id="information">
+      <h2 class="sec-label">Information</h2>
+      <div class="sec-body">
+        <div class="prose">
+          <p>
+            Mekorot is a Hebrew typeface in the Rashi style, the semi-cursive
+            script traditionally used to set rabbinical commentary alongside
+            the square-letter main text. The name means
+            <em>sources</em>; the project began as part of an effort to
+            typeset a free Hebrew Talmud preserving the traditional page
+            layout, Tzurat HaDaf.
+          </p>
+          <p>
+            The design descends from Dr. Alan Hoenig’s Makor, by way of a
+            SourceForge revival, and was reengineered and redrawn in 2023 for
+            inclusion in the Google Fonts catalog. The Latin companion is a
+            fork of Spectral; an Arabic Naskh is included for mixed
+            Semitic-script settings. Sources and build system are open on
+            <a href="https://github.com/eliheuer/mekorot">GitHub</a>.
+          </p>
+        </div>
+
+        <dl class="details">
+          {
+            details.map(([k, v]) => (
+              <div class="detail-row">
+                <dt>{k}</dt>
+                <dd>{v}</dd>
+              </div>
+            ))
+          }
+        </dl>
+      </div>
+    </section>
+
+    <!-- Variable axes -->
+    <section>
+      <h2 class="sec-label">Variable Font Axes</h2>
+      <div class="sec-body">
+        <table class="mono-table">
+          <thead>
+            <tr><th>Font</th><th>Axis</th><th>Tag</th><th>Min</th><th>Default</th><th>Max</th></tr>
+          </thead>
+          <tbody>
+            <tr><td>Mekorot</td><td>Weight</td><td>wght</td><td>400</td><td>400</td><td>800</td></tr>
+            <tr><td>Mekorot Italic</td><td>Weight</td><td>wght</td><td>400</td><td>400</td><td>800</td></tr>
+          </tbody>
+        </table>
+        <table class="mono-table" style="margin-top: 2rem;">
+          <thead>
+            <tr><th>Font</th><th>Format</th><th>Web file size</th></tr>
+          </thead>
+          <tbody>
+            <tr><td>Mekorot Variable</td><td>WOFF2</td><td>48 kb</td></tr>
+            <tr><td>Mekorot Italic Variable</td><td>WOFF2</td><td>52 kb</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- Styles -->
+    <section id="styles">
+      <h2 class="sec-label">Styles</h2>
+      <div class="style-list">
+        {
+          weights.map(({ name, wght }) => (
+            <div class="style-row">
+              <div class="style-meta">
+                <span class="mono-label">{name} · {wght}</span>
+                <input
+                  type="range"
+                  class="size-slider"
+                  min="24"
+                  max="160"
+                  value="80"
+                  aria-label={`Sample size for ${name}`}
+                />
+              </div>
+              <div
+                class="style-sample"
+                contenteditable="true"
+                spellcheck="false"
+                style={`font-weight: ${wght}; font-size: 80px;`}
+              >
+                Mekorot <span dir="rtl" lang="he">מקורות</span> {name}
+              </div>
+            </div>
+          ))
+        }
+        <div class="style-row">
+          <div class="style-meta">
+            <span class="mono-label">Italic · 400</span>
+            <input
+              type="range"
+              class="size-slider"
+              min="24"
+              max="160"
+              value="80"
+              aria-label="Sample size for Italic"
+            />
+          </div>
+          <div
+            class="style-sample"
+            contenteditable="true"
+            spellcheck="false"
+            style="font-style: italic; font-weight: 400; font-size: 80px;"
+          >
+            Mekorot Italic
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Weight tester -->
+    <section id="tester">
+      <h2 class="sec-label">Variable Weight Tester</h2>
+      <div class="sec-body">
+        <div class="tester-controls">
+          <label class="mono-label" for="wght-slider">wght</label>
+          <input type="range" id="wght-slider" min="400" max="800" step="1" value="400" />
+          <span class="mono-label" id="wght-value">400</span>
+        </div>
+        <div id="tester-text" dir="rtl" lang="he" contenteditable="true" spellcheck="false">
+          בְּרֵאשִׁית בָּרָא אֱלֹהִים
+        </div>
+      </div>
+    </section>
+
+    <!-- OpenType features -->
+    <section id="features">
+      <h2 class="sec-label">OpenType Features</h2>
+      <div class="sec-body">
+        <div class="feature-row">
+          <div class="feature-meta">
+            <span class="mono-label">mark · mkmk</span>
+            <p>Hebrew mark positioning. Niqqud (vowel points) attach to base
+            letters and stack correctly, so fully pointed text sets cleanly
+            at any weight.</p>
+          </div>
+          <div class="feature-demo" dir="rtl" lang="he">
+            וַיֹּאמֶר אֱלֹהִים יְהִי אוֹר
+          </div>
+        </div>
+
+        <div class="feature-row">
+          <div class="feature-meta">
+            <span class="mono-label">init · medi · fina · rlig</span>
+            <p>Arabic contextual shaping in the included Naskh, for mixed
+            Hebrew-Arabic scholarly settings.</p>
+          </div>
+          <div class="feature-demo" dir="rtl" lang="ar">
+            الحروف تتصل بسلاسة
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Language support -->
+    <section>
+      <h2 class="sec-label">Language Support</h2>
+      <div class="sec-body">
+        <p class="languages">
+          Hebrew with full niqqud, including pointed liturgical and
+          rabbinic text; Arabic in the included Naskh; and a broad European
+          Latin (a fork of Spectral) covering English, French, German,
+          Spanish, Portuguese, Italian, Dutch, Polish, Czech, Hungarian,
+          Romanian, Turkish, the Scandinavian and Baltic languages, and
+          more.
+        </p>
+      </div>
+    </section>
+
+    <!-- Glyphs -->
+    <section id="glyphs">
+      <h2 class="sec-label">Glyphs</h2>
+      <div class="sec-body">
+        <div class="glyph-controls">
+          <button class="glyph-weight mono-label active" data-wght="400">Regular 400</button>
+          <button class="glyph-weight mono-label" data-wght="800">ExtraBold 800</button>
+        </div>
+        {
+          glyphData.groups.map((group) => (
+            <div class="glyph-group">
+              <h3 class="mono-label">{group.name} · {group.glyphs.length}</h3>
+              <div class="glyph-grid">
+                {group.glyphs.map((g) => (
+                  <span class="glyph-cell" title={`U+${g.u}`}>{g.c}</span>
+                ))}
+              </div>
+            </div>
+          ))
+        }
+      </div>
+    </section>
+
+    <!-- Download -->
+    <section id="download">
+      <h2 class="sec-label">Download</h2>
+      <div class="sec-body">
+        <p class="download-copy">
+          Mekorot is free and open source under the
+          <a href="https://openfontlicense.org">SIL Open Font License 1.1</a> —
+          use it, ship it, modify it. Sources are UFO; builds are reproducible
+          with the repo’s Makefile and gftools. A Google Fonts release is in
+          preparation.
+        </p>
+        <a class="nav-button big" href="https://github.com/eliheuer/mekorot">
+          Download from GitHub
+        </a>
+      </div>
+    </section>
+
+    <footer>
+      <span>© 2026 Eli Heuer · SIL OFL 1.1</span>
+      <span>
+        <a href="/fonts/mekorot">Notes</a> ·
+        <a href="/">elih.net</a> ·
+        <a href="#top">Back to top ↑</a>
+      </span>
+    </footer>
+
+    <style>
+      :root {
+        --bg: #191919;
+        --ink: #c9c9c9;
+        --bright: #e8e8e4;
+        --muted: #8a8a86;
+        --rule: #3c3c3c;
+        --red: #ff4a3d;
+      }
+
+      @font-face {
+        font-family: 'Mekorot';
+        src: url('/fonts/MekorotVF.woff2') format('woff2-variations');
+        font-weight: 400 800;
+        font-style: normal;
+        font-display: swap;
+      }
+      @font-face {
+        font-family: 'Mekorot';
+        src: url('/fonts/MekorotItalicVF.woff2') format('woff2-variations');
+        font-weight: 400 800;
+        font-style: italic;
+        font-display: swap;
+      }
+      @font-face {
+        font-family: 'Geist Mono';
+        src: url('/fonts/GeistMonoVF.woff2') format('woff2-variations');
+        font-weight: 100 900;
+        font-display: swap;
+      }
+
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+      html {
+        scroll-behavior: smooth;
+      }
+      body {
+        background: var(--bg);
+        color: var(--ink);
+        font-family: 'Mekorot', serif;
+        font-size: 18px;
+        line-height: 1.55;
+      }
+      a {
+        color: var(--red);
+        text-decoration: none;
+      }
+      a:hover {
+        text-decoration: underline;
+      }
+
+      .mono-label {
+        font-family: 'Geist Mono', monospace;
+        font-size: 12px;
+        letter-spacing: 0.06em;
+        text-transform: uppercase;
+        color: var(--muted);
+      }
+
+      nav {
+        position: sticky;
+        top: 0;
+        z-index: 10;
+        display: flex;
+        align-items: center;
+        gap: 1.5rem;
+        padding: 14px 24px;
+        background: color-mix(in oklab, var(--bg) 88%, transparent);
+        backdrop-filter: blur(8px);
+        border-bottom: 1px solid var(--rule);
+        font-size: 16px;
+      }
+      .nav-title {
+        font-weight: 400;
+        color: var(--bright);
+      }
+      .nav-links {
+        margin-left: auto;
+        display: flex;
+        align-items: center;
+        gap: 1.25rem;
+        flex-wrap: wrap;
+      }
+      .nav-links a {
+        color: var(--ink);
+      }
+      .nav-links a:hover {
+        color: var(--red);
+        text-decoration: none;
+      }
+      .nav-button {
+        border: 1px solid var(--red);
+        color: var(--red) !important;
+        padding: 6px 14px;
+        border-radius: 999px;
+      }
+      .nav-button:hover {
+        background: var(--red);
+        color: var(--bg) !important;
+        text-decoration: none;
+      }
+      .nav-button.big {
+        display: inline-block;
+        font-size: 17px;
+        padding: 10px 22px;
+        margin-top: 1.5rem;
+      }
+
+      .hero-text {
+        padding: 8vh 24px;
+        font-size: clamp(64px, 15vw, 240px);
+        line-height: 1.1;
+        color: var(--bright);
+        outline: none;
+        overflow-wrap: anywhere;
+      }
+
+      section {
+        border-top: 1px solid var(--rule);
+        padding: 48px 24px 64px;
+      }
+      .sec-label {
+        font-family: 'Geist Mono', monospace;
+        font-size: 12px;
+        font-weight: 400;
+        letter-spacing: 0.06em;
+        text-transform: uppercase;
+        color: var(--muted);
+        margin-bottom: 2.5rem;
+      }
+      .sec-body {
+        max-width: 1200px;
+      }
+
+      #information .sec-body {
+        display: grid;
+        grid-template-columns: minmax(0, 60ch) minmax(280px, 480px);
+        gap: 4rem;
+        max-width: none;
+      }
+      @media (max-width: 900px) {
+        #information .sec-body {
+          grid-template-columns: 1fr;
+        }
+      }
+      .prose p {
+        margin-bottom: 1.25em;
+      }
+      .details {
+        font-size: 15px;
+      }
+      .detail-row {
+        display: grid;
+        grid-template-columns: 150px 1fr;
+        gap: 1rem;
+        padding: 9px 0;
+        border-bottom: 1px solid var(--rule);
+      }
+      .detail-row dt {
+        color: var(--muted);
+      }
+      .detail-row dd {
+        color: var(--bright);
+      }
+
+      .mono-table {
+        border-collapse: collapse;
+        font-family: 'Geist Mono', monospace;
+        font-size: 13px;
+        width: 100%;
+        max-width: 720px;
+      }
+      .mono-table th {
+        text-align: left;
+        font-weight: 400;
+        color: var(--muted);
+        text-transform: uppercase;
+        letter-spacing: 0.06em;
+        font-size: 11px;
+      }
+      .mono-table th,
+      .mono-table td {
+        border-bottom: 1px solid var(--rule);
+        padding: 8px 24px 8px 0;
+      }
+      .mono-table td {
+        color: var(--bright);
+      }
+
+      .style-row {
+        border-bottom: 1px solid var(--rule);
+        padding: 20px 0 28px;
+      }
+      .style-row:last-child {
+        border-bottom: none;
+      }
+      .style-meta {
+        display: flex;
+        align-items: center;
+        gap: 1.5rem;
+        margin-bottom: 0.75rem;
+      }
+      .style-sample {
+        color: var(--bright);
+        line-height: 1.2;
+        outline: none;
+        overflow-wrap: anywhere;
+      }
+      input[type='range'] {
+        accent-color: var(--red);
+        width: 180px;
+        opacity: 0.35;
+        transition: opacity 120ms;
+      }
+      .style-row:hover input[type='range'],
+      input[type='range']:focus,
+      #wght-slider {
+        opacity: 1;
+      }
+
+      .tester-controls {
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+        margin-bottom: 1.5rem;
+      }
+      #wght-slider {
+        width: min(420px, 60vw);
+      }
+      #tester-text {
+        font-size: clamp(48px, 9vw, 140px);
+        line-height: 1.4;
+        color: var(--bright);
+        font-weight: 400;
+        outline: none;
+        overflow-wrap: anywhere;
+      }
+
+      .feature-row {
+        display: grid;
+        grid-template-columns: minmax(240px, 380px) 1fr;
+        gap: 3rem;
+        padding: 28px 0;
+        border-bottom: 1px solid var(--rule);
+      }
+      .feature-row:last-child {
+        border-bottom: none;
+      }
+      @media (max-width: 800px) {
+        .feature-row {
+          grid-template-columns: 1fr;
+        }
+      }
+      .feature-meta p {
+        font-size: 15px;
+        color: var(--ink);
+        margin: 0.6rem 0 1rem;
+      }
+      .feature-demo {
+        font-size: clamp(32px, 4.5vw, 56px);
+        line-height: 1.6;
+        color: var(--bright);
+      }
+
+      .languages {
+        max-width: 75ch;
+        color: var(--ink);
+      }
+
+      .glyph-controls {
+        display: flex;
+        gap: 0.75rem;
+        margin-bottom: 2rem;
+      }
+      .glyph-weight {
+        background: none;
+        border: 1px solid var(--rule);
+        border-radius: 999px;
+        padding: 6px 14px;
+        cursor: pointer;
+      }
+      .glyph-weight.active {
+        border-color: var(--red);
+        color: var(--red);
+      }
+      .glyph-group {
+        margin-bottom: 2.5rem;
+      }
+      .glyph-group h3 {
+        margin-bottom: 0.75rem;
+        font-weight: 400;
+      }
+      .glyph-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(56px, 1fr));
+        border-top: 1px solid var(--rule);
+        border-left: 1px solid var(--rule);
+      }
+      .glyph-cell {
+        aspect-ratio: 1;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 26px;
+        color: var(--bright);
+        border-right: 1px solid var(--rule);
+        border-bottom: 1px solid var(--rule);
+        font-weight: 400;
+        cursor: default;
+      }
+      .glyph-cell:hover {
+        background: var(--rule);
+        color: var(--red);
+      }
+      .glyphs-bold .glyph-cell {
+        font-weight: 800;
+      }
+
+      .download-copy {
+        max-width: 65ch;
+      }
+      footer {
+        border-top: 1px solid var(--rule);
+        padding: 20px 24px 28px;
+        display: flex;
+        justify-content: space-between;
+        flex-wrap: wrap;
+        gap: 1rem;
+        font-size: 14px;
+        color: var(--muted);
+      }
+    </style>
+
+    <script>
+      // Per-style size sliders
+      document.querySelectorAll<HTMLElement>('.style-row').forEach((row) => {
+        const slider = row.querySelector<HTMLInputElement>('.size-slider')
+        const sample = row.querySelector<HTMLElement>('.style-sample')
+        if (!slider || !sample) return
+        slider.addEventListener('input', () => {
+          sample.style.fontSize = `${slider.value}px`
+        })
+      })
+
+      // Variable weight tester
+      const wghtSlider = document.getElementById('wght-slider') as HTMLInputElement | null
+      const wghtValue = document.getElementById('wght-value')
+      const testerText = document.getElementById('tester-text')
+      if (wghtSlider && wghtValue && testerText) {
+        wghtSlider.addEventListener('input', () => {
+          testerText.style.fontWeight = wghtSlider.value
+          wghtValue.textContent = wghtSlider.value
+        })
+      }
+
+      // Glyph grid weight toggle
+      const glyphsSection = document.getElementById('glyphs')
+      document.querySelectorAll<HTMLButtonElement>('.glyph-weight').forEach((btn) => {
+        btn.addEventListener('click', () => {
+          document
+            .querySelectorAll('.glyph-weight')
+            .forEach((b) => b.classList.toggle('active', b === btn))
+          glyphsSection?.classList.toggle('glyphs-bold', btn.dataset.wght === '800')
+        })
+      })
+    </script>
+  </body>
+</html>
