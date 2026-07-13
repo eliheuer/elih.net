@@ -88,18 +88,18 @@
 /* ── Colors: one foreground per mode ── */
 
 :root {
-  --background: oklch(0.92 0 0);
-  --foreground: oklch(0.3 0 0);
+  --background: oklch(0.78 0 0);
+  --foreground: oklch(0.24 0 0);
   --primary: oklch(0.3 0 0);
   --primary-foreground: oklch(0.985 0 0);
-  --secondary: oklch(0.97 0 0);
+  --secondary: oklch(0.84 0 0);
   --secondary-foreground: oklch(0.3 0 0);
-  --muted: oklch(0.97 0 0);
+  --muted: oklch(0.84 0 0);
   --muted-foreground: oklch(0.3 0 0);
-  --accent: oklch(0.97 0 0);
+  --accent: oklch(0.84 0 0);
   --accent-foreground: oklch(0.3 0 0);
   --destructive: oklch(0.577 0.245 27.325);
-  --border: oklch(0.822 0 0);
+  --border: oklch(0.66 0 0);
   --ring: oklch(0.708 0 0);
   --scrollbar-thumb: oklch(0.72 0 0);
   --scrollbar-thumb-hover: oklch(0.62 0 0);

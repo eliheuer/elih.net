@@ -1,11 +1,11 @@
 ---
 title: 'Diffuse Value Capture'
-description: 'Thoughts on incentivizing post-authorship peer production.'
+description: 'An economic lens on open source, remix culture, and authorship after AI.'
 date: 2025-05-19T12:00:00Z
 dateNote: 'Third edition July 9th, 2026'
 tags: ['AI', 'Open-Source', 'Design', 'IP', 'Economics']
 image: './1200x630.png'
-authors: ['Eli Heuer']
+authors: ['elih']
 draft: false
 ---
 import { Image } from 'astro:assets'
@@ -16,7 +16,7 @@ import Hpos from './hpos.webp'
 
 ## 1 Diffuse & Direct Value Capture
 
-Alice and Bob both work 30 hours per week creating a similar digital good. They aim to capture value in various forms, such as money and social capital.
+Alice and Bob both work 30 hours per week creating a similar digital good, and each captures some share of the value they create: money, reputation, opportunities.
 
 |                | Alice | Bob |
 |----------------|-------|-----|
@@ -29,7 +29,7 @@ Alice captures 90% of the value she creates; Bob captures only 10%. Yet Bob ends
 
 Alice's model is direct value capture: many-to-one, closed, permissioned. Bob's is diffuse value capture: many-to-many, open, permissionless. The two exist on a spectrum, and extremes on either end are rarely workable.
 
-The upside on the diffuse end has no ceiling. Produce 1,000 units and capture 1%, or 1,000,000 and capture 0.001%.
+The upside on the diffuse end has no ceiling. Produce 1,000 units of value and capture 1% and you keep 10; produce 1,000,000 and capture even 0.01% and you keep 100. The capture rate falls; the total grows anyway.
 
 ## 2 Authorship & Originality
 
@@ -39,11 +39,11 @@ The upside on the diffuse end has no ceiling. Produce 1,000 units and capture 1%
 <p>—Marshall McLuhan, The Gutenberg Galaxy, 1962.</p>
 </div>
 
-Authorship and originality are downstream of the dominant medium of reproduction. McLuhan's point—that the printing press created the modern individual as much as it created the modern book—runs in reverse, too. When copying is cheap and decentralized, the bounded originating author becomes harder to defend.
+Authorship and originality are downstream of the dominant medium of reproduction. McLuhan's point, that the printing press created the modern individual as much as it created the modern book, runs in reverse too. When copying is cheap and decentralized, the bounded originating author becomes harder to defend.
 
-For most of human history, cultural production was diffuse: stories built on stories, songs on songs. Before the printing press, works often circulated anonymously or under famous names borrowed for prestige; scribes copied freely because slow, manual duplication was the only real constraint. The press removed that constraint, and Western culture shifted increasingly toward direct value capture, culminating in the 20th-century broadcast era of Hollywood, television, music, and publishing. At the peak of that direct wave, the personal computer arrived and began swinging the pendulum back—not to a pre-industrial model, but to one built on decentralized global networks.
+For most of human history, cultural production was diffuse: stories built on stories, songs on songs. Before the printing press, works often circulated anonymously or under famous names borrowed for prestige; scribes copied freely because slow, manual duplication was the only real constraint. The press removed that constraint, and Western culture shifted increasingly toward direct value capture, culminating in the 20th-century broadcast era of Hollywood, television, music, and publishing. At the peak of that direct wave, the personal computer arrived and began swinging the pendulum back: not to a pre-industrial model, but to one built on decentralized global networks.
 
-Cultural adaptation lags technological change. More than two centuries passed between the European printing press and the Statute of Anne, the first law to recognize authors—rather than printers—as rights-holders. The cycle has accelerated since, but the lag persists.
+Cultural adaptation lags technological change. More than two centuries passed between the European printing press and the Statute of Anne, the first law to recognize authors, rather than printers, as rights-holders. The cycle has accelerated since, but the lag persists.
 
 | Year | Tech/Event | Immediate Reaction | Lasting Legal Shift |
 |------|--------------|--------------------|---------------------|
@@ -68,7 +68,7 @@ If the printing press took more than two centuries to produce modern copyright, 
 <p>—Byung-Chul Han, [Shanzhai 山寨](https://youtu.be/hpADLkWvAHA), 2017.</p>
 </div>
 
-What Han describes is not a stylistic preference but a different theory of art—one in which the work is finished by everyone who later touches it. China has a long literati tradition of individual authorship and signed work, but it also has a Daoist and Confucian strand that treats originality less as a singular act of creation than as an ongoing natural process. Skillful reference signals depth of knowledge, and originality lies more in subtle recombination than in radical novelty.
+What Han describes is not a stylistic preference but a different theory of art, one in which the work is finished by everyone who later touches it. China has a long literati tradition of individual authorship and signed work, but it also has a Daoist and Confucian strand that treats originality less as a singular act of creation than as an ongoing natural process. Skillful reference signals depth of knowledge, and originality lies more in subtle recombination than in radical novelty.
 
 <Image
   src={Hpos}
@@ -78,7 +78,7 @@ What Han describes is not a stylistic preference but a different theory of art�
   class="rounded-md"
 />
 
-In late 2023, DeepSeek open-sourced models that outperformed Meta's Llama 2. A little over a year later, in January 2025, it released DeepSeek-R1, which matched OpenAI's o1 on hard reasoning tasks—reportedly trained for a small fraction of what Western labs spend. And while the largest model needs server-class hardware, smaller distilled versions run on a consumer GPU.
+The clearest modern test of that older theory is happening in AI. In late 2023, DeepSeek open-sourced models that outperformed Meta's Llama 2. A little over a year later, in January 2025, it released DeepSeek-R1, which matched OpenAI's o1 on hard reasoning tasks, reportedly trained for a small fraction of what Western labs spend. And while the largest model needs server-class hardware, smaller distilled versions run on a consumer GPU.
 
 Many Western incumbents lean toward more direct value capture: API call metering, closed weights, NDAs. Several leading Chinese labs have treated the model itself as advertising for downstream services, hardware, and prestige, keeping only a thin proprietary layer for coordination.
 
@@ -88,13 +88,13 @@ Critics often portray this looser stance on intellectual property as a drag on i
 
 Neural networks are diffuse by nature, and more direct value capture does not map well onto them.
 
-Art, music, code, design, and other cultural artifacts—culled from the open web—are diffused across latent space. Once creativity is encoded as a multi-trillion-parameter fog, the notion that you can meter each droplet of inspiration the way you once metered a DVD sale becomes economically and technically incoherent.
+Art, music, code, design, and other cultural artifacts, culled from the open web, are diffused across latent space. Once creativity is encoded as a multi-trillion-parameter fog, the notion that you can meter each droplet of inspiration the way you once metered a DVD sale becomes economically and technically incoherent.
 
-A neural network does not store information like a database storing rows. Any given weight is meaningless in isolation; value emerges only from the statistical interaction of all weights acting in concert. Like pigments blended into paint, the original sources are no longer separable—you can’t point to a specific coordinate and say, “this vector belongs to that copyright holder.”
+A neural network does not store information like a database storing rows. Any given weight is meaningless in isolation; value emerges only from the statistical interaction of all weights acting in concert. Like pigments blended into paint, the original sources are no longer separable: you can't point to a specific coordinate and say this vector belongs to that copyright holder.
 
-Listen to current conversations around AI and intellectual property and you’ll find little consensus on how to preserve the existing IP framework in this new era. Proposals for serious reform, once considered fringe, are now discussed openly in mainstream tech circles.
+There is little consensus on how the existing IP framework survives this, and proposals for serious reform, once considered fringe, are now discussed openly in mainstream tech circles.
 
-The increasingly diffuse nature of cultural production—and the growing openness to new ways of thinking about intellectual property—is a direct consequence of three converging trends:
+The shift toward diffuse cultural production is a direct consequence of three converging trends:
 
 1. The rise of decentralized networks over traditional media and finance.
 
@@ -102,7 +102,9 @@ The increasingly diffuse nature of cultural production—and the growing opennes
 
 3. The creator economy: platform payouts, micro-monetization, and attention markets that blur the line between leisure and labor.
 
-This shift isn't driven by political will or personal preference. Stewart Brand captured the tension: “Information wants to be free. Information also wants to be expensive… That tension will not go away.” The tension doesn't go away—but market competition keeps resolving it in one direction. In a free market, prices fall toward the marginal cost of production, and for information that cost is near zero. Competition eventually breaches every barrier built to hold prices above that floor, and the ground rarely comes back. The motion is a ratchet. This is why I see potential in diffuse value capture business models, where startups can compete with big incumbents by working with the grain of the software medium and strategically building thin capture layers into ecosystems that leak more value than many traditional US tech companies are comfortable with. 
+None of this is driven by political will or personal preference. Stewart Brand named the tension: “Information wants to be free. Information also wants to be expensive… That tension will not go away.” It doesn't go away, but market competition keeps resolving it in one direction. Prices fall toward the marginal cost of production, and for information that cost is near zero. Competition eventually breaches every barrier built to hold prices above that floor, and the ground rarely comes back. The motion is a ratchet.
+
+This is why I see potential in diffuse value capture as a business model. A startup can work with the grain of the medium instead of against it, building a thin capture layer into an ecosystem that leaks more value than incumbents are comfortable leaking.
 
 ## 5 The Hacker Ethic
 
@@ -112,9 +114,9 @@ This shift isn't driven by political will or personal preference. Stewart Brand 
 <p>—Steven Levy, Hackers, 1984.</p>
 </div>
 
-Computers speak in copies, and the cost of duplication is effectively zero. When the medium itself is infinite replication, economic models based on overly direct value capture become increasingly difficult to maintain—the technology pulls toward abundance and sharing.
+Computers speak in copies, and the cost of duplication is effectively zero. When the medium itself is infinite replication, economic models based on overly direct value capture become difficult to maintain; the technology pulls toward abundance and sharing.
 
-The architecture of computing encodes this "hacker ethic" at its core, much like neural networks are diffuse by nature. McLuhan's larger point: a medium's form has second- and third-order effects on culture, far beyond its obvious uses. A medium of costless copying reshapes norms around authorship, labor, and property whether anyone wills it or not.
+The architecture of computing encodes this hacker ethic at its core. McLuhan's larger point applies: a medium's form has second- and third-order effects on culture, far beyond its obvious uses. A medium of costless copying reshapes norms around authorship, labor, and property whether anyone wills it or not.
 
 Artificial scarcity imposed by legal means in the digital realm is an awkward simulacrum of real-world scarcity. Forcing physical-world notions of property onto information systems creates endless friction and runs counter to the grain of the medium. This primal, often unspoken orientation at the heart of computing is what Richard Stallman later formalized as software freedom.
 
@@ -138,21 +140,21 @@ Despite its massive success, free and open-source software culture still struggl
 
 Corporate patronage has been a primary driver of open-source development, and the ecosystem owes much of its scale to it. But the more direct capture systems large organizations run on do not always align with the diffuse nature of open source. Metrics-driven incentives can pull contributors toward what is measurable rather than what is valuable, and can quietly reward gatekeeping knowledge over sharing it. The result is friction against the open, collaborative ethos that makes the ecosystem work.
 
-More diffuse strategies align incentives with openness and ecosystem growth: the more you share and the more you help the project around you grow, the more value you ultimately capture. Some gatekeeping still protects community culture, but the information asymmetry and cronyism that more direct systems produce are less financially rewarded. The hacker ethic becomes aligned with financial incentives and competition at the highest levels of the market—where previously it stood in tension with more direct capture.
+More diffuse strategies align incentives with openness and ecosystem growth: the more you share and the more you help the project around you grow, the more value you ultimately capture. Some gatekeeping still protects community culture, but the information asymmetry and cronyism that more direct systems produce are less financially rewarded. The hacker ethic becomes aligned with financial incentives at the highest levels of the market, where it previously stood in tension with them.
 
 ## 6 Post-Authorship
 
-The obsession with authorship and originality that results from an over-reliance on more direct value capture has become a weight dragging down creativity, collaboration, and production incentives. The path to success becomes isolating, owning, controlling, and defending infinitely copyable intangible ideas—at odds with how culture and technology actually evolve, and actively suppressing the social and memetic nature of cultural production.
+Over-reliance on direct value capture breeds an obsession with authorship and originality, and the obsession has become a weight on creativity, collaboration, and the incentive to produce. The path to success becomes isolating, owning, and defending infinitely copyable ideas: at odds with how culture and technology actually evolve, and actively suppressing the social, memetic nature of cultural production.
 
-Design social media shows the pattern at work. Scroll long enough and you'll see an endless parade of designers complaining that someone stole their work—recently over things as trivial and obviously un-ownable as color gradients. Meanwhile the quality of design in the everyday world degrades: the pressures of more direct value capture push designers toward performing as expressive auteurs rather than building durable visual systems. What our environment gets in return is expressive slop where functional, authorless late-modernism used to be.
+Design social media shows the pattern at work. Scroll long enough and you'll see an endless parade of designers complaining that someone stole their work, recently over things as trivial and obviously un-ownable as color gradients. Meanwhile the quality of design in the everyday world degrades: the pressures of more direct value capture push designers toward performing as expressive auteurs rather than building durable visual systems. What our environment gets in return is expressive slop where functional, authorless late-modernism used to be.
 
 Case in point, from late 2023: a widely-praised "Satie graphic" turned out on inspection to be little more than the font Ogg Regular with one character swapped to italic and a bit of tracking.
 
 <blockquote class="twitter-tweet"><p lang="en" dir="ltr">The Satie graphic is just the font Ogg Regular with the i changed to Ogg Regular Italic, plus a little bit of tracking...<a href="https://t.co/XtOXnRN6jE">https://t.co/XtOXnRN6jE</a> <a href="https://t.co/i59g2tbP5P">https://t.co/i59g2tbP5P</a></p>&mdash; Eli Heuer (@eliheuer) <a href="https://twitter.com/eliheuer/status/1730361630096306652?ref_src=twsrc%5Etfw">November 30, 2023</a></blockquote> <script async src="https://platform.twitter.com/widgets.js" charset="utf-8"></script>
 
-The GPL was never intended as anti-commercial—Stallman explicitly designed it to enable business models built on free software. Companies could sell support, customization, hosting, or integration services while the code itself remained free. Red Hat proved this model could work, building a multi-billion-dollar business on open-source software.
+Free software culture points at what the alternative looks like. The GPL was never intended as anti-commercial; Stallman explicitly designed it to enable business models built on free software. Companies could sell support, customization, hosting, or integration services while the code itself remained free. Red Hat proved this model could work, building a multi-billion-dollar business on open-source software.
 
-But these traditional open-source business models still rely on somewhat more direct value capture—selling services to specific customers through conventional contracts. What is still missing is the final piece of the copyleft vision: a native, diffuse economic layer that matches the license's viral, collaborative nature, so that value flows back into the commons as readily as code flows out of it.
+But these traditional open-source business models still rely on fairly direct value capture: selling services to specific customers through conventional contracts. What is still missing is the final piece of the copyleft vision: a native, diffuse economic layer that matches the license's viral, collaborative nature, so that value flows back into the commons as readily as code flows out of it.
 
 Many programmers and designers are financially incentivized to work in proprietary models on large projects they have little authorship over. Can open, permissionless projects recreate those incentives natively? It remains one of the great unsolved design problems of the software commons.
 
@@ -164,7 +166,7 @@ Many programmers and designers are financially incentivized to work in proprieta
 <p>—Elinor Ostrom</p>
 </div>
 
-TikTok is a useful middle-of-the-spectrum example. ByteDance owns the platform and a proprietary algorithm decides which videos propagate, but the creation layer is diffuse: a format emerges, thousands of creators remix it, the best versions spread, the rest fade. The same coordination shape shows up in GitHub, Hugging Face, and Linux at different points further toward the diffuse end—many contributors, flatter hierarchies, and output that stays available for anyone to use, remix, and extend. Call it post-authorship peer production.
+TikTok is a useful middle-of-the-spectrum example. ByteDance owns the platform and a proprietary algorithm decides which videos propagate, but the creation layer is diffuse: a format emerges, thousands of creators remix it, the best versions spread, the rest fade. The same coordination shape shows up in GitHub, Hugging Face, and Linux, at points further toward the diffuse end: many contributors, flatter hierarchies, and output that stays available for anyone to use, remix, and extend. Call it post-authorship peer production.
 
 Post-authorship removes many of the barriers to collaboration that have held back peer production, especially in cultural areas like art and design. When contributors stop worrying about who owns what idea, energy shifts from defending territory to building together, unlocking long-tail innovation.
 
