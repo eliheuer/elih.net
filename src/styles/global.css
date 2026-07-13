@@ -9,6 +9,13 @@
 /* ── Design tokens ── */
 
 @theme inline {
+  /* Three-size type scale: 64 title / 40 headings / 20 everything else.
+     text-sm is retuned to the body size so all chrome (header, footer,
+     dates, tags) sits on the same tier; inline code alone drops to 0.8em
+     (16px) as an optical correction for the mono's larger x-height. */
+  --text-sm: 1rem;
+  --text-sm--line-height: 1.5;
+
   --font-sans-geist:
     'Geist', -apple-system, BlinkMacSystemFont, ui-sans-serif, system-ui,
     sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol', 'Noto Color Emoji';
@@ -170,22 +177,18 @@ html.use-geist-font {
   html {
     @apply bg-background text-foreground scheme-light;
     font-family: var(--font-sans);
-    /* The whole layout is rem/em-based off this root, so scaling it down on
-       small screens shrinks type, headings, spacing, and gutters together —
-       the phone keeps the desktop proportions instead of overflowing. */
-    font-size: 20px;
-    line-height: 1.6;
+    /* The whole layout is rem/em-based off this root, so scaling it shrinks
+       type, headings, spacing, and gutters together and the phone keeps the
+       desktop proportions. Fluid root: 18px at a 400px viewport up to 20px
+       at 1200px, interpolating between. The rem term keeps browser zoom and
+       user font-size preferences working (WCAG 1.4.4); the 20:18 range is
+       well inside the safe ratio. */
+    font-size: clamp(1.125rem, 1.0625rem + 0.25vw, 1.25rem);
+    line-height: 1.5;
     letter-spacing: 0.02em;
     text-rendering: optimizeLegibility;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
-
-    @media (max-width: 639.98px) {
-      font-size: 18px;
-    }
-    @media (max-width: 389.98px) {
-      font-size: 16.5px;
-    }
 
     /* Firefox: slim scrollbar, no track background */
     scrollbar-width: thin;

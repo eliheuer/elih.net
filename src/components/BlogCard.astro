@@ -16,7 +16,7 @@ const { entry } = Astro.props
 <div class="flex flex-col gap-x-4 sm:flex-row sm:items-baseline">
   <time
     datetime={entry.data.date.toISOString()}
-    class="text-muted-foreground shrink-0 tabular-nums sm:w-32"
+    class="text-muted-foreground shrink-0 tabular-nums"
   >
     {formatDate(entry.data.date)}
   </time>
