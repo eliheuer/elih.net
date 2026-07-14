@@ -472,10 +472,15 @@ pub fn on8(x: f64, y: f64) -> bool {
     x.rem_euclid(8.0) == 0.0 && y.rem_euclid(8.0) == 0.0
 }
 
-/// Glyph body with the technical (translucent) fill.
+/// Glyph body with the technical (translucent) fill: light gray, so the
+/// semantic point colors (green machine / red hand) stay legible on top.
 pub fn draw_body(sheet: &mut Sheet, o: &Outline, s: f64, x0: f64, baseline: f64) {
     let place = Affine::new([s, 0.0, 0.0, s, x0, baseline]);
-    sheet.ctx.fill(fill_of(red())).stroke(red()).stroke_width(PEN);
+    sheet
+        .ctx
+        .fill(Color::rgba(190, 190, 190, 36))
+        .stroke(Color::rgb(0xbe, 0xbe, 0xbe))
+        .stroke_width(PEN);
     sheet.ctx.draw_path(place * o.path.clone());
 }
 

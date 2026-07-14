@@ -429,7 +429,7 @@ fn fig_semantic(renderer: &Renderer, mono: &str, reg: &std::path::Path, out: &st
     sheet.frame(
         "Multi-layer semantic powers-of-two grid system",
         "Virtua Grotesk / Virtua-12M-0.8",
-        "Grid level is meaning: 96 = machine, 100 = the hand. The model learns the levels",
+        "elih.net/blog/virtua-grotesk",
     );
     sheet.save(renderer, out);
 }
