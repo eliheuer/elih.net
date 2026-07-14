@@ -324,14 +324,14 @@ task's effective vocabulary to a few dozen familiar offsets. And the
 sources went through the grid pass, a glyph-by-glyph conforming of both
 masters to `DESIGN.md`: the design system doing its data-cleaning job.
 
-The current model, v0.7, now statistically ties the dumb baseline of
-section 06 on held-out glyphs: 33.9 font units of error per coordinate
+The current model, Virtua-12M-0.7, now statistically ties the dumb
+baseline of section 06 on held-out glyphs: 33.9 font units of error per coordinate
 against the baseline's 33.3. A tie with a baseline is not a victory lap;
 it is the floor the recipe demands, reached. The review sheet shows what
 the number looks like: six glyphs whose Bolds the model never saw, human
 Regular in, model Bold out, the human Bold underneath for reference.
 
-![Held-out review sheet: for the glyphs K, E, M, n, b, c and a, three rows show the human-drawn Regular input in white, the model-generated Bold in red, and the human-drawn Bold reference in gray. The a column's reference cell reads "never drawn": the Bold master never had a real a.](./fig-model-review.png)
+![Held-out review sheet drawn with designbot: for the glyphs K, E, M, n, b, c and a, three rows show the human-drawn Regular input in green, the Bold drawn by Virtua-12M-0.7 in red, and the human-drawn Bold reference in gray. The a column's reference cell reads "never boldened": the Bold master never had a real a.](./fig-model-review.png)
 
 The seventh column is the reason to keep going. Virtua's Bold master
 never had a real `a`: the slot held an unboldened copy of the Regular,
@@ -341,7 +341,7 @@ design has ever had. It is not finished (the eye finds the lumps within
 a second), but it is a draft where there was nothing, and it now sits in
 the Bold sources as a red-marked draft awaiting the human 2-unit pass.
 
-![The letter a twice: the hand-drawn Regular in white, and beside it the model-generated Bold in red, the first real Bold a in the design, drawn by the model from the Regular input.](./fig-model-bolden-a.png)
+![The letter a twice on the design grid, drawn with designbot in the Runebender point language: the hand-drawn Regular in green, and beside it the Bold in red, the first real Bold a in the design, drawn by Virtua-12M-0.7 from the Regular input.](./fig-model-bolden-a.png)
 
 ### 08. The Designspace Is a Data Factory
 

@@ -36,3 +36,7 @@ path = "src/bin/grids.rs"
 [[bin]]
 name = "proofs"
 path = "src/bin/proofs.rs"
+
+[[bin]]
+name = "model"
+path = "src/bin/model.rs"

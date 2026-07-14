@@ -258,7 +258,7 @@ fn fig_midpoint(renderer: &Renderer, mono: &str, out: &std::path::Path) {
     // panel: font units x 0..640, y 0..512 at S px/unit
     const S: f64 = 1.6;
     const PX: f64 = 140.0; // canvas x of unit x=0
-    const PY: f64 = 220.0; // canvas y of unit y=0
+    const PY: f64 = 248.0; // canvas y of unit y=0, panel centered between the rules
     let cx = |ux: f64| PX + ux * S;
     let cy = |uy: f64| PY + uy * S;
     let (ux1, uy1) = (640.0, 512.0);
