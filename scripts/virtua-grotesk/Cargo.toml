@@ -28,3 +28,7 @@ path = "src/bin/og.rs"
 [[bin]]
 name = "optical"
 path = "src/bin/optical.rs"
+
+[[bin]]
+name = "grids"
+path = "src/bin/grids.rs"

@@ -159,7 +159,8 @@ each one recurring and meaning one place, is the whole trick. I draw on powers
 of two anyway because type design is aesthetic, and this is the grid I find
 beautiful: one that nests cleanly and echoes the powers of two the hardware and
 tensors are built around. The machine legibility comes from the grid being
-coarse and kept; the base is a matter of taste, and type design is an aesthetic craft.
+coarse and kept. As far as the model is concerned, the base is a matter of
+taste; section 10 makes the case that the rest of the pipeline disagrees.
 
 ### 05. Glyphs as Sentences
 
@@ -496,8 +497,33 @@ corrects anyway. The operations that must be exact in font production are
 halving, doubling, scaling, and interpolating, and those are the four
 things base two does perfectly.
 
-For the machine-learning pipeline this post is about, the exactness pays
-out four ways:
+Exactness is half the answer. The other half is architecture, and it is
+where this system finally parts ways with Replica. Replica's grid is one
+flat layer: a single coarse lattice, every legal point equally legal.
+That buys regularity, and regularity is most of what a transformer
+needs. But a flat grid can say only one thing about a point, and it
+forces a bad choice about the eye: keep every point on the lattice and
+there is no room for optical correction, or let points off it and
+nothing in the data separates a correction from a slip.
+
+A power-of-two em dissolves that choice, because it halves cleanly all
+the way down. The grids that tile a 1024 em run 1024, 512, 256, and so
+on to 2: ten nested levels, each a strict subset of the one above.
+Virtua assigns those levels meanings, 64 for the vertical metrics, 8 for
+the machine's structural skeleton, 2 for the human hand, so which level
+a coordinate occupies is machine-readable metadata about what kind of
+decision it was. An optical correction here is never off-grid; it is on
+the fine grid and detectably off the coarse one, the two-tier rule of
+section 03 restated as data design. And the ladder itself is a property
+of the base. The powers of two that divide 1000 stop at 8; the ones that
+divide Replica's 700-unit em stop at 4. A decimal em runs out of rungs
+just past the drawing grid; a binary em ladders from the single unit to
+the em itself.
+
+![Two panels drawn with designbot, each showing the same zoomed crop of the lowercase a's bowl from the Regular master. On the left, a flat single-level grid: every point renders in identical gray, and the three points at x=116 are tagged off grid, correction or mistake? On the right, the nested 64/8/2 grid: structural points are green rings marked on 8, and the same three points are red, on the 2-grid but off the 8, labeled optical correction.](./fig-grid-labels.png)
+
+For the machine-learning pipeline this post is about, exactness and
+nesting together pay out four ways:
 
 **The synthetic data is noise-free.** The data factory of section 08 is
 interpolation, `a + t · (b − a)`. With masters on the 2-unit grid and
@@ -520,9 +546,8 @@ favored set. Generation quality stops being vibes and becomes a test
 suite, which is what lets a pipeline reject bad samples mechanically
 instead of by eye. Better still, because machine drafts stay on the 8-unit
 grid, every 2-unit deviation in a glyph I approve is, by definition, a
-recorded human optical correction. The lattice is the labeling function
-for the judgment dataset in the build log; the annotation pass costs
-nothing because the grid is the annotator.
+recorded human optical correction. The grid is the annotator, so the
+labeling pass costs nothing.
 
 **The differences are a small vocabulary.** Stems, sidebearings, chamfers,
 and the Regular-to-Bold deltas of section 07 are all drawn from 2, 4, 8,
@@ -533,15 +558,12 @@ choosing among a few dozen familiar offsets.
 
 **Every modality shares the lattice.** Render a 1024-em glyph at 1024
 pixels and one font unit is one pixel; the dimension sheet at the top of
-this post is drawn that way. The image models img2bez feeds on compress
+this post is drawn that way. The image models that feed img2bez compress
 pictures through an autoencoder that downsamples by eight, so their latent
 space is a 128 × 128 lattice in which each cell covers exactly an 8 × 8
-block of font units. The machine grid from the build log reappears,
-uninvited, inside the diffusion model. And 2¹⁰ gives the design ten nested
-grids, each level containing the one below, the 64-grid of the metrics,
-the 8-grid of the machine skeleton, the 2-grid of the human hand, where a
-decimal em offers three. Coarse-to-fine is the direction generative models
-like to learn, and binary builds the finest ladder.
+block of font units: the machine grid reappears, uninvited, inside the
+diffusion model. Coarse-to-fine is the direction generative models like
+to learn, and the ten-rung ladder is the finest one an em can carry.
 
 Knuth walked this exact ground forty years ago. METAFONT had to put ideal
 curves onto coarse pixel grids, and the chapter he wrote about it,
@@ -549,8 +571,8 @@ curves onto coarse pixel grids, and the chapter he wrote about it,
 noting that the objection from analog purity is hollow: "the human eye is
 composed of discrete receptors, and visible light has a finite
 wavelength." Then he states the design goal for automated letterform work,
-and it is worth quoting at length because it is this project's build log
-written in 1986: "our goal should not be to make hand-tuning obsolete; it
+and it is worth quoting at length because it is this project's design
+brief, written in 1986: "our goal should not be to make hand-tuning obsolete; it
 should rather be to make hand-tuning tolerable. Let us try to create
 meta-designs so that we would never want to change more than a few pixels
 per character, say half a dozen, regardless of the resolution." A machine
@@ -575,8 +597,8 @@ And when the engineering is settled, the tiebreaker is the thing that
 rules type design anyway: aesthetics. The same taste is at work all the
 way down the stack; it is why these sources are UFO, a folder of plain,
 readable, one-glyph-per-file XML, rather than something tidier and more
-opaque. Aesthetics is the whole game. If it were not, system fonts exist,
-and there would be better things to do with a life. The powers of two
+opaque. Aesthetics is the whole game. If it were not, system fonts
+already exist and there would be better things to do with a life. The powers of two
 would deserve this job on beauty alone; that they are also the machine's
 own numbers is the fact this whole post exists to point at. On a binary
 machine, a design drawn in powers of two is not encoded. It is simply
