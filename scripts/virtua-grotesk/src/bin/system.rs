@@ -14,6 +14,7 @@
 //!
 //!     cargo run --release --bin system
 
+use designbot::prelude::Color;
 use designbot_render::Renderer;
 use virtua_grotesk_figures::*;
 
@@ -282,6 +283,147 @@ fn fig_arabic(renderer: &Renderer, mono: &str, reg: &std::path::Path, out: &std:
     sheet.save(renderer, out);
 }
 
+
+// --- fig-semantic-grid: the whole argument in one image -------------------------------
+//
+// Left: no, with the dimensions color-coded by layer (96 = machine green,
+// 100 and 92 = the hand's +/-4 in red). Top right: why 96 and 100 mean
+// different things — not their power-of-two decomposition (every integer
+// has one) but their trailing zeros. Bottom right: the measured proof that
+// Virtua-12M-0.8 learned the layers from geometry alone.
+
+fn fig_semantic(renderer: &Renderer, mono: &str, reg: &std::path::Path, out: &std::path::Path) {
+    let mut sheet = new_sheet(renderer, mono);
+
+    let n = load_outline(reg, "n");
+    let o = load_outline(reg, "o");
+
+    const S: f64 = 0.95;
+    let f = Frame {
+        s: S,
+        x0: 104.0,
+        baseline: 330.0,
+    };
+    let left_end = f.x(n.width + o.width) + 40.0;
+
+    // grid + metrics, left zone only (the right column holds the panels)
+    {
+        let step = 16.0 * S;
+        let (y0, y1) = (f.y(-64.0), f.y(640.0));
+        let ctx = &mut sheet.ctx;
+        ctx.no_fill().stroke(grid()).stroke_width(PEN_LIGHT);
+        let mut x = MARGIN;
+        while x <= left_end {
+            ctx.line(x, y0, x, y1);
+            x += step;
+        }
+        let mut y = f.y(0.0) - ((f.y(0.0) - y0) / step).floor() * step;
+        while y <= y1 {
+            ctx.line(MARGIN, y, left_end, y);
+            y += step;
+        }
+        ctx.stroke(blue()).stroke_width(PEN);
+        for uy in [0.0, 576.0] {
+            ctx.line(MARGIN, f.y(uy), left_end, f.y(uy));
+        }
+    }
+
+    draw_body(&mut sheet, &n, S, f.x(0.0), f.baseline);
+    draw_points(&mut sheet, &n, S, f.x(0.0), f.baseline);
+    draw_body(&mut sheet, &o, S, f.x(n.width), f.baseline);
+    draw_points(&mut sheet, &o, S, f.x(n.width), f.baseline);
+
+    // the three numbers, color-coded by layer
+    sheet.dim_h(f.x(64.0), f.x(160.0), f.y(256.0), "96", green());
+    sheet.dim_h(f.x(n.width + 32.0), f.x(n.width + 132.0), f.y(288.0), "100", red());
+    sheet.dim_v(f.x(n.width + 304.0), f.y(500.0), f.y(592.0), "92", red(), true);
+
+    sheet.metric_tag("X-HEIGHT 576", MARGIN, f.y(576.0), true, -1);
+    sheet.metric_tag("BASELINE 0", MARGIN, f.y(0.0), true, -1);
+    legend(&mut sheet, left_end - 10.0, f.y(-56.0));
+
+    // ---- right column -------------------------------------------------------------
+    let rx = left_end + 72.0;
+
+    // Simon's point, answered: decomposition is free, trailing zeros are not
+    sheet.label("EVERY INTEGER IS A SUM OF POWERS OF TWO.", rx, 1096.0, LEGEND_TEXT, gray(), -1);
+    sheet.label("THE MEANING IS THE TRAILING ZEROS:", rx, 1052.0, LEGEND_TEXT, gray(), -1);
+
+    // two binary readouts: 96 (machine) and 100 (the hand)
+    let bit_row = |sheet: &mut Sheet, value: u32, y0: f64, color: Color, tag: &str| {
+        let cell = 52.0;
+        let gap = 8.0;
+        sheet.label(&value.to_string(), rx + 64.0, y0 + 14.0, DIM_TEXT, color, 1);
+        for b in 0..7u32 {
+            let bit = (value >> (6 - b)) & 1;
+            let x = rx + 88.0 + b as f64 * (cell + gap);
+            if bit == 1 {
+                sheet.ctx.fill(color).stroke(color).stroke_width(PEN_LIGHT);
+                sheet.ctx.rect(x, y0, cell, cell);
+                sheet.label("1", x + cell / 2.0, y0 + cell * 0.3, 30.0, bg(), 0);
+            } else {
+                sheet.ctx.no_fill().stroke(dim_color()).stroke_width(PEN_LIGHT);
+                sheet.ctx.rect(x, y0, cell, cell);
+                sheet.label("0", x + cell / 2.0, y0 + cell * 0.3, 30.0, dim_color(), 0);
+            }
+        }
+        let zeros = value.trailing_zeros();
+        let x_start = rx + 88.0 + (7 - zeros) as f64 * (cell + gap);
+        let x_end = rx + 88.0 + 7.0 * (cell + gap) - gap;
+        sheet.ctx.no_fill().stroke(color).stroke_width(PEN);
+        sheet.ctx.line(x_start, y0 - 14.0, x_end, y0 - 14.0);
+        sheet.ctx.line(x_start, y0 - 14.0, x_start, y0 - 4.0);
+        sheet.ctx.line(x_end, y0 - 14.0, x_end, y0 - 4.0);
+        sheet.label(tag, x_end + 24.0, y0 + 14.0, LEGEND_TEXT, color, -1);
+    };
+    bit_row(&mut sheet, 96, 924.0, green(), "ON 32: MACHINE");
+    bit_row(&mut sheet, 100, 808.0, red(), "ON 4: THE HAND");
+    sheet.label(
+        "100 = 96 + 4: THE CURVE'S OPTICAL CORRECTION",
+        rx,
+        732.0,
+        LEGEND_TEXT,
+        red(),
+        -1,
+    );
+
+    // the measured proof: share of points exactly on the machine 8-grid
+    sheet.label(
+        "SHARE OF POINTS ON THE MACHINE 8-GRID",
+        rx,
+        568.0,
+        LEGEND_TEXT,
+        gray(),
+        -1,
+    );
+    sheet.label("(HELD-OUT BOLDS, RAW MODEL OUTPUT)", rx, 528.0, SMALL_TEXT, gray(), -1);
+    let bar = |sheet: &mut Sheet, y: f64, frac: f64, color: Color, label: &str, pct: &str| {
+        sheet.label(label, rx + 330.0, y + 8.0, LEGEND_TEXT, color, 1);
+        let w = 790.0 * frac;
+        sheet.ctx.fill(fill_strong(color)).stroke(color).stroke_width(PEN_LIGHT);
+        sheet.ctx.rect(rx + 350.0, y - 6.0, w.max(6.0), 40.0);
+        sheet.label(pct, rx + 350.0 + w.max(6.0) + 18.0, y + 8.0, LEGEND_TEXT, color, -1);
+    };
+    bar(&mut sheet, 436.0, 0.0625, dim_color(), "CHANCE ON THE 2-GRID", "6%");
+    bar(&mut sheet, 360.0, 0.68, red(), "VIRTUA-12M-0.8", "68%");
+    bar(&mut sheet, 284.0, 0.85, green(), "THE HAND", "85%");
+    sheet.label(
+        "NOBODY LABELED THE LAYERS; THE MODEL FOUND THEM",
+        rx,
+        202.0,
+        SMALL_TEXT,
+        gray(),
+        -1,
+    );
+
+    sheet.frame(
+        "THE MULTI-LAYER SEMANTIC GRID / no",
+        "VIRTUA GROTESK / EM 1024 = 2^10",
+        "GRID LEVEL IS MEANING: 96 = MACHINE, 100 = THE HAND. THE MODEL LEARNS THE LEVELS",
+    );
+    sheet.save(renderer, out);
+}
+
 // --- main ------------------------------------------------------------------------
 
 fn main() {
@@ -302,6 +444,7 @@ fn main() {
         .unwrap()
         .join("src/content/blog/virtua-grotesk");
 
+    fig_semantic(&renderer, &mono, &reg, &post.join("fig-semantic-grid.png"));
     fig_ohno(&renderer, &mono, &reg, &post.join("fig-system-ohno.png"));
     fig_no(&renderer, &mono, &reg, &post.join("fig-system-no.png"));
     fig_weights(&renderer, &mono, &reg, &bold, &post.join("fig-system-weights.png"));
