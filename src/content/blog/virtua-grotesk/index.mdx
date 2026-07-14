@@ -281,8 +281,10 @@ Training follows his
 more closely than I planned. The first overnight run memorized the data: a few thousand sequences is small
 enough that the model fit them almost perfectly (training loss near zero, 0.07)
 without learning anything general. The fixes were the recipe's standard ones:
-augmentation, dropout, and a held-out validation set. The one step I still owe
-is a dumb baseline to beat, which ships with the model when I publish it.
+augmentation, dropout, and a held-out validation set. The recipe's other
+commandment, a dumb baseline to beat, is in place too: predict every Bold
+offset as the mean delta of the training pairs, no model at all. Section 07
+reports the model against it.
 
 The first test is glyph completion: give the model 40% of a held-out glyph's
 outline and ask it to finish. Below, the model completes the letter `R`,
@@ -314,12 +316,32 @@ so it never has to be checked.
 
 ![Regular-to-Bold weight transfer on a held-out g, drawn with designbot: the green Regular input, the model's red predicted Bold, and the gray actual Bold on the powers-of-two grid. Preliminary model output, refreshed each training run.](./fig-bolden-g.png)
 
-Current state, honestly: `g` is the hardest glyph in the set, and the
-predicted Bold above is still mostly noise. Simpler shapes already come out
-with the right mass and stems; the curves are where it breaks down. A few
-days ago all of it was noise. The next lever is delta-encoding: predicting
-each Bold coordinate as a small offset from its Regular twin, which shrinks
-the effective vocabulary for the task to a few dozen offsets.
+That `g` is a checkpoint from a few days ago, kept here for honesty: the
+hardest glyph in the set, and the predicted Bold was mostly noise. Two
+things changed since. Delta-encoding shipped: each Bold coordinate is now
+predicted as a small offset from its Regular twin, which shrinks the
+task's effective vocabulary to a few dozen familiar offsets. And the
+sources went through the grid pass, a glyph-by-glyph conforming of both
+masters to `DESIGN.md`: the design system doing its data-cleaning job.
+
+The current model, v0.7, now statistically ties the dumb baseline of
+section 06 on held-out glyphs: 33.9 font units of error per coordinate
+against the baseline's 33.3. A tie with a baseline is not a victory lap;
+it is the floor the recipe demands, reached. The review sheet shows what
+the number looks like: six glyphs whose Bolds the model never saw, human
+Regular in, model Bold out, the human Bold underneath for reference.
+
+![Held-out review sheet: for the glyphs K, E, M, n, b, c and a, three rows show the human-drawn Regular input in white, the model-generated Bold in red, and the human-drawn Bold reference in gray. The a column's reference cell reads "never drawn": the Bold master never had a real a.](./fig-model-review.png)
+
+The seventh column is the reason to keep going. Virtua's Bold master
+never had a real `a`: the slot held an unboldened copy of the Regular,
+flagged during the grid pass as the biggest gap in the font. So there is
+no reference to ghost in, and the model's `a` is the only Bold `a` the
+design has ever had. It is not finished (the eye finds the lumps within
+a second), but it is a draft where there was nothing, and it now sits in
+the Bold sources as a red-marked draft awaiting the human 2-unit pass.
+
+![The letter a twice: the hand-drawn Regular in white, and beside it the model-generated Bold in red, the first real Bold a in the design, drawn by the model from the Regular input.](./fig-model-bolden-a.png)
 
 ### 08. The Designspace Is a Data Factory
 
