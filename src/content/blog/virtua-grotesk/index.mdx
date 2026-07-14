@@ -145,52 +145,46 @@ designers' bézier habits.
 every structural value is a multiple of 8, and every measurement comes
 from a small closed vocabulary (a stem is 96, everywhere, always), then a
 generated glyph can be *verified* mechanically: off-grid points are
-detectable and snappable, wrong stem weights are measurable. Generation
-quality becomes measurable and an eval loop can grind at it overnight.
+detectable and snappable, wrong stem weights are measurable. Quality
+stops being an opinion, and an eval loop can grind at it overnight.
 
-A note on stating that precisely, because an earlier draft said the
-stems were "power-of-two sums" and Simon Cozens correctly pointed out
-that every integer is one; that is what binary means. The property with
-content is not decomposability but *trailing zeros*: 96 is a multiple
-of 32 and 95 is a multiple of nothing, so 96 sits five rungs up the
-ladder of section 03 and 95 sits on the floor. And the stroke weights
-that look arbitrary are the two-tier grid in action: the lowercase
-curve strokes are 100 and 92, which is the 96 stem plus and minus 4,
-the hand's optical compensation for curves, recorded on the fine grid.
-The system is machine values with many trailing zeros, corrected by the
-eye in units of 2 and 4. That is the multi-layer semantic grid, and it,
-not any single number, is the innovation this post is about: which layer
-a value sits on *is its meaning*. The n's stem is 96 because structure
-belongs to the machine's grid; the o's curve is 100 because a round
-stroke needs the eye's +4, and the 4 lives on the layer reserved for the
-hand. The powers of two are simply the base in which such a ladder of
-layers runs deepest, and, separately, the numbers I find beautiful.
+One correction is owed here. An earlier draft called the stems "sums of
+powers of two," and Simon Cozens pointed out that every integer is one;
+that is what binary means. The property that matters is *trailing
+zeros*: 96 is a multiple of 32, 95 is a multiple of nothing. And the
+stroke weights that look arbitrary are the two levels at work: the
+lowercase curves are 100 and 92, the 96 stem plus and minus 4, the
+eye's compensation for round strokes.
 
-And the claim that the layers are learnable is testable, because the
-model's vocabulary enforces only the bottom layer: every coordinate
-token is a 2-grid position, all of them equally available, and nothing
-in the encoding mentions the 8-grid at all. A model emitting random
-legal coordinates would put about 94 percent of its points off the
-machine grid. Measured on held-out glyphs whose Bolds it never saw,
-Virtua-12M-0.8 puts 68 percent of its points *exactly on* the 8-grid,
-against the hand's 85 percent in the sources, and when it does leave
-the machine grid it prefers the hand's own on-4 values to arbitrary
-positions. On the E, a glyph with no optical corrections at all, it
-stays on the machine grid at every single point. Nobody labeled any of
-this. The only supervision was outlines that obey the semantic grid,
-and the model recovered the layers from the geometry alone.
+This is the **multi-layer semantic grid**, and it, not any single
+number, is the core idea of this post. Which layer a value sits on is
+its meaning. The n's stem is 96: structure, so it lives on the
+machine's layer. The o's curve is 100: a round stroke needs the eye's
++4, and 4 lives on the layer reserved for the hand. The powers of two
+are just the base in which this ladder of layers runs deepest, and,
+separately, the numbers I find beautiful.
+
+The layers are also learnable, and that is measurable. The model's
+vocabulary enforces only the bottom layer: every coordinate token is a
+2-grid position, all equally available, and nothing in the encoding
+mentions the 8-grid. A model emitting random legal coordinates would
+land 94 percent of its points off the machine grid. On held-out glyphs
+whose Bolds it never saw, Virtua-12M-0.8 puts 68 percent of its points
+*exactly on* the 8-grid (the hand's sources: 85 percent), prefers the
+hand's on-4 values when it leaves, and keeps the E, a glyph with no
+optical corrections, on the machine grid at every point. Nobody labeled
+the layers. The model recovered them from the geometry alone.
 
 ![The whole argument in one dimension sheet, drawn with designbot. Left: the word no with its points colored by grid layer, the n stem dimensioned 96 in green as machine structure, the o curves dimensioned 100 and 92 in red as the hand's corrections. Top right: 96 and 100 written in binary with their trailing zeros bracketed, under the note that every integer is a sum of powers of two and the meaning is the trailing zeros; 100 equals 96 plus 4, the curve's optical correction. Bottom right: bars showing the share of points landing exactly on the machine 8-grid in held-out model output: chance 6 percent, Virtua-12M-0.8 68 percent, the hand 85 percent, with the note that nobody labeled the layers; the model found them.](./fig-semantic-grid.png)
 
-One honest caveat: the win here is mostly coarseness and regularity, not just base two. The
-model reads each coordinate as a token and never sees its digits, so it would
-learn just as well from Replica's decimal grid. A small set of legal values,
-each one recurring and meaning one place, is the whole trick. I draw on powers
-of two anyway because type design is aesthetic, and this is the grid I find
-beautiful: one that nests cleanly and echoes the powers of two the hardware and
-tensors are built around. The machine legibility comes from the grid being
-coarse and kept. As far as the model is concerned, the base is a matter of
-taste; section 10 makes the case that the rest of the pipeline disagrees.
+One honest caveat: for the model itself, the win is coarseness and
+regularity, not base two. It reads each coordinate as a single token and
+never sees digits, so it would learn Replica's decimal grid just as
+well. A small set of legal values, each one recurring and meaning one
+thing, is the whole trick. The machine legibility comes from the grid
+being coarse and kept; as far as the model is concerned, the base is a
+matter of taste. Section 10 makes the case that the rest of the pipeline
+disagrees.
 
 ### 05. Glyphs as Sentences
 
