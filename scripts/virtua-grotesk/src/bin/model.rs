@@ -28,7 +28,7 @@ const W: f64 = 2520.0;
 const H: f64 = 1320.0;
 const MARGIN: f64 = 96.0;
 const HEADER_RULE_Y: f64 = 1224.0;
-const FOOTER_RULE_Y: f64 = 112.0;
+const FOOTER_RULE_Y: f64 = 96.0;
 
 /// Newest font-garden-lab run that produced a pred.ufo, e.g. runs/v07 ->
 /// (".../runs/v07/pred.ufo", "VIRTUA-12M-0.7"). Keeps the figures pointed at
@@ -267,13 +267,13 @@ impl Sheet<'_> {
         self.ctx.stroke(green()).stroke_width(2.5).no_fill();
         self.ctx.line(MARGIN, HEADER_RULE_Y, W - MARGIN, HEADER_RULE_Y);
         self.ctx.line(MARGIN, FOOTER_RULE_Y, W - MARGIN, FOOTER_RULE_Y);
-        self.label(title, MARGIN, HEADER_RULE_Y + 42.0, 30.0, green(), -1);
-        self.label(right, W - MARGIN, HEADER_RULE_Y + 42.0, 30.0, green(), 1);
-        self.label(caption, MARGIN, 64.0, 30.0, green(), -1);
+        self.label(title, MARGIN, HEADER_RULE_Y + 24.0, 30.0, green(), -1);
+        self.label(right, W - MARGIN, HEADER_RULE_Y + 24.0, 30.0, green(), 1);
+        self.label(caption, MARGIN, 50.0, 30.0, green(), -1);
         self.label(
             "GITHUB.COM/ELIHEUER/VIRTUA-GROTESK",
             W - MARGIN,
-            64.0,
+            50.0,
             30.0,
             green(),
             1,
@@ -374,13 +374,13 @@ fn fig_review(
     for (i, row) in rows.iter().enumerate() {
         let band_top = HEADER_RULE_Y - i as f64 * band_h;
         let band_bottom = band_top - band_h;
-        let baseline = band_bottom + 88.0;
+        let baseline = band_bottom + 28.0;
 
         // baseline, house blue, behind the glyphs
         sheet.ctx.no_fill().stroke(blue()).stroke_width(2.0);
         sheet.ctx.line(MARGIN, baseline, W - MARGIN, baseline);
 
-        sheet.label(&row.label, MARGIN, band_top - 42.0, 26.0, row.color, -1);
+        sheet.label(&row.label, MARGIN, band_top - 46.0, 26.0, row.color, -1);
 
         for (j, name) in GLYPHS.iter().enumerate() {
             let slot_center = MARGIN + (j as f64 + 0.5) * slot_w;
@@ -432,7 +432,7 @@ fn fig_bolden_a(
     sheet.ctx.background(bg());
 
     const S: f64 = 1.3;
-    const BASELINE: f64 = 296.0;
+    const BASELINE: f64 = 330.0;
     let grid_bottom = BASELINE - 64.0 * S; // 212.8
     let grid_top = BASELINE + 640.0 * S; // 1128.8
 
@@ -500,7 +500,7 @@ fn fig_bolden_a(
     sheet.metric_tag("BASELINE 0", MARGIN, BASELINE, true);
 
     // captions under the run, centered per glyph
-    let label_y = 150.0;
+    let label_y = 158.0;
     sheet.label(
         "REGULAR / DRAWN BY HAND",
         x_reg + o_reg.width * S / 2.0,

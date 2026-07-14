@@ -25,11 +25,18 @@ const W: f64 = 2520.0;
 const H: f64 = 1320.0;
 const MARGIN: f64 = 96.0;
 const GAP: f64 = 96.0;
-const BASELINE_Y: f64 = 300.0; // canvas y of font y=0, content centered between the rules
-const GRID_TOP: f64 = BASELINE_Y + 784.0;
-const GRID_BOTTOM: f64 = BASELINE_Y - 80.0;
+/// Per-figure content geometry, so descender-deep glyphs (the g) get a
+/// deeper grid and cap-height figures keep the cap line. Baselines are set
+/// so the content block sits equidistant from the two rules.
+struct Geom {
+    baseline: f64,   // canvas y of font y=0
+    top: f64,        // grid top, font units above the baseline
+    bottom: f64,     // grid bottom, font units (negative = below baseline)
+    cap: bool,       // draw the cap-height line + tag
+    descender: bool, // draw the descender line + tag
+}
 const HEADER_RULE_Y: f64 = 1224.0;
-const FOOTER_RULE_Y: f64 = 112.0;
+const FOOTER_RULE_Y: f64 = 96.0;
 const SVG_BASELINE: f64 = 900.0; // font-garden-lab SVGs put the baseline here
 
 // Theme tokens, shared with og.rs.
@@ -225,11 +232,15 @@ fn render_figure(
     renderer: &Renderer,
     mono: &str,
     panels: &[Panel],
+    geom: &Geom,
     title: &str,
     right: &str,
     caption: &str,
     out: &std::path::Path,
 ) {
+    let baseline_y = geom.baseline;
+    let grid_top = baseline_y + geom.top;
+    let grid_bottom = baseline_y + geom.bottom;
     let mut sheet = Sheet {
         ctx: Canvas::new(W, H),
         renderer,
@@ -254,11 +265,11 @@ fn render_figure(
         ctx.no_fill().stroke(grid()).stroke_width(2.0);
         let mut x = grid_left;
         while x <= W - MARGIN {
-            ctx.line(x, GRID_BOTTOM, x, GRID_TOP);
+            ctx.line(x, grid_bottom, x, grid_top);
             x += step;
         }
-        let mut y = GRID_BOTTOM;
-        while y <= GRID_TOP {
+        let mut y = grid_bottom;
+        while y <= grid_top {
             ctx.line(MARGIN, y, W - MARGIN, y);
             y += step;
         }
@@ -269,12 +280,23 @@ fn render_figure(
         let ctx = &mut sheet.ctx;
         ctx.stroke(blue()).stroke_width(2.5).no_fill();
         ctx.line_dash(&[10.0, 10.0]);
-        for y in [784.0, -16.0] {
-            ctx.line(MARGIN, BASELINE_Y + y, W - MARGIN, BASELINE_Y + y);
+        let mut dashed = vec![-16.0];
+        if geom.cap {
+            dashed.push(784.0);
+        }
+        for y in dashed {
+            ctx.line(MARGIN, baseline_y + y, W - MARGIN, baseline_y + y);
         }
         ctx.line_dash(&[]);
-        for y in [768.0, 576.0, 0.0] {
-            ctx.line(MARGIN, BASELINE_Y + y, W - MARGIN, BASELINE_Y + y);
+        let mut solid = vec![576.0, 0.0];
+        if geom.cap {
+            solid.push(768.0);
+        }
+        if geom.descender {
+            solid.push(-256.0);
+        }
+        for y in solid {
+            ctx.line(MARGIN, baseline_y + y, W - MARGIN, baseline_y + y);
         }
     }
 
@@ -284,29 +306,44 @@ fn render_figure(
         ctx.stroke(blue()).stroke_width(2.5).no_fill();
         for i in 0..n {
             let x = cell_left(i) + inset_x; // the shared advance origin
-            ctx.line(x, GRID_BOTTOM, x, GRID_TOP);
+            ctx.line(x, grid_bottom, x, grid_top);
         }
     }
 
     // ── glyphs, role-colored, grid reading through the ~40% fill ──
     for (i, p) in panels.iter().enumerate() {
         let (fill, stroke) = p.role.colors();
-        let place = Affine::translate((cell_left(i) + inset_x, BASELINE_Y));
+        let place = Affine::translate((cell_left(i) + inset_x, baseline_y));
         sheet.ctx.fill(fill).stroke(stroke).stroke_width(2.5);
         sheet.ctx.draw_path(place * p.path.clone());
+    }
+
+    // ── mask glyph spill at the grid box (no clip API; bg is solid) ──
+    {
+        let ctx = &mut sheet.ctx;
+        ctx.fill(bg()).no_stroke();
+        ctx.rect(0.0, 0.0, W, grid_bottom);
+        ctx.rect(0.0, grid_top, W, H - grid_top);
+        ctx.rect(0.0, 0.0, MARGIN, H);
+        ctx.rect(W - MARGIN, 0.0, MARGIN, H);
     }
 
     // ── panel labels, numbered and role-colored, above the cap line ──
     for (i, p) in panels.iter().enumerate() {
         let (_, color) = p.role.colors();
         let txt = format!("{:02} {}", i + 1, p.label);
-        sheet.label(&txt, cell_left(i), GRID_TOP + 44.0, 30.0, color, -1);
+        sheet.label(&txt, cell_left(i), grid_top + 44.0, 30.0, color, -1);
     }
 
     // ── left-edge metric tags ──
-    sheet.metric_tag("CAP 768", grid_left, BASELINE_Y + 768.0, false);
-    sheet.metric_tag("X-HEIGHT 576", grid_left, BASELINE_Y + 576.0, true);
-    sheet.metric_tag("BASELINE 0", grid_left, BASELINE_Y, true);
+    if geom.cap {
+        sheet.metric_tag("CAP 768", grid_left, baseline_y + 768.0, false);
+    }
+    sheet.metric_tag("X-HEIGHT 576", grid_left, baseline_y + 576.0, true);
+    sheet.metric_tag("BASELINE 0", grid_left, baseline_y, true);
+    if geom.descender {
+        sheet.metric_tag("DESCENDER -256", grid_left, baseline_y - 256.0, true);
+    }
 
     // ── header / footer rules + captions ──
     {
@@ -315,13 +352,13 @@ fn render_figure(
         ctx.line(MARGIN, HEADER_RULE_Y, W - MARGIN, HEADER_RULE_Y);
         ctx.line(MARGIN, FOOTER_RULE_Y, W - MARGIN, FOOTER_RULE_Y);
     }
-    sheet.label(title, MARGIN, HEADER_RULE_Y + 42.0, 30.0, green(), -1);
-    sheet.label(right, W - MARGIN, HEADER_RULE_Y + 42.0, 30.0, green(), 1);
-    sheet.label(caption, MARGIN, 64.0, 30.0, green(), -1);
+    sheet.label(title, MARGIN, HEADER_RULE_Y + 24.0, 30.0, green(), -1);
+    sheet.label(right, W - MARGIN, HEADER_RULE_Y + 24.0, 30.0, green(), 1);
+    sheet.label(caption, MARGIN, 50.0, 30.0, green(), -1);
     sheet.label(
         "GITHUB.COM/ELIHEUER/VIRTUA-GROTESK",
         W - MARGIN,
-        64.0,
+        50.0,
         30.0,
         green(),
         1,
@@ -351,10 +388,25 @@ fn main() {
     // (eval SVG under font-garden-lab, output PNG, header, footer caption).
     // The model panels come from whichever eval run last covered the glyph;
     // repoint these at a fresh run to refresh.
+    let cap_geom = Geom {
+        baseline: 276.0,
+        top: 784.0,
+        bottom: -80.0,
+        cap: true,
+        descender: false,
+    };
+    let desc_geom = Geom {
+        baseline: 435.0,
+        top: 656.0,
+        bottom: -272.0,
+        cap: false,
+        descender: true,
+    };
     let figures = [
         (
             "runs/v02/complete-R.svg",
             "fig-complete-r.png",
+            &cap_geom,
             "GLYPH COMPLETION",
             "MODEL: VIRTUA-12M-0.2",
             "MODEL FINISHES A HELD-OUT GLYPH FROM 40% OF ITS OUTLINE",
@@ -362,14 +414,15 @@ fn main() {
         (
             "runs/night1/bolden-g.svg",
             "fig-bolden-g.png",
+            &desc_geom,
             "WEIGHT TRANSFER",
             "MODEL: VIRTUA-12M (NIGHT 1)",
             "MODEL PREDICTS THE BOLD WEIGHT FROM THE REGULAR",
         ),
     ];
 
-    for (svg, png, title, right, caption) in figures {
+    for (svg, png, geom, title, right, caption) in figures {
         let panels = parse_svg(&lab.join(svg));
-        render_figure(&renderer, &mono, &panels, title, right, caption, &post.join(png));
+        render_figure(&renderer, &mono, &panels, geom, title, right, caption, &post.join(png));
     }
 }

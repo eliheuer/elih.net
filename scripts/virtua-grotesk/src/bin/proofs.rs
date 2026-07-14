@@ -19,7 +19,7 @@ const W: f64 = 2520.0;
 const H: f64 = 1320.0;
 const MARGIN: f64 = 96.0;
 const HEADER_RULE_Y: f64 = 1224.0;
-const FOOTER_RULE_Y: f64 = 112.0;
+const FOOTER_RULE_Y: f64 = 96.0;
 
 fn bg() -> Color {
     Color::rgb(0x10, 0x10, 0x10)
@@ -137,20 +137,20 @@ impl Sheet<'_> {
         self.ctx.stroke(green()).stroke_width(2.5).no_fill();
         self.ctx.line(MARGIN, HEADER_RULE_Y, W - MARGIN, HEADER_RULE_Y);
         self.ctx.line(MARGIN, FOOTER_RULE_Y, W - MARGIN, FOOTER_RULE_Y);
-        self.label(title, MARGIN, HEADER_RULE_Y + 42.0, 30.0, green(), -1);
+        self.label(title, MARGIN, HEADER_RULE_Y + 24.0, 30.0, green(), -1);
         self.label(
             "VIRTUA GROTESK / EM 1024 = 2^10",
             W - MARGIN,
-            HEADER_RULE_Y + 42.0,
+            HEADER_RULE_Y + 24.0,
             30.0,
             green(),
             1,
         );
-        self.label(caption, MARGIN, 64.0, 30.0, green(), -1);
+        self.label(caption, MARGIN, 50.0, 30.0, green(), -1);
         self.label(
             "GITHUB.COM/ELIHEUER/VIRTUA-GROTESK",
             W - MARGIN,
-            64.0,
+            50.0,
             30.0,
             green(),
             1,
@@ -216,27 +216,28 @@ fn fig_fractions(renderer: &Renderer, mono: &str, out: &std::path::Path) {
     let prefix_size = 44.0;
 
     // row A: the binary em
-    let ya = 800.0;
-    sheet.label("96 / 1024", MARGIN, ya + 180.0, 36.0, green(), -1);
-    sheet.label("= 3/32, THE STEM OVER THE BINARY EM", MARGIN + 260.0, ya + 180.0, 26.0, gray(), -1);
-    sheet.label("0.", MARGIN, ya + 10.0, prefix_size, curve(), -1);
-    let x0 = MARGIN + 60.0;
+    let x0_block = 238.0;
+    let ya = 808.0;
+    sheet.label("96 / 1024", x0_block, ya + 180.0, 36.0, green(), -1);
+    sheet.label("= 3/32, THE STEM OVER THE BINARY EM", x0_block + 260.0, ya + 180.0, 26.0, gray(), -1);
+    sheet.label("0.", x0_block, ya + 10.0, prefix_size, curve(), -1);
+    let x0 = x0_block + 60.0;
     bit_row(&mut sheet, x0, ya, cell, gap, &bits_a, green());
     let end_x = x0 + bits_a.len() as f64 * (cell + gap) + 30.0;
     sheet.label("EXACT AFTER 5 BITS", end_x, ya + 10.0, 30.0, green(), -1);
-    sheet.label("= 0.09375, HELD VERBATIM", MARGIN, ya - 70.0, 26.0, gray(), -1);
+    sheet.label("= 0.09375, HELD VERBATIM", x0_block, ya - 70.0, 26.0, gray(), -1);
 
     // row B: the decimal em
-    let yb = 380.0;
-    sheet.label("96 / 1000", MARGIN, yb + 180.0, 36.0, red(), -1);
-    sheet.label("= 12/125, THE SAME STEM OVER THE DECIMAL EM", MARGIN + 260.0, yb + 180.0, 26.0, gray(), -1);
-    sheet.label("0.", MARGIN, yb + 10.0, prefix_size, curve(), -1);
+    let yb = 388.0;
+    sheet.label("96 / 1000", x0_block, yb + 180.0, 36.0, red(), -1);
+    sheet.label("= 12/125, THE SAME STEM OVER THE DECIMAL EM", x0_block + 260.0, yb + 180.0, 26.0, gray(), -1);
+    sheet.label("0.", x0_block, yb + 10.0, prefix_size, curve(), -1);
     bit_row(&mut sheet, x0, yb, cell, gap, &bits_b, red());
     let end_x = x0 + bits_b.len() as f64 * (cell + gap) + 20.0;
     sheet.label("\u{2026}", end_x, yb + 10.0, prefix_size, red(), -1);
     sheet.label(
         "REPEATS FOREVER, PERIOD 100 BITS. A 64-BIT FLOAT HOLDS 0.09600000000000000200",
-        MARGIN,
+        x0_block,
         yb - 70.0,
         26.0,
         red(),
@@ -257,7 +258,7 @@ fn fig_midpoint(renderer: &Renderer, mono: &str, out: &std::path::Path) {
 
     // panel: font units x 0..640, y 0..512 at S px/unit
     const S: f64 = 1.6;
-    const PX: f64 = 140.0; // canvas x of unit x=0
+    const PX: f64 = 460.0; // canvas x of unit x=0, block centered
     const PY: f64 = 248.0; // canvas y of unit y=0, panel centered between the rules
     let cx = |ux: f64| PX + ux * S;
     let cy = |uy: f64| PY + uy * S;
@@ -469,13 +470,13 @@ fn fig_bits(renderer: &Renderer, mono: &str, out: &std::path::Path) {
         ("STEM", 96, green()),
         ("THE HAND", 116, red()),
     ];
-    let cell = 64.0;
-    let gap = 10.0;
+    let cell = 104.0;
+    let gap = 12.0;
     let bits_x0 = 820.0;
     let n_bits = 11usize;
 
     for (i, (name, value, color)) in rows.iter().enumerate() {
-        let y0 = 960.0 - i as f64 * 168.0; // cell bottom
+        let y0 = 956.0 - i as f64 * 168.0; // cell bottom
         let level = value.trailing_zeros() as usize;
 
         sheet.label(name, MARGIN, y0 + 20.0, 26.0, gray(), -1);
@@ -488,11 +489,11 @@ fn fig_bits(renderer: &Renderer, mono: &str, out: &std::path::Path) {
             if is_one {
                 sheet.ctx.fill(*color).stroke(*color).stroke_width(2.0);
                 sheet.ctx.rect(x, y0, cell, cell);
-                sheet.label("1", x + cell / 2.0, y0 + cell * 0.30, 36.0, bg(), 0);
+                sheet.label("1", x + cell / 2.0, y0 + cell * 0.32, 46.0, bg(), 0);
             } else {
                 sheet.ctx.no_fill().stroke(dim()).stroke_width(2.0);
                 sheet.ctx.rect(x, y0, cell, cell);
-                sheet.label("0", x + cell / 2.0, y0 + cell * 0.30, 36.0, dim(), 0);
+                sheet.label("0", x + cell / 2.0, y0 + cell * 0.32, 46.0, dim(), 0);
             }
         }
 
@@ -512,8 +513,7 @@ fn fig_bits(renderer: &Renderer, mono: &str, out: &std::path::Path) {
         } else {
             format!("{} ZEROS \u{2192} ON {}", level, 1u32 << level)
         };
-        let tags_x = bits_x0 + n_bits as f64 * (cell + gap) + 40.0;
-        sheet.label(&tag, tags_x, y0 + 20.0, 26.0, *color, -1);
+        sheet.label(&tag, W - MARGIN, y0 + 20.0, 26.0, *color, 1);
     }
 
     sheet.frame(

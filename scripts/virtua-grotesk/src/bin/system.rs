@@ -32,7 +32,7 @@ const W: f64 = 2520.0;
 const H: f64 = 1320.0;
 const MARGIN: f64 = 96.0;
 const HEADER_RULE_Y: f64 = 1224.0;
-const FOOTER_RULE_Y: f64 = 112.0;
+const FOOTER_RULE_Y: f64 = 96.0;
 
 fn bg() -> Color {
     Color::rgb(0x10, 0x10, 0x10)
@@ -246,20 +246,20 @@ impl Sheet<'_> {
         self.ctx.stroke(green()).stroke_width(2.5).no_fill();
         self.ctx.line(MARGIN, HEADER_RULE_Y, W - MARGIN, HEADER_RULE_Y);
         self.ctx.line(MARGIN, FOOTER_RULE_Y, W - MARGIN, FOOTER_RULE_Y);
-        self.label(title, MARGIN, HEADER_RULE_Y + 42.0, 30.0, green(), -1);
+        self.label(title, MARGIN, HEADER_RULE_Y + 24.0, 30.0, green(), -1);
         self.label(
             "VIRTUA GROTESK / EM 1024 = 2^10",
             W - MARGIN,
-            HEADER_RULE_Y + 42.0,
+            HEADER_RULE_Y + 24.0,
             30.0,
             green(),
             1,
         );
-        self.label(caption, MARGIN, 64.0, 30.0, green(), -1);
+        self.label(caption, MARGIN, 50.0, 30.0, green(), -1);
         self.label(
             "GITHUB.COM/ELIHEUER/VIRTUA-GROTESK",
             W - MARGIN,
-            64.0,
+            50.0,
             30.0,
             green(),
             1,
@@ -385,7 +385,7 @@ fn fig_no(renderer: &Renderer, mono: &str, glyphs_dir: &std::path::Path, out: &s
     let f = Frame {
         s: S,
         x0: MARGIN + (W - 2.0 * MARGIN - run) / 2.0,
-        baseline: 296.0,
+        baseline: 310.0,
     };
 
     draw_grid(&mut sheet, &f, 640.0, -64.0);
@@ -429,7 +429,7 @@ fn fig_no(renderer: &Renderer, mono: &str, glyphs_dir: &std::path::Path, out: &s
     advance_row(
         &mut sheet,
         &f,
-        190.0,
+        204.0,
         &[(0.0, n.width, 64.0), (n.width, o.width, 32.0)],
         &[(64.0, 528.0), (32.0, 584.0)],
     );
@@ -460,7 +460,7 @@ fn fig_ohno(renderer: &Renderer, mono: &str, glyphs_dir: &std::path::Path, out: 
     let advances = [cap_o.width, cap_h.width, n.width, o.width];
     let run: f64 = advances.iter().sum::<f64>() * S;
     // content spans font -256..784; center it between the rules
-    let content_h = (784.0 + 256.0) * S;
+    let content_h = (784.0 + 256.0) * S + 50.0;
     let bottom = FOOTER_RULE_Y + (HEADER_RULE_Y - FOOTER_RULE_Y - content_h) / 2.0;
     let f = Frame {
         s: S,
