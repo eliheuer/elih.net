@@ -20,10 +20,9 @@
 use designbot::prelude::*;
 use designbot_render::Renderer;
 use kurbo::{Affine, BezPath, Shape};
+#[allow(unused_imports)]
+use virtua_grotesk_figures::*;
 
-const W: f64 = 2520.0;
-const H: f64 = 1320.0;
-const MARGIN: f64 = 64.0;
 const GAP: f64 = 96.0;
 /// Per-figure content geometry, so descender-deep glyphs (the g) get a
 /// deeper grid and cap-height figures keep the cap line. Baselines are set
@@ -35,29 +34,7 @@ struct Geom {
     cap: bool,       // draw the cap-height line + tag
     descender: bool, // draw the descender line + tag
 }
-const HEADER_RULE_Y: f64 = 1210.0;
-const FOOTER_RULE_Y: f64 = 110.0;
 const SVG_BASELINE: f64 = 900.0; // font-garden-lab SVGs put the baseline here
-
-// Theme tokens, shared with og.rs.
-fn bg() -> Color {
-    Color::rgb(0x10, 0x10, 0x10)
-}
-fn grid() -> Color {
-    Color::rgb(0x2a, 0x2a, 0x2a)
-}
-fn green() -> Color {
-    Color::rgb(0x15, 0xc4, 0x74)
-}
-fn red() -> Color {
-    Color::rgb(0xff, 0x45, 0x35)
-}
-fn blue() -> Color {
-    Color::rgb(0x4a, 0x78, 0xff)
-}
-fn gray() -> Color {
-    Color::rgb(0x8a, 0x8a, 0x8a)
-}
 
 /// What a panel is: ground truth, the given input, or the model's output. The
 /// role decides the glyph's color; it's read from the harness SVG's fill.
@@ -148,85 +125,7 @@ fn parse_svg(path: &std::path::Path) -> Vec<Panel> {
         .collect()
 }
 
-// --- sfnt family-name reader (same as og.rs) --------------------------------
-
-fn read_u16(d: &[u8], o: usize) -> u16 {
-    u16::from_be_bytes([d[o], d[o + 1]])
-}
-fn read_u32(d: &[u8], o: usize) -> u32 {
-    u32::from_be_bytes([d[o], d[o + 1], d[o + 2], d[o + 3]])
-}
-fn find_table(d: &[u8], tag: &[u8; 4]) -> Option<usize> {
-    let n = read_u16(d, 4) as usize;
-    (0..n)
-        .map(|i| 12 + i * 16)
-        .find(|&r| &d[r..r + 4] == tag)
-        .map(|r| read_u32(d, r + 8) as usize)
-}
-fn load_family(renderer: &mut Renderer, path: &str) -> String {
-    let data = std::fs::read(path).unwrap_or_else(|e| panic!("read {path}: {e}"));
-    renderer
-        .load_font(path)
-        .unwrap_or_else(|e| panic!("load {path}: {e:?}"));
-    let name = find_table(&data, b"name").expect("no name table");
-    let count = read_u16(&data, name + 2) as usize;
-    let string_off = name + read_u16(&data, name + 4) as usize;
-    for want in [16u16, 1] {
-        for i in 0..count {
-            let rec = name + 6 + i * 12;
-            if read_u16(&data, rec) == 3 && read_u16(&data, rec + 6) == want {
-                let len = read_u16(&data, rec + 8) as usize;
-                let off = string_off + read_u16(&data, rec + 10) as usize;
-                let units: Vec<u16> = data[off..off + len]
-                    .chunks_exact(2)
-                    .map(|c| u16::from_be_bytes([c[0], c[1]]))
-                    .collect();
-                return String::from_utf16_lossy(&units);
-            }
-        }
-    }
-    panic!("no Windows family name in {path}");
-}
-
 // --- drawing ----------------------------------------------------------------
-
-struct Sheet<'a> {
-    ctx: Canvas,
-    renderer: &'a Renderer,
-    mono: String,
-}
-
-impl Sheet<'_> {
-    fn label(&mut self, txt: &str, x: f64, y: f64, size: f64, color: Color, align: i8) {
-        let w = self.renderer.text_width(txt, Some(&self.mono), size, &[]);
-        let x = match align {
-            -1 => x,
-            0 => x - w / 2.0,
-            _ => x - w,
-        };
-        self.ctx
-            .font(&self.mono)
-            .clear_font_variations()
-            .font_size(size)
-            .fill(color)
-            .text_align(TextAlign::Left)
-            .text(txt, x, y);
-    }
-
-    /// Metric-line tag docked on a grid line, same look as og.rs.
-    fn metric_tag(&mut self, txt: &str, x_edge: f64, y_line: f64, above: bool) {
-        let size = 30.0;
-        let w = self.renderer.text_width(txt, Some(&self.mono), size, &[]);
-        let box_w = ((w + 16.0) / 16.0).ceil() * 16.0;
-        let box_h = 32.0;
-        let x0 = x_edge;
-        let y0 = if above { y_line + 16.0 } else { y_line - box_h - 16.0 };
-        self.ctx.fill(bg()).stroke(blue()).stroke_width(2.5);
-        self.ctx.rect(x0, y0, box_w, box_h);
-        let baseline = y0 + (box_h - 0.73 * size) / 2.0;
-        self.label(txt, x0 + box_w / 2.0, baseline, size, blue(), 0);
-    }
-}
 
 fn render_figure(
     renderer: &Renderer,
@@ -241,12 +140,7 @@ fn render_figure(
     let baseline_y = geom.baseline;
     let grid_top = baseline_y + geom.top;
     let grid_bottom = baseline_y + geom.bottom;
-    let mut sheet = Sheet {
-        ctx: Canvas::new(W, H),
-        renderer,
-        mono: mono.to_string(),
-    };
-    sheet.ctx.background(bg());
+    let mut sheet = new_sheet(renderer, mono);
 
     let n = panels.len();
     let slot = (W - 2.0 * MARGIN - (n as f64 - 1.0) * GAP) / n as f64;
@@ -278,7 +172,7 @@ fn render_figure(
     // ── vertical metrics, full width behind the glyphs ──
     {
         let ctx = &mut sheet.ctx;
-        ctx.stroke(blue()).stroke_width(2.5).no_fill();
+        ctx.stroke(blue()).stroke_width(PEN).no_fill();
         ctx.line_dash(&[10.0, 10.0]);
         let mut dashed = vec![-16.0];
         if geom.cap {
@@ -303,7 +197,7 @@ fn render_figure(
     // ── per-cell dividers ──
     {
         let ctx = &mut sheet.ctx;
-        ctx.stroke(blue()).stroke_width(2.5).no_fill();
+        ctx.stroke(blue()).stroke_width(PEN).no_fill();
         for i in 0..n {
             let x = cell_left(i) + inset_x; // the shared advance origin
             ctx.line(x, grid_bottom, x, grid_top);
@@ -314,7 +208,7 @@ fn render_figure(
     for (i, p) in panels.iter().enumerate() {
         let (fill, stroke) = p.role.colors();
         let place = Affine::translate((cell_left(i) + inset_x, baseline_y));
-        sheet.ctx.fill(fill).stroke(stroke).stroke_width(2.5);
+        sheet.ctx.fill(fill).stroke(stroke).stroke_width(PEN);
         sheet.ctx.draw_path(place * p.path.clone());
     }
 
@@ -337,32 +231,15 @@ fn render_figure(
 
     // ── left-edge metric tags ──
     if geom.cap {
-        sheet.metric_tag("CAP 768", grid_left, baseline_y + 768.0, false);
+        sheet.metric_tag("CAP 768", grid_left, baseline_y + 768.0, false, -1);
     }
-    sheet.metric_tag("X-HEIGHT 576", grid_left, baseline_y + 576.0, true);
-    sheet.metric_tag("BASELINE 0", grid_left, baseline_y, true);
+    sheet.metric_tag("X-HEIGHT 576", grid_left, baseline_y + 576.0, true, -1);
+    sheet.metric_tag("BASELINE 0", grid_left, baseline_y, true, -1);
     if geom.descender {
-        sheet.metric_tag("DESCENDER -256", grid_left, baseline_y - 256.0, true);
+        sheet.metric_tag("DESCENDER -256", grid_left, baseline_y - 256.0, true, -1);
     }
 
-    // ── header / footer rules + captions ──
-    {
-        let ctx = &mut sheet.ctx;
-        ctx.stroke(green()).stroke_width(2.5).no_fill();
-        ctx.line(MARGIN, HEADER_RULE_Y, W - MARGIN, HEADER_RULE_Y);
-        ctx.line(MARGIN, FOOTER_RULE_Y, W - MARGIN, FOOTER_RULE_Y);
-    }
-    sheet.label(title, MARGIN, HEADER_RULE_Y + 24.0, 30.0, green(), -1);
-    sheet.label(right, W - MARGIN, HEADER_RULE_Y + 24.0, 30.0, green(), 1);
-    sheet.label(caption, MARGIN, 64.0, 30.0, green(), -1);
-    sheet.label(
-        "GITHUB.COM/ELIHEUER/VIRTUA-GROTESK",
-        W - MARGIN,
-        64.0,
-        30.0,
-        green(),
-        1,
-    );
+    sheet.frame(title, right, caption);
 
     std::fs::create_dir_all(out.parent().unwrap()).unwrap();
     renderer.render_to_png(&sheet.ctx, out.to_str().unwrap()).unwrap();

@@ -22,13 +22,9 @@
 
 use designbot::prelude::*;
 use designbot_render::Renderer;
-use kurbo::{Affine, BezPath, Shape};
-
-const W: f64 = 2520.0;
-const H: f64 = 1320.0;
-const MARGIN: f64 = 64.0;
-const HEADER_RULE_Y: f64 = 1210.0;
-const FOOTER_RULE_Y: f64 = 110.0;
+use kurbo::Affine;
+#[allow(unused_imports)]
+use virtua_grotesk_figures::*;
 
 /// Newest font-garden-lab run that produced a pred.ufo, e.g. runs/v07 ->
 /// (".../runs/v07/pred.ufo", "VIRTUA-12M-0.7"). Keeps the figures pointed at
@@ -54,271 +50,6 @@ fn latest_pred(home: &str) -> (std::path::PathBuf, String) {
     (pred, name)
 }
 
-fn bg() -> Color {
-    Color::rgb(0x10, 0x10, 0x10)
-}
-fn grid() -> Color {
-    Color::rgb(0x28, 0x28, 0x28)
-}
-fn green() -> Color {
-    Color::rgb(0x15, 0xc4, 0x74)
-}
-fn red() -> Color {
-    Color::rgb(0xff, 0x45, 0x35)
-}
-fn blue() -> Color {
-    Color::rgb(0x4a, 0x78, 0xff)
-}
-fn gray() -> Color {
-    Color::rgb(0x8a, 0x8a, 0x8a)
-}
-fn dim() -> Color {
-    Color::rgb(0x5a, 0x5a, 0x5a)
-}
-fn handle() -> Color {
-    Color::rgb(0x6a, 0x6a, 0x6a)
-}
-
-fn fill_of(stroke: Color) -> Color {
-    Color::rgba(stroke.r, stroke.g, stroke.b, 100)
-}
-
-// --- UFO outline loading (same as og.rs) --------------------------------------
-
-#[derive(Clone, Copy)]
-enum PtRole {
-    Smooth,
-    Corner,
-    Off,
-}
-
-struct Outline {
-    path: BezPath,
-    points: Vec<(f64, f64, PtRole)>,
-    handles: Vec<((f64, f64), (f64, f64))>,
-    width: f64,
-}
-
-fn push_on_curve(points: &mut Vec<(f64, f64, PtRole)>, p: &norad::ContourPoint, k: usize, n: usize) {
-    if k == n {
-        return;
-    }
-    let role = if p.smooth { PtRole::Smooth } else { PtRole::Corner };
-    points.push((p.x, p.y, role));
-}
-
-fn load_outline(glif: &std::path::Path) -> Outline {
-    let glyph = norad::Glyph::load(glif).unwrap_or_else(|e| panic!("load {glif:?}: {e}"));
-    let mut path = BezPath::new();
-    let mut points = Vec::new();
-    let mut handles = Vec::new();
-    for contour in &glyph.contours {
-        use norad::PointType::*;
-        let pts = &contour.points;
-        let n = pts.len();
-        let Some(start) = pts.iter().position(|p| p.typ != OffCurve) else {
-            continue;
-        };
-        let sp = &pts[start];
-        path.move_to((sp.x, sp.y));
-        let role = if sp.smooth { PtRole::Smooth } else { PtRole::Corner };
-        points.push((sp.x, sp.y, role));
-        let mut prev_on = (sp.x, sp.y);
-        let mut pending: Vec<(f64, f64)> = Vec::new();
-        for k in 1..=n {
-            let p = &pts[(start + k) % n];
-            match p.typ {
-                OffCurve => {
-                    pending.push((p.x, p.y));
-                    points.push((p.x, p.y, PtRole::Off));
-                }
-                Curve if pending.len() == 2 => {
-                    path.curve_to(pending[0], pending[1], (p.x, p.y));
-                    handles.push((prev_on, pending[0]));
-                    handles.push(((p.x, p.y), pending[1]));
-                    pending.clear();
-                    prev_on = (p.x, p.y);
-                    push_on_curve(&mut points, p, k, n);
-                }
-                _ => {
-                    path.line_to((p.x, p.y));
-                    pending.clear();
-                    prev_on = (p.x, p.y);
-                    push_on_curve(&mut points, p, k, n);
-                }
-            }
-        }
-        path.close_path();
-    }
-    Outline {
-        path,
-        points,
-        handles,
-        width: glyph.width,
-    }
-}
-
-/// UFO3 glif filename: uppercase names get an underscore suffix.
-fn glif_name(glyph: &str) -> String {
-    if glyph.chars().next().is_some_and(|c| c.is_uppercase()) {
-        format!("{glyph}_.glif")
-    } else {
-        format!("{glyph}.glif")
-    }
-}
-
-// --- sfnt family-name reader (same as og.rs) ----------------------------------
-
-fn read_u16(d: &[u8], o: usize) -> u16 {
-    u16::from_be_bytes([d[o], d[o + 1]])
-}
-fn read_u32(d: &[u8], o: usize) -> u32 {
-    u32::from_be_bytes([d[o], d[o + 1], d[o + 2], d[o + 3]])
-}
-fn find_table(d: &[u8], tag: &[u8; 4]) -> Option<usize> {
-    let n = read_u16(d, 4) as usize;
-    (0..n)
-        .map(|i| 12 + i * 16)
-        .find(|&r| &d[r..r + 4] == tag)
-        .map(|r| read_u32(d, r + 8) as usize)
-}
-fn load_family(renderer: &mut Renderer, path: &str) -> String {
-    let data = std::fs::read(path).unwrap_or_else(|e| panic!("read {path}: {e}"));
-    renderer
-        .load_font(path)
-        .unwrap_or_else(|e| panic!("load {path}: {e:?}"));
-    let name = find_table(&data, b"name").expect("no name table");
-    let count = read_u16(&data, name + 2) as usize;
-    let string_off = name + read_u16(&data, name + 4) as usize;
-    for want in [16u16, 1] {
-        for i in 0..count {
-            let rec = name + 6 + i * 12;
-            if read_u16(&data, rec) == 3 && read_u16(&data, rec + 6) == want {
-                let len = read_u16(&data, rec + 8) as usize;
-                let off = string_off + read_u16(&data, rec + 10) as usize;
-                let units: Vec<u16> = data[off..off + len]
-                    .chunks_exact(2)
-                    .map(|c| u16::from_be_bytes([c[0], c[1]]))
-                    .collect();
-                return String::from_utf16_lossy(&units);
-            }
-        }
-    }
-    panic!("no Windows family name in {path}");
-}
-
-// --- drawing -------------------------------------------------------------------
-
-struct Sheet<'a> {
-    ctx: Canvas,
-    renderer: &'a Renderer,
-    mono: String,
-}
-
-impl Sheet<'_> {
-    fn mono_width(&self, txt: &str, size: f64) -> f64 {
-        self.renderer.text_width(txt, Some(&self.mono), size, &[])
-    }
-
-    fn label(&mut self, txt: &str, x: f64, y: f64, size: f64, color: Color, align: i8) {
-        let w = self.mono_width(txt, size);
-        let x = match align {
-            -1 => x,
-            0 => x - w / 2.0,
-            _ => x - w,
-        };
-        self.ctx
-            .font(&self.mono)
-            .clear_font_variations()
-            .font_size(size)
-            .fill(color)
-            .text_align(TextAlign::Left)
-            .text(txt, x, y);
-    }
-
-    fn label_padded(&mut self, txt: &str, x: f64, y: f64, size: f64, color: Color, align: i8) {
-        let w = self.mono_width(txt, size);
-        let pad = 10.0;
-        let x0 = match align {
-            -1 => x,
-            0 => x - w / 2.0,
-            _ => x - w,
-        };
-        self.ctx.fill(bg()).no_stroke();
-        self.ctx
-            .rect(x0 - pad, y - 0.28 * size, w + 2.0 * pad, 1.3 * size);
-        self.label(txt, x0, y, size, color, -1);
-    }
-
-    /// Metric-line tag docked on a grid line, og.rs style.
-    fn metric_tag(&mut self, txt: &str, x_edge: f64, y_line: f64, above: bool) {
-        let size = 30.0;
-        let w = self.mono_width(txt, size);
-        let box_w = ((w + 16.0) / 16.0).ceil() * 16.0;
-        let box_h = 32.0;
-        let y0 = if above { y_line + 16.0 } else { y_line - box_h - 16.0 };
-        self.ctx.fill(bg()).stroke(blue()).stroke_width(2.5);
-        self.ctx.rect(x_edge, y0, box_w, box_h);
-        let baseline = y0 + (box_h - 0.73 * size) / 2.0;
-        self.label(txt, x_edge + box_w / 2.0, baseline, size, blue(), 0);
-    }
-
-    fn frame(&mut self, title: &str, right: &str, caption: &str) {
-        self.ctx.stroke(green()).stroke_width(2.5).no_fill();
-        self.ctx.line(MARGIN, HEADER_RULE_Y, W - MARGIN, HEADER_RULE_Y);
-        self.ctx.line(MARGIN, FOOTER_RULE_Y, W - MARGIN, FOOTER_RULE_Y);
-        self.label(title, MARGIN, HEADER_RULE_Y + 24.0, 30.0, green(), -1);
-        self.label(right, W - MARGIN, HEADER_RULE_Y + 24.0, 30.0, green(), 1);
-        self.label(caption, MARGIN, 64.0, 30.0, green(), -1);
-        self.label(
-            "GITHUB.COM/ELIHEUER/VIRTUA-GROTESK",
-            W - MARGIN,
-            64.0,
-            30.0,
-            green(),
-            1,
-        );
-    }
-
-    fn save(&self, renderer: &Renderer, out: &std::path::Path) {
-        std::fs::create_dir_all(out.parent().unwrap()).unwrap();
-        renderer
-            .render_to_png(&self.ctx, out.to_str().unwrap())
-            .unwrap();
-        println!("wrote {}", out.display());
-    }
-}
-
-fn draw_glyph(sheet: &mut Sheet, o: &Outline, x: f64, baseline: f64, s: f64, color: Color) {
-    let place = Affine::new([s, 0.0, 0.0, s, x, baseline]);
-    sheet.ctx.fill(fill_of(color)).stroke(color).stroke_width(2.5);
-    sheet.ctx.draw_path(place * o.path.clone());
-}
-
-fn draw_points(sheet: &mut Sheet, o: &Outline, x: f64, baseline: f64, s: f64, color: Color) {
-    sheet.ctx.no_fill().stroke(handle()).stroke_width(2.0);
-    for ((x1, y1), (x2, y2)) in &o.handles {
-        sheet
-            .ctx
-            .line(x + x1 * s, baseline + y1 * s, x + x2 * s, baseline + y2 * s);
-    }
-    for (px, py, role) in &o.points {
-        let (cx, cy) = (x + px * s, baseline + py * s);
-        sheet.ctx.fill(bg()).stroke(color).stroke_width(2.5);
-        match role {
-            PtRole::Smooth => {
-                sheet.ctx.oval(cx - 8.0, cy - 8.0, 16.0, 16.0);
-            }
-            PtRole::Corner => {
-                sheet.ctx.rect(cx - 7.0, cy - 7.0, 14.0, 14.0);
-            }
-            PtRole::Off => {
-                sheet.ctx.oval(cx - 6.0, cy - 6.0, 12.0, 12.0);
-            }
-        }
-    }
-}
-
 // --- fig-model-review -----------------------------------------------------------
 
 fn fig_review(
@@ -330,12 +61,7 @@ fn fig_review(
     pred: &std::path::Path,
     out: &std::path::Path,
 ) {
-    let mut sheet = Sheet {
-        ctx: Canvas::new(W, H),
-        renderer,
-        mono: mono.to_string(),
-    };
-    sheet.ctx.background(bg());
+    let mut sheet = new_sheet(renderer, mono);
 
     const GLYPHS: [&str; 7] = ["K", "E", "M", "n", "b", "c", "a"];
     const S: f64 = 0.29;
@@ -390,19 +116,19 @@ fn fig_review(
                     slot_center,
                     baseline + 74.0,
                     24.0,
-                    dim(),
+                    dim_color(),
                     0,
                 );
                 continue;
             }
             let glif = row.dir.join("glyphs").join(glif_name(name));
             if !glif.is_file() {
-                sheet.label_padded("NOT IN RUN", slot_center, baseline + 74.0, 24.0, dim(), 0);
+                sheet.label_padded("NOT IN RUN", slot_center, baseline + 74.0, 24.0, dim_color(), 0);
                 continue;
             }
-            let o = load_outline(&glif);
+            let o = load_outline(&row.dir.join("glyphs"), name);
             let x = slot_center - o.width * S / 2.0;
-            draw_glyph(&mut sheet, &o, x, baseline, S, row.color);
+            draw_body_strong(&mut sheet, &o, S, x, baseline, row.color);
         }
     }
 
@@ -425,12 +151,7 @@ fn fig_bolden_a(
     pred: &std::path::Path,
     out: &std::path::Path,
 ) {
-    let mut sheet = Sheet {
-        ctx: Canvas::new(W, H),
-        renderer,
-        mono: mono.to_string(),
-    };
-    sheet.ctx.background(bg());
+    let mut sheet = new_sheet(renderer, mono);
 
     const S: f64 = 1.3;
     const BASELINE: f64 = 322.0;
@@ -440,12 +161,12 @@ fn fig_bolden_a(
     // the Regular a from the sources; the Bold a from the detected run's
     // pred.ufo when it has one (keeps the label truthful), else the
     // committed draft in the Bold sources
-    let o_reg = load_outline(&reg.join("glyphs/a.glif"));
+    let o_reg = load_outline(&reg.join("glyphs"), "a");
     let pred_a = pred.join("glyphs/a.glif");
     let o_bold = if pred_a.is_file() {
-        load_outline(&pred_a)
+        load_outline(&pred.join("glyphs"), "a")
     } else {
-        load_outline(&bold.join("glyphs/a.glif"))
+        load_outline(&bold.join("glyphs"), "a")
     };
 
     // run layout: centered between the margins
@@ -474,7 +195,7 @@ fn fig_bolden_a(
     // vertical metrics: solid baseline + x-height, dashed overshoots
     {
         let ctx = &mut sheet.ctx;
-        ctx.no_fill().stroke(blue()).stroke_width(2.5);
+        ctx.no_fill().stroke(blue()).stroke_width(PEN);
         ctx.line_dash(&[10.0, 10.0]);
         for uy in [-16.0, 592.0] {
             ctx.line(MARGIN, BASELINE + uy * S, W - MARGIN, BASELINE + uy * S);
@@ -486,10 +207,10 @@ fn fig_bolden_a(
     }
 
     // glyphs with the Runebender point language on top
-    draw_glyph(&mut sheet, &o_reg, x_reg, BASELINE, S, green());
-    draw_glyph(&mut sheet, &o_bold, x_bold, BASELINE, S, red());
-    draw_points(&mut sheet, &o_reg, x_reg, BASELINE, S, green());
-    draw_points(&mut sheet, &o_bold, x_bold, BASELINE, S, red());
+    draw_body_strong(&mut sheet, &o_reg, S, x_reg, BASELINE, green());
+    draw_body_strong(&mut sheet, &o_bold, S, x_bold, BASELINE, red());
+    draw_points_mono(&mut sheet, &o_reg, S, x_reg, BASELINE, green());
+    draw_points_mono(&mut sheet, &o_bold, S, x_bold, BASELINE, red());
 
     // arrow between, at half x-height
     {
@@ -497,15 +218,15 @@ fn fig_bolden_a(
         let x0 = x_reg + o_reg.width * S + 70.0;
         let x1 = x_bold - 70.0;
         let ctx = &mut sheet.ctx;
-        ctx.no_fill().stroke(gray()).stroke_width(2.5);
+        ctx.no_fill().stroke(gray()).stroke_width(PEN);
         ctx.line(x0, y, x1, y);
         ctx.line(x1 - 22.0, y + 14.0, x1, y);
         ctx.line(x1 - 22.0, y - 14.0, x1, y);
     }
 
     // metric tags, docked at the left margin
-    sheet.metric_tag("X-HEIGHT 576", MARGIN, BASELINE + 576.0 * S, true);
-    sheet.metric_tag("BASELINE 0", MARGIN, BASELINE, true);
+    sheet.metric_tag("X-HEIGHT 576", MARGIN, BASELINE + 576.0 * S, true, -1);
+    sheet.metric_tag("BASELINE 0", MARGIN, BASELINE, true, -1);
 
     // captions under the run, centered per glyph
     let label_y = 166.0;

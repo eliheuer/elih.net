@@ -14,16 +14,9 @@
 
 use designbot::prelude::*;
 use designbot_render::Renderer;
+#[allow(unused_imports)]
+use virtua_grotesk_figures::*;
 
-const W: f64 = 2520.0;
-const H: f64 = 1320.0;
-const MARGIN: f64 = 64.0;
-const HEADER_RULE_Y: f64 = 1210.0;
-const FOOTER_RULE_Y: f64 = 110.0;
-
-fn bg() -> Color {
-    Color::rgb(0x10, 0x10, 0x10)
-}
 fn grid_16() -> Color {
     Color::rgb(0x1e, 0x1e, 0x1e)
 }
@@ -35,145 +28,6 @@ fn dim() -> Color {
 }
 fn curve() -> Color {
     Color::rgb(230, 230, 230)
-}
-fn green() -> Color {
-    Color::rgb(0x15, 0xc4, 0x74)
-}
-fn red() -> Color {
-    Color::rgb(0xff, 0x45, 0x35)
-}
-fn purple() -> Color {
-    Color::rgb(0x8c, 0x6c, 0xff)
-}
-fn gray() -> Color {
-    Color::rgb(0x8a, 0x8a, 0x8a)
-}
-
-// --- sfnt family-name reader (same as og.rs) ---------------------------------
-
-fn read_u16(d: &[u8], o: usize) -> u16 {
-    u16::from_be_bytes([d[o], d[o + 1]])
-}
-fn read_u32(d: &[u8], o: usize) -> u32 {
-    u32::from_be_bytes([d[o], d[o + 1], d[o + 2], d[o + 3]])
-}
-fn find_table(d: &[u8], tag: &[u8; 4]) -> Option<usize> {
-    let n = read_u16(d, 4) as usize;
-    (0..n)
-        .map(|i| 12 + i * 16)
-        .find(|&r| &d[r..r + 4] == tag)
-        .map(|r| read_u32(d, r + 8) as usize)
-}
-fn load_family(renderer: &mut Renderer, path: &str) -> String {
-    let data = std::fs::read(path).unwrap_or_else(|e| panic!("read {path}: {e}"));
-    renderer
-        .load_font(path)
-        .unwrap_or_else(|e| panic!("load {path}: {e:?}"));
-    let name = find_table(&data, b"name").expect("no name table");
-    let count = read_u16(&data, name + 2) as usize;
-    let string_off = name + read_u16(&data, name + 4) as usize;
-    for want in [16u16, 1] {
-        for i in 0..count {
-            let rec = name + 6 + i * 12;
-            if read_u16(&data, rec) == 3 && read_u16(&data, rec + 6) == want {
-                let len = read_u16(&data, rec + 8) as usize;
-                let off = string_off + read_u16(&data, rec + 10) as usize;
-                let units: Vec<u16> = data[off..off + len]
-                    .chunks_exact(2)
-                    .map(|c| u16::from_be_bytes([c[0], c[1]]))
-                    .collect();
-                return String::from_utf16_lossy(&units);
-            }
-        }
-    }
-    panic!("no Windows family name in {path}");
-}
-
-// --- drawing ------------------------------------------------------------------
-
-struct Sheet<'a> {
-    ctx: Canvas,
-    renderer: &'a Renderer,
-    mono: String,
-}
-
-impl Sheet<'_> {
-    fn mono_width(&self, txt: &str, size: f64) -> f64 {
-        self.renderer.text_width(txt, Some(&self.mono), size, &[])
-    }
-
-    fn label(&mut self, txt: &str, x: f64, y: f64, size: f64, color: Color, align: i8) {
-        let w = self.mono_width(txt, size);
-        let x = match align {
-            -1 => x,
-            0 => x - w / 2.0,
-            _ => x - w,
-        };
-        self.ctx
-            .font(&self.mono)
-            .clear_font_variations()
-            .font_size(size)
-            .fill(color)
-            .text_align(TextAlign::Left)
-            .text(txt, x, y);
-    }
-
-    fn label_padded(&mut self, txt: &str, x: f64, y: f64, size: f64, color: Color, align: i8) {
-        let w = self.mono_width(txt, size);
-        let pad = 10.0;
-        let x0 = match align {
-            -1 => x,
-            0 => x - w / 2.0,
-            _ => x - w,
-        };
-        self.ctx.fill(bg()).no_stroke();
-        self.ctx
-            .rect(x0 - pad, y - 0.28 * size, w + 2.0 * pad, 1.3 * size);
-        self.label(txt, x0, y, size, color, -1);
-    }
-
-    /// Header/footer rules and the standard captions.
-    fn frame(&mut self, title: &str, caption: &str) {
-        self.ctx.stroke(green()).stroke_width(2.5).no_fill();
-        self.ctx.line(MARGIN, HEADER_RULE_Y, W - MARGIN, HEADER_RULE_Y);
-        self.ctx.line(MARGIN, FOOTER_RULE_Y, W - MARGIN, FOOTER_RULE_Y);
-        self.label(title, MARGIN, HEADER_RULE_Y + 24.0, 30.0, green(), -1);
-        self.label(
-            "VIRTUA GROTESK / EM 1024 = 2^10",
-            W - MARGIN,
-            HEADER_RULE_Y + 24.0,
-            30.0,
-            green(),
-            1,
-        );
-        self.label(caption, MARGIN, 64.0, 30.0, green(), -1);
-        self.label(
-            "GITHUB.COM/ELIHEUER/VIRTUA-GROTESK",
-            W - MARGIN,
-            64.0,
-            30.0,
-            green(),
-            1,
-        );
-    }
-
-    fn save(&self, renderer: &Renderer, out: &std::path::Path) {
-        std::fs::create_dir_all(out.parent().unwrap()).unwrap();
-        renderer
-            .render_to_png(&self.ctx, out.to_str().unwrap())
-            .unwrap();
-        println!("wrote {}", out.display());
-    }
-}
-
-fn new_sheet<'a>(renderer: &'a Renderer, mono: &str) -> Sheet<'a> {
-    let mut sheet = Sheet {
-        ctx: Canvas::new(W, H),
-        renderer,
-        mono: mono.to_string(),
-    };
-    sheet.ctx.background(bg());
-    sheet
 }
 
 // --- fig-fractions ------------------------------------------------------------
@@ -246,6 +100,7 @@ fn fig_fractions(renderer: &Renderer, mono: &str, out: &std::path::Path) {
 
     sheet.frame(
         "ONE STEM, TWO EMS",
+        "VIRTUA GROTESK / EM 1024 = 2^10",
         "A BINARY MACHINE WRITES 96/1024 DOWN EXACTLY; 96/1000 IT CAN ONLY APPROXIMATE",
     );
     sheet.save(renderer, out);
@@ -372,6 +227,7 @@ fn fig_midpoint(renderer: &Renderer, mono: &str, out: &std::path::Path) {
 
     sheet.frame(
         "DE CASTELJAU AT T = 1/2",
+        "VIRTUA GROTESK / EM 1024 = 2^10",
         "SPLITTING A CURVE IS MIDPOINTS ALL THE WAY DOWN, AND MIDPOINTS OF DYADIC POINTS ARE DYADIC",
     );
     sheet.save(renderer, out);
@@ -453,6 +309,7 @@ fn fig_ladder(renderer: &Renderer, mono: &str, out: &std::path::Path) {
 
     sheet.frame(
         "HOW FAR CAN AN EM HALVE?",
+        "VIRTUA GROTESK / EM 1024 = 2^10",
         "ONLY A BINARY EM LADDERS FROM THE EM TO THE UNIT",
     );
     sheet.save(renderer, out);
@@ -518,6 +375,7 @@ fn fig_bits(renderer: &Renderer, mono: &str, out: &std::path::Path) {
 
     sheet.frame(
         "THE LEVEL IS IN THE LOW BITS",
+        "VIRTUA GROTESK / EM 1024 = 2^10",
         "GRID LEVEL = TRAILING ZEROS (THE 2-ADIC VALUATION); HARDWARE READS IT IN ONE INSTRUCTION, CTZ",
     );
     sheet.save(renderer, out);

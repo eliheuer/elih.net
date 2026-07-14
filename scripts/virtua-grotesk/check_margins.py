@@ -44,8 +44,8 @@ def lint(path):
     if (w, h) != (2520, 1320):
         return [f"SKIP ({w}x{h}, not a 2520x1320 sheet)"]
 
-    header_row = 110  # image row of the header rule (canvas y 1210)
-    footer_row = 1210  # image row of the footer rule (canvas y 110)
+    header_row = 112  # image row of the header rule (canvas y 1208)
+    footer_row = 1208  # image row of the footer rule (canvas y 112)
     problems = []
 
     # outermost ink must sit MARGIN from every canvas edge
@@ -63,9 +63,10 @@ def lint(path):
     else:
         gap_top = header_row - top[3]
         gap_bot = bot[1] - footer_row
-        if abs(gap_top - GAP) > TOL_TEXT:
+        # descenders (commas etc.) may dip up to 9px below the text baseline
+        if not (GAP - 9 <= gap_top <= GAP + TOL_TEXT):
             problems.append(f"title-to-rule gap {gap_top} (spec {GAP})")
-        if abs(gap_bot - GAP) > TOL_TEXT:
+        if not (GAP - 9 <= gap_bot <= GAP + TOL_TEXT):
             problems.append(f"caption-to-rule gap {gap_bot} (spec {GAP})")
 
     # content block between the rules
@@ -84,7 +85,9 @@ def lint(path):
 
 
 def main():
-    targets = [Path(a) for a in sys.argv[1:]] or sorted(POST.glob("fig-*.png"))
+    targets = [Path(a) for a in sys.argv[1:]] or sorted(
+        list(POST.glob("fig-*.png")) + [POST / "share-card.png"]
+    )
     failed = False
     for p in targets:
         for msg in lint(p):
