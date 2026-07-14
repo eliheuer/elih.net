@@ -422,6 +422,7 @@ fn fig_bolden_a(
     model_name: &str,
     reg: &std::path::Path,
     bold: &std::path::Path,
+    pred: &std::path::Path,
     out: &std::path::Path,
 ) {
     let mut sheet = Sheet {
@@ -436,9 +437,16 @@ fn fig_bolden_a(
     let grid_bottom = BASELINE - 64.0 * S; // 212.8
     let grid_top = BASELINE + 640.0 * S; // 1128.8
 
-    // the a from each master; the Bold a in sources is the model's draft
+    // the Regular a from the sources; the Bold a from the detected run's
+    // pred.ufo when it has one (keeps the label truthful), else the
+    // committed draft in the Bold sources
     let o_reg = load_outline(&reg.join("glyphs/a.glif"));
-    let o_bold = load_outline(&bold.join("glyphs/a.glif"));
+    let pred_a = pred.join("glyphs/a.glif");
+    let o_bold = if pred_a.is_file() {
+        load_outline(&pred_a)
+    } else {
+        load_outline(&bold.join("glyphs/a.glif"))
+    };
 
     // run layout: centered between the margins
     let gap = 320.0;
@@ -563,6 +571,7 @@ fn main() {
         &model_name,
         &reg,
         &bold,
+        &pred,
         &post.join("fig-model-bolden-a.png"),
     );
 }

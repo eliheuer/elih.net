@@ -243,8 +243,10 @@ The model is deliberately small: a 12M-parameter decoder-only transformer
 trained from scratch on a single machine, no cloud and no GPU cluster. The work
 is early, and it runs on two setups: an [MLX](https://github.com/ml-explore/mlx)
 build on an M4 Mac and a PyTorch build on a Linux PC with a gaming GPU. An
-overnight run is about 30,000 steps. The corpus is Virtua's two masters, 427
-glyphs, structurally identical between Regular and Bold.
+overnight run is about 30,000 steps. The corpus began as Virtua's two masters, 427
+glyphs, structurally identical between Regular and Bold; since v0.8 the model
+also pretrains on glyphs from other OFL fonts before the Virtua finetune,
+and section 07 reports what that bought.
 
 Decoder-only is the GPT architecture. Each token becomes a vector, and a stack
 of transformer blocks refines those vectors through *attention*: every position
@@ -311,24 +313,31 @@ task's effective vocabulary to a few dozen familiar offsets. And the
 sources went through the grid pass, a glyph-by-glyph conforming of both
 masters to `DESIGN.md`: the design system doing its data-cleaning job.
 
-The current model, Virtua-12M-0.7, now statistically ties the dumb
-baseline of section 06 on held-out glyphs: 33.9 font units of error per coordinate
-against the baseline's 33.3. A tie with a baseline is not a victory lap;
-it is the floor the recipe demands, reached. The review sheet shows what
-the number looks like: six glyphs whose Bolds the model never saw, human
-Regular in, model Bold out, the human Bold underneath for reference.
+The current model, Virtua-12M-0.8, is the first to beat that baseline,
+and the experiment that produced it was a clean A/B. Arm one took the
+v0.7 recipe and retrained it on a freshly graded corpus (58 approved
+Bold pairs, up from 39): it still only tied the baseline, 32.0 font
+units of error per coordinate against 31.3. Arm two pretrained the same
+architecture on 29,000 glyph pairs traced from OFL fonts, then finetuned
+on the graded corpus: 20.9 against 31.3, better on every one of the ten
+held-out glyphs. Data cleaning alone kept the tie; other designers'
+letterforms broke it, which is section 08's data plan reporting its
+first result. The review sheet shows six of those held-out glyphs and
+the a: human Regular in, model Bold out, the human Bold beneath for
+reference.
 
-![Held-out review sheet drawn with designbot: for the glyphs K, E, M, n, b, c and a, three rows show the human-drawn Regular input in green, the Bold drawn by Virtua-12M-0.7 in red, and the human-drawn Bold reference in gray. The a column's reference cell reads "never boldened": the Bold master never had a real a.](./fig-model-review.png)
+![Held-out review sheet drawn with designbot: for the glyphs K, E, M, n, b, c and a, three rows show the human-drawn Regular input in green, the Bold drawn by Virtua-12M-0.8 in red, and the human-drawn Bold reference in gray. The a column's reference cell reads "never boldened": the Bold master never had a real a.](./fig-model-review.png)
 
 The seventh column is the reason to keep going. Virtua's Bold master
 never had a real `a`: the slot held an unboldened copy of the Regular,
 flagged during the grid pass as the biggest gap in the font. So there is
 no reference to ghost in, and the model's `a` is the only Bold `a` the
 design has ever had. It is not finished (the eye finds the lumps within
-a second), but it is a draft where there was nothing, and it now sits in
-the Bold sources as a red-marked draft awaiting the human 2-unit pass.
+a second), but it is a draft where there was nothing: v0.7's attempt
+already sits in the Bold sources as a red-marked draft awaiting the
+human 2-unit pass, and the `a` below is v0.8's.
 
-![The letter a twice on the design grid, drawn with designbot in the Runebender point language: the hand-drawn Regular in green, and beside it the Bold in red, the first real Bold a in the design, drawn by Virtua-12M-0.7 from the Regular input.](./fig-model-bolden-a.png)
+![The letter a twice on the design grid, drawn with designbot in the Runebender point language: the hand-drawn Regular in green, and beside it the Bold in red, the first real Bold a in the design, drawn by Virtua-12M-0.8 from the Regular input.](./fig-model-bolden-a.png)
 
 ### 08. The Designspace Is a Data Factory
 
