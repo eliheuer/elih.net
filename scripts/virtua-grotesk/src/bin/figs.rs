@@ -25,7 +25,7 @@ const W: f64 = 2520.0;
 const H: f64 = 1320.0;
 const MARGIN: f64 = 96.0;
 const GAP: f64 = 96.0;
-const BASELINE_Y: f64 = 344.0; // canvas y of font y=0
+const BASELINE_Y: f64 = 300.0; // canvas y of font y=0, content centered between the rules
 const GRID_TOP: f64 = BASELINE_Y + 784.0;
 const GRID_BOTTOM: f64 = BASELINE_Y - 80.0;
 const HEADER_RULE_Y: f64 = 1224.0;
@@ -37,7 +37,7 @@ fn bg() -> Color {
     Color::rgb(0x10, 0x10, 0x10)
 }
 fn grid() -> Color {
-    Color::rgb(0x32, 0x32, 0x32)
+    Color::rgb(0x2a, 0x2a, 0x2a)
 }
 fn green() -> Color {
     Color::rgb(0x15, 0xc4, 0x74)
@@ -226,6 +226,7 @@ fn render_figure(
     mono: &str,
     panels: &[Panel],
     title: &str,
+    right: &str,
     caption: &str,
     out: &std::path::Path,
 ) {
@@ -250,7 +251,7 @@ fn render_figure(
     let grid_left = MARGIN - ((MARGIN % step + step) % step);
     {
         let ctx = &mut sheet.ctx;
-        ctx.no_fill().stroke(grid()).stroke_width(2.5);
+        ctx.no_fill().stroke(grid()).stroke_width(2.0);
         let mut x = grid_left;
         while x <= W - MARGIN {
             ctx.line(x, GRID_BOTTOM, x, GRID_TOP);
@@ -295,9 +296,11 @@ fn render_figure(
         sheet.ctx.draw_path(place * p.path.clone());
     }
 
-    // ── panel labels, green mono above the cap line ──
+    // ── panel labels, numbered and role-colored, above the cap line ──
     for (i, p) in panels.iter().enumerate() {
-        sheet.label(&p.label, cell_left(i), GRID_TOP + 44.0, 30.0, green(), -1);
+        let (_, color) = p.role.colors();
+        let txt = format!("{:02} {}", i + 1, p.label);
+        sheet.label(&txt, cell_left(i), GRID_TOP + 44.0, 30.0, color, -1);
     }
 
     // ── left-edge metric tags ──
@@ -313,14 +316,7 @@ fn render_figure(
         ctx.line(MARGIN, FOOTER_RULE_Y, W - MARGIN, FOOTER_RULE_Y);
     }
     sheet.label(title, MARGIN, HEADER_RULE_Y + 42.0, 30.0, green(), -1);
-    sheet.label(
-        "VIRTUA GROTESK / 12M PARAMS",
-        W - MARGIN,
-        HEADER_RULE_Y + 42.0,
-        30.0,
-        green(),
-        1,
-    );
+    sheet.label(right, W - MARGIN, HEADER_RULE_Y + 42.0, 30.0, green(), 1);
     sheet.label(caption, MARGIN, 64.0, 30.0, green(), -1);
     sheet.label(
         "GITHUB.COM/ELIHEUER/VIRTUA-GROTESK",
@@ -360,18 +356,20 @@ fn main() {
             "runs/v02/complete-R.svg",
             "fig-complete-r.png",
             "GLYPH COMPLETION",
+            "MODEL: VIRTUA-12M-0.2",
             "MODEL FINISHES A HELD-OUT GLYPH FROM 40% OF ITS OUTLINE",
         ),
         (
             "runs/night1/bolden-g.svg",
             "fig-bolden-g.png",
             "WEIGHT TRANSFER",
+            "MODEL: VIRTUA-12M (NIGHT 1)",
             "MODEL PREDICTS THE BOLD WEIGHT FROM THE REGULAR",
         ),
     ];
 
-    for (svg, png, title, caption) in figures {
+    for (svg, png, title, right, caption) in figures {
         let panels = parse_svg(&lab.join(svg));
-        render_figure(&renderer, &mono, &panels, title, caption, &post.join(png));
+        render_figure(&renderer, &mono, &panels, title, right, caption, &post.join(png));
     }
 }
