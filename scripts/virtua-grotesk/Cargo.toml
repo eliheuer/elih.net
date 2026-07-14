@@ -32,3 +32,7 @@ path = "src/bin/optical.rs"
 [[bin]]
 name = "grids"
 path = "src/bin/grids.rs"
+
+[[bin]]
+name = "proofs"
+path = "src/bin/proofs.rs"
