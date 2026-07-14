@@ -86,18 +86,25 @@ less exotic than it sounds. A power-of-two em is the TrueType convention (2048
 is standard, and [Inter](https://rsms.me/inter/) uses it), so 1024 just extends
 the same logic to the rest of the system. The full spec lives in the repo as
 [`DESIGN.md`](https://github.com/eliheuer/virtua-grotesk/blob/main/DESIGN.md),
-but the system is easier to draw than to tabulate. The two dimension
-sheets below are measured directly from the Regular sources, every
-dimension line anchored to real outline coordinates, so unlike a table
-they cannot drift out of date. First the whole Latin system on four
-glyphs, then the lowercase up close:
+but the system is easier to draw than to tabulate. The four dimension
+sheets below are measured directly from the sources, every dimension
+line anchored to real outline coordinates, so unlike a table they
+cannot drift out of date. They are drawn in the Runebender point
+language: circles are smooth on-curve points, squares are corners,
+small circles are the bézier handles, and the color of every point is
+its grid level. Green points sit on the 8-unit machine grid; red
+points sit off 8 on the 2-unit human grid, the optical corrections.
+Purple numbers are handle lengths from the favored set. First the
+whole Latin system, then the lowercase up close, then the two masters
+side by side, and the same system carrying Arabic:
 
-![Dimension sheet drawn with designbot: the word OHno set in Virtua Grotesk Regular on the design grid, with blue tags for cap and ascender height 768 (512 plus 256), x-height 576 (512 plus 64), baseline, descender minus 256, and the 16-unit overshoots, and green dimensions measuring the O curves at 108 and 100, the H stem at 104 and bar at 96, the n stem at 96, and the o curve at 100.](./fig-system-ohno.png)
+![Dimension sheet drawn with designbot: the word OHno set in Virtua Grotesk Regular on the design grid, every on-curve and off-curve point marked, green points on the 8-unit machine grid and red points off 8 on the 2-unit human grid, with blue tags for cap height 768, x-height 576, baseline, descender minus 256 and the overshoots, and green dimensions measuring the O curves at 108 and 100, the H stem at 104 and bar at 96, the n stem at 96, and the o curve at 100.](./fig-system-ohno.png)
 
-![Dimension sheet drawn with designbot: the word no set large in Virtua Grotesk Regular, with the n stem measured at 96, the o curves at 100 and 92, a 16-unit chamfer called out at the n's foot, x-height and overshoot lines tagged in blue, and hatched sidebearings with ink widths dimensioned below the baseline.](./fig-system-no.png)
+![Dimension sheet drawn with designbot: the word no set large in Virtua Grotesk Regular with full point annotation, the n stem measured at 96, the o curves at 100 and 92, purple handle lengths of 64, 96, 128 and 160, a 16-unit chamfer called out at the n's foot, and hatched sidebearings with ink widths dimensioned below the baseline.](./fig-system-no.png)
 
-(The Bold and Arabic stroke values, and the rest of the spec, are in
-`DESIGN.md`.)
+![Dimension sheet drawn with designbot: the word no twice, Regular then Bold, with full point annotation, green points on the machine grid and red optical corrections, stems measured at 96 and 192, curve strokes at 100 and 196, and a red callout naming an off-8 point an optical correction.](./fig-system-weights.png)
+
+![Dimension sheet drawn with designbot: alef, beh and medial heh reading right to left with full point annotation. The alef sits entirely on the 8-unit machine grid at stroke 96; the beh's calligraphic tail is dense with red 2-grid optical corrections, its boat stroke measures 72 and its dot 160 across.](./fig-system-arabic.png)
 
 One rule keeps it humane: **optical corrections.** The grid is a starting
 point, not a cage, and it is hierarchical, with the two levels splitting the
