@@ -50,6 +50,31 @@ fn main() {
     draw_grid(&mut sheet, &f, 784.0, -80.0);
     metric_lines(&mut sheet, &f, &[0.0, 576.0, 768.0], &[784.0, -16.0]);
 
+    // advance-boundary cell dividers: each sort in its own cell, the
+    // divider dropping from the top overshoot down to the deeper of the
+    // two adjacent dimension rows, with knockout nodes at the ends
+    let row_y = |j: i64| {
+        if j % 2 == 0 {
+            f.baseline - 188.0
+        } else {
+            f.baseline - 140.0
+        }
+    };
+    {
+        let mut bounds = vec![0.0];
+        let mut acc = 0.0;
+        for o in &outlines {
+            acc += o.width;
+            bounds.push(acc);
+        }
+        let n = outlines.len() as i64;
+        for (i, &b) in bounds.iter().enumerate() {
+            let i = i as i64;
+            let deepest = row_y(i.min(n - 1)).min(row_y((i - 1).clamp(0, n - 1)));
+            cell_dividers(&mut sheet, &[f.x(b)], f.y(784.0), deepest);
+        }
+    }
+
     // glyphs: hero fill + grid-level point language
     let mut ox = 0.0;
     for o in &outlines {
@@ -61,9 +86,8 @@ fn main() {
     // advance / sidebearing dimension zone, staggered rows like a real sheet
     let mut ox = 0.0;
     for (j, o) in outlines.iter().enumerate() {
-        let row_y = if j % 2 == 0 { f.baseline - 188.0 } else { f.baseline - 140.0 };
         let (i0, i1) = ink(o);
-        advance_row(&mut sheet, &f, row_y, &[(ox, o.width)], &[(i0, i1)]);
+        advance_row(&mut sheet, &f, row_y(j as i64), &[(ox, o.width)], &[(i0, i1)]);
         ox += o.width;
     }
 

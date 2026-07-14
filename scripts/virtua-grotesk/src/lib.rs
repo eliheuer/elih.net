@@ -628,6 +628,24 @@ pub fn legend(sheet: &mut Sheet, x_right: f64, y: f64) {
     sheet.ctx.oval(dot1, y + 1.0, 15.0, 15.0);
 }
 
+/// A blue knockout node circle at a line intersection (the little circles
+/// where cell dividers meet rules and dimension rows).
+pub fn node(sheet: &mut Sheet, x: f64, y: f64, r: f64) {
+    sheet.ctx.fill(bg()).stroke(blue()).stroke_width(PEN);
+    sheet.ctx.oval(x - r, y - r, r * 2.0, r * 2.0);
+}
+
+/// Blue advance-boundary dividers: one vertical per boundary, spanning
+/// y_top..y_bottom (canvas), with knockout nodes at both ends.
+pub fn cell_dividers(sheet: &mut Sheet, xs: &[f64], y_top: f64, y_bottom: f64) {
+    for &x in xs {
+        sheet.ctx.no_fill().stroke(blue()).stroke_width(PEN);
+        sheet.ctx.line(x, y_bottom, x, y_top);
+        node(sheet, x, y_top, 7.0);
+        node(sheet, x, y_bottom, 7.0);
+    }
+}
+
 /// Red leader + label calling out one optical-correction point.
 pub fn correction_callout(sheet: &mut Sheet, from: (f64, f64), text_at: (f64, f64), align: i8) {
     sheet.ctx.no_fill().stroke(red()).stroke_width(PEN);
