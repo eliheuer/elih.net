@@ -17,7 +17,7 @@
 //!
 //! Inputs read at render time, from sibling checkouts:
 //!     ~/GH/repos/virtua-grotesk/sources/VirtuaGrotesk-{Regular,Bold}.ufo
-//!     ~/GH/repos/font-garden-lab/runs/v07/pred.ufo   (model outputs)
+//!     ~/GH/repos/font-garden-lab/runs/vNN/pred.ufo   (newest run, auto-detected)
 //!     ~/GH/repos/google-fonts/ofl/geistmono/GeistMono[wght].ttf
 
 use designbot::prelude::*;
@@ -30,7 +30,24 @@ const MARGIN: f64 = 96.0;
 const HEADER_RULE_Y: f64 = 1224.0;
 const FOOTER_RULE_Y: f64 = 112.0;
 
-const MODEL_NAME: &str = "VIRTUA-12M-0.7";
+/// Newest font-garden-lab run that produced a pred.ufo, e.g. runs/v07 ->
+/// (".../runs/v07/pred.ufo", "VIRTUA-12M-0.7"). Keeps the figures pointed at
+/// the latest model with no code edit per run.
+fn latest_pred(home: &str) -> (std::path::PathBuf, String) {
+    let runs = std::path::PathBuf::from(home).join("GH/repos/font-garden-lab/runs");
+    let mut best: Option<(u32, std::path::PathBuf)> = None;
+    for entry in std::fs::read_dir(&runs).unwrap().flatten() {
+        let name = entry.file_name().to_string_lossy().to_string();
+        if let Some(num) = name.strip_prefix('v').and_then(|s| s.parse::<u32>().ok()) {
+            let pred = entry.path().join("pred.ufo");
+            if pred.is_dir() && best.as_ref().is_none_or(|(b, _)| num > *b) {
+                best = Some((num, pred));
+            }
+        }
+    }
+    let (num, pred) = best.expect("no runs/vNN/pred.ufo under font-garden-lab");
+    (pred, format!("VIRTUA-12M-{}.{}", num / 10, num % 10))
+}
 
 fn bg() -> Color {
     Color::rgb(0x10, 0x10, 0x10)
@@ -302,6 +319,7 @@ fn draw_points(sheet: &mut Sheet, o: &Outline, x: f64, baseline: f64, s: f64, co
 fn fig_review(
     renderer: &Renderer,
     mono: &str,
+    model_name: &str,
     reg: &std::path::Path,
     bold: &std::path::Path,
     pred: &std::path::Path,
@@ -333,7 +351,7 @@ fn fig_review(
             skip_a: false,
         },
         Row {
-            label: format!("02 OUTPUT / {MODEL_NAME}"),
+            label: format!("02 OUTPUT / {model_name}"),
             color: red(),
             dir: pred,
             skip_a: false,
@@ -372,7 +390,12 @@ fn fig_review(
                 );
                 continue;
             }
-            let o = load_outline(&row.dir.join("glyphs").join(glif_name(name)));
+            let glif = row.dir.join("glyphs").join(glif_name(name));
+            if !glif.is_file() {
+                sheet.label_padded("NOT IN RUN", slot_center, baseline + 74.0, 24.0, dim(), 0);
+                continue;
+            }
+            let o = load_outline(&glif);
             let x = slot_center - o.width * S / 2.0;
             draw_glyph(&mut sheet, &o, x, baseline, S, row.color);
         }
@@ -380,7 +403,7 @@ fn fig_review(
 
     sheet.frame(
         "WEIGHT TRANSFER / HELD-OUT REVIEW",
-        &format!("MODEL: {MODEL_NAME}"),
+        &format!("MODEL: {model_name}"),
         "THE MODEL NEVER SAW THESE BOLDS; THE BOLD a HAS NO HUMAN REFERENCE",
     );
     sheet.save(renderer, out);
@@ -391,6 +414,7 @@ fn fig_review(
 fn fig_bolden_a(
     renderer: &Renderer,
     mono: &str,
+    model_name: &str,
     reg: &std::path::Path,
     bold: &std::path::Path,
     out: &std::path::Path,
@@ -481,7 +505,7 @@ fn fig_bolden_a(
         0,
     );
     sheet.label(
-        &format!("BOLD / DRAWN BY {MODEL_NAME}"),
+        &format!("BOLD / DRAWN BY {model_name}"),
         x_bold + o_bold.width * S / 2.0,
         label_y,
         26.0,
@@ -491,7 +515,7 @@ fn fig_bolden_a(
 
     sheet.frame(
         "WEIGHT TRANSFER / THE FIRST BOLD a",
-        &format!("MODEL: {MODEL_NAME}"),
+        &format!("MODEL: {model_name}"),
         "THE BOLD MASTER NEVER HAD A REAL a; THE MODEL DREW THIS ONE",
     );
     sheet.save(renderer, out);
@@ -505,7 +529,8 @@ fn main() {
     let sources = std::path::PathBuf::from(&home).join("GH/repos/virtua-grotesk/sources");
     let reg = sources.join("VirtuaGrotesk-Regular.ufo");
     let bold = sources.join("VirtuaGrotesk-Bold.ufo");
-    let pred = std::path::PathBuf::from(&home).join("GH/repos/font-garden-lab/runs/v07/pred.ufo");
+    let (pred, model_name) = latest_pred(&home);
+    println!("model: {model_name} ({})", pred.display());
 
     let mut renderer = Renderer::new(W as u32, H as u32);
     let mono = load_family(&mut renderer, &mono_path);
@@ -521,10 +546,18 @@ fn main() {
     fig_review(
         &renderer,
         &mono,
+        &model_name,
         &reg,
         &bold,
         &pred,
         &post.join("fig-model-review.png"),
     );
-    fig_bolden_a(&renderer, &mono, &reg, &bold, &post.join("fig-model-bolden-a.png"));
+    fig_bolden_a(
+        &renderer,
+        &mono,
+        &model_name,
+        &reg,
+        &bold,
+        &post.join("fig-model-bolden-a.png"),
+    );
 }
