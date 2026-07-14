@@ -361,7 +361,7 @@ impl Sheet<'_> {
         self.label(right, W - MARGIN, HEADER_RULE_Y + 24.0, FRAME_TEXT, green(), 1);
         self.label(caption, MARGIN, 64.0, FRAME_TEXT, green(), -1);
         self.label(
-            "GITHUB.COM/ELIHEUER/VIRTUA-GROTESK",
+            "github.com/eliheuer/virtua-grotesk",
             W - MARGIN,
             64.0,
             FRAME_TEXT,
@@ -613,8 +613,8 @@ pub fn annotate(sheet: &mut Sheet, o: &Outline, s: f64, x0: f64, baseline: f64) 
 /// The machine/hand legend, one row, right-aligned at (x_right, y baseline).
 pub fn legend(sheet: &mut Sheet, x_right: f64, y: f64) {
     let size = LEGEND_TEXT;
-    let t2 = "OFF 8, ON 2 = THE HAND";
-    let t1 = "ON 8 = MACHINE";
+    let t2 = "off 8, on 2 = the hand";
+    let t1 = "on 8 = machine";
     let w2 = sheet.mono_width(t2, size);
     let w1 = sheet.mono_width(t1, size);
     let x2 = x_right - w2;
@@ -653,7 +653,7 @@ pub fn correction_callout(sheet: &mut Sheet, from: (f64, f64), text_at: (f64, f6
     sheet.ctx.line(from.0, from.1, text_at.0, text_at.1 + 8.0);
     let dx = if align < 0 { 10.0 } else { -10.0 };
     sheet.label_padded(
-        "OFF 8, ON 2: OPTICAL CORRECTION",
+        "off 8, on 2: optical correction",
         text_at.0 + dx,
         text_at.1,
         LEGEND_TEXT,
