@@ -35,8 +35,8 @@ struct Geom {
     cap: bool,       // draw the cap-height line + tag
     descender: bool, // draw the descender line + tag
 }
-const HEADER_RULE_Y: f64 = 1224.0;
-const FOOTER_RULE_Y: f64 = 96.0;
+const HEADER_RULE_Y: f64 = 1178.0;
+const FOOTER_RULE_Y: f64 = 142.0;
 const SVG_BASELINE: f64 = 900.0; // font-garden-lab SVGs put the baseline here
 
 // Theme tokens, shared with og.rs.
@@ -354,11 +354,11 @@ fn render_figure(
     }
     sheet.label(title, MARGIN, HEADER_RULE_Y + 24.0, 30.0, green(), -1);
     sheet.label(right, W - MARGIN, HEADER_RULE_Y + 24.0, 30.0, green(), 1);
-    sheet.label(caption, MARGIN, 50.0, 30.0, green(), -1);
+    sheet.label(caption, MARGIN, 96.0, 30.0, green(), -1);
     sheet.label(
         "GITHUB.COM/ELIHEUER/VIRTUA-GROTESK",
         W - MARGIN,
-        50.0,
+        96.0,
         30.0,
         green(),
         1,
@@ -396,8 +396,8 @@ fn main() {
         descender: false,
     };
     let desc_geom = Geom {
-        baseline: 435.0,
-        top: 656.0,
+        baseline: 459.0,
+        top: 608.0,
         bottom: -272.0,
         cap: false,
         descender: true,

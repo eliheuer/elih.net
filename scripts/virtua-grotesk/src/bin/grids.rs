@@ -32,8 +32,8 @@ const H: f64 = 1320.0;
 const MARGIN: f64 = 96.0;
 const GAP: f64 = 96.0;
 const SLOT: f64 = (W - 2.0 * MARGIN - GAP) / 2.0; // 1116
-const HEADER_RULE_Y: f64 = 1224.0;
-const FOOTER_RULE_Y: f64 = 96.0;
+const HEADER_RULE_Y: f64 = 1178.0;
+const FOOTER_RULE_Y: f64 = 142.0;
 
 // The crop, in font units, and its scale on the canvas.
 const UX0: f64 = 64.0;
@@ -479,7 +479,7 @@ fn main() {
     sheet.label(
         "LOWER BOWL OF a, REGULAR. SAME OUTLINE BOTH PANELS; ONLY THE NESTED GRID LABELS THE HAND",
         MARGIN,
-        50.0,
+        96.0,
         30.0,
         green(),
         -1,
@@ -487,7 +487,7 @@ fn main() {
     sheet.label(
         "GITHUB.COM/ELIHEUER/VIRTUA-GROTESK",
         W - MARGIN,
-        50.0,
+        96.0,
         30.0,
         green(),
         1,

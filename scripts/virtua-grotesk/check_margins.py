@@ -44,9 +44,16 @@ def lint(path):
     if (w, h) != (2520, 1320):
         return [f"SKIP ({w}x{h}, not a 2520x1320 sheet)"]
 
-    header_row = 96  # image row of the header rule (canvas y 1224)
-    footer_row = 1224  # image row of the footer rule (canvas y 96)
+    header_row = 142  # image row of the header rule (canvas y 1178)
+    footer_row = 1178  # image row of the footer rule (canvas y 142)
     problems = []
+
+    # outermost ink must sit MARGIN from every canvas edge
+    ink = bbox(im, (0, 0, w, h))
+    for name, gap in [("left", ink[0]), ("top", ink[1]),
+                      ("right", w - ink[2]), ("bottom", h - ink[3])]:
+        if abs(gap - 96) > 6:
+            problems.append(f"outer {name} margin {gap} (spec 96)")
 
     # frame text: nearest ink to each rule from the outside
     top = bbox(im, (0, 0, w, header_row - 4))

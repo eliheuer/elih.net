@@ -18,8 +18,8 @@ use designbot_render::Renderer;
 const W: f64 = 2520.0;
 const H: f64 = 1320.0;
 const MARGIN: f64 = 96.0;
-const HEADER_RULE_Y: f64 = 1224.0;
-const FOOTER_RULE_Y: f64 = 96.0;
+const HEADER_RULE_Y: f64 = 1178.0;
+const FOOTER_RULE_Y: f64 = 142.0;
 
 fn bg() -> Color {
     Color::rgb(0x10, 0x10, 0x10)
@@ -146,11 +146,11 @@ impl Sheet<'_> {
             green(),
             1,
         );
-        self.label(caption, MARGIN, 50.0, 30.0, green(), -1);
+        self.label(caption, MARGIN, 96.0, 30.0, green(), -1);
         self.label(
             "GITHUB.COM/ELIHEUER/VIRTUA-GROTESK",
             W - MARGIN,
-            50.0,
+            96.0,
             30.0,
             green(),
             1,
@@ -384,8 +384,8 @@ fn fig_ladder(renderer: &Renderer, mono: &str, out: &std::path::Path) {
 
     let col_x = [387.0, 969.0, 1551.0, 2133.0];
     let titles = ["EM 1024", "EM 1000", "EM 729 = 3^6", "EM 700"];
-    let y_top = 1040.0;
-    let dy = 76.0;
+    let y_top = 1000.0;
+    let dy = 72.0;
     let box_w = 180.0;
     let box_h = 46.0;
 
@@ -429,7 +429,7 @@ fn fig_ladder(renderer: &Renderer, mono: &str, out: &std::path::Path) {
 
     for (i, chain) in chains.iter().enumerate() {
         let x = col_x[i];
-        sheet.label(titles[i], x, 1140.0, 30.0, chain.color, 0);
+        sheet.label(titles[i], x, 1104.0, 30.0, chain.color, 0);
         for (j, v) in chain.values.iter().enumerate() {
             let y_c = y_top - j as f64 * dy; // box center
             sheet.ctx.no_fill().stroke(chain.color).stroke_width(2.5);
@@ -448,7 +448,7 @@ fn fig_ladder(renderer: &Renderer, mono: &str, out: &std::path::Path) {
             sheet.label("\u{d7}", x, y_c - 9.0, 34.0, red(), 0);
             sheet.label(msg, x, y_c - 60.0, 24.0, red(), 0);
         }
-        sheet.label(chain.verdict.0, x, 168.0, 24.0, chain.verdict.1, 0);
+        sheet.label(chain.verdict.0, x, 196.0, 24.0, chain.verdict.1, 0);
     }
 
     sheet.frame(

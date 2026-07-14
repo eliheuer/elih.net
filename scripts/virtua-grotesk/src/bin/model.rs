@@ -27,8 +27,8 @@ use kurbo::{Affine, BezPath, Shape};
 const W: f64 = 2520.0;
 const H: f64 = 1320.0;
 const MARGIN: f64 = 96.0;
-const HEADER_RULE_Y: f64 = 1224.0;
-const FOOTER_RULE_Y: f64 = 96.0;
+const HEADER_RULE_Y: f64 = 1178.0;
+const FOOTER_RULE_Y: f64 = 142.0;
 
 /// Newest font-garden-lab run that produced a pred.ufo, e.g. runs/v07 ->
 /// (".../runs/v07/pred.ufo", "VIRTUA-12M-0.7"). Keeps the figures pointed at
@@ -269,11 +269,11 @@ impl Sheet<'_> {
         self.ctx.line(MARGIN, FOOTER_RULE_Y, W - MARGIN, FOOTER_RULE_Y);
         self.label(title, MARGIN, HEADER_RULE_Y + 24.0, 30.0, green(), -1);
         self.label(right, W - MARGIN, HEADER_RULE_Y + 24.0, 30.0, green(), 1);
-        self.label(caption, MARGIN, 50.0, 30.0, green(), -1);
+        self.label(caption, MARGIN, 96.0, 30.0, green(), -1);
         self.label(
             "GITHUB.COM/ELIHEUER/VIRTUA-GROTESK",
             W - MARGIN,
-            50.0,
+            96.0,
             30.0,
             green(),
             1,
@@ -431,8 +431,8 @@ fn fig_bolden_a(
     };
     sheet.ctx.background(bg());
 
-    const S: f64 = 1.3;
-    const BASELINE: f64 = 330.0;
+    const S: f64 = 1.25;
+    const BASELINE: f64 = 338.0;
     let grid_bottom = BASELINE - 64.0 * S; // 212.8
     let grid_top = BASELINE + 640.0 * S; // 1128.8
 
@@ -500,7 +500,7 @@ fn fig_bolden_a(
     sheet.metric_tag("BASELINE 0", MARGIN, BASELINE, true);
 
     // captions under the run, centered per glyph
-    let label_y = 158.0;
+    let label_y = 182.0;
     sheet.label(
         "REGULAR / DRAWN BY HAND",
         x_reg + o_reg.width * S / 2.0,
