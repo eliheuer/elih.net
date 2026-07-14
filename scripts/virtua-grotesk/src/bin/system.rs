@@ -405,7 +405,8 @@ fn fig_semantic(renderer: &Renderer, mono: &str, reg: &std::path::Path, out: &st
         -1,
     );
     sheet.label("(held-out Bolds, raw model output)", rx, 528.0, SMALL_TEXT, gray(), -1);
-    let bar_max = W - MARGIN - (rx + 310.0) - 84.0;
+    // scale so the longest bar's percent label ends at the margin
+    let bar_max = (W - MARGIN - 76.0 - (rx + 310.0)) / 0.85;
     let bar = |sheet: &mut Sheet, y: f64, frac: f64, color: Color, label: &str, pct: &str| {
         sheet.label(label, rx + 290.0, y + 8.0, LEGEND_TEXT, color, 1);
         let w = (bar_max * frac).max(6.0);
