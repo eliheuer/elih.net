@@ -40,3 +40,7 @@ path = "src/bin/proofs.rs"
 [[bin]]
 name = "model"
 path = "src/bin/model.rs"
+
+[[bin]]
+name = "system"
+path = "src/bin/system.rs"

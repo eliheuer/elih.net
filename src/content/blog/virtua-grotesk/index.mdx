@@ -83,34 +83,19 @@ down to the UPM (units per em) itself: 1024 (2^10) rather than the usual 1000. T
 less exotic than it sounds. A power-of-two em is the TrueType convention (2048
 is standard, and [Inter](https://rsms.me/inter/) uses it), so 1024 just extends
 the same logic to the rest of the system. The full spec lives in the repo as
-[`DESIGN.md`](https://github.com/eliheuer/virtua-grotesk/blob/main/DESIGN.md);
-the key measurements are:
+[`DESIGN.md`](https://github.com/eliheuer/virtua-grotesk/blob/main/DESIGN.md),
+but the system is easier to draw than to tabulate. The two dimension
+sheets below are measured directly from the Regular sources, every
+dimension line anchored to real outline coordinates, so unlike a table
+they cannot drift out of date. First the whole Latin system on four
+glyphs, then the lowercase up close:
 
-| Measurement | Value | Note |
-| --- | --- | --- |
-| UPM | 1024 | 2^10 |
-| Drawing Grid | 2 units | prefer even coordinates |
-| Ascender | 768 | shared with cap height |
-| Cap Height | 768 | 512 + 256 |
-| X-Height | 576 | 512 + 64 |
-| Descender | −256 | −2^8 |
-| Chamfers | 16 units | the signature corner cut |
-| Favored Measurements | 2, 4, 8, 16, 32, 64, 128 | or short sums of them |
+![Dimension sheet drawn with designbot: the word OHno set in Virtua Grotesk Regular on the design grid, with blue tags for cap and ascender height 768 (512 plus 256), x-height 576 (512 plus 64), baseline, descender minus 256, and the 16-unit overshoots, and green dimensions measuring the O curves at 108 and 100, the H stem at 104 and bar at 96, the n stem at 96, and the o curve at 100.](./fig-system-ohno.png)
 
-Stroke weights, in units, for each master:
+![Dimension sheet drawn with designbot: the word no set large in Virtua Grotesk Regular, with the n stem measured at 96, the o curves at 100 and 92, a 16-unit chamfer called out at the n's foot, x-height and overshoot lines tagged in blue, and hatched sidebearings with ink widths dimensioned below the baseline.](./fig-system-no.png)
 
-| Stroke | Regular | Bold |
-| --- | --- | --- |
-| Lowercase Stem | 96 | 192 |
-| Lowercase Bar | 88 | 152 |
-| Uppercase Stem | 104 | 200 |
-| Uppercase Bar | 96 | 160 |
-| Lowercase Curve Vertical | 100 | 196 |
-| Lowercase Curve Horizontal | 92 | 156 |
-| Uppercase Curve Vertical | 110 | 192 |
-| Uppercase Curve Horizontal | 102 | 184 |
-| Arabic Vertical | 96 | 192 |
-| Arabic Horizontal | 88 | 152 |
+(The Bold and Arabic stroke values, and the rest of the spec, are in
+`DESIGN.md`.)
 
 One rule keeps it humane: **optical corrections.** The grid is a starting
 point, not a cage, and it is hierarchical, with the two levels splitting the
