@@ -78,7 +78,7 @@ fn fig_ohno(renderer: &Renderer, mono: &str, reg: &std::path::Path, out: &std::p
     sheet.frame(
         "THE LATIN SYSTEM / OHno",
         "VIRTUA GROTESK / EM 1024 = 2^10",
-        "METRICS ON THE 64-GRID; STROKES FROM 2 4 8 16 32 64 128 AND SHORT SUMS OF THEM",
+        "METRICS ON THE 64-GRID, STEMS ON THE 8-GRID, CURVES = STEM \u{b1} 4: EVERY LEVEL AT WORK",
     );
     sheet.save(renderer, out);
 }
@@ -135,7 +135,7 @@ fn fig_no(renderer: &Renderer, mono: &str, reg: &std::path::Path, out: &std::pat
     sheet.frame(
         "THE LOWERCASE SYSTEM / no",
         "VIRTUA GROTESK / EM 1024 = 2^10",
-        "EVERY MEASUREMENT A SHORT SUM OF POWERS OF TWO: 96 = 64+32, 100 = 64+32+4, 92 = 64+16+8+4",
+        "STEM 96 = 3\u{b7}32, ON THE 32-GRID; CURVES 100 = 96+4 AND 92 = 96-4, THE HAND'S \u{b1}4",
     );
     sheet.save(renderer, out);
 }
@@ -209,7 +209,7 @@ fn fig_weights(
     sheet.frame(
         "TWO MASTERS, ONE SYSTEM / no no",
         "VIRTUA GROTESK / EM 1024 = 2^10",
-        "THE BOLD IS THE SAME GRID: STEM 96 -> 192, CURVE 100 -> 196, EVERY DELTA IN FAVORED UNITS",
+        "THE BOLD IS THE SAME SYSTEM: STEM 96 -> 192 = 96\u{b7}2, AND AGAIN CURVE 196 = STEM + 4",
     );
     sheet.save(renderer, out);
 }

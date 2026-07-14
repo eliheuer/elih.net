@@ -141,11 +141,24 @@ ways:
 start-point conventions across every glyph: the model spends its capacity
 learning the *design system* instead of averaging over five hundred
 designers' bézier habits.
-2. **Constraints make outputs checkable.** If every legal coordinate is even
-and every stem is a power-of-two sum, then a generated glyph can be
-*verified* mechanically: off-grid points are detectable and snappable,
-wrong stem weights are measurable. Generation quality becomes
-measurable and an eval loop can grind at it overnight.
+2. **Constraints make outputs checkable.** If every legal coordinate is even,
+every structural value is a multiple of 8, and every measurement comes
+from a small closed vocabulary (a stem is 96, everywhere, always), then a
+generated glyph can be *verified* mechanically: off-grid points are
+detectable and snappable, wrong stem weights are measurable. Generation
+quality becomes measurable and an eval loop can grind at it overnight.
+
+A note on stating that precisely, because an earlier draft said the
+stems were "power-of-two sums" and Simon Cozens correctly pointed out
+that every integer is one; that is what binary means. The property with
+content is not decomposability but *trailing zeros*: 96 is a multiple
+of 32 and 95 is a multiple of nothing, so 96 sits five rungs up the
+ladder of section 03 and 95 sits on the floor. And the stroke weights
+that look arbitrary are the two-tier grid in action: the lowercase
+curve strokes are 100 and 92, which is the 96 stem plus and minus 4,
+the hand's optical compensation for curves, recorded on the fine grid.
+The system is machine values with many trailing zeros, corrected by the
+eye in units of 2 and 4.
 
 One honest caveat: the win here is mostly coarseness and regularity, not just base two. The
 model reads each coordinate as a token and never sees its digits, so it would
@@ -728,11 +741,12 @@ recorded human optical correction. The grid is the annotator, so the
 labeling pass costs nothing.
 
 **The differences are a small vocabulary.** Stems, sidebearings, chamfers,
-and the Regular-to-Bold deltas of section 07 are all drawn from 2, 4, 8,
-16, 32, 64, 128 and short sums of them, a set closed under halving and
-doubling, so making a glyph bolder moves its measurements within the same
-small set. Boldening collapses from predicting arbitrary integers to
-choosing among a few dozen familiar offsets.
+and the Regular-to-Bold deltas of section 07 are all drawn from a lexicon
+of a few dozen values, each one either a machine value with three or more
+trailing zero bits or a recorded ±2 or ±4 hand offset from one, and the
+lexicon recurs: the Bold stem is the Regular stem doubled, the Bold curve
+is the Bold stem plus the same 4. Boldening collapses from predicting
+arbitrary integers to choosing among a few dozen familiar offsets.
 
 **Every modality shares the lattice.** Render a 1024-em glyph at 1024
 pixels and one font unit is one pixel; the dimension sheet at the top of

@@ -88,7 +88,8 @@ pub fn fill_strong(stroke: Color) -> Color {
     Color::rgba(stroke.r, stroke.g, stroke.b, 104)
 }
 
-/// Handle lengths worth calling out: the favored set, 2^k and short sums.
+/// Handle lengths worth calling out: the values the system actually
+/// reuses (all with high 2-adic valuation or stem-adjacent).
 pub const FAVORED: [f64; 7] = [64.0, 96.0, 128.0, 160.0, 192.0, 224.0, 256.0];
 
 // --- UFO outline loading, components resolved ----------------------------------------
