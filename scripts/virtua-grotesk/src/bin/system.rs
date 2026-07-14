@@ -30,9 +30,9 @@ use kurbo::{Affine, BezPath};
 
 const W: f64 = 2520.0;
 const H: f64 = 1320.0;
-const MARGIN: f64 = 96.0;
-const HEADER_RULE_Y: f64 = 1178.0;
-const FOOTER_RULE_Y: f64 = 142.0;
+const MARGIN: f64 = 64.0;
+const HEADER_RULE_Y: f64 = 1210.0;
+const FOOTER_RULE_Y: f64 = 110.0;
 
 fn bg() -> Color {
     Color::rgb(0x10, 0x10, 0x10)
@@ -255,11 +255,11 @@ impl Sheet<'_> {
             green(),
             1,
         );
-        self.label(caption, MARGIN, 96.0, 30.0, green(), -1);
+        self.label(caption, MARGIN, 64.0, 30.0, green(), -1);
         self.label(
             "GITHUB.COM/ELIHEUER/VIRTUA-GROTESK",
             W - MARGIN,
-            96.0,
+            64.0,
             30.0,
             green(),
             1,
@@ -380,12 +380,12 @@ fn fig_no(renderer: &Renderer, mono: &str, glyphs_dir: &std::path::Path, out: &s
     let n = load_outline(&glyphs_dir.join(glif_name("n")));
     let o = load_outline(&glyphs_dir.join(glif_name("o")));
 
-    const S: f64 = 1.3;
+    const S: f64 = 1.35;
     let run = (n.width + o.width) * S;
     let f = Frame {
         s: S,
         x0: MARGIN + (W - 2.0 * MARGIN - run) / 2.0,
-        baseline: 310.0,
+        baseline: 294.0,
     };
 
     draw_grid(&mut sheet, &f, 640.0, -64.0);
@@ -429,7 +429,7 @@ fn fig_no(renderer: &Renderer, mono: &str, glyphs_dir: &std::path::Path, out: &s
     advance_row(
         &mut sheet,
         &f,
-        204.0,
+        188.0,
         &[(0.0, n.width, 64.0), (n.width, o.width, 32.0)],
         &[(64.0, 528.0), (32.0, 584.0)],
     );
@@ -456,7 +456,7 @@ fn fig_ohno(renderer: &Renderer, mono: &str, glyphs_dir: &std::path::Path, out: 
     let n = load_outline(&glyphs_dir.join(glif_name("n")));
     let o = load_outline(&glyphs_dir.join(glif_name("o")));
 
-    const S: f64 = 0.78;
+    const S: f64 = 0.84;
     let advances = [cap_o.width, cap_h.width, n.width, o.width];
     let run: f64 = advances.iter().sum::<f64>() * S;
     // content spans font -256..784; center it between the rules

@@ -23,7 +23,7 @@ use kurbo::{Affine, BezPath, Shape};
 
 const W: f64 = 2520.0;
 const H: f64 = 1320.0;
-const MARGIN: f64 = 96.0;
+const MARGIN: f64 = 64.0;
 const GAP: f64 = 96.0;
 /// Per-figure content geometry, so descender-deep glyphs (the g) get a
 /// deeper grid and cap-height figures keep the cap line. Baselines are set
@@ -35,8 +35,8 @@ struct Geom {
     cap: bool,       // draw the cap-height line + tag
     descender: bool, // draw the descender line + tag
 }
-const HEADER_RULE_Y: f64 = 1178.0;
-const FOOTER_RULE_Y: f64 = 142.0;
+const HEADER_RULE_Y: f64 = 1210.0;
+const FOOTER_RULE_Y: f64 = 110.0;
 const SVG_BASELINE: f64 = 900.0; // font-garden-lab SVGs put the baseline here
 
 // Theme tokens, shared with og.rs.
@@ -354,11 +354,11 @@ fn render_figure(
     }
     sheet.label(title, MARGIN, HEADER_RULE_Y + 24.0, 30.0, green(), -1);
     sheet.label(right, W - MARGIN, HEADER_RULE_Y + 24.0, 30.0, green(), 1);
-    sheet.label(caption, MARGIN, 96.0, 30.0, green(), -1);
+    sheet.label(caption, MARGIN, 64.0, 30.0, green(), -1);
     sheet.label(
         "GITHUB.COM/ELIHEUER/VIRTUA-GROTESK",
         W - MARGIN,
-        96.0,
+        64.0,
         30.0,
         green(),
         1,

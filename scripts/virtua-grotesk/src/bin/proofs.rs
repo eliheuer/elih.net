@@ -17,9 +17,9 @@ use designbot_render::Renderer;
 
 const W: f64 = 2520.0;
 const H: f64 = 1320.0;
-const MARGIN: f64 = 96.0;
-const HEADER_RULE_Y: f64 = 1178.0;
-const FOOTER_RULE_Y: f64 = 142.0;
+const MARGIN: f64 = 64.0;
+const HEADER_RULE_Y: f64 = 1210.0;
+const FOOTER_RULE_Y: f64 = 110.0;
 
 fn bg() -> Color {
     Color::rgb(0x10, 0x10, 0x10)
@@ -146,11 +146,11 @@ impl Sheet<'_> {
             green(),
             1,
         );
-        self.label(caption, MARGIN, 96.0, 30.0, green(), -1);
+        self.label(caption, MARGIN, 64.0, 30.0, green(), -1);
         self.label(
             "GITHUB.COM/ELIHEUER/VIRTUA-GROTESK",
             W - MARGIN,
-            96.0,
+            64.0,
             30.0,
             green(),
             1,
