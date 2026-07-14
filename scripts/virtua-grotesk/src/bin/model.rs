@@ -46,7 +46,12 @@ fn latest_pred(home: &str) -> (std::path::PathBuf, String) {
         }
     }
     let (num, pred) = best.expect("no runs/vNN/pred.ufo under font-garden-lab");
-    (pred, format!("VIRTUA-12M-{}.{}", num / 10, num % 10))
+    // a run can pin its exact public name (e.g. the param count changed):
+    // echo "VIRTUA-25M-0.9" > runs/vNN/model-name.txt
+    let name = std::fs::read_to_string(pred.parent().unwrap().join("model-name.txt"))
+        .map(|s| s.trim().to_uppercase())
+        .unwrap_or_else(|_| format!("VIRTUA-12M-{}.{}", num / 10, num % 10));
+    (pred, name)
 }
 
 fn bg() -> Color {
