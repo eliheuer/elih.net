@@ -298,44 +298,45 @@ fn fig_semantic(renderer: &Renderer, mono: &str, reg: &std::path::Path, out: &st
     let n = load_outline(reg, "n");
     let o = load_outline(reg, "o");
 
-    const S: f64 = 1.15;
+    const S: f64 = 1.35;
     let f = Frame {
         s: S,
         x0: 104.0,
-        baseline: 330.0,
+        baseline: 272.0,
     };
-    let left_end = f.x(n.width + o.width) + 24.0;
 
-    // the multi-layer grid itself, Runebender style: faint 8, brighter 64
+    // the multi-layer grid itself, in glyph units with clean 8-multiple
+    // bounds: a whisper of 2, crisp 8 (the machine grid), brighter 64
+    const U0: f64 = -24.0;
+    const U1: f64 = 1216.0;
+    const V0: f64 = -48.0;
+    const V1: f64 = 624.0;
     {
-        let (y0, y1) = (f.y(-64.0), f.y(640.0));
-        for (step_u, color, wpen) in [
-            (8.0, Color::rgb(0x20, 0x20, 0x20), 1.0),
-            (64.0, Color::rgb(0x3c, 0x3c, 0x3c), 2.0),
+        let ctx = &mut sheet.ctx;
+        for (step, color, wpen) in [
+            (2.0, Color::rgb(0x15, 0x15, 0x15), 0.75),
+            (8.0, Color::rgb(0x30, 0x30, 0x30), 1.5),
+            (64.0, Color::rgb(0x46, 0x46, 0x46), 2.5),
         ] {
-            let step = step_u * S;
-            let ctx = &mut sheet.ctx;
             ctx.no_fill().stroke(color).stroke_width(wpen);
-            let mut x = f.x(0.0) - ((f.x(0.0) - MARGIN) / step).floor() * step;
-            while x <= left_end {
-                ctx.line(x, y0, x, y1);
-                x += step;
+            let mut u = U0;
+            while u <= U1 {
+                ctx.line(f.x0 + u * S, f.baseline + V0 * S, f.x0 + u * S, f.baseline + V1 * S);
+                u += step;
             }
-            let mut y = f.y(0.0) - ((f.y(0.0) - y0) / step).floor() * step;
-            while y <= y1 {
-                ctx.line(MARGIN, y, left_end, y);
-                y += step;
+            let mut v = V0;
+            while v <= V1 {
+                ctx.line(f.x0 + U0 * S, f.baseline + v * S, f.x0 + U1 * S, f.baseline + v * S);
+                v += step;
             }
         }
-        let ctx = &mut sheet.ctx;
         ctx.no_fill().stroke(blue()).stroke_width(PEN);
         for uy in [0.0, 576.0] {
-            ctx.line(MARGIN, f.y(uy), left_end, f.y(uy));
+            ctx.line(f.x(U0), f.y(uy), f.x(U1), f.y(uy));
         }
     }
 
-    // glyphs with the full technical treatment: points by layer, handle
-    // lengths in purple, extrema coordinates in gray
+    // glyphs with the full technical treatment
     annotate(&mut sheet, &n, S, f.x(0.0), f.baseline);
     annotate(&mut sheet, &o, S, f.x(n.width), f.baseline);
 
@@ -351,46 +352,45 @@ fn fig_semantic(renderer: &Renderer, mono: &str, reg: &std::path::Path, out: &st
 
     sheet.metric_tag("x-height 576", MARGIN, f.y(576.0), true, -1);
     sheet.metric_tag("baseline 0", MARGIN, f.y(0.0), false, -1);
-    legend(&mut sheet, left_end - 10.0, 208.0);
 
-    // ---- right column -------------------------------------------------------------
-    let rx = left_end + 56.0;
+    // ---- right column, compressed ---------------------------------------------------
+    let rx = f.x(U1) + 52.0;
 
     sheet.label("Every integer is a sum of powers of two.", rx, 1096.0, LEGEND_TEXT, gray(), -1);
     sheet.label("The meaning is the trailing zeros:", rx, 1052.0, LEGEND_TEXT, gray(), -1);
 
     let bit_row = |sheet: &mut Sheet, value: u32, y0: f64, color: Color, tag: &str| {
-        let cell = 52.0;
-        let gap = 8.0;
-        sheet.label(&value.to_string(), rx + 56.0, y0 + 14.0, DIM_TEXT, color, 1);
+        let cell = 44.0;
+        let gap = 6.0;
+        sheet.label(&value.to_string(), rx + 52.0, y0 + 10.0, DIM_TEXT, color, 1);
         for b in 0..7u32 {
             let bit = (value >> (6 - b)) & 1;
-            let x = rx + 76.0 + b as f64 * (cell + gap);
+            let x = rx + 68.0 + b as f64 * (cell + gap);
             if bit == 1 {
                 sheet.ctx.fill(color).stroke(color).stroke_width(PEN_LIGHT);
                 sheet.ctx.rect(x, y0, cell, cell);
-                sheet.label("1", x + cell / 2.0, y0 + cell * 0.3, 30.0, bg(), 0);
+                sheet.label("1", x + cell / 2.0, y0 + cell * 0.28, 26.0, bg(), 0);
             } else {
                 sheet.ctx.no_fill().stroke(dim_color()).stroke_width(PEN_LIGHT);
                 sheet.ctx.rect(x, y0, cell, cell);
-                sheet.label("0", x + cell / 2.0, y0 + cell * 0.3, 30.0, dim_color(), 0);
+                sheet.label("0", x + cell / 2.0, y0 + cell * 0.28, 26.0, dim_color(), 0);
             }
         }
         let zeros = value.trailing_zeros();
-        let x_start = rx + 76.0 + (7 - zeros) as f64 * (cell + gap);
-        let x_end = rx + 76.0 + 7.0 * (cell + gap) - gap;
+        let x_start = rx + 68.0 + (7 - zeros) as f64 * (cell + gap);
+        let x_end = rx + 68.0 + 7.0 * (cell + gap) - gap;
         sheet.ctx.no_fill().stroke(color).stroke_width(PEN);
-        sheet.ctx.line(x_start, y0 - 14.0, x_end, y0 - 14.0);
-        sheet.ctx.line(x_start, y0 - 14.0, x_start, y0 - 4.0);
-        sheet.ctx.line(x_end, y0 - 14.0, x_end, y0 - 4.0);
-        sheet.label(tag, x_end + 24.0, y0 + 14.0, LEGEND_TEXT, color, -1);
+        sheet.ctx.line(x_start, y0 - 12.0, x_end, y0 - 12.0);
+        sheet.ctx.line(x_start, y0 - 12.0, x_start, y0 - 4.0);
+        sheet.ctx.line(x_end, y0 - 12.0, x_end, y0 - 4.0);
+        sheet.label(tag, x_end + 20.0, y0 + 10.0, LEGEND_TEXT, color, -1);
     };
-    bit_row(&mut sheet, 96, 924.0, green(), "on 32: machine");
-    bit_row(&mut sheet, 100, 808.0, red(), "on 4: the hand");
+    bit_row(&mut sheet, 96, 934.0, green(), "on 32: machine");
+    bit_row(&mut sheet, 100, 818.0, red(), "on 4: the hand");
     sheet.label(
-        "100 = 96 + 4: the curve's optical correction",
+        "100 = 96 + 4: the curve's correction",
         rx,
-        732.0,
+        742.0,
         LEGEND_TEXT,
         red(),
         -1,
@@ -399,28 +399,27 @@ fn fig_semantic(renderer: &Renderer, mono: &str, reg: &std::path::Path, out: &st
     sheet.label(
         "Share of points on the machine 8-grid",
         rx,
-        568.0,
+        576.0,
         LEGEND_TEXT,
         gray(),
         -1,
     );
-    sheet.label("(held-out Bolds, raw model output)", rx, 528.0, SMALL_TEXT, gray(), -1);
-    // scale so the longest bar's percent label ends at the margin
-    let bar_max = (W - MARGIN - 76.0 - (rx + 310.0)) / 0.85;
+    sheet.label("(held-out Bolds, raw model output)", rx, 536.0, SMALL_TEXT, gray(), -1);
+    let bar_max = W - MARGIN - rx - 76.0;
     let bar = |sheet: &mut Sheet, y: f64, frac: f64, color: Color, label: &str, pct: &str| {
-        sheet.label(label, rx + 290.0, y + 8.0, LEGEND_TEXT, color, 1);
-        let w = (bar_max * frac).max(6.0);
+        sheet.label(label, rx, y + 50.0, LEGEND_TEXT, color, -1);
+        let w = (bar_max * frac / 0.85).max(6.0);
         sheet.ctx.fill(fill_strong(color)).stroke(color).stroke_width(PEN_LIGHT);
-        sheet.ctx.rect(rx + 310.0, y - 6.0, w, 40.0);
-        sheet.label(pct, rx + 310.0 + w + 18.0, y + 8.0, LEGEND_TEXT, color, -1);
+        sheet.ctx.rect(rx, y, w, 36.0);
+        sheet.label(pct, rx + w + 16.0, y + 8.0, LEGEND_TEXT, color, -1);
     };
-    bar(&mut sheet, 436.0, 0.0625, dim_color(), "chance on the 2-grid", "6%");
+    bar(&mut sheet, 448.0, 0.0625, dim_color(), "chance on the 2-grid", "6%");
     bar(&mut sheet, 360.0, 0.68, red(), "Virtua-12M-0.8", "68%");
-    bar(&mut sheet, 284.0, 0.85, green(), "the hand", "85%");
+    bar(&mut sheet, 272.0, 0.85, green(), "the hand", "85%");
     sheet.label(
         "Nobody labeled the layers; the model found them",
         rx,
-        202.0,
+        200.0,
         SMALL_TEXT,
         gray(),
         -1,
