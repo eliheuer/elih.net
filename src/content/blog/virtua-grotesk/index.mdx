@@ -447,6 +447,17 @@ it the whole way.
 
 ![Two training-curve panels drawn with designbot from the v0.8 run log. Left: pretraining on 29,000 OFL pairs, validation loss on 290 held-out OFL pairs falling to a best of 1.53, faint train loss beneath. Right: the A/B on the same Virtua validation set, the gray from-scratch control bottoming at 3.16 while the green finetune from pretrained weights starts lower and bottoms at 2.72, dots at every 500-step checkpoint and a ring on the shipped best checkpoint.](./fig-losscurve.png)
 
+One more axis, because a reviewer will ask: how much hand-graded
+data does the finetune actually need? Rerunning the same finetune
+from the same pretrained weights with the graded corpus cut down:
+twelve pairs score 28.0 ± 1.9 MAE, twenty-five score 25.5 ± 0.9, and
+the full fifty score 24.0 ± 1.6, every seed of every run better than
+the baseline's 31.3. The curve is monotone in all three metrics and
+not yet saturated, so graded pairs are still buying accuracy, and
+even twelve of them on pretrained weights beat fifty from scratch.
+Grading more of the Bold master is the cheapest improvement on the
+table.
+
 The review sheet shows six of those held-out glyphs and
 the a: human Regular in, model Bold out, the human Bold beneath for
 reference.
