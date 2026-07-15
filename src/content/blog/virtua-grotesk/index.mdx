@@ -22,7 +22,7 @@ network, and why they are the same idea. The font sources are on
 [GitHub](https://github.com/eliheuer/virtua-grotesk), free under the
 SIL Open Font License (OFL) v1.1.
 
-![The word Grid set in Virtua Grotesk as a dimension sheet: red glyphs on the 16-unit design grid with every on-curve and off-curve point marked, green points on the 8-unit machine grid and red points off 8 on the 2-unit human grid, blue tags for cap height 768, x-height 576, baseline and the overshoots, and hatched sidebearings with ink widths dimensioned below the baseline.](./share-card.png)
+![The word Grid set in Virtua Grotesk as a dimension sheet: red glyphs on the 16-unit design grid with every on-curve and off-curve point marked, green points on the 8-unit structure grid and red points off 8 on the 2-unit correction grid, blue tags for cap height 768, x-height 576, baseline and the overshoots, and hatched sidebearings with ink widths dimensioned below the baseline.](./share-card.png)
 
 ### Section Index
 
@@ -93,25 +93,26 @@ line anchored to real outline coordinates, so unlike a table they
 cannot drift out of date. They are drawn in the Runebender point
 language: circles are smooth on-curve points, squares are corners,
 small circles are the bézier handles, and the color of every point is
-its grid level. Green points sit on the 8-unit machine grid; red
-points sit off 8 on the 2-unit human grid, the optical corrections.
+its grid level. Green points sit on the 8-unit structure grid; red
+points sit off 8 on the 2-unit correction grid: the optical
+corrections.
 Purple numbers are handle lengths from the favored set. First the
 whole Latin system, then the lowercase up close, then the two masters
 side by side, and the same system carrying Arabic:
 
-![Dimension sheet drawn with designbot: the word OHno set in Virtua Grotesk Regular on the design grid, every on-curve and off-curve point marked, green points on the 8-unit machine grid and red points off 8 on the 2-unit human grid, with blue tags for cap height 768, x-height 576, baseline, descender minus 256 and the overshoots, and green dimensions measuring the O curves at 108 and 100, the H stem at 104 and bar at 96, the n stem at 96, and the o curve at 100.](./fig-system-ohno.png)
+![Dimension sheet drawn with designbot: the word OHno set in Virtua Grotesk Regular on the design grid, every on-curve and off-curve point marked, green points on the 8-unit structure grid and red points off 8 on the 2-unit correction grid, with blue tags for cap height 768, x-height 576, baseline, descender minus 256 and the overshoots, and green dimensions measuring the O curves at 108 and 100, the H stem at 104 and bar at 96, the n stem at 96, and the o curve at 100.](./fig-system-ohno.png)
 
 ![Dimension sheet drawn with designbot: the word no set large in Virtua Grotesk Regular with full point annotation, the n stem measured at 96, the o curves at 100 and 92, purple handle lengths of 64, 96, 128 and 160, a 16-unit chamfer called out at the n's foot, and hatched sidebearings with ink widths dimensioned below the baseline.](./fig-system-no.png)
 
-![Dimension sheet drawn with designbot: the word no twice, Regular then Bold, with full point annotation, green points on the machine grid and red optical corrections, stems measured at 96 and 192, curve strokes at 100 and 196, and a red callout naming an off-8 point an optical correction.](./fig-system-weights.png)
+![Dimension sheet drawn with designbot: the word no twice, Regular then Bold, with full point annotation, green points on the structure grid and red optical corrections, stems measured at 96 and 192, curve strokes at 100 and 196, and a red callout naming an off-8 point an optical correction.](./fig-system-weights.png)
 
-![Dimension sheet drawn with designbot: alef, beh and medial heh reading right to left with full point annotation. The alef sits entirely on the 8-unit machine grid at stroke 96; the beh's calligraphic tail is dense with red 2-grid optical corrections, its boat stroke measures 72 and its dot 160 across.](./fig-system-arabic.png)
+![Dimension sheet drawn with designbot: alef, beh and medial heh reading right to left with full point annotation. The alef sits entirely on the 8-unit structure grid at stroke 96; the beh's calligraphic tail is dense with red 2-grid optical corrections, its boat stroke measures 72 and its dot 160 across.](./fig-system-arabic.png)
 
 One rule keeps it humane: **optical corrections.** The grid is a starting
 point, not a cage, and it is hierarchical, with the two levels splitting the
-work. The 8-unit grid is the machine's: stems, sidebearings, chamfers,
+work. The 8-unit grid is the **structure grid**: stems, sidebearings, chamfers,
 and every offset a tool fits or generates has to land on a multiple of 8. The
-2-unit grid is the human's: dropping from 8 to 2 is an optical
+2-unit grid is the **correction grid**: dropping from 8 to 2 is an optical
 correction, the small nudge the eye asks for and, for now, only a person can
 judge.
 
@@ -122,7 +123,7 @@ structure on 8, the human teaches optics on 2, and the difference between a
 draft and its corrected version is a clean training set for free, the raw
 material for a model that will soon make those corrections on its own if given enough well-crafted example data.
 
-![A cubic arch over the two-level grid, drawn with designbot: every point lands on the 8-unit machine grid in green, except the apex and its two handles, pulled 4 units up onto the 2-unit grid, marked in red with a plus-4 dimension and a callout labeling the move an optical correction.](./fig-optical-correction.png)
+![A cubic arch over the two-level grid, drawn with designbot: every point lands on the 8-unit structure grid in green, except the apex and its two handles, pulled 4 units up onto the 2-unit grid, marked in red with a plus-4 dimension and a callout labeling the move an optical correction.](./fig-optical-correction.png)
 
 ### 04. From Aesthetic Discipline to Machine Legibility
 
@@ -158,9 +159,9 @@ eye's compensation for round strokes.
 
 This is the **multi-layer semantic grid**, and it, not any single
 number, is the core idea of this post. Which layer a value sits on is
-its meaning. The n's stem is 96: structure, so it lives on the
-machine's layer. The o's curve is 100: a round stroke needs the eye's
-+4, and 4 lives on the layer reserved for the hand. The powers of two
+its meaning. The n's stem is 96: structure, so it lives on the 8-unit
+structure grid. The o's curve is 100: a round stroke needs the eye's
++4, and 4 lives on the 2-unit correction grid. The powers of two
 are just the base in which this ladder of layers runs deepest, and,
 separately, the numbers I find beautiful.
 
@@ -168,14 +169,15 @@ The layers are also learnable, and that is measurable. The model's
 vocabulary enforces only the bottom layer: every coordinate token is a
 2-grid position, all equally available, and nothing in the encoding
 mentions the 8-grid. A model emitting random legal coordinates would
-land 94 percent of its points off the machine grid. On held-out glyphs
+land 94 percent of its points off the 8-unit grid. On held-out glyphs
 whose Bolds it never saw, Virtua-12M-0.8 puts 68 percent of its points
-*exactly on* the 8-grid (the hand's sources: 85 percent), prefers the
-hand's on-4 values when it leaves, and keeps the E, a glyph with no
-optical corrections, on the machine grid at every point. Nobody labeled
+*exactly on* the 8-unit grid (the human-drawn sources: 85 percent),
+prefers the correction grid's on-4 values when it leaves, and keeps
+the E, a glyph with no optical corrections, on the structure grid at
+every point. Nobody labeled
 the layers. The model recovered them from the geometry alone.
 
-![The whole argument in one dimension sheet, drawn with designbot. Left: a zoomed crop of the word no sitting on the layered grid itself, the fine 2-unit optical grid, the crisp 8-unit core grid and brighter 64-lines, with every point colored by its layer, the n's stem chain dimensioned 96, 272, 96 in green and the o's curve wall dimensioned 100 in red. Right: 96 and 100 written in binary with their trailing zeros bracketed, 96 on 32 as core and 100 on 4 as optical, the note that 100 equals 96 plus 4, the curve's correction, and bars showing the share of points landing exactly on the core 8-grid in held-out model output: chance 6 percent, Virtua-12M-0.8 68 percent, human sources 85 percent, with the note that nobody labeled the layers; the model found them](./fig-semantic-grid.png)
+![The whole argument in one dimension sheet, drawn with designbot. Left: a zoomed crop of the word no sitting on the layered grid itself, the fine 2-unit correction grid, the crisp 8-unit structure grid and brighter 64-lines, with every point colored by its layer, the n's stem chain dimensioned 96, 272, 96 in green and the o's curve wall dimensioned 100 in red. Right: 96 and 100 written in binary with their trailing zeros bracketed, 96 on 32 as structure and 100 on 4 as a correction, the note that 100 equals 96 plus 4, the curve's correction, and bars showing the share of points landing exactly on the 8-unit grid in held-out model output: chance 6 percent, Virtua-12M-0.8 68 percent, human sources 85 percent, with the note that nobody labeled the layers; the model found them](./fig-semantic-grid.png)
 
 One honest caveat: for the model itself, the win is coarseness and
 regularity, not base two. It reads each coordinate as a single token and
@@ -623,7 +625,7 @@ A power-of-two em dissolves that choice, because it halves cleanly all
 the way down. The grids that tile a 1024 em run 1024, 512, 256, and so
 on to 2: ten nested levels, each a strict subset of the one above.
 Virtua assigns those levels meanings, 64 for the vertical metrics, 8 for
-the machine's structural skeleton, 2 for the human hand, so which level
+structure, 2 for corrections, so which level
 a coordinate occupies is machine-readable metadata about what kind of
 decision it was. An optical correction here is never off-grid; it is on
 the fine grid and detectably off the coarse one, the two-tier rule of
@@ -653,15 +655,15 @@ There is a further gift here, almost embarrassing in how literal it
 is. Write a coordinate in binary and its grid level is simply the
 number of zeros at the end. 768 ends in eight zeros, so it sits on the
 256-grid; 576 ends in six, the 64-grid; 96 ends in five, the 32-grid;
-116 ends in two, the 4-grid, off the machine's 8, which is exactly
-what marks it as the hand's. Mathematicians call this the 2-adic
+116 ends in two, the 4-grid, off the structure grid's 8, which is
+exactly what marks it as a correction. Mathematicians call this the 2-adic
 valuation. Hardware calls it count-trailing-zeros, one machine
 instruction. The nested hierarchy is not drawn on top of the
 coordinates; it *is* their binary representation, read off the low
 bits. The labeling function this whole training scheme depends on
 ships inside the numbers themselves.
 
-![Five rows of eleven-bit binary numbers drawn with designbot: the em 1024, cap height 768, x-height 576, the 96-unit stem, and the hand-corrected 116, each with its run of trailing zeros bracketed and its grid level read off as the count, the 116 row in red.](./fig-bits.png)
+![Five rows of eleven-bit binary numbers drawn with designbot: the em 1024, cap height 768, x-height 576, the 96-unit stem, and the corrected 116, each with its run of trailing zeros bracketed and its grid level read off as the count, the 116 row in red.](./fig-bits.png)
 
 ![Two panels drawn with designbot, each showing the same zoomed crop of the lowercase a's bowl from the Regular master. On the left, a flat single-level grid: every point renders in identical gray, and the three points at x=116 are tagged off grid, correction or mistake? On the right, the nested 64/8/2 grid: structural points are green rings marked on 8, and the same three points are red, on the 2-grid but off the 8, labeled optical correction.](./fig-grid-labels.png)
 
@@ -769,7 +771,7 @@ pixels and one font unit is one pixel; the dimension sheet at the top of
 this post is drawn that way. The image models that feed img2bez compress
 pictures through an autoencoder that downsamples by eight, so their latent
 space is a 128 × 128 lattice in which each cell covers exactly an 8 × 8
-block of font units: the machine grid reappears, uninvited, inside the
+block of font units: the 8-unit structure grid reappears, uninvited, inside the
 diffusion model. Coarse-to-fine is the direction generative models like
 to learn, and the ten-rung ladder is the finest one an em can carry.
 

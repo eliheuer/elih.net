@@ -283,7 +283,7 @@ fn main() {
     sheet.frame(
         "GRID AS LABELING FUNCTION",
         "VIRTUA GROTESK / EM 1024 = 2^10",
-        "LOWER BOWL OF a, REGULAR. SAME OUTLINE BOTH PANELS; ONLY THE NESTED GRID LABELS THE HAND",
+        "SAME OUTLINE BOTH PANELS; ONLY THE NESTED GRID LABELS THE CORRECTIONS",
     );
 
     std::fs::create_dir_all(out.parent().unwrap()).unwrap();

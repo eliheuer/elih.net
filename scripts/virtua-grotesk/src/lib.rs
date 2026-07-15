@@ -44,7 +44,7 @@ pub const TAG_TEXT: f64 = 30.0; // blue metric tags
 pub const DIM_TEXT: f64 = 30.0; // dimension numbers
 pub const LABEL_TEXT: f64 = 28.0; // panel / pair labels
 pub const LEGEND_TEXT: f64 = 26.0; // legends, callouts
-pub const SMALL_TEXT: f64 = 22.0; // coordinates, handle lengths
+pub const SMALL_TEXT: f64 = 24.0; // coordinates, handle lengths
 
 // --- palette ------------------------------------------------------------------------
 
@@ -618,8 +618,8 @@ pub fn annotate(sheet: &mut Sheet, o: &Outline, s: f64, x0: f64, baseline: f64) 
 /// The machine/hand legend, one row, right-aligned at (x_right, y baseline).
 pub fn legend(sheet: &mut Sheet, x_right: f64, y: f64) {
     let size = LEGEND_TEXT;
-    let t2 = "off 8, on 2 = optical";
-    let t1 = "on 8 = core";
+    let t2 = "off 8, on 2 = correction";
+    let t1 = "on 8 = structure";
     let w2 = sheet.mono_width(t2, size);
     let w1 = sheet.mono_width(t1, size);
     let x2 = x_right - w2;

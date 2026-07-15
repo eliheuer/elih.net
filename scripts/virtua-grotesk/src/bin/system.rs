@@ -79,7 +79,7 @@ fn fig_ohno(renderer: &Renderer, mono: &str, reg: &std::path::Path, out: &std::p
     sheet.frame(
         "THE LATIN SYSTEM / OHno",
         "VIRTUA GROTESK / EM 1024 = 2^10",
-        "METRICS ON THE 64-GRID, STEMS ON THE 8-GRID, CURVES = STEM \u{b1} 4: EVERY LEVEL AT WORK",
+        "METRICS ON 64, STEMS ON 8, CURVES = STEM \u{b1} 4: EVERY LEVEL AT WORK",
     );
     sheet.save(renderer, out);
 }
@@ -136,7 +136,7 @@ fn fig_no(renderer: &Renderer, mono: &str, reg: &std::path::Path, out: &std::pat
     sheet.frame(
         "THE LOWERCASE SYSTEM / no",
         "VIRTUA GROTESK / EM 1024 = 2^10",
-        "STEM 96 = 3\u{b7}32, ON THE 32-GRID; CURVES 100 = 96+4 AND 92 = 96-4, THE HAND'S \u{b1}4",
+        "STEM 96 = 3\u{b7}32 ON THE 32-GRID; CURVES 96\u{b1}4: THE CORRECTION GRID AT WORK",
     );
     sheet.save(renderer, out);
 }
@@ -210,7 +210,7 @@ fn fig_weights(
     sheet.frame(
         "TWO MASTERS, ONE SYSTEM / no no",
         "VIRTUA GROTESK / EM 1024 = 2^10",
-        "THE BOLD IS THE SAME SYSTEM: STEM 96 -> 192 = 96\u{b7}2, AND AGAIN CURVE 196 = STEM + 4",
+        "THE BOLD IS THE SAME SYSTEM: STEM 192 = 96\u{b7}2, AND AGAIN CURVE 196 = STEM + 4",
     );
     sheet.save(renderer, out);
 }
@@ -278,7 +278,7 @@ fn fig_arabic(renderer: &Renderer, mono: &str, reg: &std::path::Path, out: &std:
     sheet.frame(
         "THE ARABIC SYSTEM / READS RIGHT TO LEFT",
         "VIRTUA GROTESK / EM 1024 = 2^10",
-        "SAME GRID, SAME RULES: THE ALEF IS PURE MACHINE GRID; THE BEH'S CURVES ARE THE HAND'S 2-GRID",
+        "SAME GRID, SAME RULES: THE ALEF IS PURE STRUCTURE; THE BEH'S CURVES ARE 2-UNIT CORRECTIONS",
     );
     sheet.save(renderer, out);
 }
@@ -298,13 +298,14 @@ fn fig_semantic(renderer: &Renderer, mono: &str, reg: &std::path::Path, out: &st
     let n = load_outline(reg, "n");
     let o = load_outline(reg, "o");
 
-    // Zoomed crop, Runebender style: window in glyph units with exact
-    // 8-multiple bounds, scaled so the box sits 24px off the rules (the
-    // same gap as rule-to-text) and the core 8-grid reads as crisp cells.
-    const V0: f64 = 64.0;
-    const V1: f64 = 592.0; // 528 units tall = 66 cells of 8
+    // Zoomed crop with exact 8-multiple bounds, box sitting 24px off the
+    // rules on all sides. 560 units tall / 840 wide -> the 8-unit
+    // structure grid reads as crisp cells, the 2-unit correction grid as
+    // fine lines between them.
+    const V0: f64 = 48.0;
+    const V1: f64 = 608.0;
     const U0: f64 = -8.0;
-    const U1: f64 = 744.0; // 752 units wide = 94 cells of 8
+    const U1: f64 = 832.0;
     let box_bottom = FOOTER_RULE_Y + 24.0;
     let box_top = HEADER_RULE_Y - 24.0;
     let s_zoom = (box_top - box_bottom) / (V1 - V0);
@@ -315,8 +316,7 @@ fn fig_semantic(renderer: &Renderer, mono: &str, reg: &std::path::Path, out: &st
     };
     let box_right = f.x(U1);
 
-    // the multi-layer grid: a whisper of 2 (optical), crisp 8 (core),
-    // brighter 64, all terminating on the window's 8-line bounds
+    // the multi-layer grid: 2 (correction, faint), 8 (structure, crisp), 64
     {
         let ctx = &mut sheet.ctx;
         for (step, color, wpen) in [
@@ -336,18 +336,15 @@ fn fig_semantic(renderer: &Renderer, mono: &str, reg: &std::path::Path, out: &st
                 v += step;
             }
         }
-        ctx.no_fill().stroke(blue()).stroke_width(PEN);
-        ctx.line(MARGIN, f.y(576.0), box_right, f.y(576.0));
     }
 
-    // glyphs: body, layer-colored points, handle lengths (crop-masked below)
     for (outline, ox) in [(&n, 0.0), (&o, n.width)] {
         draw_body(&mut sheet, outline, s_zoom, f.x(ox), f.baseline);
         draw_points(&mut sheet, outline, s_zoom, f.x(ox), f.baseline);
     }
     handle_labels(&mut sheet, &n, s_zoom, f.x(0.0), f.baseline);
 
-    // mask the crop spill (bg is solid), then annotate on top
+    // mask the crop spill (bg is solid)
     {
         let ctx = &mut sheet.ctx;
         ctx.fill(bg()).no_stroke();
@@ -357,42 +354,41 @@ fn fig_semantic(renderer: &Renderer, mono: &str, reg: &std::path::Path, out: &st
         ctx.rect(box_right, 0.0, W - box_right, H);
     }
 
-    // dimension chains inside the window, color = layer
+    // dimension chains, color = layer
     sheet.dim_h(f.x(64.0), f.x(160.0), f.y(256.0), "96", green());
     sheet.dim_h(f.x(160.0), f.x(432.0), f.y(256.0), "272", gray());
     sheet.dim_h(f.x(432.0), f.x(528.0), f.y(256.0), "96", green());
     sheet.dim_h(f.x(n.width + 32.0), f.x(n.width + 132.0), f.y(288.0), "100", red());
 
-    // key coordinates + the o wall's handle lengths (labeled manually so
-    // nothing straddles the crop edge)
+    // key coordinates + the o wall's handle lengths, placed by hand so
+    // nothing straddles the crop edge
     sheet.label_padded("(32,288)", f.x(n.width + 32.0) - 16.0, f.y(288.0) + 26.0, SMALL_TEXT, gray(), 1);
     sheet.label_padded("128", f.x(n.width + 132.0) + 14.0, f.y(352.0) - 7.0, SMALL_TEXT, purple(), -1);
     sheet.label_padded("128", f.x(n.width + 132.0) + 14.0, f.y(224.0) - 7.0, SMALL_TEXT, purple(), -1);
 
-    sheet.metric_tag("x-height 576", MARGIN, f.y(576.0), false, -1);
-    legend(&mut sheet, box_right - 12.0, f.y(96.0));
-
-    // ---- right column -------------------------------------------------------------
+    // ---- right column: one text size, tags under the bit rows ----------------------
     let rx = box_right + 56.0;
+    let body = DIM_TEXT; // 30px everywhere in the column
 
-    sheet.label("Every integer is a sum of powers of two.", rx, 1156.0, LEGEND_TEXT, gray(), -1);
-    sheet.label("The meaning is the trailing zeros:", rx, 1112.0, LEGEND_TEXT, gray(), -1);
+    sheet.label("Every integer is a sum of", rx, 1158.0, body, gray(), -1);
+    sheet.label("powers of two. The meaning", rx, 1114.0, body, gray(), -1);
+    sheet.label("is the trailing zeros:", rx, 1070.0, body, gray(), -1);
 
     let bit_row = |sheet: &mut Sheet, value: u32, y0: f64, color: Color, tag: &str| {
         let cell = 50.0;
         let gap = 8.0;
-        sheet.label(&value.to_string(), rx + 56.0, y0 + 12.0, DIM_TEXT, color, 1);
+        sheet.label(&value.to_string(), rx + 56.0, y0 + 12.0, body, color, 1);
         for b in 0..7u32 {
             let bit = (value >> (6 - b)) & 1;
             let x = rx + 72.0 + b as f64 * (cell + gap);
             if bit == 1 {
                 sheet.ctx.fill(color).stroke(color).stroke_width(PEN_LIGHT);
                 sheet.ctx.rect(x, y0, cell, cell);
-                sheet.label("1", x + cell / 2.0, y0 + cell * 0.28, 28.0, bg(), 0);
+                sheet.label("1", x + cell / 2.0, y0 + cell * 0.28, body, bg(), 0);
             } else {
                 sheet.ctx.no_fill().stroke(dim_color()).stroke_width(PEN_LIGHT);
                 sheet.ctx.rect(x, y0, cell, cell);
-                sheet.label("0", x + cell / 2.0, y0 + cell * 0.28, 28.0, dim_color(), 0);
+                sheet.label("0", x + cell / 2.0, y0 + cell * 0.28, body, dim_color(), 0);
             }
         }
         let zeros = value.trailing_zeros();
@@ -402,47 +398,28 @@ fn fig_semantic(renderer: &Renderer, mono: &str, reg: &std::path::Path, out: &st
         sheet.ctx.line(x_start, y0 - 12.0, x_end, y0 - 12.0);
         sheet.ctx.line(x_start, y0 - 12.0, x_start, y0 - 4.0);
         sheet.ctx.line(x_end, y0 - 12.0, x_end, y0 - 4.0);
-        sheet.label(tag, x_end + 22.0, y0 + 12.0, LEGEND_TEXT, color, -1);
+        sheet.label(tag, x_end, y0 - 56.0, body, color, 1);
     };
-    bit_row(&mut sheet, 96, 980.0, green(), "on 32: core");
-    bit_row(&mut sheet, 100, 860.0, red(), "on 4: optical");
-    sheet.label(
-        "100 = 96 + 4: the curve's correction",
-        rx,
-        780.0,
-        LEGEND_TEXT,
-        red(),
-        -1,
-    );
+    bit_row(&mut sheet, 96, 968.0, green(), "on 32: structure");
+    bit_row(&mut sheet, 100, 830.0, red(), "on 4: correction");
+    sheet.label("100 = 96 + 4: the curve's", rx, 700.0, body, red(), -1);
+    sheet.label("optical correction", rx, 656.0, body, red(), -1);
 
-    sheet.label(
-        "Share of points on the core 8-grid",
-        rx,
-        640.0,
-        LEGEND_TEXT,
-        gray(),
-        -1,
-    );
-    sheet.label("(held-out Bolds, raw model output)", rx, 598.0, SMALL_TEXT, gray(), -1);
-    let bar_max = W - MARGIN - rx - 76.0;
+    sheet.label("Points on the 8-unit grid", rx, 560.0, body, gray(), -1);
+    sheet.label("(held-out Bolds, raw output)", rx, 516.0, SMALL_TEXT, gray(), -1);
+    let bar_max = W - MARGIN - rx - 84.0;
     let bar = |sheet: &mut Sheet, y: f64, frac: f64, color: Color, label: &str, pct: &str| {
-        sheet.label(label, rx, y + 50.0, LEGEND_TEXT, color, -1);
+        sheet.label(label, rx, y + 52.0, body, color, -1);
         let w = (bar_max * frac / 0.85).max(6.0);
         sheet.ctx.fill(fill_strong(color)).stroke(color).stroke_width(PEN_LIGHT);
         sheet.ctx.rect(rx, y, w, 36.0);
-        sheet.label(pct, rx + w + 16.0, y + 8.0, LEGEND_TEXT, color, -1);
+        sheet.label(pct, rx + w + 16.0, y + 8.0, body, color, -1);
     };
-    bar(&mut sheet, 484.0, 0.0625, dim_color(), "chance on the 2-grid", "6%");
-    bar(&mut sheet, 380.0, 0.68, red(), "Virtua-12M-0.8", "68%");
-    bar(&mut sheet, 276.0, 0.85, green(), "human sources", "85%");
-    sheet.label(
-        "Nobody labeled the layers; the model found them",
-        rx,
-        188.0,
-        SMALL_TEXT,
-        gray(),
-        -1,
-    );
+    bar(&mut sheet, 408.0, 0.0625, dim_color(), "chance on the 2-grid", "6%");
+    bar(&mut sheet, 304.0, 0.68, red(), "Virtua-12M-0.8", "68%");
+    bar(&mut sheet, 200.0, 0.85, green(), "human sources", "85%");
+
+    legend(&mut sheet, W - MARGIN, 136.0);
 
     sheet.frame(
         "Multi-layer semantic powers-of-two grid system",

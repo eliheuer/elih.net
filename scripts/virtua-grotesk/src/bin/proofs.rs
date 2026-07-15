@@ -325,7 +325,7 @@ fn fig_bits(renderer: &Renderer, mono: &str, out: &std::path::Path) {
         ("CAP HEIGHT", 768, green()),
         ("X-HEIGHT", 576, green()),
         ("STEM", 96, green()),
-        ("THE HAND", 116, red()),
+        ("CORRECTION", 116, red()),
     ];
     let cell = 104.0;
     let gap = 12.0;
@@ -376,7 +376,7 @@ fn fig_bits(renderer: &Renderer, mono: &str, out: &std::path::Path) {
     sheet.frame(
         "THE LEVEL IS IN THE LOW BITS",
         "VIRTUA GROTESK / EM 1024 = 2^10",
-        "GRID LEVEL = TRAILING ZEROS (THE 2-ADIC VALUATION); HARDWARE READS IT IN ONE INSTRUCTION, CTZ",
+        "GRID LEVEL = TRAILING ZEROS; HARDWARE READS IT IN ONE INSTRUCTION, CTZ",
     );
     sheet.save(renderer, out);
 }
