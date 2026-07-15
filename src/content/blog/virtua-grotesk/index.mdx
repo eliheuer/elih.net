@@ -14,19 +14,19 @@ Virtua Grotesk is a typeface I am designing on a **self-labeling grid
 system**: the drawing grid comes in nested tiers, and the tier a point
 lands on records what kind of decision it was. This makes it a
 machine-learning and data-engineering experiment as much as an
-aesthetic and visual-design experiment. The same grid that gives the font its
-aesthetic makes its source files unusually good training data, and a
-small neural network is now learning to draw it. If you are reading
-this on [elih.net](/), Virtua Grotesk is the typeface you are reading
+aesthetic and visual-design one. The same grid that gives the font its
+look makes its source files unusually good training data, and a small
+neural network is now learning to draw it. If you are reading this
+on [elih.net](/), Virtua Grotesk is the typeface you are reading
 right now.
 
-The grid has two nested tiers: structure on the 8-unit grid, optical
-correction on the 2-unit grid. Everything is ruled in powers-of-two,
-and every dimension reaches for an elegant binary number: 1024 = 2^10
-units per em, stems of 96, chamfers of 16, sidebearings of 48
-(32 + 16), and so on. The model will soon be on Hugging Face as an
-open-weight release that anyone can use and fine-tune on their own
-fonts. The font sources are on
+In practice the grid has two tiers: structure on the 8-unit grid,
+optical correction on the 2-unit grid. Everything is ruled in
+powers-of-two, and every dimension reaches for an elegant binary
+number: 1024 = 2^10 units per em, stems of 96, chamfers of 16,
+sidebearings of 48 (32 + 16), and so on. The model will soon be on
+Hugging Face as an open-weight release that anyone can use and
+fine-tune on their own fonts. The font sources are already on
 [GitHub](https://github.com/eliheuer/virtua-grotesk), free under the
 SIL Open Font License (OFL) v1.1. This post is about the typeface, the
 neural network, and why they are the same idea.
