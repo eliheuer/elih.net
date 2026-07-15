@@ -98,7 +98,13 @@ power-of-two em is the TrueType convention (2048 is standard, and
 same logic down through every dimension. The full spec lives in the
 repo as
 [`DESIGN.md`](https://github.com/eliheuer/virtua-grotesk/blob/main/DESIGN.md),
-but the system is easier to draw than to tabulate.
+and it is enforced, not aspirational: from the repo root, `make
+grid-qa` grades every glyph in both masters on how strictly it
+follows the system. Points must sit on the 2-grid, on-curve points on
+8 or off by exactly 4, advances on 8, and handle lengths and
+structural spans are scored as short sums of powers-of-two. Point an
+agent at that report and the agentic harness in the repo, and it can
+be put to work reviewing and fixing whatever the grader flags.
 
 The four dimension sheets below are measured directly from the
 sources, every dimension line anchored to real outline coordinates,
