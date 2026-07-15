@@ -11,12 +11,11 @@ draft: false
 <p class="font-mono text-sm" style="color: #ff4535">NOTE: this post is a draft and still being edited.<br />WARNING: may contain AI slop while still a draft.<br />Feedback welcome: eli@elih.net</p>
 
 Virtua Grotesk is a typeface I am designing on a **self-labeling grid
-system**. The drawing grid comes in nested tiers, ruled in powers of
-two from the em on down, and the tier a point lands on records what
+system**. The drawing grid comes in nested tiers, ruled in powers-of-two from the em on down, and the tier a point lands on records what
 kind of decision it was. Every dimension reaches for an elegant binary
 number: the em is 1024 = 2^10, stems are 96, chamfers 16, sidebearings
 48 = 32 + 16. Even the base is part of the labeling: in binary, a
-value's tier can be read straight off its digits. If you are reading
+value's tier can be read straight off its low digits. If you are reading
 this on [elih.net](/), Virtua Grotesk is the typeface you are reading
 right now.
 
@@ -89,7 +88,7 @@ constraint.
 
 There are two ideas in this design system: a self-labeling grid, and a
 base to draw it in. Start with the base, because it is the part you can
-see. Virtua Grotesk is drawn against powers of two, not the base-10 grid of Replica,
+see. Virtua Grotesk is drawn against powers-of-two, not the base-10 grid of Replica,
 down to the UPM (units per em) itself: 1024 (2^10) rather than the usual 1000. That is
 less exotic than it sounds. A power-of-two em is the TrueType convention (2048
 is standard, and [Inter](https://rsms.me/inter/) uses it), so 1024 just extends
@@ -159,7 +158,7 @@ detectable and snappable, wrong stem weights are measurable. Quality
 stops being an opinion, and an eval loop can grind at it overnight.
 
 One correction is owed here. An earlier draft called the stems "sums of
-powers of two," and Simon Cozens pointed out that every integer is one;
+powers-of-two," and Simon Cozens pointed out that every integer is one;
 that is what binary means. The property that matters is *trailing
 zeros*: 96 is a multiple of 32, 95 is a multiple of nothing. And the
 stroke weights that look arbitrary are the two levels at work: the
@@ -169,7 +168,7 @@ eye's compensation for round strokes.
 This is the **self-labeling grid**, and it, not any single number, is
 the core idea of this post. Which tier a value sits on is its meaning. The n's stem is 96: structure, so it lives on the 8-unit
 structure grid. The o's curve is 100: a round stroke needs the eye's
-+4, and 4 lives on the 2-unit correction grid. The powers of two
++4, and 4 lives on the 2-unit correction grid. The powers-of-two
 are just the base in which this ladder of tiers runs deepest, and,
 separately, the numbers I find beautiful.
 
@@ -497,8 +496,7 @@ even remains a secret because nobody ever believes you anyways”</p>
 <p>—roon ([@tszzl](https://x.com/tszzl)), 2026.</p>
 </div>
 
-When I shared this draft, the most common pushback was why powers of
-two, so I added this additional section, where I try to mathematically
+When I shared this draft, the most common pushback was why powers-of-two, so I added this additional section, where I try to mathematically
 prove that this is the best possible grid system for AI/ML data
 engineering for type design. Any grid shrinks the coordinate vocabulary, so a
 decimal grid like Replica's would tokenize just as cleanly, and if the
@@ -637,7 +635,7 @@ a coordinate occupies is machine-readable metadata about what kind of
 decision it was. An optical correction here is never off-grid; it is on
 the fine grid and detectably off the coarse one, the two-tier rule of
 section 03 restated as data design. And the ladder itself is a property
-of the base. The powers of two that divide 1000 stop at 8; the ones that
+of the base. The powers-of-two that divide 1000 stop at 8; the ones that
 divide Replica's 700-unit em stop at 4. A decimal em runs out of rungs
 just past the drawing grid; a binary em ladders from the single unit to
 the em itself.
@@ -811,7 +809,7 @@ arithmetic.
 
 And when the engineering is settled, the tiebreaker is the thing that
 rules type design anyway: aesthetics. Typographic modernism was never
-especially concerned with powers of two, though it is not innocent of
+especially concerned with powers-of-two, though it is not innocent of
 them: A-series paper halves at every fold. Had the computer arrived a
 little earlier, the Swiss might have fallen for base two the way I
 have; their creed was truth to materials, and the true material of the
@@ -819,8 +817,8 @@ computer is the bit. The same taste is at work all the
 way down the stack; it is why these sources are UFO, a folder of plain,
 readable, one-glyph-per-file XML, rather than something tidier and more
 opaque. Aesthetics is the whole game. If it were not, system fonts
-already exist and there would be better things to do with a life. The powers of two
+already exist and there would be better things to do with a life. The powers-of-two
 would deserve this job on beauty alone; that they are also the machine's
 own numbers is the fact this whole post exists to point at. On a binary
-machine, a design drawn in powers of two is not encoded. It is simply
+machine, a design drawn in powers-of-two is not encoded. It is simply
 written down.
