@@ -435,6 +435,13 @@ glyphs would be noise dressed as rigor.
 | graded corpus only (control) | 31.7 ± 0.5 | 35.3 ± 0.7 | 0.567 ± 0.013 |
 | + OFL pretrain (Virtua-12M-0.8) | **24.0 ± 1.6** | **22.4 ± 1.3** | **0.745 ± 0.016** |
 
+The training curves behind that table, parsed straight from the run
+log so the figure cannot drift from the experiment: the pretrained arm
+enters the finetune already below the control's best and stays below
+it the whole way.
+
+![Two training-curve panels drawn with designbot from the v0.8 run log. Left: pretraining on 29,000 OFL pairs, validation loss on 290 held-out OFL pairs falling to a best of 1.53, faint train loss beneath. Right: the A/B on the same Virtua validation set, the gray from-scratch control bottoming at 3.16 while the green finetune from pretrained weights starts lower and bottoms at 2.72, dots at every 500-step checkpoint and a ring on the shipped best checkpoint.](./fig-losscurve.png)
+
 The review sheet shows six of those held-out glyphs and
 the a: human Regular in, model Bold out, the human Bold beneath for
 reference.
@@ -455,7 +462,9 @@ human 2-unit pass, and the `a` below is v0.8's.
 The honest scoreboard, before anyone reads it for me: ten held-out
 glyphs, one font family, and one training run per arm, so the error
 bars above cover sampling variance, not retraining variance. A
-five-fold split, every pair held out once, is queued for v0.9. The
+five-fold split, every pair held out once, is queued for v0.9.
+Section 08 reports what the same weights do off-family, including a
+negative result. The
 current ceiling is draft quality; the
 division of labor is deliberate, the model proposing on the structure
 grid and a person finishing on the correction grid. The deeper bet is
@@ -495,6 +504,29 @@ could audit glyph by glyph. The grid-ifier is also the answer to the
 fair charge that this system is boutique, one foundry's private
 convention: any OFL family can be brought onto the grid in about a
 minute, corrections and all.
+
+The pretraining corpus already supports its own held-out test, and it
+is worth reporting both halves, because one is a negative result. The
+pretrain stage never trains on one percent of the OFL pairs, 290 of
+29,000. On those, the pretrained model beats the mean-delta baseline
+recomputed on OFL data, so the skill is not Virtua-specific: the model
+boldens glyphs it has never seen. The honest scope: the held-out unit
+is the glyph pair, not the whole font, so this measures new glyphs
+from seen font styles; a font-level split is queued for the next
+corpus build. The negative half is what the finetune costs. After
+specializing on Virtua, the same model collapses on OFL, worse than
+the baseline it once beat, winning 9 percent of pairs instead of 74.
+This is catastrophic forgetting, the textbook price of finetuning a
+small model with no replay, and the standard fix, mixing pretraining
+data into the finetune, is queued for v0.9. Virtua-12M-0.8 is a
+Virtua specialist, not a general boldening engine, and the table says
+so plainly:
+
+| held-out OFL pairs, n = 290 | MAE ↓ | Chamfer ↓ | IoU ↑ | beats baseline |
+| --- | --- | --- | --- | --- |
+| mean-delta baseline (OFL) | 20.8 | 22.9 | 0.61 | |
+| after OFL pretrain | **15.0** | **14.8** | **0.75** | 74% |
+| after Virtua finetune | 33.5 | 28.9 | 0.50 | 9% |
 
 Karpathy's [Software 2.0](https://karpathy.medium.com/software-2-0-a64152b37c35)
 essay gives this a name. If the weights are the program and training is the
