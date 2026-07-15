@@ -387,7 +387,7 @@ fn fig_semantic(renderer: &Renderer, mono: &str, reg: &std::path::Path, out: &st
     let body = DIM_TEXT;
 
     sheet.label("The self-labeling grid,", rx, 1216.0, body, green(), -1);
-    sheet.label("ruled in powers-of-two", rx, 1172.0, body, green(), -1);
+    sheet.label("built on powers-of-two", rx, 1172.0, body, green(), -1);
 
     sheet.label("Every integer is a sum of", rx, 1084.0, body, gray(), -1);
     sheet.label("powers-of-two. The meaning", rx, 1040.0, body, gray(), -1);
