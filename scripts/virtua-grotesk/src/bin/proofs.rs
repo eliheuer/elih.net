@@ -73,24 +73,24 @@ fn fig_fractions(renderer: &Renderer, mono: &str, out: &std::path::Path) {
     let x0_block = 238.0;
     let ya = 808.0;
     sheet.label("96 / 1024", x0_block, ya + 180.0, 36.0, green(), -1);
-    sheet.label("= 3/32, THE STEM OVER THE BINARY EM", x0_block + 260.0, ya + 180.0, 26.0, gray(), -1);
+    sheet.label("= 3/32, the stem over the binary em", x0_block + 260.0, ya + 180.0, 26.0, gray(), -1);
     sheet.label("0.", x0_block, ya + 10.0, prefix_size, curve(), -1);
     let x0 = x0_block + 60.0;
     bit_row(&mut sheet, x0, ya, cell, gap, &bits_a, green());
     let end_x = x0 + bits_a.len() as f64 * (cell + gap) + 30.0;
-    sheet.label("EXACT AFTER 5 BITS", end_x, ya + 10.0, 30.0, green(), -1);
-    sheet.label("= 0.09375, HELD VERBATIM", x0_block, ya - 70.0, 26.0, gray(), -1);
+    sheet.label("exact after 5 bits", end_x, ya + 10.0, 30.0, green(), -1);
+    sheet.label("= 0.09375, held verbatim", x0_block, ya - 70.0, 26.0, gray(), -1);
 
     // row B: the decimal em
     let yb = 388.0;
     sheet.label("96 / 1000", x0_block, yb + 180.0, 36.0, red(), -1);
-    sheet.label("= 12/125, THE SAME STEM OVER THE DECIMAL EM", x0_block + 260.0, yb + 180.0, 26.0, gray(), -1);
+    sheet.label("= 12/125, the same stem over the decimal em", x0_block + 260.0, yb + 180.0, 26.0, gray(), -1);
     sheet.label("0.", x0_block, yb + 10.0, prefix_size, curve(), -1);
     bit_row(&mut sheet, x0, yb, cell, gap, &bits_b, red());
     let end_x = x0 + bits_b.len() as f64 * (cell + gap) + 20.0;
     sheet.label("\u{2026}", end_x, yb + 10.0, prefix_size, red(), -1);
     sheet.label(
-        "REPEATS FOREVER, PERIOD 100 BITS. A 64-BIT FLOAT HOLDS 0.09600000000000000200",
+        "repeats forever, period 100 bits. A 64-bit float holds 0.09600000000000000200",
         x0_block,
         yb - 70.0,
         26.0,
@@ -98,11 +98,11 @@ fn fig_fractions(renderer: &Renderer, mono: &str, out: &std::path::Path) {
         -1,
     );
 
-    sheet.frame(
-        "ONE STEM, TWO EMS",
-        "VIRTUA GROTESK / EM 1024 = 2^10",
-        "A BINARY MACHINE WRITES 96/1024 DOWN EXACTLY; 96/1000 IT CAN ONLY APPROXIMATE",
-    );
+    sheet.hud_title(&[
+        "One stem, two ems",
+        "a binary machine writes 96/1024 down exactly; 96/1000 it can only approximate",
+    ]);
+    sheet.attribution(None);
     sheet.save(renderer, out);
 }
 
@@ -220,16 +220,16 @@ fn fig_midpoint(renderer: &Renderer, mono: &str, out: &std::path::Path) {
         }
         sheet.label(txt, lx + 36.0, y, 26.0, *color, -1);
     }
-    sheet.label("A MIDPOINT OF TWO MULTIPLES OF 2^K", lx, 640.0, 24.0, gray(), -1);
-    sheet.label("IS A MULTIPLE OF 2^(K-1):", lx, 604.0, 24.0, gray(), -1);
-    sheet.label("EACH ROUND DESCENDS ONE RUNG,", lx, 568.0, 24.0, gray(), -1);
-    sheet.label("AND THE LADDER HAS TEN.", lx, 532.0, 24.0, gray(), -1);
+    sheet.label("a midpoint of two multiples of 2^k", lx, 640.0, 24.0, gray(), -1);
+    sheet.label("is a multiple of 2^(k-1):", lx, 604.0, 24.0, gray(), -1);
+    sheet.label("each round descends one rung,", lx, 568.0, 24.0, gray(), -1);
+    sheet.label("and the ladder has ten.", lx, 532.0, 24.0, gray(), -1);
 
-    sheet.frame(
-        "DE CASTELJAU AT T = 1/2",
-        "VIRTUA GROTESK / EM 1024 = 2^10",
-        "SPLITTING A CURVE IS MIDPOINTS ALL THE WAY DOWN, AND MIDPOINTS OF DYADIC POINTS ARE DYADIC",
-    );
+    sheet.hud_title(&[
+        "De Casteljau at t = 1/2",
+        "midpoints all the way down, and midpoints of dyadic points are dyadic",
+    ]);
+    sheet.attribution(None);
     sheet.save(renderer, out);
 }
 
@@ -239,7 +239,7 @@ fn fig_ladder(renderer: &Renderer, mono: &str, out: &std::path::Path) {
     let mut sheet = new_sheet(renderer, mono);
 
     let col_x = [387.0, 969.0, 1551.0, 2133.0];
-    let titles = ["EM 1024", "EM 1000", "EM 729 = 3^6", "EM 700"];
+    let titles = ["em 1024", "em 1000", "em 729 = 3^6", "em 700"];
     let y_top = 1000.0;
     let dy = 72.0;
     let box_w = 180.0;
@@ -258,28 +258,28 @@ fn fig_ladder(renderer: &Renderer, mono: &str, out: &std::path::Path) {
             div: "\u{f7}2",
             color: green(),
             dead_end: None,
-            verdict: ("TEN RUNGS, EM TO UNIT", green()),
+            verdict: ("ten rungs, em to unit", green()),
         },
         Chain {
             values: vec![1000, 500, 250, 125],
             div: "\u{f7}2",
             color: gray(),
-            dead_end: Some("125 IS ODD \u{b7} DEAD END"),
-            verdict: ("THREE RUNGS", red()),
+            dead_end: Some("125 is odd \u{b7} dead end"),
+            verdict: ("three rungs", red()),
         },
         Chain {
             values: vec![729, 243, 81, 27, 9, 3, 1],
             div: "\u{f7}3",
             color: gray(),
             dead_end: None,
-            verdict: ("SIX RUNGS, BUT 1/3 IS NO FLOAT", red()),
+            verdict: ("six rungs, but 1/3 is no float", red()),
         },
         Chain {
             values: vec![700, 350, 175],
             div: "\u{f7}2",
             color: gray(),
-            dead_end: Some("175 IS ODD \u{b7} DEAD END"),
-            verdict: ("TWO RUNGS", red()),
+            dead_end: Some("175 is odd \u{b7} dead end"),
+            verdict: ("two rungs", red()),
         },
     ];
 
@@ -307,11 +307,11 @@ fn fig_ladder(renderer: &Renderer, mono: &str, out: &std::path::Path) {
         sheet.label(chain.verdict.0, x, 196.0, 24.0, chain.verdict.1, 0);
     }
 
-    sheet.frame(
-        "HOW FAR CAN AN EM HALVE?",
-        "VIRTUA GROTESK / EM 1024 = 2^10",
-        "ONLY A BINARY EM LADDERS FROM THE EM TO THE UNIT",
-    );
+    sheet.hud_title(&[
+        "How far can an em halve?",
+        "only a binary em ladders from the em to the unit",
+    ]);
+    sheet.attribution(None);
     sheet.save(renderer, out);
 }
 
@@ -321,11 +321,11 @@ fn fig_bits(renderer: &Renderer, mono: &str, out: &std::path::Path) {
     let mut sheet = new_sheet(renderer, mono);
 
     let rows: [(&str, u32, Color); 5] = [
-        ("THE EM", 1024, green()),
-        ("CAP HEIGHT", 768, green()),
-        ("X-HEIGHT", 576, green()),
-        ("STEM", 96, green()),
-        ("CORRECTION", 116, red()),
+        ("the em", 1024, green()),
+        ("cap height", 768, green()),
+        ("x-height", 576, green()),
+        ("stem", 96, green()),
+        ("correction", 116, red()),
     ];
     let cell = 104.0;
     let gap = 12.0;
@@ -366,18 +366,18 @@ fn fig_bits(renderer: &Renderer, mono: &str, out: &std::path::Path) {
         }
 
         let tag = if *value == 116 {
-            format!("{} ZEROS \u{2192} ON 4, OFF 8", level)
+            format!("{} zeros \u{2192} on 4, off 8", level)
         } else {
-            format!("{} ZEROS \u{2192} ON {}", level, 1u32 << level)
+            format!("{} zeros \u{2192} on {}", level, 1u32 << level)
         };
         sheet.label(&tag, W - MARGIN, y0 + 20.0, 26.0, *color, 1);
     }
 
-    sheet.frame(
-        "THE LEVEL IS IN THE LOW BITS",
-        "VIRTUA GROTESK / EM 1024 = 2^10",
-        "GRID LEVEL = TRAILING ZEROS; HARDWARE READS IT IN ONE INSTRUCTION, CTZ",
-    );
+    sheet.hud_title(&[
+        "The level is in the low bits",
+        "grid level = trailing zeros; hardware reads it in one instruction, CTZ",
+    ]);
+    sheet.attribution(None);
     sheet.save(renderer, out);
 }
 

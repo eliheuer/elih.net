@@ -32,8 +32,11 @@ use kurbo::{Affine, BezPath};
 pub const W: f64 = 2520.0;
 pub const H: f64 = 1320.0;
 pub const MARGIN: f64 = 64.0;
-pub const HEADER_RULE_Y: f64 = 1208.0;
-pub const FOOTER_RULE_Y: f64 = 112.0;
+// Frameless spec: content runs to MARGIN on all four sides. The old rule
+// constants now name the content-zone bounds so existing centering math
+// expands to full bleed automatically.
+pub const HEADER_RULE_Y: f64 = H - MARGIN; // content zone top
+pub const FOOTER_RULE_Y: f64 = MARGIN; // content zone bottom
 
 // --- pen + type scale ---------------------------------------------------------------
 
@@ -352,22 +355,32 @@ impl Sheet<'_> {
         self.label_padded(txt, lx, (y0 + y1) / 2.0 - 10.0, DIM_TEXT, color, align);
     }
 
-    /// Header/footer rules and the four frame-text slots.
-    pub fn frame(&mut self, title: &str, right: &str, caption: &str) {
-        self.ctx.stroke(green()).stroke_width(PEN).no_fill();
-        self.ctx.line(MARGIN, HEADER_RULE_Y, W - MARGIN, HEADER_RULE_Y);
-        self.ctx.line(MARGIN, FOOTER_RULE_Y, W - MARGIN, FOOTER_RULE_Y);
-        self.label(title, MARGIN, HEADER_RULE_Y + 24.0, FRAME_TEXT, green(), -1);
-        self.label(right, W - MARGIN, HEADER_RULE_Y + 24.0, FRAME_TEXT, green(), 1);
-        self.label(caption, MARGIN, 64.0, FRAME_TEXT, green(), -1);
-        self.label(
-            "github.com/eliheuer/virtua-grotesk",
-            W - MARGIN,
-            64.0,
-            FRAME_TEXT,
+    /// In-viewport title, top-left, knockout over whatever is beneath.
+    pub fn hud_title(&mut self, lines: &[&str]) {
+        // first line's cap tops sit exactly on the top margin
+        let mut y = H - MARGIN - 0.74 * FRAME_TEXT;
+        for line in lines {
+            self.label_padded(line, MARGIN + 2.0, y, FRAME_TEXT, green(), -1);
+            y -= FRAME_TEXT + 14.0;
+        }
+    }
+
+    /// Attribution, bottom-right, knockout. `extra` adds a line above the
+    /// standard one (model name, license, ...).
+    pub fn attribution(&mut self, extra: Option<&str>) {
+        let mut y = MARGIN + 4.0;
+        self.label_padded(
+            "Virtua Grotesk / elih.net/blog/virtua-grotesk",
+            W - MARGIN - 2.0,
+            y,
+            SMALL_TEXT,
             green(),
             1,
         );
+        if let Some(line) = extra {
+            y += SMALL_TEXT + 14.0;
+            self.label_padded(line, W - MARGIN - 2.0, y, SMALL_TEXT, green(), 1);
+        }
     }
 
     pub fn save(&self, renderer: &Renderer, out: &std::path::Path) {
@@ -603,7 +616,9 @@ pub fn extrema_labels(sheet: &mut Sheet, o: &Outline, s: f64, x0: f64, baseline:
             _ => anchor,
         };
         tx = tx.clamp(MARGIN + 10.0, W - MARGIN - 10.0 - w);
-        sheet.label_padded(&txt, tx, baseline + p.1 * s + dxy.1, SMALL_TEXT, gray(), -1);
+        let ty = (baseline + p.1 * s + dxy.1)
+            .clamp(MARGIN + 8.0, H - MARGIN - SMALL_TEXT);
+        sheet.label_padded(&txt, tx, ty, SMALL_TEXT, gray(), -1);
     }
 }
 

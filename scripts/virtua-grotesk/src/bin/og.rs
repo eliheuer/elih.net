@@ -47,7 +47,9 @@ fn main() {
         baseline: 375.0,
     };
 
-    draw_grid(&mut sheet, &f, 784.0, -80.0);
+    let top_u = (((H - MARGIN - f.baseline) / S) / 8.0).floor() * 8.0;
+    let bot_u = (((MARGIN - f.baseline) / S) / 8.0).ceil() * 8.0;
+    draw_grid(&mut sheet, &f, top_u, bot_u);
     metric_lines(&mut sheet, &f, &[0.0, 576.0, 768.0], &[784.0, -16.0]);
 
     // advance-boundary cell dividers: each sort in its own cell, the
@@ -92,19 +94,19 @@ fn main() {
     }
 
     // metric tags
-    sheet.metric_tag("CAP 768", MARGIN, f.y(768.0), false, -1);
-    sheet.metric_tag("X-HEIGHT 576", MARGIN, f.y(576.0), true, -1);
-    sheet.metric_tag("BASELINE 0", MARGIN, f.y(0.0), true, -1);
-    sheet.metric_tag("OVERSHOOT +16", W - MARGIN, f.y(784.0), false, 1);
-    sheet.metric_tag("OVERSHOOT -16", W - MARGIN, f.y(-16.0), false, 1);
+    sheet.metric_tag("cap 768", MARGIN, f.y(768.0), false, -1);
+    sheet.metric_tag("x-height 576", MARGIN, f.y(576.0), true, -1);
+    sheet.metric_tag("baseline 0", MARGIN, f.y(0.0), true, -1);
+    sheet.metric_tag("overshoot +16", W - MARGIN, f.y(784.0), false, 1);
+    sheet.metric_tag("overshoot -16", W - MARGIN, f.y(-16.0), false, 1);
 
-    legend(&mut sheet, W - MARGIN, f.baseline - 214.0);
+    legend(&mut sheet, W - MARGIN - 16.0, f.baseline - 214.0);
 
-    sheet.frame(
-        "VIRTUA GROTESK",
-        "POWERS OF TWO GRID / UPM 1024 = 2^10",
-        "REGULAR 400 / SIL OPEN FONT LICENSE (OFL) VERSION 1.1",
-    );
+    sheet.hud_title(&[
+        "Virtua Grotesk",
+        "powers-of-two grid / upm 1024 = 2^10",
+    ]);
+    sheet.attribution(Some("Regular 400 / SIL Open Font License (OFL) v1.1"));
 
     let here = std::path::PathBuf::from(env!("CARGO_MANIFEST_DIR"));
     let root = here.parent().unwrap().parent().unwrap();

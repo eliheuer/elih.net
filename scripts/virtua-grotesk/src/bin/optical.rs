@@ -18,7 +18,7 @@ use kurbo::{Affine, BezPath};
 #[allow(unused_imports)]
 use virtua_grotesk_figures::*;
 
-const UNIT: f64 = 11.0; // canvas px per unit: 8-cell = 88px, 2-cell = 22px
+const UNIT: f64 = 13.0; // canvas px per unit: 8-cell = 104px, 2-cell = 26px
 
 fn main() {
     let home = std::env::var("HOME").unwrap();
@@ -39,7 +39,7 @@ fn main() {
 
     // frame: arch centered, content -8..80 units vertically
     let origin_x = MARGIN + (W - 2.0 * MARGIN - 128.0 * UNIT) / 2.0;
-    let origin_y = 176.0 + 8.0 * UNIT;
+    let origin_y = MARGIN + (H - 2.0 * MARGIN - 88.0 * UNIT) / 2.0 + 8.0 * UNIT;
     let cx = |ux: f64| origin_x + ux * UNIT;
     let cy = |uy: f64| origin_y + uy * UNIT;
 
@@ -128,13 +128,13 @@ fn main() {
         (cx(78.0), cy(78.0)),
         -1,
     );
-    legend(&mut sheet, W - MARGIN, cy(-6.0));
+    legend(&mut sheet, W - MARGIN - 16.0, cy(-6.0));
 
-    sheet.frame(
-        "OPTICAL CORRECTION / THE TWO-LEVEL GRID",
-        "VIRTUA GROTESK / EM 1024 = 2^10",
-        "STRUCTURE LANDS ON THE 8-GRID; THE EYE'S +4 LANDS ON THE 2-GRID",
-    );
+    sheet.hud_title(&[
+        "Optical correction / the two-layer grid",
+        "structure lands on 8; the eye's +4 lands on 2",
+    ]);
+    sheet.attribution(None);
 
     let here = std::path::PathBuf::from(env!("CARGO_MANIFEST_DIR"));
     let out = here

@@ -64,7 +64,7 @@ fn fig_review(
     let mut sheet = new_sheet(renderer, mono);
 
     const GLYPHS: [&str; 7] = ["K", "E", "M", "n", "b", "c", "a"];
-    const S: f64 = 0.29;
+    const S: f64 = 0.32;
 
     // three bands between the rules, top to bottom
     let band_h = (HEADER_RULE_Y - FOOTER_RULE_Y) / 3.0;
@@ -76,19 +76,19 @@ fn fig_review(
     }
     let rows = [
         Row {
-            label: "01 INPUT / HUMAN REGULAR".into(),
+            label: "01 input / human Regular".into(),
             color: green(),
             dir: reg,
             skip_a: false,
         },
         Row {
-            label: format!("02 OUTPUT / {model_name}"),
+            label: format!("02 output / {model_name}"),
             color: red(),
             dir: pred,
             skip_a: false,
         },
         Row {
-            label: "03 REFERENCE / HUMAN BOLD".into(),
+            label: "03 reference / human Bold".into(),
             color: gray(),
             dir: bold,
             skip_a: true,
@@ -106,13 +106,13 @@ fn fig_review(
         sheet.ctx.no_fill().stroke(blue()).stroke_width(2.0);
         sheet.ctx.line(MARGIN, baseline, W - MARGIN, baseline);
 
-        sheet.label(&row.label, MARGIN, band_top - 46.0, 26.0, row.color, -1);
+        sheet.label(&row.label, MARGIN, band_top - 28.0, 26.0, row.color, -1);
 
         for (j, name) in GLYPHS.iter().enumerate() {
             let slot_center = MARGIN + (j as f64 + 0.5) * slot_w;
             if row.skip_a && *name == "a" {
                 sheet.label_padded(
-                    "NEVER BOLDENED",
+                    "never boldened",
                     slot_center,
                     baseline + 74.0,
                     24.0,
@@ -123,7 +123,7 @@ fn fig_review(
             }
             let glif = row.dir.join("glyphs").join(glif_name(name));
             if !glif.is_file() {
-                sheet.label_padded("NOT IN RUN", slot_center, baseline + 74.0, 24.0, dim_color(), 0);
+                sheet.label_padded("not in run", slot_center, baseline + 74.0, 24.0, dim_color(), 0);
                 continue;
             }
             let o = load_outline(&row.dir.join("glyphs"), name);
@@ -132,11 +132,7 @@ fn fig_review(
         }
     }
 
-    sheet.frame(
-        "WEIGHT TRANSFER / HELD-OUT REVIEW",
-        &format!("MODEL: {model_name}"),
-        "THE MODEL NEVER SAW THESE BOLDS; THE BOLD a HAS NO HUMAN REFERENCE",
-    );
+    sheet.attribution(Some(&format!("held-out review / model: {model_name}")));
     sheet.save(renderer, out);
 }
 
@@ -153,10 +149,10 @@ fn fig_bolden_a(
 ) {
     let mut sheet = new_sheet(renderer, mono);
 
-    const S: f64 = 1.3;
-    const BASELINE: f64 = 322.0;
-    let grid_bottom = BASELINE - 64.0 * S; // 212.8
-    let grid_top = BASELINE + 640.0 * S; // 1128.8
+    const S: f64 = 1.45;
+    const BASELINE: f64 = 242.0;
+    let grid_bottom = MARGIN;
+    let grid_top = H - MARGIN;
 
     // the Regular a from the sources; the Bold a from the detected run's
     // pred.ufo when it has one (keeps the label truthful), else the
@@ -225,13 +221,13 @@ fn fig_bolden_a(
     }
 
     // metric tags, docked at the left margin
-    sheet.metric_tag("X-HEIGHT 576", MARGIN, BASELINE + 576.0 * S, true, -1);
-    sheet.metric_tag("BASELINE 0", MARGIN, BASELINE, true, -1);
+    sheet.metric_tag("x-height 576", MARGIN, BASELINE + 576.0 * S, true, -1);
+    sheet.metric_tag("baseline 0", MARGIN, BASELINE, true, -1);
 
     // captions under the run, centered per glyph
-    let label_y = 166.0;
+    let label_y = 132.0;
     sheet.label(
-        "REGULAR / DRAWN BY HAND",
+        "Regular / drawn by hand",
         x_reg + o_reg.width * S / 2.0,
         label_y,
         26.0,
@@ -239,7 +235,7 @@ fn fig_bolden_a(
         0,
     );
     sheet.label(
-        &format!("BOLD / DRAWN BY {model_name}"),
+        &format!("Bold / drawn by {model_name}"),
         x_bold + o_bold.width * S / 2.0,
         label_y,
         26.0,
@@ -247,11 +243,11 @@ fn fig_bolden_a(
         0,
     );
 
-    sheet.frame(
-        "WEIGHT TRANSFER / THE FIRST BOLD a",
-        &format!("MODEL: {model_name}"),
-        "THE BOLD MASTER NEVER HAD A REAL a; THE MODEL DREW THIS ONE",
-    );
+    sheet.hud_title(&[
+        "Weight transfer / the first Bold a",
+        "the Bold master never had a real a; the model drew this one",
+    ]);
+    sheet.attribution(Some(&format!("model: {model_name}")));
     sheet.save(renderer, out);
 }
 

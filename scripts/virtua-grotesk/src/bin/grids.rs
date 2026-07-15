@@ -37,8 +37,8 @@ const UX0: f64 = 64.0;
 const UX1: f64 = 464.0;
 const UY0: f64 = -16.0;
 const UY1: f64 = 304.0;
-const S: f64 = 2.7; // canvas px per font unit -> 1080 x 864 panel
-const PANEL_BOTTOM: f64 = 195.0;
+const S: f64 = 2.87; // canvas px per font unit -> 1148 x 918.4 panel
+const PANEL_BOTTOM: f64 = 168.0;
 const PANEL_TOP: f64 = PANEL_BOTTOM + (UY1 - UY0) * S;
 const INSET_X: f64 = (SLOT - (UX1 - UX0) * S) / 2.0;
 
@@ -227,9 +227,9 @@ fn main() {
         sheet.ctx.no_fill().stroke(color).stroke_width(PEN);
         sheet.ctx.line(anchor.0 + 16.0, anchor.1, text_x - 14.0, text_y + 8.0);
         let (l1, l2) = if i == 0 {
-            ("X=116: OFF GRID", "CORRECTION OR MISTAKE?")
+            ("x=116: off grid", "correction or mistake?")
         } else {
-            ("X=116: ON 2, OFF 8", "OPTICAL CORRECTION")
+            ("x=116: on 2, off 8", "optical correction")
         };
         sheet.label_padded(l1, text_x, text_y + 20.0, 26.0, color, -1);
         sheet.label_padded(l2, text_x, text_y - 22.0, 26.0, color, -1);
@@ -238,14 +238,14 @@ fn main() {
     // ── baseline tags ──
     for i in 0..2 {
         let pl = panel_left(i);
-        sheet.label_padded("BASELINE 0", pl + 14.0, cy(0.0) + 12.0, 26.0, blue(), -1);
+        sheet.label_padded("baseline 0", pl + 14.0, cy(0.0) + 12.0, 26.0, blue(), -1);
     }
 
     // ── panel titles + legends ──
     let title_y = PANEL_TOP + 44.0;
-    sheet.label("01 FLAT GRID / ONE LEVEL", panel_left(0), title_y, 30.0, green(), -1);
+    sheet.label("01 flat grid / one level", panel_left(0), title_y, 30.0, green(), -1);
     sheet.label(
-        "ALL POINTS EQUALLY LEGAL",
+        "all points equally legal",
         panel_left(0) + panel_w,
         title_y,
         26.0,
@@ -253,7 +253,7 @@ fn main() {
         1,
     );
     sheet.label(
-        "02 NESTED GRID / 64 \u{b7} 8 \u{b7} 2",
+        "02 nested grid / 64 \u{b7} 8 \u{b7} 2",
         panel_left(1),
         title_y,
         30.0,
@@ -263,8 +263,8 @@ fn main() {
     {
         // right-aligned legend: [green oval] ON 8   [red oval] ON 2, OFF 8
         let size = 26.0;
-        let t2 = "ON 2, OFF 8";
-        let t1 = "ON 8";
+        let t2 = "on 2, off 8";
+        let t1 = "on 8";
         let w2 = sheet.mono_width(t2, size);
         let w1 = sheet.mono_width(t1, size);
         let right = panel_left(1) + panel_w;
@@ -280,11 +280,11 @@ fn main() {
         sheet.ctx.oval(dot1, title_y + 1.0, 16.0, 16.0);
     }
 
-    sheet.frame(
-        "GRID AS LABELING FUNCTION",
-        "VIRTUA GROTESK / EM 1024 = 2^10",
-        "SAME OUTLINE BOTH PANELS; ONLY THE NESTED GRID LABELS THE CORRECTIONS",
-    );
+    sheet.hud_title(&[
+        "Grid as labeling function",
+        "same outline both panels; only the nested grid labels the corrections",
+    ]);
+    sheet.attribution(None);
 
     std::fs::create_dir_all(out.parent().unwrap()).unwrap();
     renderer

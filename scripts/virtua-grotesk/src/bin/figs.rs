@@ -117,7 +117,7 @@ fn parse_svg(path: &std::path::Path) -> Vec<Panel> {
             //   x' = x - offset,  y' = SVG_BASELINE - y
             let to_font = Affine::new([1.0, 0.0, 0.0, -1.0, -offset, SVG_BASELINE]);
             Panel {
-                label: label.trim().to_uppercase(),
+                label: label.trim().to_string(),
                 path: to_font * raw,
                 role: Role::from_fill(&fill),
             }
@@ -231,15 +231,17 @@ fn render_figure(
 
     // ── left-edge metric tags ──
     if geom.cap {
-        sheet.metric_tag("CAP 768", grid_left, baseline_y + 768.0, false, -1);
+        sheet.metric_tag("cap 768", grid_left, baseline_y + 768.0, false, -1);
     }
-    sheet.metric_tag("X-HEIGHT 576", grid_left, baseline_y + 576.0, true, -1);
-    sheet.metric_tag("BASELINE 0", grid_left, baseline_y, true, -1);
+    sheet.metric_tag("x-height 576", grid_left, baseline_y + 576.0, true, -1);
+    sheet.metric_tag("baseline 0", grid_left, baseline_y, true, -1);
     if geom.descender {
-        sheet.metric_tag("DESCENDER -256", grid_left, baseline_y - 256.0, true, -1);
+        sheet.metric_tag("descender -256", grid_left, baseline_y - 256.0, true, -1);
     }
 
-    sheet.frame(title, right, caption);
+    sheet.label_padded(title, MARGIN + 2.0, MARGIN + 4.0 + SMALL_TEXT + 14.0, FRAME_TEXT, green(), -1);
+    sheet.label_padded(caption, MARGIN + 2.0, MARGIN + 4.0, SMALL_TEXT, green(), -1);
+    sheet.attribution(Some(right));
 
     std::fs::create_dir_all(out.parent().unwrap()).unwrap();
     renderer.render_to_png(&sheet.ctx, out.to_str().unwrap()).unwrap();
@@ -267,15 +269,15 @@ fn main() {
     // repoint these at a fresh run to refresh.
     let cap_geom = Geom {
         baseline: 276.0,
-        top: 784.0,
-        bottom: -80.0,
+        top: 912.0,
+        bottom: -208.0,
         cap: true,
         descender: false,
     };
     let desc_geom = Geom {
         baseline: 459.0,
-        top: 608.0,
-        bottom: -272.0,
+        top: 728.0,
+        bottom: -392.0,
         cap: false,
         descender: true,
     };
@@ -284,17 +286,17 @@ fn main() {
             "runs/v02/complete-R.svg",
             "fig-complete-r.png",
             &cap_geom,
-            "GLYPH COMPLETION",
-            "MODEL: VIRTUA-12M-0.2",
-            "MODEL FINISHES A HELD-OUT GLYPH FROM 40% OF ITS OUTLINE",
+            "Glyph completion",
+            "model: Virtua-12M-0.2",
+            "the model finishes a held-out glyph from 40% of its outline",
         ),
         (
             "runs/night1/bolden-g.svg",
             "fig-bolden-g.png",
             &desc_geom,
-            "WEIGHT TRANSFER",
-            "MODEL: VIRTUA-12M (NIGHT 1)",
-            "MODEL PREDICTS THE BOLD WEIGHT FROM THE REGULAR",
+            "Weight transfer",
+            "model: Virtua-12M (night 1)",
+            "the model predicts the Bold weight from the Regular",
         ),
     ];
 
