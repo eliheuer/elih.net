@@ -316,25 +316,31 @@ fn fig_semantic(renderer: &Renderer, mono: &str, reg: &std::path::Path, out: &st
     };
     let box_right = f.x(U1);
 
-    // the multi-layer grid: 2 (correction, faint), 8 (structure, crisp), 64
+    // the two-layer grid, classified per line IN GLYPH COORDINATES so it
+    // can never drift off the letter: majors every 8 units (structure),
+    // minors every 2 (correction)
     {
         let ctx = &mut sheet.ctx;
-        for (step, color, wpen) in [
-            (2.0, Color::rgb(0x16, 0x16, 0x16), 0.75),
-            (8.0, Color::rgb(0x32, 0x32, 0x32), 1.5),
-            (64.0, Color::rgb(0x4a, 0x4a, 0x4a), 2.5),
-        ] {
+        let weight = |q: f64| -> (Color, f64) {
+            if q.rem_euclid(8.0) == 0.0 {
+                (Color::rgb(0x40, 0x40, 0x40), 2.0) // major: the 8-unit structure grid
+            } else {
+                (Color::rgb(0x18, 0x18, 0x18), 0.75) // minor: the 2-unit correction grid
+            }
+        };
+        let mut u = (U0 / 2.0).ceil() * 2.0;
+        while u <= U1 {
+            let (color, wpen) = weight(u);
             ctx.no_fill().stroke(color).stroke_width(wpen);
-            let mut u = U0;
-            while u <= U1 {
-                ctx.line(f.x0 + u * s_zoom, box_bottom, f.x0 + u * s_zoom, box_top);
-                u += step;
-            }
-            let mut v = V0;
-            while v <= V1 {
-                ctx.line(MARGIN, f.y(v), box_right, f.y(v));
-                v += step;
-            }
+            ctx.line(f.x0 + u * s_zoom, box_bottom, f.x0 + u * s_zoom, box_top);
+            u += 2.0;
+        }
+        let mut v = (V0 / 2.0).ceil() * 2.0;
+        while v <= V1 {
+            let (color, wpen) = weight(v);
+            ctx.no_fill().stroke(color).stroke_width(wpen);
+            ctx.line(MARGIN, f.y(v), box_right, f.y(v));
+            v += 2.0;
         }
     }
 
