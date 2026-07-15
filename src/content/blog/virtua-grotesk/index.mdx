@@ -11,20 +11,21 @@ draft: false
 <p class="font-mono text-sm" style="color: #ff4535">NOTE: this post is a draft and still being edited.<br />WARNING: may contain AI slop while still a draft.<br />Feedback welcome: eli@elih.net</p>
 
 Virtua Grotesk is a typeface I am designing on a **self-labeling grid
-system**. The drawing grid comes in nested tiers, ruled in powers-of-two from the 1024 units per em
-down to 2-unit optical corrections, and the tier a point lands on records what
-kind of decision it was. Every dimension reaches for an elegant binary
-number: the em is 1024 = 2^10, stems are 96, chamfers 16, sidebearings
-48 = 32 + 16. Even the base is part of the labeling: in binary, a
-value's tier can be read straight off its low digits. If you are reading
-this on [elih.net](/), Virtua Grotesk is the typeface you are reading
-right now.
+system**. The drawing grid comes in 8-unit and 2-unit nested tiers.
+The tier a point lands on records what kind of decision it was:
+structure on the 8-unit grid, optical correction on the 2-unit grid.
+Everything is ruled in powers-of-two, and every dimension reaches for
+an elegant binary number: 1024 = 2^10 units per em, stems of 96,
+chamfers of 16, sidebearings of 48 = 32 + 16. The base is part of the
+labeling too: in binary, a value's tier can be read straight off its
+low digits. If you are reading this on [elih.net](/), Virtua Grotesk
+is the typeface you are reading right now.
 
-It is also a machine-learning experiment: the same grid that gives the
-font its aesthetic makes its source files unusually good training data,
-and a small neural network is now learning to draw it. The model will
-soon be on Hugging Face as an open-weight release that anyone can use
-and fine-tune on their own fonts, and the font sources are on
+It is also a machine-learning experiment. The same grid that gives the
+font its aesthetic makes its source files unusually good training
+data, and a small neural network is now learning to draw it. The model
+will soon be on Hugging Face as an open-weight release that anyone can
+use and fine-tune on their own fonts. The font sources are on
 [GitHub](https://github.com/eliheuer/virtua-grotesk), free under the
 SIL Open Font License (OFL) v1.1. This post is about the typeface, the
 neural network, and why they are the same idea.
