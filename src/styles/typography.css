@@ -16,10 +16,9 @@
 @layer components {
   .prose {
     color: var(--foreground);
-    /* Post body sits tighter than the sitewide 1.5: 17/12 gives 34px
-       lines at 24px body (4/3 read a touch too tight), still on the
-       2-unit lattice. */
-    line-height: calc(17 / 12);
+    /* Post body sits tighter than the sitewide 1.5: 4/3 gives 32px lines
+       at 24px body, a multiple of 8 and the classic Swiss article ratio. */
+    line-height: calc(4 / 3);
 
     /* One rhythm unit; all vertical margins below are N * this. */
     --prose-space: 0.625rem;
