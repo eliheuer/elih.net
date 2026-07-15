@@ -618,8 +618,8 @@ pub fn annotate(sheet: &mut Sheet, o: &Outline, s: f64, x0: f64, baseline: f64) 
 /// The machine/hand legend, one row, right-aligned at (x_right, y baseline).
 pub fn legend(sheet: &mut Sheet, x_right: f64, y: f64) {
     let size = LEGEND_TEXT;
-    let t2 = "off 8, on 2 = the hand";
-    let t1 = "on 8 = machine";
+    let t2 = "off 8, on 2 = optical";
+    let t1 = "on 8 = core";
     let w2 = sheet.mono_width(t2, size);
     let w1 = sheet.mono_width(t1, size);
     let x2 = x_right - w2;

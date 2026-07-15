@@ -298,113 +298,132 @@ fn fig_semantic(renderer: &Renderer, mono: &str, reg: &std::path::Path, out: &st
     let n = load_outline(reg, "n");
     let o = load_outline(reg, "o");
 
-    const S: f64 = 1.35;
+    // Zoomed crop, Runebender style: window in glyph units with exact
+    // 8-multiple bounds, scaled so the box sits 24px off the rules (the
+    // same gap as rule-to-text) and the core 8-grid reads as crisp cells.
+    const V0: f64 = 64.0;
+    const V1: f64 = 592.0; // 528 units tall = 66 cells of 8
+    const U0: f64 = -8.0;
+    const U1: f64 = 744.0; // 752 units wide = 94 cells of 8
+    let box_bottom = FOOTER_RULE_Y + 24.0;
+    let box_top = HEADER_RULE_Y - 24.0;
+    let s_zoom = (box_top - box_bottom) / (V1 - V0);
     let f = Frame {
-        s: S,
-        x0: 104.0,
-        baseline: 272.0,
+        s: s_zoom,
+        x0: MARGIN - U0 * s_zoom,
+        baseline: box_bottom - V0 * s_zoom,
     };
+    let box_right = f.x(U1);
 
-    // the multi-layer grid itself, in glyph units with clean 8-multiple
-    // bounds: a whisper of 2, crisp 8 (the machine grid), brighter 64
-    const U0: f64 = -24.0;
-    const U1: f64 = 1216.0;
-    const V0: f64 = -48.0;
-    const V1: f64 = 624.0;
+    // the multi-layer grid: a whisper of 2 (optical), crisp 8 (core),
+    // brighter 64, all terminating on the window's 8-line bounds
     {
         let ctx = &mut sheet.ctx;
         for (step, color, wpen) in [
-            (2.0, Color::rgb(0x15, 0x15, 0x15), 0.75),
-            (8.0, Color::rgb(0x30, 0x30, 0x30), 1.5),
-            (64.0, Color::rgb(0x46, 0x46, 0x46), 2.5),
+            (2.0, Color::rgb(0x16, 0x16, 0x16), 0.75),
+            (8.0, Color::rgb(0x32, 0x32, 0x32), 1.5),
+            (64.0, Color::rgb(0x4a, 0x4a, 0x4a), 2.5),
         ] {
             ctx.no_fill().stroke(color).stroke_width(wpen);
             let mut u = U0;
             while u <= U1 {
-                ctx.line(f.x0 + u * S, f.baseline + V0 * S, f.x0 + u * S, f.baseline + V1 * S);
+                ctx.line(f.x0 + u * s_zoom, box_bottom, f.x0 + u * s_zoom, box_top);
                 u += step;
             }
             let mut v = V0;
             while v <= V1 {
-                ctx.line(f.x0 + U0 * S, f.baseline + v * S, f.x0 + U1 * S, f.baseline + v * S);
+                ctx.line(MARGIN, f.y(v), box_right, f.y(v));
                 v += step;
             }
         }
         ctx.no_fill().stroke(blue()).stroke_width(PEN);
-        for uy in [0.0, 576.0] {
-            ctx.line(f.x(U0), f.y(uy), f.x(U1), f.y(uy));
-        }
+        ctx.line(MARGIN, f.y(576.0), box_right, f.y(576.0));
     }
 
-    // glyphs with the full technical treatment
-    annotate(&mut sheet, &n, S, f.x(0.0), f.baseline);
-    annotate(&mut sheet, &o, S, f.x(n.width), f.baseline);
+    // glyphs: body, layer-colored points, handle lengths (crop-masked below)
+    for (outline, ox) in [(&n, 0.0), (&o, n.width)] {
+        draw_body(&mut sheet, outline, s_zoom, f.x(ox), f.baseline);
+        draw_points(&mut sheet, outline, s_zoom, f.x(ox), f.baseline);
+    }
+    handle_labels(&mut sheet, &n, s_zoom, f.x(0.0), f.baseline);
 
-    // complete dimension chains: stem | counter | stem, color = layer
-    let nw = n.width;
+    // mask the crop spill (bg is solid), then annotate on top
+    {
+        let ctx = &mut sheet.ctx;
+        ctx.fill(bg()).no_stroke();
+        ctx.rect(0.0, 0.0, W, box_bottom);
+        ctx.rect(0.0, box_top, W, H - box_top);
+        ctx.rect(0.0, 0.0, MARGIN, H);
+        ctx.rect(box_right, 0.0, W - box_right, H);
+    }
+
+    // dimension chains inside the window, color = layer
     sheet.dim_h(f.x(64.0), f.x(160.0), f.y(256.0), "96", green());
     sheet.dim_h(f.x(160.0), f.x(432.0), f.y(256.0), "272", gray());
     sheet.dim_h(f.x(432.0), f.x(528.0), f.y(256.0), "96", green());
-    sheet.dim_h(f.x(nw + 32.0), f.x(nw + 132.0), f.y(288.0), "100", red());
-    sheet.dim_h(f.x(nw + 132.0), f.x(nw + 484.0), f.y(288.0), "352", gray());
-    sheet.dim_h(f.x(nw + 484.0), f.x(nw + 584.0), f.y(288.0), "100", red());
-    sheet.dim_v(f.x(nw + 304.0), f.y(500.0), f.y(592.0), "92", red(), true);
+    sheet.dim_h(f.x(n.width + 32.0), f.x(n.width + 132.0), f.y(288.0), "100", red());
 
-    sheet.metric_tag("x-height 576", MARGIN, f.y(576.0), true, -1);
-    sheet.metric_tag("baseline 0", MARGIN, f.y(0.0), false, -1);
+    // key coordinates + the o wall's handle lengths (labeled manually so
+    // nothing straddles the crop edge)
+    sheet.label_padded("(32,288)", f.x(n.width + 32.0) - 16.0, f.y(288.0) + 26.0, SMALL_TEXT, gray(), 1);
+    sheet.label_padded("128", f.x(n.width + 132.0) + 14.0, f.y(352.0) - 7.0, SMALL_TEXT, purple(), -1);
+    sheet.label_padded("128", f.x(n.width + 132.0) + 14.0, f.y(224.0) - 7.0, SMALL_TEXT, purple(), -1);
 
-    // ---- right column, compressed ---------------------------------------------------
-    let rx = f.x(U1) + 52.0;
+    sheet.metric_tag("x-height 576", MARGIN, f.y(576.0), false, -1);
+    legend(&mut sheet, box_right - 12.0, f.y(96.0));
 
-    sheet.label("Every integer is a sum of powers of two.", rx, 1096.0, LEGEND_TEXT, gray(), -1);
-    sheet.label("The meaning is the trailing zeros:", rx, 1052.0, LEGEND_TEXT, gray(), -1);
+    // ---- right column -------------------------------------------------------------
+    let rx = box_right + 56.0;
+
+    sheet.label("Every integer is a sum of powers of two.", rx, 1156.0, LEGEND_TEXT, gray(), -1);
+    sheet.label("The meaning is the trailing zeros:", rx, 1112.0, LEGEND_TEXT, gray(), -1);
 
     let bit_row = |sheet: &mut Sheet, value: u32, y0: f64, color: Color, tag: &str| {
-        let cell = 44.0;
-        let gap = 6.0;
-        sheet.label(&value.to_string(), rx + 52.0, y0 + 10.0, DIM_TEXT, color, 1);
+        let cell = 50.0;
+        let gap = 8.0;
+        sheet.label(&value.to_string(), rx + 56.0, y0 + 12.0, DIM_TEXT, color, 1);
         for b in 0..7u32 {
             let bit = (value >> (6 - b)) & 1;
-            let x = rx + 68.0 + b as f64 * (cell + gap);
+            let x = rx + 72.0 + b as f64 * (cell + gap);
             if bit == 1 {
                 sheet.ctx.fill(color).stroke(color).stroke_width(PEN_LIGHT);
                 sheet.ctx.rect(x, y0, cell, cell);
-                sheet.label("1", x + cell / 2.0, y0 + cell * 0.28, 26.0, bg(), 0);
+                sheet.label("1", x + cell / 2.0, y0 + cell * 0.28, 28.0, bg(), 0);
             } else {
                 sheet.ctx.no_fill().stroke(dim_color()).stroke_width(PEN_LIGHT);
                 sheet.ctx.rect(x, y0, cell, cell);
-                sheet.label("0", x + cell / 2.0, y0 + cell * 0.28, 26.0, dim_color(), 0);
+                sheet.label("0", x + cell / 2.0, y0 + cell * 0.28, 28.0, dim_color(), 0);
             }
         }
         let zeros = value.trailing_zeros();
-        let x_start = rx + 68.0 + (7 - zeros) as f64 * (cell + gap);
-        let x_end = rx + 68.0 + 7.0 * (cell + gap) - gap;
+        let x_start = rx + 72.0 + (7 - zeros) as f64 * (cell + gap);
+        let x_end = rx + 72.0 + 7.0 * (cell + gap) - gap;
         sheet.ctx.no_fill().stroke(color).stroke_width(PEN);
         sheet.ctx.line(x_start, y0 - 12.0, x_end, y0 - 12.0);
         sheet.ctx.line(x_start, y0 - 12.0, x_start, y0 - 4.0);
         sheet.ctx.line(x_end, y0 - 12.0, x_end, y0 - 4.0);
-        sheet.label(tag, x_end + 20.0, y0 + 10.0, LEGEND_TEXT, color, -1);
+        sheet.label(tag, x_end + 22.0, y0 + 12.0, LEGEND_TEXT, color, -1);
     };
-    bit_row(&mut sheet, 96, 934.0, green(), "on 32: machine");
-    bit_row(&mut sheet, 100, 818.0, red(), "on 4: the hand");
+    bit_row(&mut sheet, 96, 980.0, green(), "on 32: core");
+    bit_row(&mut sheet, 100, 860.0, red(), "on 4: optical");
     sheet.label(
         "100 = 96 + 4: the curve's correction",
         rx,
-        742.0,
+        780.0,
         LEGEND_TEXT,
         red(),
         -1,
     );
 
     sheet.label(
-        "Share of points on the machine 8-grid",
+        "Share of points on the core 8-grid",
         rx,
-        576.0,
+        640.0,
         LEGEND_TEXT,
         gray(),
         -1,
     );
-    sheet.label("(held-out Bolds, raw model output)", rx, 536.0, SMALL_TEXT, gray(), -1);
+    sheet.label("(held-out Bolds, raw model output)", rx, 598.0, SMALL_TEXT, gray(), -1);
     let bar_max = W - MARGIN - rx - 76.0;
     let bar = |sheet: &mut Sheet, y: f64, frac: f64, color: Color, label: &str, pct: &str| {
         sheet.label(label, rx, y + 50.0, LEGEND_TEXT, color, -1);
@@ -413,13 +432,13 @@ fn fig_semantic(renderer: &Renderer, mono: &str, reg: &std::path::Path, out: &st
         sheet.ctx.rect(rx, y, w, 36.0);
         sheet.label(pct, rx + w + 16.0, y + 8.0, LEGEND_TEXT, color, -1);
     };
-    bar(&mut sheet, 448.0, 0.0625, dim_color(), "chance on the 2-grid", "6%");
-    bar(&mut sheet, 360.0, 0.68, red(), "Virtua-12M-0.8", "68%");
-    bar(&mut sheet, 272.0, 0.85, green(), "the hand", "85%");
+    bar(&mut sheet, 484.0, 0.0625, dim_color(), "chance on the 2-grid", "6%");
+    bar(&mut sheet, 380.0, 0.68, red(), "Virtua-12M-0.8", "68%");
+    bar(&mut sheet, 276.0, 0.85, green(), "human sources", "85%");
     sheet.label(
         "Nobody labeled the layers; the model found them",
         rx,
-        200.0,
+        188.0,
         SMALL_TEXT,
         gray(),
         -1,
