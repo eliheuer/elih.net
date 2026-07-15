@@ -386,11 +386,11 @@ fn fig_semantic(renderer: &Renderer, mono: &str, reg: &std::path::Path, out: &st
     let rx = box_right + 56.0;
     let body = DIM_TEXT;
 
-    sheet.label("Multi-layer semantic", rx, 1216.0, body, green(), -1);
-    sheet.label("powers-of-two grid system", rx, 1172.0, body, green(), -1);
+    sheet.label("The self-labeling grid,", rx, 1216.0, body, green(), -1);
+    sheet.label("ruled in powers-of-two", rx, 1172.0, body, green(), -1);
 
     sheet.label("Every integer is a sum of", rx, 1084.0, body, gray(), -1);
-    sheet.label("powers of two. The meaning", rx, 1040.0, body, gray(), -1);
+    sheet.label("powers-of-two. The meaning", rx, 1040.0, body, gray(), -1);
     sheet.label("is the trailing zeros:", rx, 996.0, body, gray(), -1);
 
     let bit_row = |sheet: &mut Sheet, value: u32, y0: f64, color: Color, tag: &str| {

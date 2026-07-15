@@ -132,7 +132,8 @@ lives on 8, any point on 2 but off 8 is a deliberate optical correction, with
 nothing to annotate. The machine proposes
 structure on 8, the human teaches optics on 2, and the difference between a
 draft and its corrected version is a clean training set for free, the raw
-material for a model that will soon make those corrections on its own if given enough well-crafted example data.
+material for a model that could eventually make those corrections on
+its own.
 
 ![A cubic arch over the two-level grid, drawn with designbot: every point lands on the 8-unit structure grid in green, except the apex and its two handles, pulled 4 units up onto the 2-unit grid, marked in red with a plus-4 dimension and a callout labeling the move an optical correction.](./fig-optical-correction.png)
 
@@ -191,7 +192,7 @@ as plain statistics, with no labels and no auxiliary loss, and not only
 as frequencies: where the human sources step off the structure grid,
 the model tends to step off at the same points.
 
-![The whole argument in one dimension sheet, drawn with designbot. Left: a zoomed crop of the word no sitting on the layered grid itself, the fine 2-unit correction grid, the crisp 8-unit structure grid and brighter 64-lines, with every point colored by its layer, the n's stem chain dimensioned 96, 272, 96 in green and the o's curve wall dimensioned 100 in red. Right: 96 and 100 written in binary with their trailing zeros bracketed, 96 on 32 as structure and 100 on 4 as a correction, the note that 100 equals 96 plus 4, the curve's correction, and bars showing the share of points landing exactly on the 8-unit grid in held-out model output: chance 6 percent, Virtua-12M-0.8 68 percent, human sources 85 percent, with the note that nobody labeled the layers; the model found them](./fig-semantic-grid.png)
+![The whole argument in one dimension sheet, drawn with designbot. Left: a zoomed crop of the word no sitting on the two-tier grid itself, the fine 2-unit correction grid and the crisp 8-unit structure grid, with every point colored by its tier, the n's stem chain dimensioned 96, 272, 96 in green and the o's curve wall dimensioned 100 in red. Right: under the heading "the self-labeling grid, ruled in powers-of-two," 96 and 100 written in binary with their trailing zeros bracketed, 96 on 32 as structure and 100 on 4 as a correction, the note that 100 equals 96 plus 4, the curve's optical correction, and bars showing the share of points landing exactly on the 8-unit grid in held-out raw model output: chance 6 percent, Virtua-12M-0.8 68 percent, human sources 85 percent](./fig-semantic-grid.png)
 
 One honest caveat: for the model itself, the win is coarseness and
 regularity, not base two. It reads each coordinate as a single token and
@@ -218,13 +219,15 @@ their coordinates, in order, and nothing else.
 
 A transformer works from a fixed *vocabulary*: the set of tokens it can read and
 write, like the words of a language. Here that set holds three kinds of token: the four drawing
-verbs (`MOVE`, `LINE`, `CURVE`, `CLOSE`); conditioning tokens that identify the glyph
-by name (and Unicode where it has one) and set its weight (the prompt, what to
-draw); and one token for each legal
-position on the grid. Here is the numeral **2** in the Regular weight:
+verbs (`MOVE`, `LINE`, `CURVE`, `CLOSE`); conditioning tokens that name
+the glyph and set its weight (the prompt, what to draw); and one token
+for each legal position on the grid. (A fourth kind, the small
+Bold-offset tokens of section 07, joins for two-master training.) Here
+is the numeral **2** in the Regular weight, exactly as the codec in
+the training repo emits it:
 
 ```
-BOS N_two U_0032 W400 ADV 594
+BOS N_two W400 ADV 592
 MOVE 48 0
 LINE 528 0
 LINE 544 16
@@ -233,15 +236,15 @@ LINE 528 88
 LINE 160 88
 LINE 152 96
 CURVE 152 136 232 216 356 276
-CURVE 492 342 562 414 562 528
-CURVE 562 652 494 760 306 760
-CURVE 150 760 50 656 50 500
-LINE 66 484
-LINE 134 484
-LINE 150 500
-CURVE 150 596 210 668 306 668
-CURVE 402 668 462 608 462 528
-CURVE 462 452 394 390 280 336
+CURVE 492 342 560 422 560 552
+CURVE 560 676 494 784 304 784
+CURVE 150 784 48 680 48 524
+LINE 64 508
+LINE 136 508
+LINE 152 524
+CURVE 152 620 210 692 304 692
+CURVE 402 692 464 632 464 552
+CURVE 464 460 394 390 280 336
 CURVE 116 258 32 146 32 32
 LINE 32 16
 CLOSE
@@ -249,8 +252,8 @@ EOS
 ```
 
 Read it top to bottom. `BOS` opens the sequence and `EOS` ends it. `N_two` names
-the glyph and `U_0032` gives its Unicode (U+0032, the digit two), `W400` sets
-the weight (Regular), and `ADV 594` is its advance width,
+the glyph (the digit two), `W400` sets
+the weight (Regular), and `ADV 592` is its advance width,
 how far the pen moves before the next character. The rest is the outline:
 `MOVE` starts a contour at a point, `LINE` draws a straight segment to the next,
 `CURVE` draws a cubic bézier through two control points to an endpoint, and
@@ -276,16 +279,25 @@ each coordinate already equals a token exactly, with nothing rounded either way.
 grid would round-trip just as cleanly.)
 
 There is no rasterization here, no image encoder, no diffusion. The font source
-itself, stripped to the drawing, is the training data, about 80 tokens a glyph.
+itself, stripped to the drawing, is the training data, about 90 tokens a glyph.
 This is what training on found fonts can never have: quantize the data after the
 fact and you lose the designer's intent by some unknowable amount, but draw on
 the grid and the tokens *are* the intent.
 
-None of the machinery is new. DeepSVG, DeepVecFont, IconShop, and StarVector all
-tokenize outlines and learn them with a transformer, several quantizing to a
-small integer grid exactly as I do. What none of them can do is start from data
-that was grid-native; they train on found fonts snapped to a grid in
-preprocessing, a lossy scrape of a thousand disagreeing hands. [Simon
+None of the machinery is new, and the lineage deserves naming.
+[SVG-VAE](https://arxiv.org/abs/1904.02632) learned glyphs as command
+sequences from a corpus of tens of thousands of fonts in 2019;
+[DeepSVG](https://arxiv.org/abs/2007.11301),
+[DeepVecFont](https://arxiv.org/abs/2110.06688),
+[IconShop](https://arxiv.org/abs/2304.14400), and
+[StarVector](https://arxiv.org/abs/2312.11556) all tokenize vector
+outlines and learn them with a transformer, several quantizing to a
+small integer grid exactly as I do. What none of them can do is start
+from data that was grid-native: they train on found fonts snapped to a
+grid in preprocessing, a lossy scrape of a thousand disagreeing hands,
+and spend much of their capacity absorbing that heterogeneity. This
+project inverts the ratio. Design one corpus until it is nearly
+homogeneous, then ask how small the model can get. [Simon
 Cozens](https://simoncozens.github.io/state-of-ai-font-generation/), surveying
 the field, is blunt: "vectorization of glyph images has been historically very
 bad," and his own model trained on the Google Fonts dataset "completely failed."
@@ -331,21 +343,8 @@ generating C with balanced braces,
 [makemore](https://github.com/karpathy/makemore) spelling names character by
 character, [microgpt](https://karpathy.github.io/2026/02/12/microgpt/) training
 a tiny GPT over a 27-token vocabulary. This project does the same for glyph outlines, generating a letter's drawing
-commands one token at a time, and a full run takes about forty minutes on an M4
-Pro or gaming GPU.
-
-The lineage has a font branch too, worth naming to place this work on
-a map. [SVG-VAE](https://arxiv.org/abs/1904.02632) (Lopes et al.,
-2019) learned glyphs as SVG command sequences from a corpus of tens of
-thousands of fonts; [DeepSVG](https://arxiv.org/abs/2007.11301)
-(Carlier et al., 2020) built a hierarchical transformer for vector
-graphics; [DeepVecFont](https://arxiv.org/abs/2110.06688) (Wang and
-Lian, 2021) generates whole vector fonts with dual raster-and-sequence
-supervision. All three learn from large heterogeneous corpora and
-spend much of their capacity absorbing that heterogeneity: coordinates
-that land wherever thousands of different hands put them. This project
-inverts the ratio. Design one corpus until it is nearly homogeneous,
-then ask how small the model can get.
+commands one token at a time, and a single training stage runs in a
+45-minute box on an M4 Pro or gaming GPU.
 
 Training follows his
 [Recipe for Training Neural Networks](https://karpathy.github.io/2019/04/25/recipe/)
@@ -382,8 +381,10 @@ the second master does not exist yet. Every result below is scored on
 exactly that case, Bolds the model never saw, and the baseline it must
 beat is a strong classical answer to the same missing-master problem:
 shift every point by the average Bold offset learned from the pairs you
-do have. Beating it means beating the best non-learning tool that can
-even enter the contest.
+do have. Beating it means beating a serious non-learning answer to
+the same problem; the classical offset-curve filter, the other tool
+that can draw a Bold from a single master, is queued as the next
+baseline.
 
 The encoding is where the design system pays off again. Because Virtua's
 masters are point-compatible, I interleave them per point
@@ -411,7 +412,7 @@ v0.7 recipe and retrained it on the freshly graded corpus (50 approved
 Bold pairs, up from 39): it tied the baseline again. Arm two pretrained
 the same architecture on 29,000 glyph pairs traced from OFL fonts, then
 finetuned on the same graded corpus: it beats the baseline on all ten
-held-out glyphs, on every metric. Data cleaning alone kept the tie;
+held-out glyphs, on every metric's seed-averaged score. Data cleaning alone kept the tie;
 other designers' letterforms broke it, which is section 08's data plan
 reporting its first result.
 
@@ -469,8 +470,8 @@ current ceiling is draft quality; the
 division of labor is deliberate, the model proposing on the structure
 grid and a person finishing on the correction grid. The deeper bet is
 also still open. At this scale, on one machine, curated grid-native
-data demonstrably beats both a strong baseline and a bigger helping of
-parameters; whether that holds three orders of magnitude up, against
+data plus generic pretraining demonstrably beats a strong baseline,
+and more graded data alone did not; whether that holds three orders of magnitude up, against
 someone training a giant model on renders of every font in existence,
 is precisely what the coming OFL-corpus scale-ups are for. And even in
 that world the grid keeps its jobs: the encoding, the eval harness, and
@@ -508,7 +509,8 @@ minute, corrections and all.
 The pretraining corpus already supports its own held-out test, and it
 is worth reporting both halves, because one is a negative result. The
 pretrain stage never trains on one percent of the OFL pairs, 290 of
-29,000. On those, the pretrained model beats the mean-delta baseline
+29,000, scored here with a single sampling seed (at this n the
+standard error on every MAE in the table is about half a font unit). On those, the pretrained model beats the mean-delta baseline
 recomputed on OFL data, so the skill is not Virtua-specific: the model
 boldens glyphs it has never seen. The honest scope: the held-out unit
 is the glyph pair, not the whole font, so this measures new glyphs
@@ -583,9 +585,10 @@ even remains a secret because nobody ever believes you anyways”</p>
 <p>—roon ([@tszzl](https://x.com/tszzl)), 2026.</p>
 </div>
 
-When I shared this draft, the most common pushback was why powers-of-two, so I added this additional section, where I try to mathematically
-prove that this is the best possible grid system for AI/ML data
-engineering for type design. Any grid shrinks the coordinate vocabulary, so a
+When I shared this draft, the most common pushback was: why
+powers-of-two? So I added this section, which tries to prove, not just
+defend, that this is the right grid system for machine-learning data
+engineering in type design. Any grid shrinks the coordinate vocabulary, so a
 decimal grid like Replica's would tokenize just as cleanly, and if the
 argument is consistency, the base looks like superstition. Concede the
 narrow point first: the transformer does not care. I can find no evidence
