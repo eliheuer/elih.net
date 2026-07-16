@@ -247,9 +247,10 @@ how far the pen moves before the next character. The rest is the outline:
 `CLOSE` shuts the loop. Every bare number is a grid coordinate.
 
 Many carefully drawn fonts are fairly regular. Virtua is stricter: a
-stem is 96 every time, never 95 or 97, so structural tokens recur,
-and the optical corrections sit off the 8-grid, so their tokens stay
-rare. To the model, a correction is a rare, high-information token.
+stem is 96 every time, never 95 or 97. Structural values recur, so
+their tokens are common. Corrections sit off the 8-grid, so their
+tokens are rare. To the model, a correction is a rare,
+high-information token.
 
 The codec runs both ways. To train, it turns every glyph into a
 sequence. To generate, you give it the opening tokens (a name and a
@@ -292,9 +293,9 @@ trained from scratch on a single machine, no cloud and no GPU cluster. The work
 is early, and it runs on two setups: an [MLX](https://github.com/ml-explore/mlx)
 build on an M4 Mac and a PyTorch build on a Linux PC with a gaming GPU. An
 overnight run is about 30,000 steps. The corpus began as Virtua's two masters, 427
-glyphs, structurally identical between Regular and Bold; since v0.8 the model
-also pretrains on glyphs from other OFL fonts before the Virtua finetune,
-and section 07 reports what that bought.
+glyphs, structurally identical between Regular and Bold. Since v0.8
+the model also pretrains on glyphs from other OFL fonts before the
+Virtua finetune; section 07 reports what that bought.
 
 The model card:
 
@@ -325,8 +326,8 @@ generating C with balanced braces,
 [makemore](https://github.com/karpathy/makemore) spelling names character by
 character, [microgpt](https://karpathy.github.io/2026/02/12/microgpt/) training
 a tiny GPT over a 27-token vocabulary. This project does the same for glyph outlines, generating a letter's drawing
-commands one token at a time, and a single training stage runs in a
-45-minute box on an M4 Pro or gaming GPU.
+commands one token at a time. A single training stage takes about 45
+minutes on an M4 Pro or a gaming GPU.
 
 Training follows his
 [Recipe for Training Neural Networks](https://karpathy.github.io/2019/04/25/recipe/)
@@ -358,25 +359,22 @@ glyph drawn once must be drawn again heavier, with the same structure.
 
 An obvious objection first: font tools already interpolate. When both
 masters exist, interpolation is exact and free, and no model should
-compete with it. The model is for the case interpolation cannot touch:
-the second master does not exist yet. Every result below is scored on
-exactly that case, Bolds the model never saw, and the baseline it must
-beat is a strong classical answer to the same missing-master problem:
-shift every point by the average Bold offset learned from the pairs you
-do have. Beating it means beating a serious non-learning answer to
-the same problem; the classical offset-curve filter, the other tool
-that can draw a Bold from a single master, is queued as the next
-baseline.
+compete with it. The model is for the case interpolation cannot
+touch: the second master does not exist yet. Every result below is
+scored on that case, Bolds the model never saw. The baseline is the
+classical answer to the same missing-master problem: shift every
+point by the average Bold offset of the pairs you do have. The
+offset-curve filter, the other tool that can draw a Bold from one
+master, is queued as the next baseline.
 
 The encoding is where the design system pays off again. Because Virtua's
 masters are point-compatible, I interleave them per point
 (`MOVE x_reg y_reg x_bold y_bold`), so every Bold coordinate sits directly
 after its Regular partner in the sequence. Boldening stops being a
-long-range translation problem and becomes local prediction. Better: at
-generation time the Regular coordinates are *forced* from the input, and the
-model only fills the Bold slots, so the output Bold cannot structurally
-diverge from the Regular. The encoding guarantees master compatibility,
-so it never has to be checked.
+long-range problem and becomes local prediction. At generation time
+the Regular coordinates are *forced* from the input and the model
+fills only the Bold slots, so the output cannot structurally diverge
+from its Regular. The encoding guarantees master compatibility.
 
 ![Regular-to-Bold weight transfer on a held-out g, drawn with designbot: the green Regular input, the model's red predicted Bold, and the gray actual Bold on the powers-of-two grid. Preliminary model output, refreshed each training run.](./fig-bolden-g.png)
 
@@ -536,16 +534,16 @@ channel. The goal of the whole apparatus is unglamorous and concrete:
 doing real production work (the Bold companions, the tedious completions,
 the cleanup passes) and a human doing what humans are good at.
 
-This is only a first step. What I hope it eventually allows is leaving OpenType
-behind entirely, and fonts that are models rather than tables of outlines, no
-longer confined to the fixed per-glyph boxes that digital type inherited from
-the metal sorts of movable type. An outline font is a compression scheme for
-the Latin idea of a letter, a fixed shape reused everywhere, and it strains at
-scripts built differently. Arabic in its manuscript forms is a continuous,
-context-dependent stroke, and today's workaround is thousands of glyphs and rules
-faking what a hand does in one motion. A generative font, a small network that
-has compressed the typeface and draws each glyph in context, handles that
-natively, and I would bet the first ones are built on a grid like this.
+This is a first step. The hope is fonts that are models rather than
+tables of outlines, no longer confined to the per-glyph boxes digital
+type inherited from metal sorts. An outline font is a compression
+scheme for the Latin idea of a letter, a fixed shape reused
+everywhere, and it strains at scripts built differently. Arabic in
+its manuscript forms is a continuous, context-dependent stroke;
+today's workaround is thousands of glyphs and rules faking what a
+hand does in one motion. A generative font, a small network that has
+compressed the typeface and draws each glyph in context, handles that
+natively. I would bet the first ones are built on a grid like this.
 
 <h3 id="09-the-mathematics-of-2n">09. The Mathematics of 2ⁿ</h3>
 
