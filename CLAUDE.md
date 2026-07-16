@@ -63,3 +63,28 @@ Configured in `astro.config.ts`:
 - Remark: `remark-math`, `remark-emoji`, `remark-sectionize`
 - Rehype: `rehype-document` (injects KaTeX CSS CDN), `rehype-external-links` (opens new tab + `nofollow`), `rehype-heading-ids`, `rehype-katex`, `rehype-pretty-code`
 - `astro-expressive-code` is the primary code-block renderer (themes `github-light` / `github-dark`, gated by `.light` / `.dark` class via `themeCssSelector`). Built-in syntax highlight is disabled (`syntaxHighlight: false`) to let Expressive Code own it.
+
+## Writing style (all prose: post body, captions, alt text, titles)
+
+The model is Tao Lin's directness applied to technical writing:
+https://www.taolin.us/writing. Say the fact. Stop.
+
+- Short declarative sentences. One idea per sentence. Subject first.
+- Plain words: "use" not "leverage", "shows" not "demonstrates".
+- State numbers and concrete nouns. Delete intensifiers (very, really,
+  deeply) and adjectives that do not carry information.
+- No cuteness. No aphorisms, paradox hooks, or applause lines. No
+  "here's the trick", "worth slowing down for", "the evidence fits in
+  three numbers", "writes itself".
+- No anthropomorphizing: points do not "know", the eye does not "ask",
+  grids do not "insist".
+- No conversational filler: "of course", "honestly", "frankly", "a fair
+  objection", "agreed, and that is the point".
+- Never em dashes (rewrite with commas, parentheses, colons, or periods).
+- Metaphors: at most one per section, only if it carries information a
+  plain sentence cannot.
+- Do not restate. If a fact appeared earlier, refer to it; do not
+  re-explain it.
+- Titles are short noun phrases.
+- A boring sentence that is clear beats a memorable sentence that is not.
+- It is fine to sound flat. Flat is the voice.

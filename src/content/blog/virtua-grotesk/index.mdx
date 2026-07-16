@@ -10,19 +10,18 @@ draft: false
 
 <p class="font-mono text-sm" style="color: #ff4535">NOTE: this post is a draft and still being edited.<br />WARNING: may contain AI slop while still a draft.<br />Feedback welcome: eli@elih.net</p>
 
-Virtua Grotesk is a typeface designed to be training data. Its
-drawing grid comes in nested tiers that label every point as it is
-placed: structure on the coarse tier, the eye's optical corrections
-on the fine one. I call this a **self-labeling grid system**, and it
-makes the typeface a machine-learning and data-engineering experiment
-as much as a visual-design one. A small neural network is now
-learning to draw it. If you are reading this on [elih.net](/),
-Virtua Grotesk is the typeface you are reading right now.
+Virtua Grotesk is a typeface drawn on two nested grids. Structural
+points go on the 8-unit grid. Optical corrections go on the 2-unit
+grid. The grid a point lands on records what the point is for, so
+the font's source files are labeled training data. I call this a
+**self-labeling grid system**. It makes the typeface a
+machine-learning and data-engineering experiment as much as a
+visual-design one. A small neural network is now learning to draw
+it. If you are reading this on [elih.net](/), you are reading
+Virtua Grotesk right now.
 
-Everything is built on powers-of-two, and every dimension reaches
-for an elegant binary number: the structure grid is 8 units, the
-correction grid 2, the em 1024 = 2^10, stems 96, chamfers 16,
-sidebearings 48 (32 + 16), and so on. The model will soon be on
+Everything is built on powers-of-two: the em is 1024 = 2^10 units,
+stems are 96, chamfers 16, sidebearings 48 (32 + 16), and so on. The model will soon be on
 Hugging Face as an open-weight release that anyone can use, run
 locally (it's under 50 MB), and fine-tune. The font sources are
 already on
