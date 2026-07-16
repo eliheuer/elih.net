@@ -137,7 +137,11 @@
       display: block;
       width: 100%;
       overflow-x: auto;
-      /* body size; the scale has no smaller tier */
+      /* Dense numeric tables (benchmarks, model card) need a smaller
+         tier than body text, and mono keeps the columns aligned. */
+      font-family: var(--font-mono);
+      font-size: 0.75em; /* 18px at the 24px body */
+      line-height: 1.4;
     }
 
     thead {
