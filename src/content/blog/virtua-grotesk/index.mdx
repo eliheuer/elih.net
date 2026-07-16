@@ -177,14 +177,15 @@ tends to step off at the same points.
 
 ![The whole argument in one annotated specimen, drawn with designbot. Left: a zoomed crop of the word no sitting on the two-tier grid itself, the fine 2-unit correction grid and the crisp 8-unit structure grid, with every point colored by its tier, the n's stem chain dimensioned 96, 272, 96 in green and the o's curve wall dimensioned 100 in red. Right: under the heading "the self-labeling grid, built on powers-of-two," 96 and 100 written in binary with their trailing zeros bracketed, 96 on 32 as structure and 100 on 4 as a correction, the note that 100 equals 96 plus 4, the curve's optical correction, and bars showing the share of points landing exactly on the 8-unit grid in held-out raw model output: chance 6 percent, Virtua-12M-0.8 68 percent, human sources 85 percent](./fig-semantic-grid.png)
 
-One honest caveat: for the model itself, the win is coarseness and
-regularity, not base two. It reads each coordinate as a single token and
-never sees digits, so it would learn Replica's decimal grid just as
-well. A small set of legal values, each one recurring and meaning one
-thing, is the whole trick. The machine legibility comes from the grid
-being coarse and kept; as far as the model is concerned, the base is a
-matter of taste. Section 09 makes the case that the rest of the pipeline
-disagrees.
+One honest caveat: for the model itself, the win is coarseness,
+regularity, and the nested tiers, not base two. It reads each
+coordinate as a single token and never sees digits, so it would learn
+a base-ten version of these tiers just as well. A small set of legal
+values, each one recurring and meaning one thing, with corrections
+rare against a regular background: that is the whole trick, and none
+of it needs the base to be two. But the model is only the middle of
+the pipeline, and in the last section of this post I will argue that
+base two is the best possible choice for a system like this.
 
 ### 05. Glyphs as Sentences
 
