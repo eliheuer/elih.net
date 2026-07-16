@@ -194,11 +194,10 @@ in general.
 
 ### 05. Glyphs as Sentences
 
-A glyph is already a kind of sentence: an ordered list of drawing commands. That
-is exactly what a transformer predicts, a sequence where each symbol follows from
-the ones before. So instead of a picture of a letter or a loose set of points, I
-give the model each glyph as the sequence it already is and train it to predict
-the next token.
+A glyph is already a kind of sentence: an ordered list of drawing
+commands. A transformer predicts sequences. So I give the model each
+glyph as the sequence it already is and train it to predict the next
+token.
 
 The source files are a [UFO](https://unifiedfontobject.org/): a folder of XML,
 one file per glyph, each outline stored as points on the grid. A transformer
@@ -206,14 +205,13 @@ can't read a tree of XML, it reads a flat list of tokens. So a small codec
 rewrites each glyph's outline as a single line of text: the drawing commands and
 their coordinates, in order, and nothing else.
 
-A transformer works from a fixed *vocabulary*: the set of tokens it can read and
-write, like the words of a language. Here that set holds three kinds of token: the four drawing
-verbs (`MOVE`, `LINE`, `CURVE`, `CLOSE`); conditioning tokens that name
-the glyph and set its weight (the prompt, what to draw); and one token
-for each legal position on the grid. (A fourth kind, the small
-Bold-offset tokens of section 07, joins for two-master training.) Here
-is the numeral **2** in the Regular weight, exactly as the codec in
-the training repo emits it:
+A transformer works from a fixed *vocabulary*: the set of tokens it
+can read and write. Here that set holds three kinds of token: the
+four drawing verbs (`MOVE`, `LINE`, `CURVE`, `CLOSE`); conditioning
+tokens that name the glyph and set its weight; and one token for each
+legal position on the grid. A fourth kind, the Bold-offset tokens,
+joins in section 07. Here is the numeral **2** in the Regular weight,
+exactly as the codec emits it:
 
 ```
 BOS N_two W400 ADV 592
@@ -248,32 +246,28 @@ how far the pen moves before the next character. The rest is the outline:
 `CURVE` draws a cubic bézier through two control points to an endpoint, and
 `CLOSE` shuts the loop. Every bare number is a grid coordinate.
 
-Many carefully drawn fonts are already fairly regular. What sets Virtua apart is
-a stricter, systematic grid: every coordinate lands on it exactly, a stem is 96
-every time, never 95 or 97, and where a point lands carries semantic meaning,
-which hands a data engineer labeled training data for free.
+Many carefully drawn fonts are fairly regular. Virtua is stricter: a
+stem is 96 every time, never 95 or 97, so structural tokens recur,
+and the optical corrections sit off the 8-grid, so their tokens stay
+rare. To the model, a correction is a rare, high-information token.
 
-The two-tier grid splits the tokens the way it splits the drawing. Structural
-points sit on the 8-grid, so their coordinate tokens are common; the optical
-corrections sit off it, so they stay rare. To the model, a correction is just a rare, high-information token.
+The codec runs both ways. To train, it turns every glyph into a
+sequence. To generate, you give it the opening tokens (a name and a
+weight), let it finish, and run the codec backward into a UFO
+outline: a real, editable glyph. The round trip is lossless. Snapping
+loses precision only when a point falls between two legal positions,
+and a grid-native font has no such points: every coordinate already
+equals a token exactly. The exactness comes from committing to the
+grid, not from its coarseness; a 1-unit grid would round-trip just as
+cleanly.
 
-The codec runs both ways. To train, it turns every glyph into a sequence and the
-model learns to predict the next token. To generate, you give it the opening
-tokens (the name and weight you want), let it finish, and run the codec backward
-into a UFO outline: a real, editable glyph. The round trip is lossless. Tokenizing only loses precision when a point falls
-between two legal positions and gets snapped to the nearer one, and a
-grid-native font never has one: the designer drew every point on the grid. So
-each coordinate already equals a token exactly, with nothing rounded either way.
-(What makes it exact is committing to the grid, not how coarse it is; a 1-unit
-grid would round-trip just as cleanly.)
+There is no rasterization, no image encoder, no diffusion. The font
+source itself, stripped to the drawing, is the training data, about
+90 tokens a glyph. Quantize found fonts after the fact and you lose
+the designer's intent by an unknowable amount; draw on the grid and
+the tokens *are* the intent.
 
-There is no rasterization here, no image encoder, no diffusion. The font source
-itself, stripped to the drawing, is the training data, about 90 tokens a glyph.
-This is what training on found fonts can never have: quantize the data after the
-fact and you lose the designer's intent by some unknowable amount, but draw on
-the grid and the tokens *are* the intent.
-
-None of the machinery is new, and the lineage deserves naming.
+None of the machinery is new.
 [SVG-VAE](https://arxiv.org/abs/1904.02632) learned glyphs as command
 sequences from a corpus of tens of thousands of fonts in 2019;
 [DeepSVG](https://arxiv.org/abs/2007.11301),
@@ -302,7 +296,7 @@ glyphs, structurally identical between Regular and Bold; since v0.8 the model
 also pretrains on glyphs from other OFL fonts before the Virtua finetune,
 and section 07 reports what that bought.
 
-For ML readers who want the card up front:
+The model card:
 
 | Virtua-12M-0.8 |   |
 | --- | --- |
@@ -326,8 +320,7 @@ vocabulary, the model's guess at the following token. Training nudges that guess
 toward the true next token, glyph after glyph, until the model has learned the
 grammar of outlines.
 
-The lineage should be clear to anyone who has followed Karpathy's from-scratch
-projects: [char-rnn](https://karpathy.github.io/2015/05/21/rnn-effectiveness/)
+The lineage is Karpathy's from-scratch projects: [char-rnn](https://karpathy.github.io/2015/05/21/rnn-effectiveness/)
 generating C with balanced braces,
 [makemore](https://github.com/karpathy/makemore) spelling names character by
 character, [microgpt](https://karpathy.github.io/2026/02/12/microgpt/) training
@@ -405,7 +398,7 @@ held-out glyphs, on every metric's seed-averaged score. Data cleaning alone kept
 other designers' letterforms broke it, which is section 08's data plan
 reporting its first result.
 
-The protocol, for anyone who wants to hold it to a standard. The ten
+The protocol. The ten
 held-out pairs (six carried over from v0.7, plus two capitals and two
 lowercase drawn at random) were frozen before training, and their
 Bolds never trained in either arm. Each model is sampled at
@@ -416,8 +409,7 @@ font units), two metrics the vector-graphics literature will
 recognize: symmetric Chamfer distance on densely sampled outlines,
 because control-point error rewards matching the construction while
 Chamfer measures the drawn shape, and intersection-over-union of the
-filled glyphs. No FID, deliberately: a distribution metric over ten
-glyphs would be noise dressed as rigor.
+filled glyphs. No FID: over ten glyphs a distribution metric is noise.
 
 | held-out Bold prediction | MAE ↓ | Chamfer ↓ | IoU ↑ |
 | --- | --- | --- | --- |
@@ -425,23 +417,19 @@ glyphs would be noise dressed as rigor.
 | graded corpus only (control) | 31.7 ± 0.5 | 35.3 ± 0.7 | 0.567 ± 0.013 |
 | + OFL pretrain (Virtua-12M-0.8) | **24.0 ± 1.6** | **22.4 ± 1.3** | **0.745 ± 0.016** |
 
-The training curves behind that table, parsed straight from the run
-log so the figure cannot drift from the experiment: the pretrained arm
-enters the finetune already below the control's best and stays below
-it the whole way.
+The training curves, parsed from the run log: the pretrained arm
+starts the finetune below the control's best and stays below it.
 
 ![Two training-curve panels drawn with designbot from the v0.8 run log. Left: pretraining on 29,000 OFL pairs, validation loss on 290 held-out OFL pairs falling to a best of 1.53, faint train loss beneath. Right: the A/B on the same Virtua validation set, the gray from-scratch control bottoming at 3.16 while the green finetune from pretrained weights starts lower and bottoms at 2.72, dots at every 500-step checkpoint and a ring on the shipped best checkpoint.](./fig-losscurve.png)
 
-One more axis, because a reviewer will ask: how much hand-graded
-data does the finetune actually need? Rerunning the same finetune
+How much hand-graded data does the finetune need? Rerunning the same finetune
 from the same pretrained weights with the graded corpus cut down:
 twelve pairs score 28.0 ± 1.9 MAE, twenty-five score 25.5 ± 0.9, and
 the full fifty score 24.0 ± 1.6, every seed of every run better than
 the baseline's 31.3. The curve is monotone in all three metrics and
 not yet saturated, so graded pairs are still buying accuracy, and
 even twelve of them on pretrained weights beat fifty from scratch.
-Grading more of the Bold master is the cheapest improvement on the
-table.
+Grading more of the Bold master is the cheapest next improvement.
 
 The review sheet shows six of those held-out glyphs and
 the a: human Regular in, model Bold out, the human Bold beneath for
@@ -453,29 +441,26 @@ The seventh column is the reason to keep going. Virtua's Bold master
 never had a real `a`: the slot held an unboldened copy of the Regular,
 flagged during the grid pass as the biggest gap in the font. So there is
 no reference to ghost in, and the model's `a` is the only Bold `a` the
-design has ever had. It is not finished (the eye finds the lumps within
-a second), but it is a draft where there was nothing: v0.7's attempt
+design has ever had. It is not finished, but it is a draft where there was nothing: v0.7's attempt
 already sits in the Bold sources as a red-marked draft awaiting the
 human 2-unit pass, and the `a` below is v0.8's.
 
 ![The letter a twice on the design grid, drawn with designbot in the Runebender point language: the hand-drawn Regular in green, and beside it the Bold in red, the first real Bold a in the design, drawn by Virtua-12M-0.8 from the Regular input.](./fig-model-bolden-a.png)
 
-The honest scoreboard, before anyone reads it for me: ten held-out
-glyphs, one font family, and one training run per arm, so the error
-bars above cover sampling variance, not retraining variance. A
-five-fold split, every pair held out once, is queued for v0.9.
-Section 08 reports what the same weights do off-family, including a
-negative result. The
-current ceiling is draft quality; the
-division of labor is deliberate, the model proposing on the structure
-grid and a person finishing on the correction grid. The deeper bet is
-also still open. At this scale, on one machine, curated grid-native
-data plus generic pretraining demonstrably beats a strong baseline,
-and more graded data alone did not; whether that holds three orders of magnitude up, against
-someone training a giant model on renders of every font in existence,
-is precisely what the coming OFL-corpus scale-ups are for. And even in
-that world the grid keeps its jobs: the encoding, the eval harness, and
-the labeled corrections survive any size of model.
+The honest scoreboard: ten held-out glyphs, one font family, one
+training run per arm, so the error bars cover sampling variance, not
+retraining variance. A five-fold split, every pair held out once, is
+queued for v0.9. Section 08 reports what the same weights do
+off-family, including a negative result. The current ceiling is draft
+quality, and the division of labor is deliberate: the model proposes
+on the structure grid, a person finishes on the correction grid. The
+deeper bet is still open. At this scale, curated grid-native data
+plus generic pretraining beats a strong baseline, and more graded
+data alone did not. Whether that holds three orders of magnitude up,
+against a giant model trained on renders of every font in existence,
+is what the OFL-corpus scale-ups are for. Even in that world the grid
+keeps its jobs: the encoding, the eval harness, and the labeled
+corrections survive any size of model.
 
 ### 08. The Designspace Is a Data Factory
 
