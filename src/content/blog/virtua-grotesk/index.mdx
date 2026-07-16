@@ -11,29 +11,27 @@ draft: false
 <p class="font-mono text-sm" style="color: #ff4535">NOTE: this post is a draft and still being edited.<br />WARNING: may contain AI slop while still a draft.<br />Feedback welcome: eli@elih.net</p>
 
 Virtua Grotesk is a typeface drawn on two nested grids: an 8-unit
-grid with a 2-unit grid inside it. I call this a **self-labeling
+grid with a 2-unit sub-grid. I call this a **self-labeling
 grid system**, and it makes the
-typeface a machine learning and data engineering experiment as much
-as a visual design one. A small language model is now learning to
-draw it. If you are reading this on [elih.net](/), you are reading
+typeface a machine learning and data engineering project as much
+as a visual design one. If you are reading this on [elih.net](/), you are reading
 Virtua Grotesk right now.
 
 Every measurement in the design defaults to a power-of-two based
-grid system. The source files also hold
+grid system. The source outlines also hold
 many values that are not powers-of-two but are short sums of
 powers-of-two, like 64 + 32 = 96. The system prefers a power of
 two, but never at the expense of the aesthetics of neo-modernist
 letterforms or optical corrections. When a pure
-power does not fit, the value is a short sum of powers: 64 is too
-thin for a stem and 128 too heavy, so stems are 96 = 64 + 32. Where
-96 is too light, 112 = 64 + 32 + 16.
-Like the nested grid, the length of the sum is a free label: it
-records how much optical correction a measurement needed. A Python
-script in the font repo grades every measurement in both masters
-against this system, and an AI agent fixes what the report flags in
-a report, fix, render loop. The model will soon be on
-Hugging Face as an open-weight release that anyone can use, run
-locally (it's under 50 MB), and fine-tune. The font sources are
+power-of-two does not fit, the value is a short sum of them: if 64 is too
+light and 128 too heavy, 96 (64 + 32) might be used. Where
+96 is too light, 112 (64 + 32 + 16) might work better, and so on.
+Like the nested grid, the length of the sum is a free label and a visual design constraint.
+A Python script grades every measurement against this system, and an AI agent harness system
+fixes what the report flags in a report, fix, render loop.
+
+The model will soon be on Hugging Face as an open-weight model that anyone can use, run
+locally, and fine-tune. The font sources and harness system are
 already on
 [GitHub](https://github.com/eliheuer/virtua-grotesk), free under the
 SIL Open Font License (OFL) v1.1.
