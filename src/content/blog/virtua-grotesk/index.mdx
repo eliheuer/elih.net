@@ -26,7 +26,9 @@ letterforms or optical corrections. When a pure
 power-of-two does not fit, the value is a short sum of them: if 64 is too
 light and 128 too heavy, 96 (64 + 32) might be used. Where
 96 is too light, 112 (64 + 32 + 16) might work better, and so on.
-Like the nested grid, the length of the sum is a free label and a visual design constraint.
+Like the nested grid, the number of powers-of-two needed to reach a
+value is a free label and a visual design constraint: 128 needs one,
+96 needs two, 112 needs three.
 A Python script grades every measurement against this system, and an AI agent harness system
 fixes what the report flags in a report, fix, render loop.
 
@@ -105,20 +107,18 @@ power-of-two em is the TrueType convention (2048 is standard, and
 same logic down through every dimension. The full spec lives in the
 repo as
 [`DESIGN.md`](https://github.com/eliheuer/virtua-grotesk/blob/main/DESIGN.md),
-and it is enforced programatically. From the repo root, `make
+and it is enforced programmatically. From the repo root, `make
 grid-qa` grades every glyph in both masters on how strictly it
 follows the system. Every point must sit on the 2-grid, on-curve
 points on the 8-grid with off-8 reported by the QA tool, and handle lengths and structural spans are scored as
-short sums of powers-of-two. Point an
-agent at that report and the agentic harness in the repo, and it can
-be put to work reviewing and fixing whatever the QA grader flags.
+short sums of powers-of-two.
 
 The same rule spaces the font. Sidebearings and kerning default to
 the 8-unit grid: of Regular's 84 kerning pairs, all but two sit on
 it, and the two that drop to the 2-unit grid are, exactly as with
 point placement, self-labeled optical judgments, free training data.
 The coarse default is also what gives the spacing its rhythm, a small
-set of recurring intervals instead of eighty-four bespoke ones,
+set of recurring intervals instead of 100s of bespoke ones,
 snapped tighter only where the eye insists.
 
 ![Annotated specimen drawn with designbot: the word OHno set in Virtua Grotesk Regular on the design grid, every on-curve and off-curve point marked, green points on the 8-unit structure grid and red points off 8 on the 2-unit correction grid, with blue tags for cap height 768, x-height 576, baseline, descender minus 256 and the overshoots, and green dimensions measuring the O curves at 108 and 100, the H stem at 104 and bar at 96, the n stem at 96, and the o curve at 100.](./fig-system-ohno.png)
@@ -130,14 +130,12 @@ snapped tighter only where the eye insists.
 ![Annotated specimen drawn with designbot: alef, beh and medial heh reading right to left with full point annotation. The alef sits entirely on the 8-unit structure grid at stroke 96; the beh's calligraphic tail is dense with red 2-grid optical corrections, its boat stroke measures 72 and its dot 160 across.](./fig-system-arabic.png)
 
 The two tiers divide the work. Structure lives on the 8-unit grid:
-stems, sidebearings, chamfers, and every value a tool fits or
-generates. Optical corrections live on the 2-unit grid, and for now
-only a person can judge them. Because everything structural is on 8,
-a point on 2 but off 8 can only be a deliberate correction: the label
-is in the coordinate itself, and nothing has to be annotated. In
-practice the machine drafts on the 8-grid, a person corrects on the
-2-grid, and the difference between the draft and the corrected
-version is a labeled training set.
+stems, sidebearings, chamfers, and every value a tool generates.
+Optical corrections live on the 2-unit grid, and for now only a
+person can judge them. A point on 2 but off 8 can only be a
+deliberate correction, so the label is in the coordinate itself. The
+machine drafts on 8, a person corrects on 2, and the difference
+between the two versions is a labeled training set.
 
 ![A cubic arch over the two-level grid, drawn with designbot: every point lands on the 8-unit structure grid in green, except the apex and its two handles, pulled 4 units up onto the 2-unit grid, marked in red with a plus-4 dimension and a callout labeling the move an optical correction.](./fig-optical-correction.png)
 
@@ -173,7 +171,7 @@ held-out glyphs whose Bolds it never saw, Virtua-12M-0.8 lands on it
 68 percent of the time, most of the way from chance to the human
 hand. When it leaves the structure grid it tends to land on
 correction values rather than at random, and it keeps the E, a glyph
-with no optical corrections, on the structure grid at every point.
+with only straight line segments on the structure grid at every point.
 Nobody labeled the tiers and no auxiliary loss rewards them; they
 were learned as plain statistics. The obvious objection, that a
 next-token model reproducing its training statistics is doing exactly
@@ -189,9 +187,10 @@ coordinate as a single token and never sees digits, so it would learn
 a base-ten version of these tiers just as well. A small set of legal
 values, each one recurring and meaning one thing, with corrections
 rare against a regular background: that is the whole trick, and none
-of it needs the base to be two. But the model is only the middle of
+of it needs the base to be two. But the model is only part of
 the pipeline, and in the last section of this post I will argue that
-base two is the best possible choice for a system like this.
+base two is the best possible choice for a system like this, and font UPMs
+in general.
 
 ### 05. Glyphs as Sentences
 
