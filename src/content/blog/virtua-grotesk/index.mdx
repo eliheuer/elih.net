@@ -199,19 +199,18 @@ commands. A transformer predicts sequences. So I give the model each
 glyph as the sequence it already is and train it to predict the next
 token.
 
-The source files are a [UFO](https://unifiedfontobject.org/): a folder of XML,
+The source files are in the [UFO](https://unifiedfontobject.org/) format: a folder of XML,
 one file per glyph, each outline stored as points on the grid. A transformer
 can't read a tree of XML, it reads a flat list of tokens. So a small codec
 rewrites each glyph's outline as a single line of text: the drawing commands and
 their coordinates, in order, and nothing else.
 
-A transformer works from a fixed *vocabulary*: the set of tokens it
-can read and write. Here that set holds three kinds of token: the
-four drawing verbs (`MOVE`, `LINE`, `CURVE`, `CLOSE`); conditioning
-tokens that name the glyph and set its weight; and one token for each
-legal position on the grid. A fourth kind, the Bold-offset tokens,
-joins in section 07. Here is the numeral **2** in the Regular weight,
-exactly as the codec emits it:
+A transformer reads and writes a fixed set of tokens: its
+*vocabulary*. Virtua's is small. A few conditioning tokens say what
+to draw: the glyph's name and its weight. Four drawing verbs draw it:
+`MOVE`, `LINE`, `CURVE`, `CLOSE`. And one token exists for each legal
+position on the grid, so a coordinate is a single token. Here is the
+numeral **2** in the Regular weight, exactly as the codec emits it:
 
 ```
 BOS N_two W400 ADV 592
