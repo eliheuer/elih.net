@@ -464,15 +464,16 @@ corrections survive any size of model.
 
 ### 08. The Designspace Is a Data Factory
 
-Two masters sounds like no data at all. But type design has been quietly
-synthesizing valid data since Adobe's Multiple Master fonts in 1991: every interpolation between compatible
-masters is a legitimate instance of the family. Each training batch samples
-a continuous weight between Regular and Bold, snaps it back to the grid, and
-gets a "new" glyph, with its exact parameters attached as conditioning
-tokens, because synthetic data comes with labels found data can't have.
-Add contour-start rotation (any cyclic rotation of a closed contour draws
-the same shape) and one family amplifies into a practically endless stream of
-distinct training batches, enough to keep the model from memorizing.
+Two masters sounds like no data at all. But type design has been
+synthesizing valid data since Adobe's Multiple Master fonts in 1991:
+every interpolation between compatible masters is a legitimate
+instance of the family. Each training batch samples a weight between
+Regular and Bold, snaps it to the grid, and gets a new glyph with its
+exact parameters attached as conditioning tokens: synthetic data with
+labels found data cannot have. Add contour-start rotation (any cyclic
+rotation of a closed contour draws the same shape) and one family
+becomes an effectively endless stream of distinct batches, enough to
+keep the model from memorizing.
 
 That covers volume, but every one of those batches is a variation on a single
 design. Real variety, other letterforms and other designers' hands, takes more
@@ -480,16 +481,15 @@ source families, and that is where [img2bez](/blog/img2bez) comes in. My Rust
 autotracer traces any raster, a rendered OFL font, a scan, or an AI-generated
 glyph, into bézier outlines snapped to the 2-unit grid;
 [img2ufo](https://github.com/eliheuer/img2ufo), built on top of it, assembles
-those glyphs into a full UFO font source. Together they are a *grid-ifier*, and
-a fast one: I dropped a type specimen image into the pipeline today and had a
-grid-native font source about a minute later, already speaking Virtua's
-coordinate language. Pointed at OFL fonts, it becomes the long-term data plan:
-a growing corpus of grid-native families, every one of them OFL, with a
-provenance manifest I can publish. No scraping, no gray areas: training data you
-could audit glyph by glyph. The grid-ifier is also the answer to the
-fair charge that this system is boutique, one foundry's private
-convention: any OFL family can be brought onto the grid in about a
-minute, corrections and all.
+those glyphs into a full UFO font source. Together they are a
+*grid-ifier*: a type specimen image becomes a grid-native font source
+in about a minute, already in Virtua's coordinate language. Pointed
+at OFL fonts, this is the long-term data plan: a growing corpus of
+grid-native families, every one OFL, with a provenance manifest I can
+publish. No scraping, no gray areas: training data you could audit
+glyph by glyph. It also answers the charge that this system is one
+foundry's private convention: any OFL family can be brought onto the
+grid, corrections and all.
 
 The pretraining corpus already supports its own held-out test, and it
 is worth reporting both halves, because one is a negative result. The
@@ -505,9 +505,8 @@ specializing on Virtua, the same model collapses on OFL, worse than
 the baseline it once beat, winning 9 percent of pairs instead of 74.
 This is catastrophic forgetting, the textbook price of finetuning a
 small model with no replay, and the standard fix, mixing pretraining
-data into the finetune, is queued for v0.9. Virtua-12M-0.8 is a
-Virtua specialist, not a general boldening engine, and the table says
-so plainly:
+data into the finetune, is queued for v0.9. Virtua-12M-0.8 is a Virtua specialist, not a general boldening
+engine:
 
 | held-out OFL pairs, n = 290 | MAE ↓ | Chamfer ↓ | IoU ↑ | beats baseline |
 | --- | --- | --- | --- | --- |
@@ -664,8 +663,8 @@ corrects anyway. The operations that must be exact in font production are
 halving, doubling, scaling, and interpolating, and those are the four
 things base two does perfectly.
 
-**Close under the operations.** Here is the keystone, the fact that
-turns a preference into a proof. Ask which numbers you can reach from
+**Close under the operations.** This is the keystone. Ask which
+numbers you can reach from
 the integers by taking midpoints, and the answer is exactly the dyadic
 rationals: not a set that happens to include them, but them, precisely,
 nothing more and nothing less. Every dyadic rational is a midpoint of
@@ -731,8 +730,8 @@ compete on depth: dividing by 3 gives a 729 em six levels, dividing by
 2 gives a 1024 em ten. Two is the smallest factor a subdivision can
 have, so base two builds the deepest ladder any em can carry.
 
-There is a further gift here, almost embarrassing in how literal it
-is. Write a coordinate in binary and its grid level is simply the
+The last property is the most literal. Write a coordinate in binary
+and its grid level is simply the
 number of zeros at the end. 768 ends in eight zeros, so it sits on the
 256-grid; 576 ends in six, the 64-grid; 96 ends in five, the 32-grid;
 116 ends in two, the 4-grid, off the structure grid's 8, which is
@@ -826,14 +825,11 @@ to draw the samples: the base-2
 spread at every prefix, so the oldest low-discrepancy sequence in
 numerical analysis turns out to be a training schedule for fonts.
 
-**The outputs are checkable, and the taste comes labeled.** On this grid a
-wrong coordinate is a lintable defect: an odd number, a stem outside the
-favored set. Generation quality stops being vibes and becomes a test
-suite, which is what lets a pipeline reject bad samples mechanically
-instead of by eye. Better still, because machine drafts stay on the 8-unit
-grid, every 2-unit deviation in a glyph I approve is, by definition, a
-recorded human optical correction. The grid is the annotator, so the
-labeling pass costs nothing.
+**The outputs are checkable, and the taste comes labeled.** On this
+grid a wrong coordinate is a lintable defect: an odd number, a stem
+outside the favored set. And because machine drafts stay on the
+8-unit grid, every 2-unit deviation in a glyph I approve is a
+recorded human optical correction. The grid is the annotator.
 
 **The differences are a small vocabulary.** Stems, sidebearings, chamfers,
 and the Regular-to-Bold deltas of section 07 are all drawn from a lexicon
