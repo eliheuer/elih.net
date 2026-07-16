@@ -85,7 +85,7 @@ The purest precedent to what I am doing with Virtua Grotesk is [LL Replica](http
 (Norm: Dimitri Bruni and Manuel Krebs; Lineto, 2008). Norm took the drawing
 grid their font editor provided and made it ten times coarser. FontLab
 provides a 700-unit grid, and instead of drawing on that 700-grid they allowed
-themselves a 70-grid. Fewer legal positions for every node and every bézier
+themselves a 70-unit grid. Fewer legal positions for every node and every bézier
 handle. Deliberately less freedom.
 
 Two details make Replica more than a constraint stunt. First, the bevels:
@@ -98,21 +98,20 @@ constraint.
 ### 03. The Self-Labeling Grid
 
 Virtua's answer to Replica's flat grid is a nested one, in
-powers-of-two down to the em itself: 1024 units, 2^10, rather than
+powers-of-two up to the em itself: 1024 units, 2^10, rather than
 the industry's usual 1000. That is less exotic than it sounds. A
 power-of-two em is the TrueType convention (2048 is standard, and
 [Inter](https://rsms.me/inter/) uses it); Virtua just extends the
 same logic down through every dimension. The full spec lives in the
 repo as
 [`DESIGN.md`](https://github.com/eliheuer/virtua-grotesk/blob/main/DESIGN.md),
-and it is enforced, not aspirational: from the repo root, `make
+and it is enforced programatically. From the repo root, `make
 grid-qa` grades every glyph in both masters on how strictly it
 follows the system. Every point must sit on the 2-grid, on-curve
-points on the 8-grid with off-8 counted as the optical class,
-advances on 8, and handle lengths and structural spans are scored as
+points on the 8-grid with off-8 reported by the QA tool, and handle lengths and structural spans are scored as
 short sums of powers-of-two. Point an
 agent at that report and the agentic harness in the repo, and it can
-be put to work reviewing and fixing whatever the grader flags.
+be put to work reviewing and fixing whatever the QA grader flags.
 
 The same rule spaces the font. Sidebearings and kerning default to
 the 8-unit grid: of Regular's 84 kerning pairs, all but two sit on
