@@ -630,11 +630,11 @@ speedup by padding the vocabulary from 50,257 to 50,304, the nearest
 multiple of 64, and signed off,
 ["Careful with your Powers of 2."](https://x.com/karpathy/status/1621578354024677377)
 
-| operation | em 1024, 2-unit grid | em 1000, 10-unit grid |
+| operation | em 1024 | em 1000 |
 | --- | --- | --- |
-| normalize a 96-unit stem | 0.09375, exact | 0.096, repeats in binary |
-| interpolate masters at t = 1/2, 1/4, 3/8… | exact on every machine | float error before the snap |
-| scale outlines to a pixel size | bit shift | division |
+| normalize a 96-unit stem | 0.09375, exact | 0.096, repeats |
+| interpolate at t = 1/2, 1/4, 3/8… | exact | float error |
+| scale to a pixel size | bit shift | division |
 | divide the em in thirds | approximate | approximate |
 
 The last row is the honest one. Binary buys no thirds, and neither does
