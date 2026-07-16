@@ -158,22 +158,7 @@ from a small closed vocabulary, then a
 generated glyph can be *verified* mechanically. Quality
 stops being an opinion, and an eval loop can grind at it overnight.
 
-One correction is owed here. An earlier draft called the stems "sums of
-powers-of-two," and Simon Cozens pointed out that every integer is one;
-that is what binary means. The property that matters is *trailing
-zeros*: 96 is a multiple of 32, 95 is a multiple of nothing. And the
-stroke weights that look arbitrary are the two levels at work: the
-lowercase curves are 100 and 92, the 96 stem plus and minus 4, the
-eye's compensation for round strokes.
-
-This is the **self-labeling grid**, and it, not any single number, is
-the core idea of this post. Which tier a value sits on is its meaning. The n's stem is 96: structure, so it lives on the 8-unit
-structure grid. The o's curve is 100: a round stroke needs the eye's
-+4, and 4 lives on the 2-unit correction grid. The powers-of-two
-are just the base in which this ladder of tiers runs deepest, and,
-separately, the numbers I find beautiful.
-
-The tiers are also learnable, and that is measurable. The model's
+The tiers are learnable, and that is measurable. The model's
 vocabulary enforces only the bottom tier: every coordinate token is a
 2-grid position, all equally available, and nothing in the encoding
 mentions the 8-grid. A model emitting random legal coordinates would
