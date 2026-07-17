@@ -88,3 +88,7 @@ https://www.taolin.us/writing. Say the fact. Stop.
 - Titles are short noun phrases.
 - A boring sentence that is clear beats a memorable sentence that is not.
 - It is fine to sound flat. Flat is the voice.
+- Names: the font is "Virtua Grotesk" (or "the sources"); the model is
+  "Virtua-12M-v0.N" (public) with internal run ids (v0.8) only in
+  experiment narration. Never bare "Virtua" where font and model could
+  be confused.
