@@ -18,11 +18,18 @@ MARGIN = 64
 TOL = 8
 
 
+# Figures that deliberately bleed a background grid to the canvas edge;
+# the frameless margin rule applies to the outlines, not the grid field.
+FULL_BLEED = {"fig-interp-outlines.png"}
+
+
 def lint(path):
     im = Image.open(path).convert("RGB")
     w, h = im.size
     if (w, h) != (2520, 1320):
         return [f"SKIP ({w}x{h}, not a 2520x1320 sheet)"]
+    if path.name in FULL_BLEED:
+        return ["SKIP (full-bleed grid, outlines checked by eye)"]
     bg = Image.new("RGB", im.size, BG)
     b = ImageChops.difference(im, bg).getbbox()
     if b is None:
