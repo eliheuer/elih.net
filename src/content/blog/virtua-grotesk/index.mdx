@@ -445,13 +445,27 @@ that did not work.
 Two masters sounds like no data at all. But type design has been
 synthesizing valid data since Adobe's Multiple Master fonts in 1991:
 every interpolation between compatible masters is a legitimate
-instance of the family. Each training batch samples a weight between
-Regular and Bold, snaps it to the grid, and gets a new glyph with its
-exact parameters attached as conditioning tokens: synthetic data with
-labels found data cannot have. Add contour-start rotation (any cyclic
-rotation of a closed contour draws the same shape) and one family
-becomes an effectively endless stream of distinct batches, enough to
-keep the model from memorizing.
+instance of the family. Each training batch picks a weight between
+Regular and Bold, interpolates, snaps the result to the grid, and
+gets a new glyph with its exact weight attached as a conditioning
+token.
+
+A fair worry: the masters are drawn exactly on the grid, but an
+interpolation lands between grid positions, so is it worse data? No.
+The interpolation is snapped before it becomes data, so every training
+glyph is fully on the grid, exactly as grid-native as a master. And
+the weights are binary fractions (section 09), a base the grid is
+closed under, so blending two grid points lands back on the grid with
+little or no rounding. The one thing interpolation cannot invent is a
+new optical correction: it blends the two masters' corrections
+linearly, and real optics are not linear in weight. So this data
+teaches structure faithfully and approximates the fine corrections,
+which is the right division: the model learns optical taste from the
+two real masters and the graded corpus, not from the augmentation.
+
+Add contour-start rotation (any cyclic rotation of a closed contour
+draws the same shape) and one family becomes an effectively endless
+stream of distinct batches, enough to keep the model from memorizing.
 
 That covers volume, but every one of those batches is a variation on a single
 design. Real variety, other letterforms and other designers' hands, takes more
