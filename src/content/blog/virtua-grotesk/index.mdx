@@ -44,7 +44,7 @@ SIL Open Font License (OFL) v1.1.
 <li><a href="#04-aesthetic-discipline--machine-legibility"><span class="n">04</span>Aesthetic Discipline &amp; Machine Legibility</a></li>
 <li><a href="#05-glyphs-as-sentences"><span class="n">05</span>Glyphs as Sentences</a></li>
 <li><a href="#06-a-small-model-learns-to-draw"><span class="n">06</span>A Small Model Learns to Draw</a></li>
-<li><a href="#07-boldening-as-local-prediction"><span class="n">07</span>Boldening as Local Prediction</a></li>
+<li><a href="#07-the-missing-master"><span class="n">07</span>The Missing Master</a></li>
 <li><a href="#08-the-designspace-is-a-data-factory"><span class="n">08</span>The Designspace Is a Data Factory</a></li>
 <li><a href="#09-the-mathematics-of-2n"><span class="n">09</span>The Mathematics of 2ⁿ</a></li>
 </ol>
@@ -357,9 +357,9 @@ green-graded glyphs already in the sources as reference:
 
 <video src="/videos/e-draw.mp4" poster="/videos/e-draw-poster.jpg" controls playsinline preload="metadata" aria-label="Screen recording of the Runebender editor: a lowercase e is sketched with a brush, traced to a draft outline on the grid, and redrawn by Virtua-12M in the font's conventions using the Draft with Virtua tool."></video>
 
-### 07. Boldening as Local Prediction
+### 07. The Missing Master
 
-Boldening is the task with immediate production value. Every glyph
+Weight transfer is the task with immediate production value. Every glyph
 drawn once must be drawn again heavier, with the same structure.
 Given the Regular, the model draws the Bold. The goal is a workflow
 where a designer draws the core control glyphs by hand (H, O, n, o,
@@ -437,7 +437,7 @@ model Bold out, human Bold beneath for reference.
 ![Held-out review sheet drawn with designbot: for the glyphs K, E, M, n, b, c and a, three rows show the human-drawn Regular input in green, the Bold drawn by Virtua-12M-v0.1 in red, and the human-drawn Bold reference in gray. The a column's reference cell reads "never boldened": the Bold master never had a real a.](./fig-model-review.png)
 
 The seventh column is the reason to keep going. Virtua Grotesk's Bold
-master never had a real `a`; the slot held an unboldened copy of the
+master never had a real `a`; the slot held an untouched copy of the
 Regular. So there is no reference to ghost, and the model's `a` is
 the only Bold `a` the design has ever had. It is not finished, but it
 is a draft where there was nothing.
@@ -491,7 +491,7 @@ pretrain stage never trains on one percent of the OFL pairs, 290 of
 29,000, scored here with a single sampling seed (at this n the
 standard error on every MAE in the table is about half a font unit). On those, the pretrained model beats the mean-delta baseline
 recomputed on OFL data, so the skill is not Virtua-specific: the model
-boldens glyphs it has never seen. The honest scope: the held-out unit
+draws Bolds for glyphs it has never seen. The honest scope: the held-out unit
 is the glyph pair, not the whole font, so this measures new glyphs
 from seen font styles; a font-level split is queued for the next
 corpus build. The negative half is what the finetune costs. After
@@ -499,7 +499,7 @@ specializing on Virtua, the same model collapses on OFL, worse than
 the baseline it once beat, winning 9 percent of pairs instead of 74.
 This is catastrophic forgetting, the textbook price of finetuning a
 small model with no replay, and the standard fix, mixing pretraining
-data into the finetune, is queued for v0.9. Virtua-12M-v0.1 is a Virtua specialist, not a general boldening
+data into the finetune, is queued for v0.9. Virtua-12M-v0.1 is a Virtua specialist, not a general weight-transfer
 engine:
 
 | held-out OFL pairs, n = 290 | MAE ↓ | Chamfer ↓ | IoU ↑ | beats baseline |
@@ -519,8 +519,8 @@ foundry that designs its own training data is just a software shop that
 keeps its codebase clean.
 
 The pieces are converging into one system: [img2bez](/blog/img2bez) traces
-raster references into grid-snapped UFO sources; the glyph model completes,
-boldens, and (soon) repairs outlines; [designbot](https://github.com/eliheuer/designbot)
+raster references into grid-snapped UFO sources; the glyph model
+completes outlines, draws Bolds, and (soon) repairs drawings; [designbot](https://github.com/eliheuer/designbot)
 renders proofs and the figures in this post;
 [Runebender](https://runebender.org) is the visual review
 surface; and an agentic harness in the Virtua repo orchestrates all of it
@@ -778,7 +778,7 @@ Regular-to-Bold deltas of section 07 come from a few dozen values:
 machine values with three or more trailing zeros, or recorded ±2 and
 ±4 hand offsets from one. The lexicon recurs: the Bold stem is the
 Regular stem doubled, the Bold curve is the Bold stem plus the same
-4. Boldening collapses to choosing among familiar offsets.
+4. Weight transfer collapses to choosing among familiar offsets.
 
 **Every modality shares the lattice.** Render a 1024-em glyph at 1024
 pixels and one font unit is one pixel; the specimen at the top of
