@@ -392,13 +392,13 @@ on the same graded corpus: it beats the baseline on all ten held-out
 glyphs, on every metric. Cleaning the data kept the tie; other
 designers' letterforms broke it.
 
-The protocol. Ten held-out pairs, frozen before training, never
-trained in either arm. Five sampling seeds at temperature 0.3; the
-table reports mean ± standard deviation; the baseline is
-deterministic. Three metrics: MAE (mean absolute error per
-coordinate, in font units), Chamfer distance (the drawn shape rather
-than the construction), and intersection-over-union of the filled
-glyphs. No FID: over ten glyphs a distribution metric is noise.
+The test setup. Ten glyphs were set aside before training; their
+Bolds were never shown to either run. Every model number in the table
+is the average of five samples, written as mean ± spread, and errors
+are in font units. MAE measures error at the points, Chamfer measures
+error along the drawn shape, and IoU measures how much the filled
+glyphs overlap. FID, the usual generative-image metric, needs far
+more than ten samples, so it is skipped.
 
 | held-out Bold prediction | MAE ↓ | Chamfer ↓ | IoU ↑ |
 | --- | --- | --- | --- |
