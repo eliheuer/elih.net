@@ -361,15 +361,23 @@ green-graded glyphs already in the sources as reference:
 
 Boldening is the task with immediate production value. Every glyph
 drawn once must be drawn again heavier, with the same structure.
-Given the Regular, the model draws the Bold.
+Given the Regular, the model draws the Bold. The goal is a workflow
+where a designer draws the core control glyphs by hand (H, O, n, o,
+e, a, R) and bootstraps a full variable font from them: the model
+drafts the remaining glyphs and the second master, and the designer
+corrects on the 2-unit grid.
 
 An objection first: font tools already interpolate, and when both
 masters exist interpolation is exact and free. The model is for the
 case interpolation cannot touch: the second master does not exist
-yet. Every result below is scored on that case, Bolds the model never
-saw. The baseline: shift every point by the average Bold offset of
-the pairs you do have. The offset-curve filter, the other tool that
-can draw a Bold from one master, is queued as the next baseline.
+yet. The classical tools for that case are the offset-curve filter,
+which thickens mechanically and clogs the joins, and extrapolation or
+RMX-style scaling, which approximate a new weight from masters you
+already have. The model learns the weight from a corpus instead.
+Every result below is scored on the missing-master case, Bolds the
+model never saw. The baseline: shift every point by the average Bold
+offset of the pairs you do have; the offset-curve filter is queued as
+the next baseline.
 
 The encoding makes the task local. Virtua Grotesk's masters are
 point-compatible, so the codec interleaves them per point
