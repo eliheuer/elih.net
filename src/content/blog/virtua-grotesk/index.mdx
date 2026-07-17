@@ -112,7 +112,9 @@ and it is enforced programmatically. From the repo root, `make
 grid-qa` grades every glyph in both masters on how strictly it
 follows the system. Every point must sit on the 2-grid, on-curve
 points on the 8-grid with off-8 reported by the QA tool, and handle lengths and structural spans are scored as
-short sums of powers-of-two. The score is binary popcount, the count
+short sums of powers-of-two. The sums are a second semantic
+hierarchy, parallel to the nested grid: the fewer the powers, the
+more structural the value. The score is binary popcount, the count
 of ones in the value's binary form: 1 is a pure power (64, 128, 256),
 2 an elegant sum (96 = 64 + 32, 272 = 256 + 16), 3 acceptable
 (104 = 64 + 32 + 8), 4 or more flagged for review. Between sums with
