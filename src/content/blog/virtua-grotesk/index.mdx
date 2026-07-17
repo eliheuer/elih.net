@@ -341,10 +341,10 @@ minutes on an M4 Pro or a gaming GPU.
 
 Training follows his
 [Recipe for Training Neural Networks](https://karpathy.github.io/2019/04/25/recipe/)
-more closely than I planned. The first overnight run memorized the data: a few thousand sequences is small
-enough that the model fit them almost perfectly (training loss near zero, 0.07)
-without learning anything general. The fixes were the recipe's standard ones:
-augmentation, dropout, and a held-out validation set. The recipe's other
+more closely than I planned. The first overnight run memorized its
+few thousand sequences instead of learning anything general, and the
+fixes were the recipe's standard ones: augmentation, dropout, and a
+held-out validation set. The recipe's other
 commandment, a dumb baseline to beat, is in place too: predict every Bold
 offset as the mean delta of the training pairs, no model at all. Section 07
 reports the model against it.
