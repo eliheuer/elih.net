@@ -320,7 +320,7 @@ The model card:
 | pretraining | 29,000 Regular-Bold pairs traced from Google Fonts |
 | finetuning | 50 human-graded Virtua Bold pairs; 463 glyphs in the corpus |
 | optimizer | AdamW, lr 3e-4, 200-step warmup, cosine decay, batch 24, dropout 0.1 |
-| compute | one Apple M4 Pro laptop (MLX); the full v0.8 A/B, both arms, in 3h20m |
+| compute | one Apple M4 Pro laptop (MLX); both training runs in 3h20m |
 | checkpoint | 48 MB fp32 safetensors |
 
 Decoder-only is the GPT architecture. Each token becomes a vector, and a stack
@@ -384,14 +384,14 @@ the Regular point beside it, as a small offset. The Regular points
 are fixed. The model fills in only the Bold values, so the structure
 of the glyph cannot break.
 
-The current model, released as Virtua-12M-v0.1 (internally, run
-v0.8), is the first to beat the baseline. The experiment was an A/B.
-Arm one retrained the v0.7 recipe on the freshly graded corpus (50
-approved Bold pairs, up from 39): it tied the baseline again. Arm two
-pretrained on 29,000 pairs traced from Google Fonts, then finetuned
-on the same corpus: it beats the baseline on all ten held-out glyphs,
-on every metric (seed-averaged). Cleaning the data kept the tie;
-other designers' letterforms broke it.
+The current model, Virtua-12M-v0.1, beats the baseline. The evidence
+is a controlled comparison of two training runs. The first trained
+only on the graded corpus (50 approved Bold pairs, up from 39): it
+tied the baseline. The second pretrained on 29,000 pairs traced from
+Google Fonts, then finetuned on the same graded corpus: it beats the
+baseline on all ten held-out glyphs, on every metric (seed-averaged).
+Cleaning the data kept the tie; other designers' letterforms broke
+it.
 
 The protocol. Ten held-out pairs, frozen before training, never
 trained in either arm. Five sampling seeds at temperature 0.3; the
@@ -434,7 +434,7 @@ is a draft where there was nothing.
 ![The letter a twice on the design grid, drawn with designbot in the Runebender point language: the hand-drawn Regular in green, and beside it the Bold in red, the first real Bold a in the design, drawn by Virtua-12M-v0.1 from the Regular input.](./fig-model-bolden-a.png)
 
 The honest scoreboard: ten held-out glyphs, one font family, one
-training run per arm, so the error bars cover sampling variance, not
+training run each, so the error bars cover sampling variance, not
 retraining variance. A five-fold split is queued for v0.9. Section 08
 reports what the same weights do off-family, including a negative
 result. The ceiling is draft quality, and the division of labor is
