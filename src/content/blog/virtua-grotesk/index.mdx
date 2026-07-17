@@ -422,18 +422,15 @@ even twelve graded pairs on pretrained weights beat fifty from
 scratch. Grading more of the Bold master is the cheapest next
 improvement.
 
-The review sheet, six held-out glyphs and the `a`: human Regular in,
-model Bold out, human Bold beneath for reference.
+The review sheet shows six held-out glyphs: human Regular in, model
+Bold out, human Bold beneath for reference.
 
-![Held-out review sheet drawn with designbot: for the glyphs K, E, M, n, b, c and a, three rows show the human-drawn Regular input in green, the Bold drawn by Virtua-12M-v0.1 in red, and the human-drawn Bold reference in gray. The a column's reference cell reads "never boldened": the Bold master never had a real a.](./fig-model-review.png)
+![Held-out review sheet drawn with designbot: for the glyphs K, E, M, n, b and c, three rows show the human-drawn Regular input in green, the Bold drawn by Virtua-12M-v0.1 in red, and the human-drawn Bold reference in gray.](./fig-model-review.png)
 
-The seventh column is the reason to keep going. Virtua Grotesk's Bold
-master never had a real `a`; the slot held an untouched copy of the
-Regular. So there is no reference to ghost, and the model's `a` is
-the only Bold `a` the design has ever had. It is not finished, but it
-is a draft where there was nothing.
+One transfer up close, the held-out `n`: the hand-drawn Regular, and
+beside it the Bold the model drew from it.
 
-![The letter a twice on the design grid, drawn with designbot in the Runebender point language: the hand-drawn Regular in green, and beside it the Bold in red, the first real Bold a in the design, drawn by Virtua-12M-v0.1 from the Regular input.](./fig-model-bolden-a.png)
+![The letter n twice on the design grid, drawn with designbot in the Runebender point language: the hand-drawn Regular in green, and beside it the Bold in red, drawn by Virtua-12M-v0.1 from the Regular input.](./fig-model-bolden-n.png)
 
 The honest scoreboard: ten held-out glyphs, one font family, one
 training run each, so the error bars cover sampling variance, not

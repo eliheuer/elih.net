@@ -44,8 +44,9 @@ fn latest_pred(home: &str) -> (std::path::PathBuf, String) {
     let (num, pred) = best.expect("no runs/vNN/pred.ufo under font-garden-lab");
     // a run can pin its exact public name (e.g. the param count changed):
     // echo "VIRTUA-25M-0.9" > runs/vNN/model-name.txt
+    // a pinned name keeps its own casing; the auto default is uppercase
     let name = std::fs::read_to_string(pred.parent().unwrap().join("model-name.txt"))
-        .map(|s| s.trim().to_uppercase())
+        .map(|s| s.trim().to_string())
         .unwrap_or_else(|_| format!("VIRTUA-12M-{}.{}", num / 10, num % 10));
     (pred, name)
 }
@@ -63,7 +64,7 @@ fn fig_review(
 ) {
     let mut sheet = new_sheet(renderer, mono);
 
-    const GLYPHS: [&str; 7] = ["K", "E", "M", "n", "b", "c", "a"];
+    const GLYPHS: [&str; 6] = ["K", "E", "M", "n", "b", "c"];
     const S: f64 = 0.32;
 
     // three bands between the rules, top to bottom
@@ -72,26 +73,22 @@ fn fig_review(
         label: String,
         color: Color,
         dir: &'a std::path::Path,
-        skip_a: bool,
     }
     let rows = [
         Row {
             label: "01 input / human Regular".into(),
             color: green(),
             dir: reg,
-            skip_a: false,
         },
         Row {
             label: format!("02 output / {model_name}"),
             color: red(),
             dir: pred,
-            skip_a: false,
         },
         Row {
             label: "03 reference / human Bold".into(),
             color: gray(),
             dir: bold,
-            skip_a: true,
         },
     ];
 
@@ -110,17 +107,6 @@ fn fig_review(
 
         for (j, name) in GLYPHS.iter().enumerate() {
             let slot_center = MARGIN + (j as f64 + 0.5) * slot_w;
-            if row.skip_a && *name == "a" {
-                sheet.label_padded(
-                    "never boldened",
-                    slot_center,
-                    baseline + 74.0,
-                    24.0,
-                    dim_color(),
-                    0,
-                );
-                continue;
-            }
             let glif = row.dir.join("glyphs").join(glif_name(name));
             if !glif.is_file() {
                 sheet.label_padded("not in run", slot_center, baseline + 74.0, 24.0, dim_color(), 0);
@@ -157,12 +143,12 @@ fn fig_bolden_a(
     // the Regular a from the sources; the Bold a from the detected run's
     // pred.ufo when it has one (keeps the label truthful), else the
     // committed draft in the Bold sources
-    let o_reg = load_outline(&reg.join("glyphs"), "a");
-    let pred_a = pred.join("glyphs/a.glif");
-    let o_bold = if pred_a.is_file() {
-        load_outline(&pred.join("glyphs"), "a")
+    let o_reg = load_outline(&reg.join("glyphs"), "n");
+    let pred_n = pred.join("glyphs/n.glif");
+    let o_bold = if pred_n.is_file() {
+        load_outline(&pred.join("glyphs"), "n")
     } else {
-        load_outline(&bold.join("glyphs"), "a")
+        load_outline(&bold.join("glyphs"), "n")
     };
 
     // run layout: centered between the margins
@@ -244,8 +230,8 @@ fn fig_bolden_a(
     );
 
     sheet.hud_title(&[
-        "Weight transfer / the first Bold a",
-        "the Bold master never had a real a; the model drew this one",
+        "Weight transfer / Regular to Bold",
+        "the model draws the held-out Bold n from the Regular input",
     ]);
     sheet.attribution(Some(&format!("model: {model_name}")));
     sheet.save(renderer, out);
@@ -289,6 +275,6 @@ fn main() {
         &reg,
         &bold,
         &pred,
-        &post.join("fig-model-bolden-a.png"),
+        &post.join("fig-model-bolden-n.png"),
     );
 }
