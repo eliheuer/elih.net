@@ -26,10 +26,14 @@ letterforms or optical corrections. When a pure
 power-of-two does not fit, the value is a short sum of them: if 64 is too
 light and 128 too heavy, 96 (64 + 32) might be used. Where
 96 is too light, 112 (64 + 32 + 16) might work better, and so on.
-Like the nested grid, the number of powers-of-two needed to reach a
-value is a free label and a visual design constraint: 128 needs one,
-96 needs two, 112 needs three.
-A Python script grades every measurement against this system, and an AI agent harness system
+The sums have a hierarchy of their own, like the grid. A pure power
+is cleanest: 128. Two terms is next: 96 = 64 + 32. Three is
+acceptable: 112 = 64 + 32 + 16. Between sums with the same number of
+terms, adjacent powers are cleaner: 96 = 64 + 32, n plus half of n,
+over 80 = 64 + 16, n plus a quarter of n. The goal is the same as the
+grid's: free semantic labels, read straight out of the outlines.
+[A Python script](https://github.com/eliheuer/virtua-grotesk/blob/main/scripts/grid_qa.py)
+grades every measurement against this system, and an AI agent harness
 fixes what the report flags in a report, fix, render loop.
 
 The model will soon be on Hugging Face as an open-weight model that anyone can use, run
@@ -111,7 +115,10 @@ and it is enforced programmatically. From the repo root, `make
 grid-qa` grades every glyph in both masters on how strictly it
 follows the system. Every point must sit on the 2-grid, on-curve
 points on the 8-grid with off-8 reported by the QA tool, and handle lengths and structural spans are scored as
-short sums of powers-of-two.
+short sums of powers-of-two. The score is binary popcount, the count
+of ones in the value's binary form: 1 is a pure power (64, 128, 256),
+2 an elegant sum (96 = 64 + 32, 272 = 256 + 16), 3 acceptable
+(104 = 64 + 32 + 8), 4 or more flagged for review.
 
 The same rule spaces the font. Sidebearings and kerning default to
 the 8-unit grid: of Regular's 84 kerning pairs, all but two sit on
