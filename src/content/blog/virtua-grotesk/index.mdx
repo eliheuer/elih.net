@@ -395,10 +395,13 @@ designers' letterforms broke it.
 The test setup. Ten glyphs were set aside before training; their
 Bolds were never shown to either run. Every model number in the table
 is the average of five samples, written as mean ± spread, and errors
-are in font units. MAE measures error at the points, Chamfer measures
-error along the drawn shape, and IoU measures how much the filled
-glyphs overlap. FID, the usual generative-image metric, needs far
-more than ten samples, so it is skipped.
+are in font units. MAE, the mean absolute error, averages how far
+each coordinate lands from the human-drawn value. Chamfer distance
+measures the same gap along the drawn outline, so it scores the shape
+rather than the point placement. IoU, intersection over union, is the
+share of ink the two filled glyphs have in common. FID, the usual
+generative-image metric, needs far more than ten samples, so it is
+skipped.
 
 | held-out Bold prediction | MAE ↓ | Chamfer ↓ | IoU ↑ |
 | --- | --- | --- | --- |
