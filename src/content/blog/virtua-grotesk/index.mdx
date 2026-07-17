@@ -449,14 +449,21 @@ and Bold, interpolates, snaps to the grid, and labels the glyph with
 its exact weight.
 
 An interpolation lands between grid points, so is it worse data than a
-master? No. Interpolation is halving, and a power-of-two grid is
-closed under halving: the midpoint of two grid points is on the grid,
-or one level finer down the same ladder, exactly. A 1000-unit em is
-not closed: halving a 10-unit interval gives 5, then 2.5, then 1.25,
-values off any clean level that must be rounded back, a small error in
-every sample. This is why a font built to be training data belongs on
-1024, not 1000: one em makes noise-free data, the other cannot.
-Section 09 proves the general case.
+master? No, and the outline sheet below shows why. Here is the real
+`n`, interpolated from Regular to Bold at 1/4, 1/2, and 3/4. Every
+intermediate is a genuine grid-native glyph: the stem steps 96, 120,
+144, 168, 192, and every point lands on a grid intersection.
+
+![Five n outlines drawn with designbot, the n interpolated from Regular to Bold at 1/4, 1/2, 3/4, each on its own 8-unit grid with on-curve and off-curve points marked. Points are colored by grid level, green on the 8-unit structure grid and red off 8 on the 2-unit correction grid. The left stem is dimensioned under each weight: 96, 120, 144, 168, 192, every value on the grid, and each intermediate n is a clean, grid-native glyph.](./fig-interp-outlines.png)
+
+The reason is arithmetic. Interpolation is halving, and a power-of-two
+grid is closed under halving: the midpoint of two grid points is on
+the grid, or one level finer down the same ladder, exactly. A
+1000-unit em is not closed: halving a 10-unit interval gives 5, then
+2.5, then 1.25, values off any clean level that must be rounded back,
+a small error in every sample. This is why a font built to be training
+data belongs on 1024, not 1000: one em makes noise-free data, the
+other cannot. Section 09 proves the general case.
 
 ![Two aligned number lines drawn with designbot, showing the n stem interpolated from Regular to Bold at binary-fraction weights. The top line is the 1024 em on a 2-unit grid, stem 96 to 192, with the weights 1/8, 1/4, 3/8, 1/2, 5/8, 3/4, 7/8 all landing exactly on grid ticks at 108, 120, 132, 144, 156, 168, 180 in green. The bottom line is the 1000 em on a 10-unit grid, stem 90 to 180, with the same weights falling off the grid: 1/2 lands at 135 between ticks, 1/4 lands at 112.5, not even an integer, both marked in red. Dashed guides connect the same weight on both lines.](./fig-interp.png)
 

@@ -52,3 +52,7 @@ path = "src/bin/curves.rs"
 [[bin]]
 name = "interp"
 path = "src/bin/interp.rs"
+
+[[bin]]
+name = "interpn"
+path = "src/bin/interpn.rs"
