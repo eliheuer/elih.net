@@ -375,18 +375,13 @@ which thickens mechanically and clogs the joins, and extrapolation or
 RMX-style scaling, which approximate a new weight from masters you
 already have. The model learns the weight from a corpus instead.
 Every result below is scored on the missing-master case, Bolds the
-model never saw. The baseline: shift every point by the average Bold
-offset of the pairs you do have; the offset-curve filter is queued as
-the next baseline.
+model never saw.
 
-The encoding makes the task local. Virtua Grotesk's masters are
-point-compatible, so the codec interleaves them per point
-(`MOVE x_reg y_reg x_bold y_bold`): every Bold coordinate sits
-directly after its Regular partner, encoded as a small offset (the
-Bold stem is the Regular's +96). At generation time the Regular
-coordinates are *forced* from the input and the model fills only the
-offset slots, so the output cannot structurally diverge from its
-Regular.
+The encoding makes the task local. The codec interleaves the two
+masters point by point, so each Bold value is predicted as a small
+offset from the Regular value directly before it (the Bold stem is
+the Regular's +96). The Regular coordinates are *forced* from the
+input, so the output cannot structurally diverge from its Regular.
 
 The current model, released as Virtua-12M-v0.1 (internally, run
 v0.8), is the first to beat the baseline. The experiment was an A/B.
