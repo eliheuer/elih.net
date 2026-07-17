@@ -449,17 +449,24 @@ weight between Regular and Bold, interpolates, and snaps to the grid.
 Each new glyph carries its exact weight as a label.
 
 A fair worry: the masters sit exactly on the grid, but an
-interpolation lands between grid points. Is it worse data? No. It is
-snapped before it becomes data, so every training glyph is fully on
-the grid, as grid-native as a master. The weights are binary
-fractions, and the grid is closed under them (section 09), so the
-blend lands back on the grid with little rounding. The one thing
-interpolation cannot invent is a new optical correction; it blends the
-masters' corrections in a straight line, and optics are not linear in
-weight. So it teaches structure exactly and approximates the fine
-corrections. That is the right split: the model learns optical taste
-from the two real masters and the graded corpus, not from the
-augmentation.
+interpolation lands between grid points. Is it worse data? No, and the
+reason is the case for the em. Interpolation is halving, and a
+power-of-two grid is closed under halving: split the gap between two
+grid points and the result is on the grid, or one level finer down the
+same nested ladder, exactly, with no rounding. The factory
+manufactures exact data forever. A 1000-unit em has no such closure:
+halve a 10-unit interval and you get 5, then 2.5, then 1.25, values
+that belong to no clean level and have to be rounded back, a small
+error in every sample. This is the concrete form of the section 09
+proof, and it is the reason to build a font meant to be training data
+on 1024 rather than 1000: the one em manufactures noise-free data, the
+other cannot.
+
+The one thing interpolation cannot invent is a new optical correction;
+it blends the masters' corrections in a straight line, and optics are
+not linear in weight. So it teaches structure exactly and approximates
+the fine corrections. The model learns optical taste from the two real
+masters and the graded corpus, not from the augmentation.
 
 Add contour-start rotation, since any cyclic rotation of a closed
 contour draws the same shape, and two masters become an endless
