@@ -442,63 +442,57 @@ that did not work.
 
 ### 08. The Designspace Is a Data Factory
 
-Two masters sounds like no data at all. But type design has been
-synthesizing valid data since Adobe's Multiple Master fonts in 1991:
-every interpolation between compatible masters is a legitimate
-instance of the family. Each training batch picks a weight between
-Regular and Bold, interpolates, snaps the result to the grid, and
-gets a new glyph with its exact weight attached as a conditioning
-token.
+Two masters sounds like no data at all. But every interpolation
+between them is a real instance of the family; Adobe's Multiple
+Master fonts have worked this way since 1991. The factory picks a
+weight between Regular and Bold, interpolates, and snaps to the grid.
+Each new glyph carries its exact weight as a label.
 
-A fair worry: the masters are drawn exactly on the grid, but an
-interpolation lands between grid positions, so is it worse data? No.
-The interpolation is snapped before it becomes data, so every training
-glyph is fully on the grid, exactly as grid-native as a master. And
-the weights are binary fractions (section 09), a base the grid is
-closed under, so blending two grid points lands back on the grid with
-little or no rounding. The one thing interpolation cannot invent is a
-new optical correction: it blends the two masters' corrections
-linearly, and real optics are not linear in weight. So this data
-teaches structure faithfully and approximates the fine corrections,
-which is the right division: the model learns optical taste from the
-two real masters and the graded corpus, not from the augmentation.
+A fair worry: the masters sit exactly on the grid, but an
+interpolation lands between grid points. Is it worse data? No. It is
+snapped before it becomes data, so every training glyph is fully on
+the grid, as grid-native as a master. The weights are binary
+fractions, and the grid is closed under them (section 09), so the
+blend lands back on the grid with little rounding. The one thing
+interpolation cannot invent is a new optical correction; it blends the
+masters' corrections in a straight line, and optics are not linear in
+weight. So it teaches structure exactly and approximates the fine
+corrections. That is the right split: the model learns optical taste
+from the two real masters and the graded corpus, not from the
+augmentation.
 
-Add contour-start rotation (any cyclic rotation of a closed contour
-draws the same shape) and one family becomes an effectively endless
-stream of distinct batches, enough to keep the model from memorizing.
+Add contour-start rotation, since any cyclic rotation of a closed
+contour draws the same shape, and two masters become an endless
+stream of distinct batches. Enough to keep the model from
+memorizing.
 
-That covers volume, but every one of those batches is a variation on a single
-design. Real variety, other letterforms and other designers' hands, takes more
-source families, and that is where [img2bez](/blog/img2bez) comes in. My Rust
-autotracer traces any raster, a rendered OFL font, a scan, or an AI-generated
-glyph, into bézier outlines snapped to the 2-unit grid;
-[img2ufo](https://github.com/eliheuer/img2ufo), built on top of it, assembles
-those glyphs into a full UFO font source. Together they are a
-*grid-ifier*: a type specimen image becomes a grid-native font source
-in about a minute, already in Virtua's coordinate language. Pointed
-at the Google Fonts OFL library, this is the long-term data plan: a
-growing corpus of grid-native families, every one OFL, with a
-provenance manifest I can publish. No scraping, no gray areas: training data you could audit
-glyph by glyph. It also answers the charge that this system is one
-foundry's private convention: any OFL family can be brought onto the
-grid, corrections and all.
+That is volume, not variety. Every batch is still one design. Other
+hands take more source families, and that is where
+[img2bez](/blog/img2bez) comes in: a Rust autotracer that traces any
+raster, a rendered font, a scan, an AI-drawn glyph, into outlines
+snapped to the 2-unit grid.
+[img2ufo](https://github.com/eliheuer/img2ufo) assembles them into a
+full UFO source. Together they turn a type specimen image into a
+grid-native font in about a minute, already in the same coordinate
+language. Pointed at the Google Fonts OFL library, this is the
+long-term data plan: a growing corpus of grid-native families, every
+one OFL, with a provenance manifest. No scraping, training data you
+could audit glyph by glyph. It also answers the charge that the grid
+is one foundry's private convention: any OFL family can be brought
+onto it.
 
-The pretraining corpus already supports its own held-out test, and it
-is worth reporting both halves, because one is a negative result. The
-pretrain stage never trains on one percent of the OFL pairs, 290 of
-29,000, scored here with a single sampling seed (at this n the
-standard error on every MAE in the table is about half a font unit). On those, the pretrained model beats the mean-delta baseline
-recomputed on OFL data, so the skill is not Virtua-specific: the model
-draws Bolds for glyphs it has never seen. The honest scope: the held-out unit
-is the glyph pair, not the whole font, so this measures new glyphs
-from seen font styles; a font-level split is queued for the next
-corpus build. The negative half is what the finetune costs. After
-specializing on Virtua, the same model collapses on OFL, worse than
-the baseline it once beat, winning 9 percent of pairs instead of 74.
-This is catastrophic forgetting, the textbook price of finetuning a
-small model with no replay, and the standard fix, mixing pretraining
-data into the finetune, is queued for v0.9. Virtua-12M-v0.1 is a Virtua specialist, not a general weight-transfer
-engine:
+The pretraining corpus supports its own test, with a positive result
+and a negative one. One percent of the OFL pairs, 290 of 29,000, are
+held out. On them the pretrained model beats the baseline, so the
+skill is not Virtua-specific: it draws Bolds for glyphs it has never
+seen. (The held-out unit is the glyph, not the whole font, so this is
+new glyphs from styles it has seen; a font-level split is next.) The
+negative result is what the finetune costs. After specializing on
+Virtua, the same model collapses on OFL: from beating the baseline on
+74 percent of pairs to 9 percent. This is catastrophic forgetting,
+the known price of finetuning a small model without mixing the old
+data back in. That mix is queued for v0.9. Virtua-12M-v0.1 is a
+Virtua specialist, not a general tool:
 
 | held-out OFL pairs, n = 290 | MAE ↓ | Chamfer ↓ | IoU ↑ | beats baseline |
 | --- | --- | --- | --- | --- |
@@ -516,17 +510,16 @@ side. Write the data the way you'd write software: a style guide
 foundry that designs its own training data is just a software shop that
 keeps its codebase clean.
 
-The pieces are converging into one system: [img2bez](/blog/img2bez) traces
-raster references into grid-snapped UFO sources; the glyph model
-completes outlines, draws Bolds, and (soon) repairs drawings; [designbot](https://github.com/eliheuer/designbot)
-renders proofs and the figures in this post;
-[Runebender](https://runebender.org) is the visual review
-surface; and an agentic harness in the Virtua repo orchestrates all of it
-against `DESIGN.md`, with mark colors in the UFO as the human control
-channel. The goal of the whole apparatus is unglamorous and concrete:
-**finish Virtua Grotesk and ship it to Google Fonts**, with the neural net
-doing real production work (the Bold companions, the tedious completions,
-the cleanup passes) and a human doing what humans are good at.
+The pieces converge into one system. [img2bez](/blog/img2bez) traces
+references into grid-snapped sources. The model completes outlines,
+draws Bolds, and soon repairs them.
+[designbot](https://github.com/eliheuer/designbot) renders the proofs
+and every figure in this post. [Runebender](https://runebender.org)
+is the review surface. An agentic harness runs the loop against
+`DESIGN.md`, with mark colors as the human's control channel. The
+goal is concrete: **finish Virtua Grotesk and ship it to Google
+Fonts**, the model doing the tedious production work and a human doing
+what humans are good at.
 
 This is a first step. The hope is fonts that are models rather than
 tables of outlines, no longer confined to the per-glyph boxes digital
