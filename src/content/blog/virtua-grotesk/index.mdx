@@ -382,18 +382,11 @@ the next baseline.
 The encoding makes the task local. Virtua Grotesk's masters are
 point-compatible, so the codec interleaves them per point
 (`MOVE x_reg y_reg x_bold y_bold`): every Bold coordinate sits
-directly after its Regular partner. At generation time the Regular
+directly after its Regular partner, encoded as a small offset (the
+Bold stem is the Regular's +96). At generation time the Regular
 coordinates are *forced* from the input and the model fills only the
-Bold slots, so the output cannot structurally diverge from its
+offset slots, so the output cannot structurally diverge from its
 Regular.
-
-![Regular-to-Bold weight transfer on a held-out g, drawn with designbot: the green Regular input, the model's red predicted Bold, and the gray actual Bold on the powers-of-two grid. Preliminary model output, refreshed each training run.](./fig-bolden-g.png)
-
-That `g` is an old checkpoint, kept for honesty: the hardest glyph in
-the set, and the prediction was mostly noise. Two things changed
-since. Delta-encoding: each Bold coordinate is predicted as a small
-offset from its Regular twin. The grid pass: both masters conformed
-to `DESIGN.md`, glyph by glyph.
 
 The current model, released as Virtua-12M-v0.1 (internally, run
 v0.8), is the first to beat the baseline. The experiment was an A/B.
