@@ -283,11 +283,11 @@ fn main() {
     };
     let figures = [
         (
-            "runs/v02/complete-R.svg",
+            "runs/v08/complete-R.svg",
             "fig-complete-r.png",
             &cap_geom,
             "Glyph completion",
-            "model: Virtua-12M-0.2",
+            "model: Virtua-12M-v0.1",
             "the model finishes a held-out glyph from 40% of its outline",
         ),
         (
