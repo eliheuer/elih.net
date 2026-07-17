@@ -353,70 +353,56 @@ The model runs inside
 editor I work on. Below, I
 sketch an e with a brush, trace the sketch to a draft outline, and
 have Virtua-12M-v0.1 redraw it in the font's conventions, with the
-green-graded glyphs already in the sources as reference. Real time,
-37 seconds:
+green-graded glyphs already in the sources as reference:
 
 <video src="/videos/e-draw.mp4" poster="/videos/e-draw-poster.jpg" controls playsinline preload="metadata" aria-label="Screen recording of the Runebender editor: a lowercase e is sketched with a brush, traced to a draft outline on the grid, and redrawn by Virtua-12M in the font's conventions using the Draft with Virtua tool."></video>
 
 ### 07. Boldening as Local Prediction
 
-The second task is the one with immediate production value: given a Regular
-glyph, draw the Bold. In font production this is real, tedious work: every
-glyph drawn once must be drawn again heavier, with the same structure.
+Boldening is the task with immediate production value. Every glyph
+drawn once must be drawn again heavier, with the same structure.
+Given the Regular, the model draws the Bold.
 
-An obvious objection first: font tools already interpolate. When both
-masters exist, interpolation is exact and free, and no model should
-compete with it. The model is for the case interpolation cannot
-touch: the second master does not exist yet. Every result below is
-scored on that case, Bolds the model never saw. The baseline is the
-classical answer to the same missing-master problem: shift every
-point by the average Bold offset of the pairs you do have. The
-offset-curve filter, the other tool that can draw a Bold from one
-master, is queued as the next baseline.
+An objection first: font tools already interpolate, and when both
+masters exist interpolation is exact and free. The model is for the
+case interpolation cannot touch: the second master does not exist
+yet. Every result below is scored on that case, Bolds the model never
+saw. The baseline: shift every point by the average Bold offset of
+the pairs you do have. The offset-curve filter, the other tool that
+can draw a Bold from one master, is queued as the next baseline.
 
-The encoding is where the design system pays off again. Because Virtua's
-masters are point-compatible, I interleave them per point
-(`MOVE x_reg y_reg x_bold y_bold`), so every Bold coordinate sits directly
-after its Regular partner in the sequence. Boldening stops being a
-long-range problem and becomes local prediction. At generation time
-the Regular coordinates are *forced* from the input and the model
-fills only the Bold slots, so the output cannot structurally diverge
-from its Regular. The encoding guarantees master compatibility.
+The encoding makes the task local. Virtua Grotesk's masters are
+point-compatible, so the codec interleaves them per point
+(`MOVE x_reg y_reg x_bold y_bold`): every Bold coordinate sits
+directly after its Regular partner. At generation time the Regular
+coordinates are *forced* from the input and the model fills only the
+Bold slots, so the output cannot structurally diverge from its
+Regular.
 
 ![Regular-to-Bold weight transfer on a held-out g, drawn with designbot: the green Regular input, the model's red predicted Bold, and the gray actual Bold on the powers-of-two grid. Preliminary model output, refreshed each training run.](./fig-bolden-g.png)
 
-That `g` is a checkpoint from a few days ago, kept here for honesty: the
-hardest glyph in the set, and the predicted Bold was mostly noise. Two
-things changed since. Delta-encoding shipped: each Bold coordinate is now
-predicted as a small offset from its Regular twin, which shrinks the
-task's effective vocabulary to a few dozen familiar offsets. And the
-sources went through the grid pass, a glyph-by-glyph conforming of both
-masters to `DESIGN.md`: the design system doing its data-cleaning job.
+That `g` is an old checkpoint, kept for honesty: the hardest glyph in
+the set, and the prediction was mostly noise. Two things changed
+since. Delta-encoding: each Bold coordinate is predicted as a small
+offset from its Regular twin. The grid pass: both masters conformed
+to `DESIGN.md`, glyph by glyph.
 
 The current model, released as Virtua-12M-v0.1 (internally, run
-v0.8), is the first to beat that baseline, and the experiment that
-produced it was a clean A/B. Arm one took the
-v0.7 recipe and retrained it on the freshly graded corpus (50 approved
-Bold pairs, up from 39): it tied the baseline again. Arm two pretrained
-the same architecture on 29,000 glyph pairs traced from OFL fonts in
-the Google Fonts collection, then finetuned on the same graded
-corpus: it beats the baseline on all ten
-held-out glyphs, on every metric's seed-averaged score. Data cleaning alone kept the tie;
-other designers' letterforms broke it, which is section 08's data plan
-reporting its first result.
+v0.8), is the first to beat the baseline. The experiment was an A/B.
+Arm one retrained the v0.7 recipe on the freshly graded corpus (50
+approved Bold pairs, up from 39): it tied the baseline again. Arm two
+pretrained on 29,000 pairs traced from Google Fonts, then finetuned
+on the same corpus: it beats the baseline on all ten held-out glyphs,
+on every metric (seed-averaged). Cleaning the data kept the tie;
+other designers' letterforms broke it.
 
-The protocol. The ten
-held-out pairs (six carried over from v0.7, plus two capitals and two
-lowercase drawn at random) were frozen before training, and their
-Bolds never trained in either arm. Each model is sampled at
-temperature 0.3 with five random seeds; the table reports mean ±
-standard deviation across seeds, and the baseline is deterministic.
-Alongside the recipe's raw MAE (mean absolute error per coordinate,
-font units), two metrics the vector-graphics literature will
-recognize: symmetric Chamfer distance on densely sampled outlines,
-because control-point error rewards matching the construction while
-Chamfer measures the drawn shape, and intersection-over-union of the
-filled glyphs. No FID: over ten glyphs a distribution metric is noise.
+The protocol. Ten held-out pairs, frozen before training, never
+trained in either arm. Five sampling seeds at temperature 0.3; the
+table reports mean ± standard deviation; the baseline is
+deterministic. Three metrics: MAE (mean absolute error per
+coordinate, in font units), Chamfer distance (the drawn shape rather
+than the construction), and intersection-over-union of the filled
+glyphs. No FID: over ten glyphs a distribution metric is noise.
 
 | held-out Bold prediction | MAE ↓ | Chamfer ↓ | IoU ↑ |
 | --- | --- | --- | --- |
@@ -429,45 +415,38 @@ starts the finetune below the control's best and stays below it.
 
 ![Two training-curve panels drawn with designbot from the v0.8 run log. Left: pretraining on 29,000 OFL pairs, validation loss on 290 held-out OFL pairs falling to a best of 1.53, faint train loss beneath. Right: the A/B on the same Virtua validation set, the gray from-scratch control bottoming at 3.16 while the green finetune from pretrained weights starts lower and bottoms at 2.72, dots at every 500-step checkpoint and a ring on the shipped best checkpoint.](./fig-losscurve.png)
 
-How much hand-graded data does the finetune need? Rerunning the same finetune
-from the same pretrained weights with the graded corpus cut down:
-twelve pairs score 28.0 ± 1.9 MAE, twenty-five score 25.5 ± 0.9, and
-the full fifty score 24.0 ± 1.6, every seed of every run better than
-the baseline's 31.3. The curve is monotone in all three metrics and
-not yet saturated, so graded pairs are still buying accuracy, and
-even twelve of them on pretrained weights beat fifty from scratch.
-Grading more of the Bold master is the cheapest next improvement.
+How much hand-graded data does the finetune need? The same finetune
+with the corpus cut down: twelve pairs score 28.0 ± 1.9 MAE,
+twenty-five 25.5 ± 0.9, fifty 24.0 ± 1.6, every seed of every run
+better than the baseline's 31.3. The curve is not yet saturated, and
+even twelve graded pairs on pretrained weights beat fifty from
+scratch. Grading more of the Bold master is the cheapest next
+improvement.
 
-The review sheet shows six of those held-out glyphs and
-the a: human Regular in, model Bold out, the human Bold beneath for
-reference.
+The review sheet, six held-out glyphs and the `a`: human Regular in,
+model Bold out, human Bold beneath for reference.
 
 ![Held-out review sheet drawn with designbot: for the glyphs K, E, M, n, b, c and a, three rows show the human-drawn Regular input in green, the Bold drawn by Virtua-12M-v0.1 in red, and the human-drawn Bold reference in gray. The a column's reference cell reads "never boldened": the Bold master never had a real a.](./fig-model-review.png)
 
-The seventh column is the reason to keep going. Virtua's Bold master
-never had a real `a`: the slot held an unboldened copy of the Regular,
-flagged during the grid pass as the biggest gap in the font. So there is
-no reference to ghost in, and the model's `a` is the only Bold `a` the
-design has ever had. It is not finished, but it is a draft where there was nothing: v0.7's attempt
-already sits in the Bold sources as a red-marked draft awaiting the
-human 2-unit pass, and the `a` below is v0.8's.
+The seventh column is the reason to keep going. Virtua Grotesk's Bold
+master never had a real `a`; the slot held an unboldened copy of the
+Regular. So there is no reference to ghost, and the model's `a` is
+the only Bold `a` the design has ever had. It is not finished, but it
+is a draft where there was nothing.
 
 ![The letter a twice on the design grid, drawn with designbot in the Runebender point language: the hand-drawn Regular in green, and beside it the Bold in red, the first real Bold a in the design, drawn by Virtua-12M-v0.1 from the Regular input.](./fig-model-bolden-a.png)
 
 The honest scoreboard: ten held-out glyphs, one font family, one
 training run per arm, so the error bars cover sampling variance, not
-retraining variance. A five-fold split, every pair held out once, is
-queued for v0.9. Section 08 reports what the same weights do
-off-family, including a negative result. The current ceiling is draft
-quality, and the division of labor is deliberate: the model proposes
-on the structure grid, a person finishes on the correction grid. The
-deeper bet is still open. At this scale, curated grid-native data
-plus generic pretraining beats a strong baseline, and more graded
-data alone did not. Whether that holds three orders of magnitude up,
-against a giant model trained on renders of every font in existence,
-is what the OFL-corpus scale-ups are for. Even in that world the grid
-keeps its jobs: the encoding, the eval harness, and the labeled
-corrections survive any size of model.
+retraining variance. A five-fold split is queued for v0.9. Section 08
+reports what the same weights do off-family, including a negative
+result. The ceiling is draft quality, and the division of labor is
+deliberate: the model proposes on the structure grid, a person
+finishes on the correction grid. Whether this still wins three orders
+of magnitude up, against a giant model trained on renders of every
+font in existence, is what the OFL-corpus scale-ups are for. Even
+there, the grid keeps its jobs: the encoding, the eval harness, and
+the labeled corrections survive any size of model.
 
 ### 08. The Designspace Is a Data Factory
 
