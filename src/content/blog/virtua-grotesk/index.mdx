@@ -458,6 +458,8 @@ every sample. This is why a font built to be training data belongs on
 1024, not 1000: one em makes noise-free data, the other cannot.
 Section 09 proves the general case.
 
+![Two aligned number lines drawn with designbot, showing the n stem interpolated from Regular to Bold at binary-fraction weights. The top line is the 1024 em on a 2-unit grid, stem 96 to 192, with the weights 1/8, 1/4, 3/8, 1/2, 5/8, 3/4, 7/8 all landing exactly on grid ticks at 108, 120, 132, 144, 156, 168, 180 in green. The bottom line is the 1000 em on a 10-unit grid, stem 90 to 180, with the same weights falling off the grid: 1/2 lands at 135 between ticks, 1/4 lands at 112.5, not even an integer, both marked in red. Dashed guides connect the same weight on both lines.](./fig-interp.png)
+
 Interpolation cannot invent a new optical correction. It blends the
 two masters' corrections in a straight line, and optics are not linear
 in weight, so it reproduces structure exactly and only approximates
