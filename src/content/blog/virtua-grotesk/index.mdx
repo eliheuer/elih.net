@@ -18,19 +18,12 @@ as a visual design one. If you are reading this on [elih.net](/), you are readin
 Virtua Grotesk right now.
 
 Every measurement in the design defaults to a power-of-two based
-grid system. The source outlines also hold
-many values that are not powers-of-two but are short sums of
-powers-of-two, like 64 + 32 = 96. The system prefers a power of
-two, but never at the expense of the aesthetics of neo-modernist
-letterforms or optical corrections. When a pure
-power-of-two does not fit, the value is a short sum of them: if 64 is too
-light and 128 too heavy, 96 (64 + 32) might be used. Where
-96 is too light, 112 (64 + 32 + 16) might work better, and so on.
-Like the nested grid, the number of powers-of-two needed to reach a
-value is a free label and a visual design constraint: 128 needs one,
-96 needs two, 112 needs three.
+grid system. The system prefers a power of two, but never at the
+expense of the aesthetics of neo-modernist letterforms or optical
+corrections; section 03 explains how every deviation is ranked and
+becomes a free training label.
 [A Python script](https://github.com/eliheuer/virtua-grotesk/blob/main/scripts/grid_qa.py)
-grades every measurement against this system, and an AI agent harness
+grades every measurement against the system, and an AI agent harness
 fixes what the report flags in a report, fix, render loop.
 
 The model will soon be on Hugging Face as an open-weight model that anyone can use, run
@@ -112,9 +105,12 @@ and it is enforced programmatically. From the repo root, `make
 grid-qa` grades every glyph in both masters on how strictly it
 follows the system. Every point must sit on the 2-grid, on-curve
 points on the 8-grid with off-8 reported by the QA tool, and handle lengths and structural spans are scored as
-short sums of powers-of-two. The sums are a second semantic
-hierarchy, parallel to the nested grid: the fewer the powers, the
-more structural the value. The score is binary popcount, the count
+short sums of powers-of-two. When a pure power does not fit the
+letterform, the value is a short sum: 64 is too light for a stem and
+128 too heavy, so stems are 96 = 64 + 32; where 96 is too light,
+112 = 64 + 32 + 16. The sums are a second semantic hierarchy,
+parallel to the nested grid: the fewer the powers, the more
+structural the value. The score is binary popcount, the count
 of ones in the value's binary form: 1 is a pure power (64, 128, 256),
 2 an elegant sum (96 = 64 + 32, 272 = 256 + 16), 3 acceptable
 (104 = 64 + 32 + 8), 4 or more flagged for review. Between sums with
