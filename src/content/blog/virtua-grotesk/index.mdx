@@ -377,11 +377,12 @@ already have. The model learns the weight from a corpus instead.
 Every result below is scored on the missing-master case, Bolds the
 model never saw.
 
-The encoding makes the task local. The codec interleaves the two
-masters point by point, so each Bold value is predicted as a small
-offset from the Regular value directly before it (the Bold stem is
-the Regular's +96). The Regular coordinates are *forced* from the
-input, so the output cannot structurally diverge from its Regular.
+The encoding makes the task local. The two masters are written into
+one sequence, point by point: a Regular point, then its Bold value,
+then the next Regular point. The model predicts each Bold value from
+the Regular point beside it, as a small offset. The Regular points
+are fixed. The model fills in only the Bold values, so the structure
+of the glyph cannot break.
 
 The current model, released as Virtua-12M-v0.1 (internally, run
 v0.8), is the first to beat the baseline. The experiment was an A/B.
