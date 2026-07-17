@@ -207,13 +207,13 @@ their coordinates, in order, and nothing else.
 
 A transformer reads and writes a fixed set of tokens: its
 *vocabulary*. Virtua's is small. A few conditioning tokens say what
-to draw: the glyph's name and its weight. Four drawing verbs draw it:
+to draw: the glyph's name, its Unicode codepoint, and its weight. Four drawing verbs draw it:
 `MOVE`, `LINE`, `CURVE`, `CLOSE`. And one token exists for each legal
 position on the grid, so a coordinate is a single token. Here is the
 numeral **2** in the Regular weight, exactly as the codec emits it:
 
 ```
-BOS N_two W400 ADV 592
+BOS N_two U_0032 W400 ADV 592
 MOVE 48 0
 LINE 528 0
 LINE 544 16
@@ -237,9 +237,10 @@ CLOSE
 EOS
 ```
 
-Read it top to bottom. `BOS` opens the sequence and `EOS` ends it. `N_two` names
-the glyph (the digit two), `W400` sets
-the weight (Regular), and `ADV 592` is its advance width,
+Read it top to bottom. `BOS` opens the sequence and `EOS` ends it.
+`N_two` names the glyph, `U_0032` is its Unicode codepoint (the digit
+two), `W400` sets the weight (Regular), and `ADV 592` is its advance
+width,
 how far the pen moves before the next character. The rest is the outline:
 `MOVE` starts a contour at a point, `LINE` draws a straight segment to the next,
 `CURVE` draws a cubic bézier through two control points to an endpoint, and
