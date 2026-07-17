@@ -317,7 +317,7 @@ The model card:
 | parameters | 12.54M |
 | context | 1,368 tokens |
 | vocabulary | 1,784 tokens: commands, names, coordinates, deltas |
-| pretraining | 29,000 Regular-Bold glyph pairs traced from OFL fonts |
+| pretraining | 29,000 Regular-Bold pairs traced from Google Fonts |
 | finetuning | 50 human-graded Virtua Bold pairs; 463 glyphs in the corpus |
 | optimizer | AdamW, lr 3e-4, 200-step warmup, cosine decay, batch 24, dropout 0.1 |
 | compute | one Apple M4 Pro laptop (MLX); the full v0.8 A/B, both arms, in 3h20m |
@@ -402,8 +402,9 @@ The current model, Virtua-12M-0.8, is the first to beat that baseline,
 and the experiment that produced it was a clean A/B. Arm one took the
 v0.7 recipe and retrained it on the freshly graded corpus (50 approved
 Bold pairs, up from 39): it tied the baseline again. Arm two pretrained
-the same architecture on 29,000 glyph pairs traced from OFL fonts, then
-finetuned on the same graded corpus: it beats the baseline on all ten
+the same architecture on 29,000 glyph pairs traced from OFL fonts in
+the Google Fonts collection, then finetuned on the same graded
+corpus: it beats the baseline on all ten
 held-out glyphs, on every metric's seed-averaged score. Data cleaning alone kept the tie;
 other designers' letterforms broke it, which is section 08's data plan
 reporting its first result.
@@ -494,9 +495,9 @@ glyph, into bézier outlines snapped to the 2-unit grid;
 those glyphs into a full UFO font source. Together they are a
 *grid-ifier*: a type specimen image becomes a grid-native font source
 in about a minute, already in Virtua's coordinate language. Pointed
-at OFL fonts, this is the long-term data plan: a growing corpus of
-grid-native families, every one OFL, with a provenance manifest I can
-publish. No scraping, no gray areas: training data you could audit
+at the Google Fonts OFL library, this is the long-term data plan: a
+growing corpus of grid-native families, every one OFL, with a
+provenance manifest I can publish. No scraping, no gray areas: training data you could audit
 glyph by glyph. It also answers the charge that this system is one
 foundry's private convention: any OFL family can be brought onto the
 grid, corrections and all.
