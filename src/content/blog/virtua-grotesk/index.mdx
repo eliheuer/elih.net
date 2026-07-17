@@ -349,19 +349,7 @@ commandment, a dumb baseline to beat, is in place too: predict every Bold
 offset as the mean delta of the training pairs, no model at all. Section 07
 reports the model against it.
 
-The first test is glyph completion: give the model 40% of a held-out glyph's
-outline and ask it to finish. Below, the model completes the letter `R`,
-a glyph it never saw in any weight during training. It gets the stem, the
-bowl, and the overall proportions:
-
-![Glyph completion of the letter R, drawn with designbot: gray reference, the green 40% given to the model, and the model's red completion on the powers-of-two grid. Preliminary model output, refreshed each training run.](./fig-complete-r.png)
-
-It is not production quality: the interior counters come out mangled, and about
-one sample in three fails. But this is one font family, a few thousand
-sequences, and a single night of compute. That it produces recognizable structure at all, on data and compute this small,
-is what justifies scaling both up.
-
-The model also runs inside
+The model runs inside
 [Runebender](https://runebender.org), the font editor. Below, I
 sketch an e with a brush, trace the sketch to a draft outline, and
 have Virtua-12M-v0.1 redraw it in the font's conventions, with the
