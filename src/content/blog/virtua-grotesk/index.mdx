@@ -306,8 +306,8 @@ build on an M4 Mac and a PyTorch build on a Linux PC with a gaming GPU. An
 overnight run is about 30,000 steps. The corpus began as Virtua's two masters, 427
 glyphs, structurally identical between Regular and Bold. Since v0.8
 the model also pretrains on glyphs from OFL fonts in the Google Fonts
-collection before the Virtua finetune; section 07 reports what that
-bought.
+collection before the Virtua-12M-v0.1 finetune; section 07 reports
+what that bought.
 
 The model card:
 
@@ -362,6 +362,15 @@ It is not production quality: the interior counters come out mangled, and about
 one sample in three fails. But this is one font family, a few thousand
 sequences, and a single night of compute. That it produces recognizable structure at all, on data and compute this small,
 is what justifies scaling both up.
+
+The model also runs inside
+[Runebender](https://runebender.org), the font editor. Below, I
+sketch an e with a brush, trace the sketch to a draft outline, and
+have Virtua-12M-v0.1 redraw it in the font's conventions, with the
+green-graded glyphs already in the sources as reference. Real time,
+37 seconds:
+
+<video src="/videos/e-draw.mp4" poster="/videos/e-draw-poster.jpg" controls playsinline preload="metadata" aria-label="Screen recording of the Runebender editor: a lowercase e is sketched with a brush, traced to a draft outline on the grid, and redrawn by Virtua-12M in the font's conventions using the Draft with Virtua tool."></video>
 
 ### 07. Boldening as Local Prediction
 
