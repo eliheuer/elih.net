@@ -10,7 +10,7 @@
 
 use designbot::prelude::*;
 use designbot_render::Renderer;
-use kurbo::{PathEl, Point};
+use kurbo::{Affine, PathEl, Point};
 #[allow(unused_imports)]
 use virtua_grotesk_figures::*;
 
@@ -86,14 +86,12 @@ fn main() {
     let cols = weights.len() as f64;
 
     let _ = cols;
-    // ONE 8-unit grid across the whole canvas; the three n's sit on it, big.
-    let edge = 88.0; // pure-grid border; outlines stay inside it
-    let ink_h = 584.0; // baseline..x-height+overshoot, in glyph units
-    let inner = W - 2.0 * edge;
-    // scale for a mild ~20% overlap of three Bold-width glyphs across the width
-    let s = inner / (2.6 * n_bold.width);
-    let gp = 8.0 * s; // pixel pitch of the 8-grid
-    // center the ink band (0..ink_h) vertically, baseline on a grid line
+    // ONE 8-unit grid; three n's sit on it, sized to fill the height, spaced
+    // by a constant ink-gap so the tracking is even.
+    let edge = 72.0;
+    let ink_h = 584.0; // baseline..x-height+overshoot
+    let s = (H - 2.0 * edge) / ink_h; // fill the height
+    let gp = 8.0 * s;
     let baseline = ((H / 2.0 - ink_h / 2.0 * s) / gp).round() * gp;
     let grid_dim = Color::rgb(0x24, 0x24, 0x24);
     let grid_maj = Color::rgb(0x40, 0x40, 0x40);
@@ -114,21 +112,36 @@ fn main() {
         gy += gp;
     }
 
-    // three n's spread across the inner width, overlapping to zoom in, each
-    // origin snapped to the grid so on-8 points land on grid lines
-    let bw = n_bold.width * s;
-    let pitch = (inner - bw) / 2.0; // origin spacing (< bw, so they overlap)
-    for (i, (t, _, stem)) in weights.iter().enumerate() {
-        let o = interp(&n_reg, &n_bold, *t);
-        let x0 = ((edge + i as f64 * pitch + (bw - o.width * s) / 2.0) / gp).round() * gp;
-        draw_body(&mut sheet, &o, s, x0, baseline);
-        draw_points(&mut sheet, &o, s, x0, baseline);
+    // precompute the three outlines and their ink extents
+    let outs: Vec<Outline> = weights.iter().map(|(t, _, _)| interp(&n_reg, &n_bold, *t)).collect();
+    let ink: Vec<(f64, f64)> = outs
+        .iter()
+        .map(|o| {
+            let l = o.points.iter().fold(f64::MAX, |m, (x, _, _)| m.min(*x));
+            let r = o.points.iter().fold(f64::MIN, |m, (x, _, _)| m.max(*x));
+            (l, r)
+        })
+        .collect();
+    let sum_ink: f64 = ink.iter().map(|(l, r)| r - l).sum();
+    // even gap (pixels) so the three ink boxes fill the inner width
+    let gap = ((W - 2.0 * edge) - sum_ink * s) / 2.0;
 
-        // stem dimension: left ink edge to left edge + stem, across mid x-height
-        let leftx = o.points.iter().fold(f64::MAX, |m, (px, _, _)| m.min(*px));
+    // place left to right with a constant ink gap; origins snapped to the grid
+    let mut prev_right = edge; // pixel x where the next ink block starts
+    for (i, o) in outs.iter().enumerate() {
+        let (il, ir) = ink[i];
+        let x0 = ((prev_right - il * s) / gp).round() * gp;
+        prev_right = x0 + ir * s + gap;
+
+        // stroke-only outline so overlaps read as clean crossings, not muddy fill
+        let place = Affine::new([s, 0.0, 0.0, s, x0, baseline]);
+        sheet.ctx.no_fill().stroke(Color::rgb(0xcc, 0xcc, 0xcc)).stroke_width(PEN);
+        sheet.ctx.draw_path(place * o.path.clone());
+        draw_points(&mut sheet, o, s, x0, baseline);
+
+        let stem = weights[i].2;
         let dy = baseline + 300.0 * s;
-        sheet.dim_h(x0 + leftx * s, x0 + (leftx + *stem as f64) * s, dy, &stem.to_string(), green());
-        // apex coordinate: the top on-curve point of the arch
+        sheet.dim_h(x0 + il * s, x0 + (il + stem as f64) * s, dy, &stem.to_string(), green());
         if let Some((px, py, _)) = o
             .points
             .iter()
@@ -145,10 +158,6 @@ fn main() {
             );
         }
     }
-
-    // shared vertical metrics, tagged once on the left
-    sheet.metric_tag("x-height 576", edge, baseline + 576.0 * s, true, -1);
-    sheet.metric_tag("baseline 0", edge, baseline, true, -1);
 
     let here = std::path::PathBuf::from(env!("CARGO_MANIFEST_DIR"));
     let post = here
