@@ -323,8 +323,6 @@ The model card:
 | compute | one Apple M4 Pro laptop (MLX); the full v0.8 A/B, both arms, in 3h20m |
 | checkpoint | 48 MB fp32 safetensors |
 
-Every row comes from the run log and config checked in with the run.
-
 Decoder-only is the GPT architecture. Each token becomes a vector, and a stack
 of transformer blocks refines those vectors through *attention*: every position
 looks back at the tokens before it and pulls in whatever helps predict what
