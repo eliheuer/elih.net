@@ -481,15 +481,9 @@ snapped to the 2-unit grid.
 [img2ufo](https://github.com/eliheuer/img2ufo) assembles them into a
 full UFO source. Together they turn a type specimen image into a
 grid-native font in about a minute, already in the same coordinate
-language. The plan is not to bulk-convert Google Fonts. That library
-is large and uneven, and running all of it through the grid-ifier
-would only move the quality problem onto the grid. The plan is to
-engineer good data: bring a strong family onto the grid, grade it,
-keep what passes. The grid-ifier makes each conversion cheap, so the
-work becomes curation, a growing corpus of high-quality grid-native
-families, every one OFL, with a provenance manifest you could audit
-glyph by glyph. It also answers the charge that the grid is one
-foundry's private convention: any OFL family can be brought onto it.
+language. That is how the model's pretraining data was made: other
+OFL families, traced onto the grid, so the model sees more than one
+designer's hand before it ever meets Virtua Grotesk.
 
 The pretraining corpus supports its own test, with a positive result
 and a negative one. One percent of the OFL pairs, 290 of 29,000, are
