@@ -264,7 +264,7 @@ fn main() {
         "The v0.8 A/B as training curves",
         "read from runs/v08/run.log / val loss, lower is better",
     ]);
-    sheet.attribution(Some("Virtua-12M-0.8 / one Apple M4 Pro, MLX"));
+    sheet.attribution(Some("Virtua-12M-v0.1 / one Apple M4 Pro, MLX"));
 
     let here = std::path::PathBuf::from(env!("CARGO_MANIFEST_DIR"));
     let post = here

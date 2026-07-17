@@ -26,8 +26,8 @@ becomes a free training label.
 grades every measurement against the system, and an AI agent harness
 fixes what the report flags in a report, fix, render loop.
 
-The model will soon be on Hugging Face as an open-weight model that anyone can use, run
-locally, and fine-tune. The font sources and harness system are
+The model will soon be on Hugging Face as Virtua-12M-v0.1, an
+open-weight model that anyone can use, run locally, and fine-tune. The font sources and harness system are
 already on
 [GitHub](https://github.com/eliheuer/virtua-grotesk), free under the
 SIL Open Font License (OFL) v1.1.
@@ -171,7 +171,7 @@ Nothing in the encoding mentions the 8-unit grid: every coordinate
 token is a 2-grid position, all equally available. Placing points at
 random would land on the 8-grid 6 percent of the time. The
 human-drawn sources land on it 85 percent of the time. Drawing
-held-out glyphs whose Bolds it never saw, Virtua-12M-0.8 lands on it
+held-out glyphs whose Bolds it never saw, Virtua-12M-v0.1 lands on it
 68 percent of the time, most of the way from chance to the human
 hand. When it leaves the structure grid it tends to land on
 correction values rather than at random, and it keeps the E, a glyph
@@ -183,7 +183,7 @@ what it should, is agreed and is the point. And it is not only
 frequencies: where the humans step off the structure grid, the model
 tends to step off at the same points.
 
-![The whole argument in one annotated specimen, drawn with designbot. Left: a zoomed crop of the word no sitting on the two-tier grid itself, the fine 2-unit correction grid and the crisp 8-unit structure grid, with every point colored by its tier, the n's stem chain dimensioned 96, 272, 96 in green and the o's curve wall dimensioned 100 in red. Right: under the heading "the self-labeling grid, built on powers-of-two," 96 and 100 written in binary with their trailing zeros bracketed, 96 on 32 as structure and 100 on 4 as a correction, the note that 100 equals 96 plus 4, the curve's optical correction, and bars showing the share of points landing exactly on the 8-unit grid in held-out raw model output: chance 6 percent, Virtua-12M-0.8 68 percent, human sources 85 percent](./fig-semantic-grid.png)
+![The whole argument in one annotated specimen, drawn with designbot. Left: a zoomed crop of the word no sitting on the two-tier grid itself, the fine 2-unit correction grid and the crisp 8-unit structure grid, with every point colored by its tier, the n's stem chain dimensioned 96, 272, 96 in green and the o's curve wall dimensioned 100 in red. Right: under the heading "the self-labeling grid, built on powers-of-two," 96 and 100 written in binary with their trailing zeros bracketed, 96 on 32 as structure and 100 on 4 as a correction, the note that 100 equals 96 plus 4, the curve's optical correction, and bars showing the share of points landing exactly on the 8-unit grid in held-out raw model output: chance 6 percent, Virtua-12M-v0.1 68 percent, human sources 85 percent](./fig-semantic-grid.png)
 
 One honest caveat: for the model itself, the win is coarseness,
 regularity, and the nested tiers, not base two. It reads each
@@ -311,7 +311,7 @@ what that bought.
 
 The model card:
 
-| Virtua-12M-0.8 |   |
+| Virtua-12M-v0.1 |   |
 | --- | --- |
 | architecture | decoder-only transformer: 6 layers, 384 dims, 8 heads |
 | parameters | 12.54M |
@@ -407,8 +407,9 @@ task's effective vocabulary to a few dozen familiar offsets. And the
 sources went through the grid pass, a glyph-by-glyph conforming of both
 masters to `DESIGN.md`: the design system doing its data-cleaning job.
 
-The current model, Virtua-12M-0.8, is the first to beat that baseline,
-and the experiment that produced it was a clean A/B. Arm one took the
+The current model, released as Virtua-12M-v0.1 (internally, run
+v0.8), is the first to beat that baseline, and the experiment that
+produced it was a clean A/B. Arm one took the
 v0.7 recipe and retrained it on the freshly graded corpus (50 approved
 Bold pairs, up from 39): it tied the baseline again. Arm two pretrained
 the same architecture on 29,000 glyph pairs traced from OFL fonts in
@@ -435,7 +436,7 @@ filled glyphs. No FID: over ten glyphs a distribution metric is noise.
 | --- | --- | --- | --- |
 | mean-delta baseline | 31.3 | 37.4 | 0.564 |
 | graded corpus only (control) | 31.7 ± 0.5 | 35.3 ± 0.7 | 0.567 ± 0.013 |
-| + OFL pretrain (Virtua-12M-0.8) | **24.0 ± 1.6** | **22.4 ± 1.3** | **0.745 ± 0.016** |
+| + OFL pretrain (Virtua-12M-v0.1) | **24.0 ± 1.6** | **22.4 ± 1.3** | **0.745 ± 0.016** |
 
 The training curves, parsed from the run log: the pretrained arm
 starts the finetune below the control's best and stays below it.
@@ -455,7 +456,7 @@ The review sheet shows six of those held-out glyphs and
 the a: human Regular in, model Bold out, the human Bold beneath for
 reference.
 
-![Held-out review sheet drawn with designbot: for the glyphs K, E, M, n, b, c and a, three rows show the human-drawn Regular input in green, the Bold drawn by Virtua-12M-0.8 in red, and the human-drawn Bold reference in gray. The a column's reference cell reads "never boldened": the Bold master never had a real a.](./fig-model-review.png)
+![Held-out review sheet drawn with designbot: for the glyphs K, E, M, n, b, c and a, three rows show the human-drawn Regular input in green, the Bold drawn by Virtua-12M-v0.1 in red, and the human-drawn Bold reference in gray. The a column's reference cell reads "never boldened": the Bold master never had a real a.](./fig-model-review.png)
 
 The seventh column is the reason to keep going. Virtua's Bold master
 never had a real `a`: the slot held an unboldened copy of the Regular,
@@ -465,7 +466,7 @@ design has ever had. It is not finished, but it is a draft where there was nothi
 already sits in the Bold sources as a red-marked draft awaiting the
 human 2-unit pass, and the `a` below is v0.8's.
 
-![The letter a twice on the design grid, drawn with designbot in the Runebender point language: the hand-drawn Regular in green, and beside it the Bold in red, the first real Bold a in the design, drawn by Virtua-12M-0.8 from the Regular input.](./fig-model-bolden-a.png)
+![The letter a twice on the design grid, drawn with designbot in the Runebender point language: the hand-drawn Regular in green, and beside it the Bold in red, the first real Bold a in the design, drawn by Virtua-12M-v0.1 from the Regular input.](./fig-model-bolden-a.png)
 
 The honest scoreboard: ten held-out glyphs, one font family, one
 training run per arm, so the error bars cover sampling variance, not
@@ -525,7 +526,7 @@ specializing on Virtua, the same model collapses on OFL, worse than
 the baseline it once beat, winning 9 percent of pairs instead of 74.
 This is catastrophic forgetting, the textbook price of finetuning a
 small model with no replay, and the standard fix, mixing pretraining
-data into the finetune, is queued for v0.9. Virtua-12M-0.8 is a Virtua specialist, not a general boldening
+data into the finetune, is queued for v0.9. Virtua-12M-v0.1 is a Virtua specialist, not a general boldening
 engine:
 
 | held-out OFL pairs, n = 290 | MAE ↓ | Chamfer ↓ | IoU ↑ | beats baseline |

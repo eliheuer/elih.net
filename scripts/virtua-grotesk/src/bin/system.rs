@@ -305,7 +305,7 @@ fn fig_arabic(renderer: &Renderer, mono: &str, reg: &std::path::Path, out: &std:
 // 100 and 92 = the hand's +/-4 in red). Top right: why 96 and 100 mean
 // different things — not their power-of-two decomposition (every integer
 // has one) but their trailing zeros. Bottom right: the measured proof that
-// Virtua-12M-0.8 learned the layers from geometry alone.
+// Virtua-12M-v0.1 learned the tiers from geometry alone.
 
 fn fig_semantic(renderer: &Renderer, mono: &str, reg: &std::path::Path, out: &std::path::Path) {
     let mut sheet = new_sheet(renderer, mono);
@@ -435,13 +435,13 @@ fn fig_semantic(renderer: &Renderer, mono: &str, reg: &std::path::Path, out: &st
         sheet.label(pct, rx + w + 16.0, y + 6.0, body, color, -1);
     };
     bar(&mut sheet, 336.0, 0.0625, dim_color(), "chance on the 2-grid", "6%");
-    bar(&mut sheet, 240.0, 0.68, red(), "Virtua-12M-0.8", "68%");
+    bar(&mut sheet, 240.0, 0.68, red(), "Virtua-12M-v0.1", "68%");
     bar(&mut sheet, 144.0, 0.85, green(), "human sources", "85%");
 
     legend(&mut sheet, box_right - 16.0, 84.0);
 
     // attribution, bottom of the column
-    sheet.label("Virtua Grotesk / Virtua-12M-0.8", rx, 64.0 + 36.0, SMALL_TEXT, green(), -1);
+    sheet.label("Virtua Grotesk / Virtua-12M-v0.1", rx, 64.0 + 36.0, SMALL_TEXT, green(), -1);
     sheet.label("elih.net/blog/virtua-grotesk", rx, 64.0, SMALL_TEXT, green(), -1);
 
     sheet.save(renderer, out);
