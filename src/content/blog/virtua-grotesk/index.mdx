@@ -386,12 +386,11 @@ of the glyph cannot break.
 
 The current model, Virtua-12M-v0.1, beats the baseline. The evidence
 is a controlled comparison of two training runs. The first trained
-only on the graded corpus (50 approved Bold pairs, up from 39): it
-tied the baseline. The second pretrained on 29,000 pairs traced from
-Google Fonts, then finetuned on the same graded corpus: it beats the
-baseline on all ten held-out glyphs, on every metric (seed-averaged).
-Cleaning the data kept the tie; other designers' letterforms broke
-it.
+only on the graded corpus: it tied the baseline. The second
+pretrained on 29,000 pairs traced from Google Fonts, then finetuned
+on the same graded corpus: it beats the baseline on all ten held-out
+glyphs, on every metric. Cleaning the data kept the tie; other
+designers' letterforms broke it.
 
 The protocol. Ten held-out pairs, frozen before training, never
 trained in either arm. Five sampling seeds at temperature 0.3; the
