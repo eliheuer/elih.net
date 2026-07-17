@@ -78,57 +78,51 @@ fn main() {
     let n_reg = load_outline(&reg_dir, "n");
     let n_bold = load_outline(&bold_dir, "n");
 
-    let weights: [(f64, &str, i64); 5] = [
+    let weights: [(f64, &str, i64); 3] = [
         (0.0, "Regular", 96),
-        (0.25, "1/4", 120),
         (0.5, "1/2", 144),
-        (0.75, "3/4", 168),
         (1.0, "Bold", 192),
     ];
+    let cols = weights.len() as f64;
 
-    const S: f64 = 0.64;
-    let baseline = MARGIN + 430.0;
-    let grid_lo = -24.0; // glyph units below baseline
-    let grid_hi = 620.0; // above baseline (past x-height 576)
-    let col_w = (W - 2.0 * MARGIN) / 5.0;
-    let grid_dim = Color::rgb(0x28, 0x28, 0x28);
-    let grid_maj = Color::rgb(0x44, 0x44, 0x44);
+    let edge = 20.0; // near-edge padding; outlines stay well inside it
+    let col_w = (W - 2.0 * edge) / cols;
+    // scale to fill each column with the widest weight (Bold), keep a hair of gap
+    let s = 0.985 * col_w / n_bold.width;
+    // vertically center the glyph body (grid_lo..grid_hi) in the canvas
+    let (grid_lo, grid_hi) = (-24.0f64, 620.0f64);
+    let baseline = H / 2.0 - (grid_lo + grid_hi) / 2.0 * s;
+    // draw the grid tall, filling the canvas, so the field reads as one plane
+    let field_top = H - edge;
+    let field_bot = edge;
+    let gy_hi = (field_top - baseline) / s;
+    let gy_lo = (field_bot - baseline) / s;
+    let grid_dim = Color::rgb(0x26, 0x26, 0x26);
+    let grid_maj = Color::rgb(0x42, 0x42, 0x42);
 
-    for (i, (t, label, stem)) in weights.iter().enumerate() {
+    for (i, (t, _, _)) in weights.iter().enumerate() {
         let o = interp(&n_reg, &n_bold, *t);
-        let x0 = MARGIN + i as f64 * col_w + (col_w - o.width * S) / 2.0;
+        let x0 = edge + i as f64 * col_w + (col_w - o.width * s) / 2.0;
 
-        // per-column 8-unit grid, brighter every 64
+        // 8-unit grid, brighter every 64, spanning the full canvas height
         let mut gx = 0.0;
         while gx <= o.width + 0.1 {
             let maj = (gx as i64) % 64 == 0;
             sheet.ctx.no_fill().stroke(if maj { grid_maj } else { grid_dim }).stroke_width(PEN_LIGHT);
-            sheet.ctx.line(x0 + gx * S, baseline + grid_lo * S, x0 + gx * S, baseline + grid_hi * S);
+            sheet.ctx.line(x0 + gx * s, baseline + gy_lo * s, x0 + gx * s, baseline + gy_hi * s);
             gx += 8.0;
         }
-        let mut gy = grid_lo;
-        while gy <= grid_hi + 0.1 {
+        let mut gy = (gy_lo / 8.0).ceil() * 8.0;
+        while gy <= gy_hi + 0.1 {
             let maj = (gy as i64).rem_euclid(64) == 0;
             sheet.ctx.no_fill().stroke(if maj { grid_maj } else { grid_dim }).stroke_width(PEN_LIGHT);
-            sheet.ctx.line(x0, baseline + gy * S, x0 + o.width * S, baseline + gy * S);
+            sheet.ctx.line(x0, baseline + gy * s, x0 + o.width * s, baseline + gy * s);
             gy += 8.0;
         }
 
-        draw_body(&mut sheet, &o, S, x0, baseline);
-        draw_points(&mut sheet, &o, S, x0, baseline);
-
-        // stem dimension under the glyph
-        let cx = x0 + o.width * S / 2.0;
-        let color = if *t == 0.0 { green() } else if *t == 1.0 { red() } else { gray() };
-        sheet.label(label, cx, baseline + grid_lo * S - 40.0, LABEL_TEXT, color, 0);
-        sheet.label(&format!("stem {stem}"), cx, baseline + grid_lo * S - 78.0, SMALL_TEXT, dim_color(), 0);
+        draw_body(&mut sheet, &o, s, x0, baseline);
+        draw_points(&mut sheet, &o, s, x0, baseline);
     }
-
-    sheet.hud_title(&[
-        "Every interpolation is a grid-native glyph",
-        "the n from Regular to Bold, points colored by grid level",
-    ]);
-    sheet.attribution(Some("green on 8, red off 8 on 2 / Virtua Grotesk"));
 
     let here = std::path::PathBuf::from(env!("CARGO_MANIFEST_DIR"));
     let post = here

@@ -450,11 +450,13 @@ its exact weight.
 
 An interpolation lands between grid points, so is it worse data than a
 master? No, and the outline sheet below shows why. Here is the real
-`n`, interpolated from Regular to Bold at 1/4, 1/2, and 3/4. Every
-intermediate is a genuine grid-native glyph: the stem steps 96, 120,
-144, 168, 192, and every point lands on a grid intersection.
+`n` at Regular, at the 1/2 interpolation, and at Bold, points colored
+by grid level: green on the 8-unit structure grid, red off 8 on the
+2-unit correction grid. The middle glyph is not a master, but it is a
+clean glyph with every point on the grid. The stem steps 96, 144,
+192.
 
-![Five n outlines drawn with designbot, the n interpolated from Regular to Bold at 1/4, 1/2, 3/4, each on its own 8-unit grid with on-curve and off-curve points marked. Points are colored by grid level, green on the 8-unit structure grid and red off 8 on the 2-unit correction grid. The left stem is dimensioned under each weight: 96, 120, 144, 168, 192, every value on the grid, and each intermediate n is a clean, grid-native glyph.](./fig-interp-outlines.png)
+![Three large n outlines drawn with designbot on an 8-unit grid: the n at Regular, at the 1/2 interpolation between Regular and Bold, and at Bold, with all on-curve and off-curve points marked. Points are colored by grid level, green on the 8-unit structure grid and red off 8 on the 2-unit correction grid. Every point of the interpolated middle n lands on a grid intersection, and the stem steps 96, 144, 192, so the intermediate weight is a clean, grid-native glyph.](./fig-interp-outlines.png)
 
 The reason is arithmetic. Interpolation is halving, and a power-of-two
 grid is closed under halving: the midpoint of two grid points is on
