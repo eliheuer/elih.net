@@ -86,11 +86,15 @@ fn main() {
     let cols = weights.len() as f64;
 
     let _ = cols;
-    // ONE 8-unit grid across the whole canvas; the three n's sit on it.
-    let s = (W - 160.0) / (3.0 * n_bold.width); // three Bold-width slots fit
+    // ONE 8-unit grid across the whole canvas; the three n's sit on it, big.
+    let edge = 88.0; // pure-grid border; outlines stay inside it
+    let ink_h = 584.0; // baseline..x-height+overshoot, in glyph units
+    let inner = W - 2.0 * edge;
+    // scale for a mild ~20% overlap of three Bold-width glyphs across the width
+    let s = inner / (2.6 * n_bold.width);
     let gp = 8.0 * s; // pixel pitch of the 8-grid
-    // vertical center: glyph body spans -24..620 (center 298), baseline on a line
-    let baseline = ((H / 2.0 - 298.0 * s) / gp).round() * gp;
+    // center the ink band (0..ink_h) vertically, baseline on a grid line
+    let baseline = ((H / 2.0 - ink_h / 2.0 * s) / gp).round() * gp;
     let grid_dim = Color::rgb(0x24, 0x24, 0x24);
     let grid_maj = Color::rgb(0x40, 0x40, 0x40);
 
@@ -110,16 +114,41 @@ fn main() {
         gy += gp;
     }
 
-    // three n's, each centered in a Bold-width slot, origin snapped to the grid
-    let gw = n_bold.width * s;
-    let gap = (W - 3.0 * gw) / 4.0;
-    for (i, (t, _, _)) in weights.iter().enumerate() {
+    // three n's spread across the inner width, overlapping to zoom in, each
+    // origin snapped to the grid so on-8 points land on grid lines
+    let bw = n_bold.width * s;
+    let pitch = (inner - bw) / 2.0; // origin spacing (< bw, so they overlap)
+    for (i, (t, _, stem)) in weights.iter().enumerate() {
         let o = interp(&n_reg, &n_bold, *t);
-        let slot_l = gap + i as f64 * (gw + gap);
-        let x0 = ((slot_l + (gw - o.width * s) / 2.0) / gp).round() * gp;
+        let x0 = ((edge + i as f64 * pitch + (bw - o.width * s) / 2.0) / gp).round() * gp;
         draw_body(&mut sheet, &o, s, x0, baseline);
         draw_points(&mut sheet, &o, s, x0, baseline);
+
+        // stem dimension: left ink edge to left edge + stem, across mid x-height
+        let leftx = o.points.iter().fold(f64::MAX, |m, (px, _, _)| m.min(*px));
+        let dy = baseline + 300.0 * s;
+        sheet.dim_h(x0 + leftx * s, x0 + (leftx + *stem as f64) * s, dy, &stem.to_string(), green());
+        // apex coordinate: the top on-curve point of the arch
+        if let Some((px, py, _)) = o
+            .points
+            .iter()
+            .filter(|(_, _, r)| matches!(r, PtRole::Smooth))
+            .max_by(|a, b| a.1.total_cmp(&b.1))
+        {
+            sheet.label_padded(
+                &format!("({},{})", *px as i64, *py as i64),
+                x0 + px * s,
+                baseline + py * s + 26.0,
+                SMALL_TEXT,
+                gray(),
+                0,
+            );
+        }
     }
+
+    // shared vertical metrics, tagged once on the left
+    sheet.metric_tag("x-height 576", edge, baseline + 576.0 * s, true, -1);
+    sheet.metric_tag("baseline 0", edge, baseline, true, -1);
 
     let here = std::path::PathBuf::from(env!("CARGO_MANIFEST_DIR"));
     let post = here

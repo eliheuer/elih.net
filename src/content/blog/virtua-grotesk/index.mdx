@@ -456,7 +456,7 @@ by grid level: green on the 8-unit structure grid, red off 8 on the
 clean glyph with every point on the grid. The stem steps 96, 144,
 192.
 
-![Three large n outlines drawn with designbot on an 8-unit grid: the n at Regular, at the 1/2 interpolation between Regular and Bold, and at Bold, with all on-curve and off-curve points marked. Points are colored by grid level, green on the 8-unit structure grid and red off 8 on the 2-unit correction grid. Every point of the interpolated middle n lands on a grid intersection, and the stem steps 96, 144, 192, so the intermediate weight is a clean, grid-native glyph.](./fig-interp-outlines.png)
+![Three large lowercase n outlines set tightly on one continuous 8-unit grid: the n at Regular, at the 1/2 interpolation between Regular and Bold, and at Bold. All on-curve and off-curve points are marked and colored by grid level, green on the 8-unit structure grid and red off 8 on the 2-unit correction grid. Green stem dimensions read 96, 144, 192; gray coordinate labels give the arch apex at (328,592), (380,592), (432,592), the same y with the x interpolating; blue tags mark the x-height at 576 and the baseline at 0. Every interpolated point lands on the grid, so the intermediate weight is a clean, grid-native glyph.](./fig-interp-outlines.png)
 
 The reason is arithmetic. Interpolation is halving, and a power-of-two
 grid is closed under halving: the midpoint of two grid points is on
