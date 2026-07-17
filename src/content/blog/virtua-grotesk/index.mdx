@@ -281,10 +281,15 @@ from data that was grid-native: they train on found fonts snapped to a
 grid in preprocessing, a lossy scrape of a thousand disagreeing hands,
 and spend much of their capacity absorbing that heterogeneity. This
 project inverts the ratio. Design one corpus until it is nearly
-homogeneous, then ask how small the model can get. [Simon
-Cozens](https://simoncozens.github.io/state-of-ai-font-generation/), surveying
+homogeneous, then ask how small the model can get.
+
+[Simon Cozens](https://simoncozens.github.io/state-of-ai-font-generation/), surveying
 the field, is blunt: "vectorization of glyph images has been historically very
 bad," and his own model trained on the Google Fonts dataset "completely failed."
+Both failures are data problems, upstream of any model. Grid-native
+sources remove the vectorization step entirely; where a raster really
+is the starting point, section 08's tracer vectorizes straight onto
+the grid.
 
 ### 06. A Small Model Learns to Draw
 
