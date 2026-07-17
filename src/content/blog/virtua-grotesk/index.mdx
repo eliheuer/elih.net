@@ -432,17 +432,13 @@ beside it the Bold the model drew from it.
 
 ![The letter n twice on the design grid, drawn with designbot in the Runebender point language: the hand-drawn Regular in green, and beside it the Bold in red, drawn by Virtua-12M-v0.1 from the Regular input.](./fig-model-bolden-n.png)
 
-The honest scoreboard: ten held-out glyphs, one font family, one
-training run each, so the error bars cover sampling variance, not
-retraining variance. A five-fold split is queued for v0.9. Section 08
-reports what the same weights do off-family, including a negative
-result. The ceiling is draft quality, and the division of labor is
-deliberate: the model proposes on the structure grid, a person
-finishes on the correction grid. Whether this still wins three orders
-of magnitude up, against a giant model trained on renders of every
-font in existence, is what the OFL-corpus scale-ups are for. Even
-there, the grid keeps its jobs: the encoding, the eval harness, and
-the labeled corrections survive any size of model.
+This is a small test: ten glyphs, one font, one training run each.
+The numbers will move as the work grows. The output is a draft, not a
+finished Bold; a person still corrects it on the 2-unit grid. The
+open question is whether the approach holds at a much larger scale,
+and that is what the next runs are for. Section 08 reports what the
+same model does on fonts it was not tuned for, including a result
+that did not work.
 
 ### 08. The Designspace Is a Data Factory
 
