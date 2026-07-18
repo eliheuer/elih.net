@@ -25,7 +25,7 @@
 
 use designbot::prelude::*;
 use designbot_render::Renderer;
-use kurbo::{Affine, BezPath};
+use kurbo::{Affine, BezPath, Point as KPoint, Shape};
 
 // --- frame ------------------------------------------------------------------------
 
@@ -507,7 +507,20 @@ pub fn draw_body_strong(sheet: &mut Sheet, o: &Outline, s: f64, x0: f64, baselin
 /// Handles + point markers colored by GRID LEVEL: green on the 8-unit
 /// machine grid, red off 8 (the human's 2-unit optical corrections).
 pub fn draw_points(sheet: &mut Sheet, o: &Outline, s: f64, x0: f64, baseline: f64) {
-    sheet.ctx.no_fill().stroke(handle_color()).stroke_width(PEN_LIGHT);
+    draw_points_handle_stroke(sheet, o, s, x0, baseline, handle_color());
+}
+
+/// draw_points with a chosen handle-line color (e.g. purple to match
+/// handle-length labels).
+pub fn draw_points_handle_stroke(
+    sheet: &mut Sheet,
+    o: &Outline,
+    s: f64,
+    x0: f64,
+    baseline: f64,
+    stroke: Color,
+) {
+    sheet.ctx.no_fill().stroke(stroke).stroke_width(PEN_LIGHT);
     for ((ax, ay), (hx, hy)) in &o.handles {
         sheet.ctx.line(
             x0 + ax * s,
@@ -698,3 +711,393 @@ pub fn correction_callout(sheet: &mut Sheet, from: (f64, f64), text_at: (f64, f6
 //     reuse for animated variants (CRF 16, lanczos, BT.709).
 //   - export_social.py already numbers masters in post order and extracts
 //     alt text; square/vertical exports slot in beside them.
+
+// --- label placement engine --------------------------------------------------
+// Collision-aware label placement, shared by the dimension-sheet figures
+// (reference usage: src/bin/interpn.rs). Register fixed obstacles, ink
+// paths (canvas coordinates), and anchor points; then place labels.
+
+/// 96 -> "64+32": a value as its descending powers-of-two sum.
+pub fn p2sum(v: i64) -> String {
+    let mut parts = Vec::new();
+    let mut bit = 1i64 << 62;
+    while bit > 0 {
+        if v & bit != 0 {
+            parts.push(bit.to_string());
+        }
+        bit >>= 1;
+    }
+    parts.join("+")
+}
+
+/// "96 (64+32)"; pure powers stay bare ("128", not "128 (128)").
+pub fn fmt_val(v: i64) -> String {
+    if v.count_ones() <= 1 {
+        v.to_string()
+    } else {
+        format!("{v} ({})", p2sum(v))
+    }
+}
+
+/// Unit vector pointing away from the ink around a boundary point.
+/// Probes 16 directions at radius r; averages the ink-free ones.
+pub fn outward_dir(path: &BezPath, x: f64, y: f64, r: f64) -> (f64, f64) {
+    let (mut sx, mut sy) = (0.0f64, 0.0f64);
+    for k in 0..16 {
+        let th = k as f64 * std::f64::consts::TAU / 16.0;
+        let (dx, dy) = (th.cos(), th.sin());
+        if !path.contains(KPoint::new(x + dx * r, y + dy * r)) {
+            sx += dx;
+            sy += dy;
+        }
+    }
+    let n = (sx * sx + sy * sy).sqrt();
+    if n < 1e-6 { (0.0, -1.0) } else { (sx / n, sy / n) }
+}
+
+fn rot(d: (f64, f64), deg: f64) -> (f64, f64) {
+    let a = deg.to_radians();
+    (d.0 * a.cos() - d.1 * a.sin(), d.0 * a.sin() + d.1 * a.cos())
+}
+
+pub struct Labeler {
+    placed: Vec<(f64, f64, f64, f64)>,
+    ink: Vec<BezPath>,
+    anchors: Vec<(f64, f64)>,
+    markers: Vec<(f64, f64)>,
+    queued: Vec<(f64, f64, (f64, f64), String, Color, bool, usize)>,
+}
+
+impl Default for Labeler {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
+impl Labeler {
+    pub fn new() -> Self {
+        Labeler { placed: Vec::new(), ink: Vec::new(), anchors: Vec::new(), markers: Vec::new(), queued: Vec::new() }
+    }
+
+    fn text_w(txt: &str) -> f64 {
+        txt.len() as f64 * SMALL_TEXT * 0.62 + 18.0
+    }
+
+    /// Register a fixed rectangle labels must avoid.
+    pub fn obstacle(&mut self, x0: f64, y0: f64, x1: f64, y1: f64) {
+        self.placed.push((x0, y0, x1, y1));
+    }
+
+    /// Register already-drawn centered text as an obstacle.
+    pub fn obstacle_text(&mut self, cx: f64, y: f64, size: f64, txt: &str) {
+        let w = txt.len() as f64 * size * 0.62 + 18.0;
+        self.placed.push((cx - w / 2.0, y - 10.0, cx + w / 2.0, y + size + 12.0));
+    }
+
+    /// Register a glyph outline (canvas coordinates) labels must not cover.
+    pub fn ink(&mut self, path: BezPath) {
+        self.ink.push(path);
+    }
+
+    /// Register an anchor point (used for the rival-ambiguity cost and
+    /// as a marker no label may cover).
+    pub fn anchor(&mut self, x: f64, y: f64) {
+        self.anchors.push((x, y));
+        self.markers.push((x, y));
+    }
+
+    /// Register a drawn marker (e.g. an off-curve dot) no label may cover.
+    pub fn marker(&mut self, x: f64, y: f64) {
+        self.markers.push((x, y));
+    }
+
+    fn overlaps(&self, r: (f64, f64, f64, f64)) -> bool {
+        self.placed
+            .iter()
+            .any(|q| r.0 < q.2 && q.0 < r.2 && r.1 < q.3 && q.1 < r.3)
+    }
+
+    fn ink_hit(&self, r: (f64, f64, f64, f64)) -> bool {
+        let probes = [
+            KPoint::new(r.0, r.1),
+            KPoint::new(r.2, r.1),
+            KPoint::new(r.0, r.3),
+            KPoint::new(r.2, r.3),
+            KPoint::new((r.0 + r.2) / 2.0, (r.1 + r.3) / 2.0),
+        ];
+        self.ink.iter().any(|p| probes.iter().any(|pt| p.contains(*pt)))
+    }
+
+    /// Queue a label for simultaneous placement (see `place_all`).
+    /// `dir` is the preferred outward unit vector, `avoid_ink` forbids
+    /// positions over the registered outlines (use for coordinate labels;
+    /// handle/segment labels may sit on the glyph fill).
+    /// `owner` is the index of the ink path this label belongs to (order
+    /// of `ink()` calls); labels pay a heavy cost for candidates inside a
+    /// DIFFERENT glyph's bounding box, so they stay in their own territory.
+    pub fn queue(
+        &mut self,
+        px: f64,
+        py: f64,
+        dir: (f64, f64),
+        txt: String,
+        color: Color,
+        avoid_ink: bool,
+        owner: usize,
+    ) {
+        self.queued.push((px, py, dir, txt, color, avoid_ink, owner));
+    }
+
+    /// Place every queued label at once by simulated annealing over
+    /// discrete candidate positions (8 octants x 5 gaps per label), after
+    /// Christensen, Marks & Shieber, "An Empirical Study of Algorithms for
+    /// Point-Feature Label Placement" (ACM TOG 1995). The objective sums a
+    /// per-candidate preference cost (stay close, stay outward, stay
+    /// unambiguous) and a large penalty per overlapping label pair.
+    pub fn place_all(&mut self, sheet: &mut Sheet) {
+        let reqs = std::mem::take(&mut self.queued);
+        if reqs.is_empty() {
+            return;
+        }
+        struct Cand {
+            x: f64,
+            y: f64,
+            rect: (f64, f64, f64, f64),
+            cost: f64,
+        }
+        let bboxes: Vec<kurbo::Rect> = self.ink.iter().map(|p| p.bounding_box()).collect();
+        let mut cands: Vec<Vec<Cand>> = Vec::with_capacity(reqs.len());
+        for (px, py, dir, txt, _, avoid_ink, owner) in reqs.iter() {
+            let w = Self::text_w(txt);
+            // snap the outward direction to the nearest octant so the
+            // candidate fan is always the 8 clean cartographic positions
+            let base = (dir.1.atan2(dir.0) / std::f64::consts::FRAC_PI_4).round()
+                * std::f64::consts::FRAC_PI_4;
+            let mut list = Vec::new();
+            for k in 0..8i32 {
+                // angular octant distance from the outward direction
+                let ang_steps = k.min(8 - k) as f64;
+                let a = base + k as f64 * std::f64::consts::FRAC_PI_4;
+                let u = (a.cos(), a.sin());
+                for (gi, gap) in [12.0f64, 26.0].iter().enumerate() {
+                    // near or nothing, at a UNIFORM visual distance: offset
+                    // each axis by half-extent + gap, so on diagonals the box
+                    // corner hugs the point exactly like the axis placements
+                    let (hw, hh) = (w / 2.0, 18.0);
+                    let m = u.0.abs().max(u.1.abs());
+                    let ex = (u.0 / m).round();
+                    let ey = (u.1 / m).round();
+                    let cx = px + ex * (hw + gap);
+                    let cy = py + ey * (hh + gap) - 8.0;
+                    let r = (cx - w / 2.0, cy - 10.0, cx + w / 2.0, cy + 26.0);
+                    let dbg = std::env::var("DEBUG_LABELS").is_ok() && txt == "64,16" && gi < 2;
+                    if r.0 < 6.0 || r.2 > W - 6.0 || r.1 < 6.0 || r.3 > H - 6.0 {
+                        if dbg { eprintln!("  rej canvas k={k} gi={gi} c=({cx:.0},{cy:.0})"); }
+                        continue;
+                    }
+                    if self.overlaps(r) {
+                        if dbg { eprintln!("  rej fixed  k={k} gi={gi} c=({cx:.0},{cy:.0})"); }
+                        continue; // fixed obstacles are hard constraints
+                    }
+                    if *avoid_ink && self.ink_hit(r) {
+                        if dbg { eprintln!("  rej ink    k={k} gi={gi} c=({cx:.0},{cy:.0})"); }
+                        continue;
+                    }
+                    // hard rule: a label box never covers any drawn marker
+                    // (its own point is exempt; the clearance geometry
+                    // already keeps the box off it)
+                    if self.markers.iter().any(|(mx, my)| {
+                        ((mx - px).abs() > 0.1 || (my - py).abs() > 0.1)
+                            && *mx > r.0 - 10.0 && *mx < r.2 + 10.0
+                            && *my > r.1 - 10.0 && *my < r.3 + 10.0
+                    }) {
+                        if std::env::var("DEBUG_LABELS").is_ok() && txt == "64,16" && gi < 2 {
+                            eprintln!("  rej marker k={k} gi={gi} c=({cx:.0},{cy:.0})");
+                        }
+                        continue;
+                    }
+                    let d_own = ((cx - px).powi(2) + (cy + 8.0 - py).powi(2)).sqrt();
+                    let mut cost = ang_steps * 18.0 + gi as f64 * 20.0 + d_own * 0.02;
+                    // territory: penalize only candidates sitting in ANOTHER
+                    // glyph's column while outside their own; the open canvas
+                    // margins outside every column are free ground
+                    let in_own_col = bboxes
+                        .get(*owner)
+                        .is_none_or(|ob| cx > ob.x0 - 44.0 && cx < ob.x1 + 44.0);
+                    for (bi, bb) in bboxes.iter().enumerate() {
+                        if bi == *owner {
+                            continue;
+                        }
+                        let in_other_col = cx > bb.x0 - 44.0 && cx < bb.x1 + 44.0;
+                        if in_other_col && !in_own_col {
+                            cost += 400.0;
+                        }
+                        if cx > bb.x0 && cx < bb.x1
+                            && cy + 8.0 > bb.y0 && cy + 8.0 < bb.y1
+                        {
+                            cost += 500.0;
+                        }
+                    }
+                    for (qx, qy) in self.anchors.iter() {
+                        if (qx - px).abs() < 0.1 && (qy - py).abs() < 0.1 {
+                            continue;
+                        }
+                        let d_riv = ((cx - qx).powi(2) + (cy + 8.0 - qy).powi(2)).sqrt();
+                        if d_riv < d_own {
+                            cost += 140.0;
+                        }
+                    }
+                    list.push(Cand { x: cx, y: cy, rect: r, cost });
+                }
+            }
+            if std::env::var("DEBUG_LABELS").is_ok() && txt == "64,16" {
+                eprintln!("cands for 64,16 at ({px:.0},{py:.0}): {}", list.len());
+                for c in list.iter().take(6) {
+                    eprintln!("  ({:>5.0},{:>5.0}) cost {:>6.1}", c.x, c.y, c.cost);
+                }
+            }
+            {
+            }
+            cands.push(list);
+        }
+
+        // initial assignment: cheapest candidate each
+        let n = reqs.len();
+        let mut pick: Vec<Option<usize>> = cands
+            .iter()
+            .map(|l| {
+                (0..l.len()).min_by(|a, b| l[*a].cost.total_cmp(&l[*b].cost))
+            })
+            .collect();
+        let isect = |a: (f64, f64, f64, f64), b: (f64, f64, f64, f64)| {
+            a.0 < b.2 && b.0 < a.2 && a.1 < b.3 && b.1 < a.3
+        };
+        const W_OVL: f64 = 3000.0;
+        let pair_energy = |i: usize, ci: usize, pick: &Vec<Option<usize>>| {
+            let mut e = 0.0;
+            let ri = cands[i][ci].rect;
+            for (j, pj) in pick.iter().enumerate() {
+                if j == i {
+                    continue;
+                }
+                if let Some(cj) = pj {
+                    if isect(ri, cands[j][*cj].rect) {
+                        e += W_OVL;
+                    }
+                }
+            }
+            e
+        };
+
+        // simulated annealing, deterministic LCG
+        let mut rng: u64 = 0x9E3779B97F4A7C15;
+        let mut next = |m: usize| -> usize {
+            rng = rng.wrapping_mul(6364136223846793005).wrapping_add(1442695040888963407);
+            ((rng >> 33) as usize) % m.max(1)
+        };
+        let mut temp = 2600.0f64; // hot enough to hop over one overlap
+        for _sweep in 0..420 {
+            for _ in 0..n {
+                let i = next(n);
+                if cands[i].is_empty() {
+                    continue;
+                }
+                let cur = match pick[i] {
+                    Some(c) => c,
+                    None => continue,
+                };
+                let alt = next(cands[i].len());
+                if alt == cur {
+                    continue;
+                }
+                let e_cur = cands[i][cur].cost + pair_energy(i, cur, &pick);
+                let e_alt = cands[i][alt].cost + pair_energy(i, alt, &pick);
+                let de = e_alt - e_cur;
+                let accept = de < 0.0 || {
+                    let p = (-de / temp).exp();
+                    (next(1_000_000) as f64) / 1_000_000.0 < p
+                };
+                if accept {
+                    pick[i] = Some(alt);
+                }
+            }
+            temp *= 0.97;
+        }
+
+        // repair pass: keep labels greedily; a label overlapping the kept
+        // set retries every candidate before it is dropped
+        let mut kept: Vec<(usize, usize)> = Vec::new();
+        let mut dropped = 0usize;
+        let mut order: Vec<usize> = (0..n).collect();
+        order.sort_by(|a, b| {
+            let ca = pick[*a].map(|c| cands[*a][c].cost).unwrap_or(f64::MAX);
+            let cb = pick[*b].map(|c| cands[*b][c].cost).unwrap_or(f64::MAX);
+            ca.total_cmp(&cb)
+        });
+        for i in order {
+            let free_vs_kept = |ci: usize, kept: &Vec<(usize, usize)>| {
+                kept.iter().all(|(j, cj)| !isect(cands[i][ci].rect, cands[*j][*cj].rect))
+            };
+            let chosen = match pick[i] {
+                Some(ci) if free_vs_kept(ci, &kept) => Some(ci),
+                _ => {
+                    let mut order_c: Vec<usize> = (0..cands[i].len()).collect();
+                    order_c.sort_by(|a, b| cands[i][*a].cost.total_cmp(&cands[i][*b].cost));
+                    order_c.into_iter().find(|ci| free_vs_kept(*ci, &kept))
+                }
+            };
+            match chosen {
+                Some(ci) => kept.push((i, ci)),
+                None => dropped += 1,
+            }
+        }
+        for (i, ci) in kept {
+            let c = &cands[i][ci];
+            sheet.label_padded(&reqs[i].3, c.x, c.y, SMALL_TEXT, reqs[i].4, 0);
+            self.placed.push(c.rect);
+        }
+        if dropped > 0 {
+            eprintln!("labeler: {dropped} label(s) dropped (no non-overlapping spot)");
+        }
+        if std::env::var("DEBUG_LABELS").is_ok() {
+            for i in 0..n {
+                let chosen = pick[i].map(|c| cands[i][c].cost);
+                let best = cands[i]
+                    .iter()
+                    .map(|c| c.cost)
+                    .fold(f64::MAX, f64::min);
+                if let Some(ch) = chosen {
+                    if ch > best + 60.0 {
+                        eprintln!(
+                            "label {:>14} at ({:>6.0},{:>6.0}): chosen cost {:>6.1}, best static {:>6.1}, cands {}",
+                            reqs[i].3, reqs[i].0, reqs[i].1, ch, best, cands[i].len()
+                        );
+                    }
+                }
+            }
+        }
+    }
+}
+
+/// Arrowed dimension: line stops short of what it measures, arrowheads
+/// point outward, the value label registers as a Labeler obstacle.
+pub fn dim_arrow(
+    sheet: &mut Sheet,
+    lab: &mut Labeler,
+    x0: f64,
+    x1: f64,
+    y: f64,
+    txt: &str,
+    color: Color,
+) {
+    let inset = 6.0;
+    let (a, b) = (x0 + inset, x1 - inset);
+    sheet.ctx.no_fill().stroke(color).stroke_width(PEN);
+    sheet.ctx.line(a, y, b, y);
+    for (tip, dir) in [(a, 1.0), (b, -1.0)] {
+        sheet.ctx.line(tip, y, tip + dir * 14.0, y + 7.0);
+        sheet.ctx.line(tip, y, tip + dir * 14.0, y - 7.0);
+    }
+    sheet.label_padded(txt, (x0 + x1) / 2.0, y + 16.0, SMALL_TEXT, color, 0);
+    lab.obstacle_text((x0 + x1) / 2.0, y + 16.0, SMALL_TEXT, txt);
+}

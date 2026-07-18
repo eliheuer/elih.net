@@ -17,6 +17,7 @@ use virtua_grotesk_figures::*;
 fn snap2(v: f64) -> f64 {
     (v / 2.0).round() * 2.0
 }
+
 fn lp(a: Point, b: Point, t: f64) -> Point {
     Point::new(snap2(a.x + (b.x - a.x) * t), snap2(a.y + (b.y - a.y) * t))
 }
@@ -86,32 +87,31 @@ fn main() {
     let cols = weights.len() as f64;
 
     let _ = cols;
-    // ONE 8-unit grid; three n's sit on it, sized to fill the height, spaced
-    // by a constant ink-gap so the tracking is even.
-    let edge = 72.0;
+    // ONE 8-unit grid; three n's sit on it, spaced by a constant ink-gap.
+    // The grid pitch divides both canvas dimensions (gcd(2520,1320) = 120),
+    // so grid lines land exactly on all four edges.
+    let gp = 15.0; // px per 8 units
+    let s = gp / 8.0; // 1.875
     let ink_h = 584.0; // baseline..x-height+overshoot
-    let s = (H - 2.0 * edge) / ink_h; // fill the height
-    let gp = 8.0 * s;
-    let baseline = ((H / 2.0 - ink_h / 2.0 * s) / gp).round() * gp;
-    let grid_dim = Color::rgb(0x24, 0x24, 0x24);
-    let grid_maj = Color::rgb(0x40, 0x40, 0x40);
+    let baseline = ((H - ink_h * s) / 2.0 / gp).round() * gp - gp;
+    let edge = 72.0; // horizontal inset for the outlines
+    let grid = Color::rgb(0x2c, 0x2c, 0x2c);
 
-    // one continuous grid, phase-aligned to x = 0 and to the baseline
-    let mut gx = 0.0;
-    while gx <= W + 0.1 {
-        let maj = ((gx / gp).round() as i64) % 8 == 0;
-        sheet.ctx.no_fill().stroke(if maj { grid_maj } else { grid_dim }).stroke_width(PEN_LIGHT);
+    // uniform 8-unit grid, phase 0 so lines coincide with every edge;
+    // the edge lines themselves are skipped (they'd double the image border)
+    sheet.ctx.no_fill().stroke(grid).stroke_width(PEN_LIGHT);
+    let mut gx = gp;
+    while gx <= W - gp + 0.1 {
         sheet.ctx.line(gx, 0.0, gx, H);
         gx += gp;
     }
-    let mut gy = baseline.rem_euclid(gp);
-    while gy <= H + 0.1 {
-        let maj = (((gy - baseline) / gp).round() as i64).rem_euclid(8) == 0;
-        sheet.ctx.no_fill().stroke(if maj { grid_maj } else { grid_dim }).stroke_width(PEN_LIGHT);
+    let mut gy = gp;
+    while gy <= H - gp + 0.1 {
         sheet.ctx.line(0.0, gy, W, gy);
         gy += gp;
     }
 
+    let _ = edge;
     // precompute the three outlines and their ink extents
     let outs: Vec<Outline> = weights.iter().map(|(t, _, _)| interp(&n_reg, &n_bold, *t)).collect();
     let ink: Vec<(f64, f64)> = outs
@@ -122,42 +122,120 @@ fn main() {
             (l, r)
         })
         .collect();
-    let sum_ink: f64 = ink.iter().map(|(l, r)| r - l).sum();
-    // even gap (pixels) so the three ink boxes fill the inner width
-    let gap = ((W - 2.0 * edge) - sum_ink * s) / 2.0;
 
-    // place left to right with a constant ink gap; origins snapped to the grid
-    let mut prev_right = edge; // pixel x where the next ink block starts
+    // 8 units of pure grid on every side: outer ink pinned at 120px exactly,
+    // the middle n centered between its neighbors, origins on grid lines
+    let inset = 8.0 * gp;
+    let x0_l = ((inset - ink[0].0 * s) / gp).round() * gp;
+    let x0_r = (((W - inset) - ink[2].1 * s) / gp).round() * gp;
+    let mid_ctr = ((x0_l + ink[0].1 * s) + (x0_r + ink[2].0 * s)) / 2.0;
+    let x0_m = ((mid_ctr - (ink[1].0 + ink[1].1) / 2.0 * s) / gp).round() * gp;
+    let origins = [x0_l, x0_m, x0_r];
+
+    let mut lab = Labeler::new();
+
+    // one hue per weight so the overlapping outlines stay distinct
+    let hues = [
+        Color::rgb(0xff, 0x45, 0x35), // Regular: red
+        Color::rgb(0xff, 0x98, 0x22), // 1/2: orange
+        Color::rgb(0xff, 0xd2, 0x3c), // Bold: yellow
+    ];
     for (i, o) in outs.iter().enumerate() {
         let (il, ir) = ink[i];
-        let x0 = ((prev_right - il * s) / gp).round() * gp;
-        prev_right = x0 + ir * s + gap;
+        let x0 = origins[i];
 
-        // stroke-only outline so overlaps read as clean crossings, not muddy fill
         let place = Affine::new([s, 0.0, 0.0, s, x0, baseline]);
-        sheet.ctx.no_fill().stroke(Color::rgb(0xcc, 0xcc, 0xcc)).stroke_width(PEN);
+        let canvas_path = place * o.path.clone();
+        lab.ink(canvas_path.clone());
+        let (hr, hg, hb) = (hues[i].r, hues[i].g, hues[i].b);
+        sheet.ctx
+            .fill(Color::rgba(hr, hg, hb, 34))
+            .stroke(hues[i])
+            .stroke_width(PEN);
         sheet.ctx.draw_path(place * o.path.clone());
-        draw_points(&mut sheet, o, s, x0, baseline);
+        draw_points_handle_stroke(&mut sheet, o, s, x0, baseline, purple());
 
-        let stem = weights[i].2;
-        let dy = baseline + 300.0 * s;
-        sheet.dim_h(x0 + il * s, x0 + (il + stem as f64) * s, dy, &stem.to_string(), green());
-        if let Some((px, py, _)) = o
-            .points
+        let stem = weights[i].2 as f64;
+        let ink_w = ir - il;
+        // dimensions in the glyph's own hue so spans read as belonging to it
+        dim_arrow(&mut sheet, &mut lab, x0 + il * s, x0 + (il + stem) * s,
+                  baseline + 200.0 * s, &fmt_val(stem as i64), hues[i]);
+        let counter = (ink_w - 2.0 * stem) as i64;
+        dim_arrow(&mut sheet, &mut lab, x0 + (il + stem) * s, x0 + (ir - stem) * s,
+                  baseline + 260.0 * s, &fmt_val(counter), hues[i]);
+
+        // handle lengths (purple, like the system sheets): the four longest
+        let mut hl: Vec<(f64, f64, f64, f64, f64)> = o
+            .handles
             .iter()
-            .filter(|(_, _, r)| matches!(r, PtRole::Smooth))
-            .max_by(|a, b| a.1.total_cmp(&b.1))
-        {
-            sheet.label_padded(
-                &format!("({},{})", *px as i64, *py as i64),
-                x0 + px * s,
-                baseline + py * s + 26.0,
-                SMALL_TEXT,
-                gray(),
-                0,
-            );
+            .map(|((ax, ay), (hx, hy))| {
+                let len = ((hx - ax).powi(2) + (hy - ay).powi(2)).sqrt();
+                (len, *ax, *ay, *hx, *hy)
+            })
+            .collect();
+        hl.sort_by(|a, b| b.0.total_cmp(&a.0));
+        let glyph_ctr = (il + ir) / 2.0;
+        for (len, ax, ay, hx, hy) in hl.into_iter().take(2) {
+            lab.marker(x0 + hx * s, baseline + hy * s);
+            let (mx, my) = ((ax + hx) / 2.0, (ay + hy) / 2.0);
+            let (cmx, cmy) = (x0 + mx * s, baseline + my * s);
+            let dir = outward_dir(&canvas_path, cmx, cmy, 26.0);
+            lab.anchor(cmx, cmy);
+            lab.queue(cmx, cmy, dir, fmt_val(len.round() as i64), purple(), false, i);
         }
+
+        // longest axis-aligned line segments, length + sum in the glyph hue
+        let mut segs: Vec<(f64, f64, f64, f64, f64)> = Vec::new();
+        let mut cur = (0.0f64, 0.0f64);
+        let mut start = cur;
+        for el in o.path.elements() {
+            match el {
+                PathEl::MoveTo(pt) => { cur = (pt.x, pt.y); start = cur; }
+                PathEl::LineTo(pt) => {
+                    let nxt = (pt.x, pt.y);
+                    if (nxt.0 - cur.0).abs() < 0.01 || (nxt.1 - cur.1).abs() < 0.01 {
+                        let len = (nxt.0 - cur.0).abs() + (nxt.1 - cur.1).abs();
+                        segs.push((len, cur.0, cur.1, nxt.0, nxt.1));
+                    }
+                    cur = nxt;
+                }
+                PathEl::CurveTo(_, _, pt) => cur = (pt.x, pt.y),
+                PathEl::QuadTo(_, pt) => cur = (pt.x, pt.y),
+                PathEl::ClosePath => cur = start,
+            }
+        }
+        // vertical segments only: the horizontal ones collide with the dims
+        segs.retain(|(_, ax, _, bx, _)| (bx - ax).abs() < 0.01);
+        segs.sort_by(|a, b| b.0.total_cmp(&a.0));
+        for (len, ax, ay, bx, by) in segs.into_iter().take(if i == 0 { 1 } else { 0 }) {
+            let (mx, my) = ((ax + bx) / 2.0, (ay + by) / 2.0);
+            let dir = if mx < glyph_ctr { (1.0, 0.0) } else { (-1.0, 0.0) };
+            let (cmx, cmy) = (x0 + mx * s, baseline + my * s);
+            lab.queue(cmx, cmy, dir, fmt_val(len.round() as i64), hues[i], false, i);
+        }
+
+        // queue a coordinate for EVERY on-curve point; placed after the
+        // loop by the point-labeling pass
+        // every on-curve point is queued; the near-or-nothing placer
+        // labels the uncrowded ones and skips the crowded ones
+        for (px, py, _) in &o.points {
+            let cpt = (x0 + px * s, baseline + py * s);
+            lab.anchor(cpt.0, cpt.1);
+            let dir = outward_dir(&canvas_path, cpt.0, cpt.1, 26.0);
+            lab.queue(cpt.0, cpt.1, dir, format!("{},{}", *px as i64, *py as i64), gray(), true, i);
+        }
+
+
+        // weight label inside the counter, above the baseline
+        let wl_x = x0 + (il + ink_w / 2.0) * s;
+        let wl_y = baseline + 56.0 * s;
+        sheet.label_padded(weights[i].1, wl_x, wl_y, LABEL_TEXT, dim_color(), 0);
+        lab.obstacle_text(wl_x, wl_y, LABEL_TEXT, weights[i].1);
+
     }
+
+    // all queued labels placed simultaneously (annealing, lib.rs Labeler)
+    lab.place_all(&mut sheet);
 
     let here = std::path::PathBuf::from(env!("CARGO_MANIFEST_DIR"));
     let post = here
