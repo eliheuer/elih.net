@@ -27,22 +27,23 @@ pub const FAVORED: [f64; 7] = [64.0, 96.0, 128.0, 160.0, 192.0, 224.0, 256.0];
 
 /// Output paths for a figure binary.
 ///
-/// Renders go to the ignored build directory by default. Passing `--publish`
-/// is the only way a generator may overwrite an asset used by the site.
+/// Renders update the working-tree blog asset by default so Astro can show
+/// them in context immediately. Git does not store those revisions until they
+/// are explicitly committed. Pass `--scratch` for an ignored standalone render.
 pub struct OutputPaths {
     repo_root: PathBuf,
     preview_root: PathBuf,
-    publish: bool,
+    scratch: bool,
 }
 
 impl OutputPaths {
     pub fn from_args() -> Self {
-        let mut publish = false;
+        let mut scratch = false;
         for arg in std::env::args().skip(1) {
             match arg.as_str() {
-                "--preview" => publish = false,
-                "--publish" => publish = true,
-                _ => panic!("unknown argument {arg:?}; use --preview or --publish"),
+                "--site" | "--publish" => scratch = false,
+                "--scratch" | "--preview" => scratch = true,
+                _ => panic!("unknown argument {arg:?}; use --site or --scratch"),
             }
         }
 
@@ -55,22 +56,22 @@ impl OutputPaths {
         let preview_root = manifest.join("build/preview");
         println!(
             "output mode: {}",
-            if publish {
-                "PUBLISH (tracked site assets)"
+            if scratch {
+                "scratch preview (ignored build directory)"
             } else {
-                "preview (ignored build directory)"
+                "site preview (working-tree asset; not committed automatically)"
             }
         );
 
         Self {
             repo_root,
             preview_root,
-            publish,
+            scratch,
         }
     }
 
     pub fn blog(&self, filename: &str) -> PathBuf {
-        if self.publish {
+        if !self.scratch {
             self.repo_root
                 .join("src/content/blog/virtua-grotesk")
                 .join(filename)
@@ -80,7 +81,7 @@ impl OutputPaths {
     }
 
     pub fn og(&self, filename: &str) -> PathBuf {
-        if self.publish {
+        if !self.scratch {
             self.repo_root.join("public/og").join(filename)
         } else {
             self.preview_root.join("og").join(filename)

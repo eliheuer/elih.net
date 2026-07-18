@@ -3,8 +3,9 @@
 DesignBot sources for the “Virtua Grotesk: Powers-of-Two Design Grids for
 Neural Networks” post. The renderer reads the font sources from the sibling
 checkout at `~/GH/repos/virtua-grotesk`. Renders are previews by default and
-stay under the ignored `build/preview/` directory. Publishing to the blogpost
-directory is always explicit.
+replace the working-tree PNG used by the blogpost, so Astro shows every change
+in context immediately. Git does not store a rendered revision unless it is
+explicitly committed.
 
 ## Where to edit
 
@@ -22,10 +23,10 @@ The system has six deliberately separate layers:
    dimensions, markers, labels, and collision-aware placement live here.
 4. `src/bin/*.rs` — one binary per figure group. These files contain content,
    geometry, and layout decisions; they should not contain raw RGB values.
-5. `build/preview/` — disposable renders and comparison images. This directory
-   is ignored by Git.
-6. `src/content/blog/virtua-grotesk/*.png` — approved published outputs. Do not
-   edit these by hand; edit the generator and publish one chosen render.
+5. `src/content/blog/virtua-grotesk/*.png` — the live site-preview outputs.
+   These may stay modified throughout a design pass without being committed.
+6. `build/preview/` — optional isolated scratch renders. This directory is
+   ignored by Git.
 
 To change a hue everywhere, edit its base swatch in `style::color`. To change
 which swatch a drawing job uses, edit the corresponding function in
@@ -42,13 +43,26 @@ From `scripts/virtua-grotesk`:
 
 ```sh
 cargo check --bins
-cargo run --release --bin interpn                # ignored preview
-cargo run --release --bin interpn -- --publish   # replace published PNG
+cargo run --release --bin interpn               # update the PNG in the post
+cargo run --release --bin interpn -- --scratch  # ignored standalone render
 ```
 
-Use the default preview command while editing. Inspect the file printed by the
-renderer under `build/preview/blog/`, and use `--publish` only after approving
-it. This prevents exploratory PNG revisions from entering Git history.
+Run the site alongside the generator:
+
+```sh
+pnpm dev
+# open http://localhost:4321/blog/virtua-grotesk/
+```
+
+The default generator command updates the image already referenced by the
+post, and Astro refreshes it in place. Leave these PNGs uncommitted while
+iterating. Commit the generator freely, then commit each approved PNG once at
+the end of the design pass. Use `--scratch` only when you want a render that
+does not appear in the post.
+
+If intermediate checkpoints are valuable, keep them as local commits and
+squash them before pushing. This gives us recovery without making history
+rewrites part of the normal blog workflow.
 
 Before committing a large batch of published assets, audit repository growth
 from the repository root:
