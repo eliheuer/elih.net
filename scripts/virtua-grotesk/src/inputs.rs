@@ -21,8 +21,20 @@ pub fn geist_mono() -> PathBuf {
     user_root().join("GH/repos/google-fonts/ofl/geistmono/GeistMono[wght].ttf")
 }
 
+pub fn virtua_repo() -> PathBuf {
+    user_root().join("GH/repos/virtua-grotesk")
+}
+
 pub fn virtua_sources() -> PathBuf {
-    user_root().join("GH/repos/virtua-grotesk/sources")
+    virtua_repo().join("sources")
+}
+
+pub fn virtua_designspace() -> PathBuf {
+    virtua_sources().join("VirtuaGrotesk.designspace")
+}
+
+pub fn virtua_regular_font() -> PathBuf {
+    virtua_repo().join("fonts/ttf/VirtuaGrotesk-Regular.ttf")
 }
 
 pub fn font_garden() -> PathBuf {

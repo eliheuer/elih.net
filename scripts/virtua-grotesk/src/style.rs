@@ -1,7 +1,8 @@
 //! Editable visual system for all Virtua Grotesk DesignBot figures.
 //!
 //! Work from top to bottom:
-//! 1. `color` contains context-free swatches.
+//! 1. `color` contains context-free illustration swatches; `og_color` is an
+//!    independent context-free palette reserved for OG/share-card images.
 //! 2. `line` and `type_size` contain context-free numeric scales.
 //! 3. `role` maps those primitives to jobs in the figures.
 //!
@@ -145,11 +146,85 @@ pub mod color {
 
 pub use color::*;
 
+// --- OG / share-card primitive color swatches -------------------------------
+// Independent from `color` so art direction here cannot silently change the
+// inline illustrations in the post.
+
+pub mod og_color {
+    use super::Color;
+
+    pub fn gray_950() -> Color {
+        Color::rgb(0x10, 0x10, 0x10)
+    }
+    pub fn gray_350() -> Color {
+        Color::rgb(0x8a, 0x8a, 0x8a)
+    }
+    pub fn gray_200() -> Color {
+        Color::rgb(0xbe, 0xbe, 0xbe)
+    }
+    pub fn gray_850() -> Color {
+        Color::rgb(0x28, 0x28, 0x28)
+    }
+    pub fn gray_625() -> Color {
+        Color::rgb(0x42, 0x42, 0x42)
+    }
+    pub fn green() -> Color {
+        Color::rgb(0x15, 0xc4, 0x74)
+    }
+    pub fn red() -> Color {
+        Color::rgb(0xff, 0x45, 0x35)
+    }
+    pub fn blue() -> Color {
+        Color::rgb(0x4a, 0x78, 0xff)
+    }
+    pub fn orange_red() -> Color {
+        Color::rgb(0xff, 0x6f, 0x1f)
+    }
+    pub fn orange_yellow() -> Color {
+        Color::rgb(0xff, 0xad, 0x2e)
+    }
+}
+
 // --- semantic mappings -------------------------------------------------------
 // These functions contain no RGB values. They only assign base swatches to
 // drawing jobs, so palette edits and role edits remain separate decisions.
 
 pub mod role {
+    pub mod og {
+        use super::super::{og_color, Color};
+
+        pub fn background() -> Color {
+            og_color::gray_950()
+        }
+        pub fn title() -> Color {
+            og_color::gray_200()
+        }
+        pub fn dimension_line() -> Color {
+            og_color::gray_350()
+        }
+        pub fn grid_minor() -> Color {
+            og_color::gray_850()
+        }
+        pub fn grid_major() -> Color {
+            og_color::gray_625()
+        }
+        pub fn structure_point() -> Color {
+            og_color::green()
+        }
+        pub fn correction_point() -> Color {
+            og_color::red()
+        }
+        pub fn construction() -> Color {
+            og_color::blue()
+        }
+        pub fn gradient_start() -> Color {
+            og_color::orange_red()
+        }
+        pub fn gradient_end() -> Color {
+            og_color::orange_yellow()
+        }
+    }
+
     pub mod canvas {
         use super::super::{color, Color};
 

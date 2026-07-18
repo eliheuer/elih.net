@@ -296,6 +296,20 @@ impl Sheet<'_> {
 
     /// Label over a background patch so it stays legible on the grid.
     pub fn label_padded(&mut self, txt: &str, x: f64, y: f64, size: f64, color: Color, align: i8) {
+        self.label_padded_on(txt, x, y, size, color, align, role::canvas::background());
+    }
+
+    /// Padded label with an explicit knockout color for figure-specific palettes.
+    pub fn label_padded_on(
+        &mut self,
+        txt: &str,
+        x: f64,
+        y: f64,
+        size: f64,
+        color: Color,
+        align: i8,
+        background: Color,
+    ) {
         let w = self.mono_width(txt, size);
         let pad = 8.0;
         let x0 = match align {
@@ -303,7 +317,7 @@ impl Sheet<'_> {
             0 => x - w / 2.0,
             _ => x - w,
         };
-        self.ctx.fill(role::canvas::background()).no_stroke();
+        self.ctx.fill(background).no_stroke();
         self.ctx
             .rect(x0 - pad, y - 0.28 * size, w + 2.0 * pad, 1.3 * size);
         self.label(txt, x0, y, size, color, -1);
@@ -466,29 +480,57 @@ pub fn advance_row(
     glyphs: &[(f64, f64)], // (origin_ux, advance)
     inks: &[(f64, f64)],   // (ink_x0, ink_x1) glyph-local
 ) {
+    advance_row_colored(
+        sheet,
+        f,
+        y,
+        glyphs,
+        inks,
+        gray(),
+        red(),
+        green(),
+        red(),
+        role::canvas::background(),
+    );
+}
+
+/// Advance-width dimension zone with explicit colors for figure palettes.
+pub fn advance_row_colored(
+    sheet: &mut Sheet,
+    f: &Frame,
+    y: f64,
+    glyphs: &[(f64, f64)],
+    inks: &[(f64, f64)],
+    line_color: Color,
+    hatch_color: Color,
+    value_color: Color,
+    bearing_color: Color,
+    background: Color,
+) {
     for ((origin, adv), (ink0, ink1)) in glyphs.iter().zip(inks) {
         let (bx0, bx1) = (f.x(*origin), f.x(origin + adv));
         let (ix0, ix1) = (f.x(*ink0 + origin), f.x(*ink1 + origin));
-        sheet.ctx.no_fill().stroke(gray()).stroke_width(PEN);
+        sheet.ctx.no_fill().stroke(line_color).stroke_width(PEN);
         sheet.ctx.line(bx0, y, bx1, y);
         sheet.ctx.line(bx0, y - 20.0, bx0, y + 20.0);
         sheet.ctx.line(bx1, y - 20.0, bx1, y + 20.0);
-        sheet.hatch(bx0, y - 14.0, ix0, y + 14.0, red());
-        sheet.hatch(ix1, y - 14.0, bx1, y + 14.0, red());
-        sheet.label_padded(
+        sheet.hatch(bx0, y - 14.0, ix0, y + 14.0, hatch_color);
+        sheet.hatch(ix1, y - 14.0, bx1, y + 14.0, hatch_color);
+        sheet.label_padded_on(
             &format!("{}", (ink1 - ink0).round()),
             (ix0 + ix1) / 2.0,
             y - 10.0,
             DIM_TEXT,
-            green(),
+            value_color,
             0,
+            background,
         );
         sheet.label(
             &format!("{}", ink0.round()),
             ix0 + 10.0,
             y + 26.0,
             LEGEND_TEXT,
-            red(),
+            bearing_color,
             -1,
         );
         sheet.label(
@@ -496,7 +538,7 @@ pub fn advance_row(
             ix1 - 10.0,
             y + 26.0,
             LEGEND_TEXT,
-            red(),
+            bearing_color,
             1,
         );
     }
@@ -569,6 +611,31 @@ pub fn draw_points_colored(
     on8_col: Color,
     off8_col: Color,
 ) {
+    draw_points_colored_on(
+        sheet,
+        o,
+        s,
+        x0,
+        baseline,
+        stroke,
+        on8_col,
+        off8_col,
+        role::canvas::background(),
+    );
+}
+
+/// Point language with an explicit knockout color for figure palettes.
+pub fn draw_points_colored_on(
+    sheet: &mut Sheet,
+    o: &Outline,
+    s: f64,
+    x0: f64,
+    baseline: f64,
+    stroke: Color,
+    on8_col: Color,
+    off8_col: Color,
+    background: Color,
+) {
     sheet.ctx.no_fill().stroke(stroke).stroke_width(PEN_LIGHT);
     for ((ax, ay), (hx, hy)) in &o.handles {
         sheet.ctx.line(
@@ -580,7 +647,7 @@ pub fn draw_points_colored(
     }
     for (px, py, role) in &o.points {
         let (color, fill) = if on8(*px, *py) {
-            (on8_col, role::canvas::background())
+            (on8_col, background)
         } else {
             (off8_col, off8_col) // corrections draw solid
         };
@@ -620,7 +687,14 @@ fn marker(sheet: &mut Sheet, cx: f64, cy: f64, role: PtRole, color: Color) {
     marker_with_fill(sheet, cx, cy, role, color, role::canvas::background());
 }
 
-fn marker_with_fill(sheet: &mut Sheet, cx: f64, cy: f64, role: PtRole, color: Color, fill: Color) {
+pub fn marker_with_fill(
+    sheet: &mut Sheet,
+    cx: f64,
+    cy: f64,
+    role: PtRole,
+    color: Color,
+    fill: Color,
+) {
     sheet.ctx.fill(fill).stroke(color).stroke_width(PEN);
     match role {
         PtRole::Smooth => {
@@ -758,11 +832,31 @@ pub fn node(sheet: &mut Sheet, x: f64, y: f64, r: f64) {
 /// Blue advance-boundary dividers: one vertical per boundary, spanning
 /// y_top..y_bottom (canvas), with knockout nodes at both ends.
 pub fn cell_dividers(sheet: &mut Sheet, xs: &[f64], y_top: f64, y_bottom: f64) {
+    cell_dividers_colored(
+        sheet,
+        xs,
+        y_top,
+        y_bottom,
+        blue(),
+        role::canvas::background(),
+    );
+}
+
+/// Advance-boundary dividers with explicit colors for figure palettes.
+pub fn cell_dividers_colored(
+    sheet: &mut Sheet,
+    xs: &[f64],
+    y_top: f64,
+    y_bottom: f64,
+    color: Color,
+    background: Color,
+) {
     for &x in xs {
-        sheet.ctx.no_fill().stroke(blue()).stroke_width(PEN);
+        sheet.ctx.no_fill().stroke(color).stroke_width(PEN);
         sheet.ctx.line(x, y_bottom, x, y_top);
-        node(sheet, x, y_top, 7.0);
-        node(sheet, x, y_bottom, 7.0);
+        sheet.ctx.fill(background).stroke(color).stroke_width(PEN);
+        sheet.ctx.oval(x - 7.0, y_top - 7.0, 14.0, 14.0);
+        sheet.ctx.oval(x - 7.0, y_bottom - 7.0, 14.0, 14.0);
     }
 }
 
