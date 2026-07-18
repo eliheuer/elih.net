@@ -24,9 +24,18 @@ struct Series {
 fn parse_log(path: &str) -> [Series; 3] {
     let text = std::fs::read_to_string(path).expect("run.log");
     let mut out = [
-        Series { train: vec![], val: vec![] },
-        Series { train: vec![], val: vec![] },
-        Series { train: vec![], val: vec![] },
+        Series {
+            train: vec![],
+            val: vec![],
+        },
+        Series {
+            train: vec![],
+            val: vec![],
+        },
+        Series {
+            train: vec![],
+            val: vec![],
+        },
     ];
     let mut stage: Option<usize> = None;
     let mut last_step = [0.0f64; 3];
@@ -44,7 +53,9 @@ fn parse_log(path: &str) -> [Series; 3] {
         let f = line.split_whitespace().collect::<Vec<_>>();
         // "checkpoint step 500 | val loss 3.1574 (best, saved)"
         if line.starts_with("checkpoint step") {
-            out[s].val.push((f[2].parse().unwrap(), f[6].parse().unwrap()));
+            out[s]
+                .val
+                .push((f[2].parse().unwrap(), f[6].parse().unwrap()));
         // "time budget reached at step 4937" then "checkpoint final | val loss 1.5300"
         } else if line.starts_with("time budget reached at step") {
             last_step[s] = f[5].parse().unwrap();
@@ -52,7 +63,9 @@ fn parse_log(path: &str) -> [Series; 3] {
             out[s].val.push((last_step[s], f[5].parse().unwrap()));
         // "step    100 | loss 4.4714 | 46s"
         } else if line.starts_with("step ") && f.len() >= 5 {
-            out[s].train.push((f[1].parse().unwrap(), f[4].parse().unwrap()));
+            out[s]
+                .train
+                .push((f[1].parse().unwrap(), f[4].parse().unwrap()));
             last_step[s] = out[s].train.last().unwrap().0;
         }
     }
@@ -99,14 +112,21 @@ fn val_dots(sheet: &mut Sheet, p: &Panel, pts: &[(f64, f64)], color: Color) {
 }
 
 fn axes(sheet: &mut Sheet, p: &Panel, tick: f64) {
-    let ink = Color::rgb(0x3a, 0x3a, 0x3a);
-    let faint = Color::rgb(0x1e, 0x1e, 0x1e);
+    let ink = role::chart::axis();
+    let faint = role::chart::grid();
     // y ticks: horizontal hairlines + values at left
     let mut v = (p.lo / tick).ceil() * tick;
     while v <= p.hi + 1e-9 {
         sheet.ctx.no_fill().stroke(faint).stroke_width(PEN_LIGHT);
         sheet.ctx.line(p.x0, p.y(v), p.x0 + p.w, p.y(v));
-        sheet.label(&format!("{v:.0}"), p.x0 - 16.0, p.y(v) - 8.0, SMALL_TEXT, dim_color(), 1);
+        sheet.label(
+            &format!("{v:.0}"),
+            p.x0 - 16.0,
+            p.y(v) - 8.0,
+            SMALL_TEXT,
+            role::annotation::dimensions(),
+            1,
+        );
         v += tick;
     }
     // x ticks every 2k steps
@@ -122,7 +142,14 @@ fn axes(sheet: &mut Sheet, p: &Panel, tick: f64) {
         } else {
             format!("{}k", s / 1000.0)
         };
-        sheet.label(&txt, p.x(s), p.y0 - 14.0 - SMALL_TEXT, SMALL_TEXT, dim_color(), 0);
+        sheet.label(
+            &txt,
+            p.x(s),
+            p.y0 - 14.0 - SMALL_TEXT,
+            SMALL_TEXT,
+            role::annotation::dimensions(),
+            0,
+        );
         s += 2000.0;
     }
     // frame: bottom + left rules only
@@ -152,13 +179,12 @@ fn max_step(series: &[&Series]) -> f64 {
 }
 
 fn main() {
-    let home = std::env::var("HOME").unwrap();
-    let mono_path = format!("{home}/GH/repos/google-fonts/ofl/geistmono/GeistMono[wght].ttf");
-    let log = format!("{home}/GH/repos/font-garden-lab/runs/v08/run.log");
-    let [control, pretrain, finetune] = parse_log(&log);
+    let mono_path = inputs::geist_mono();
+    let log = inputs::font_garden().join(inputs::LOSS_LOG);
+    let [control, pretrain, finetune] = parse_log(log.to_str().unwrap());
 
     let mut renderer = Renderer::new(W as u32, H as u32);
-    let mono = load_family(&mut renderer, &mono_path);
+    let mono = load_family(&mut renderer, mono_path.to_str().unwrap());
     let mut sheet = new_sheet(&renderer, &mono);
 
     let top = H - MARGIN - 170.0; // clear of the two-line HUD title
@@ -179,7 +205,13 @@ fn main() {
         hi,
     };
     axes(&mut sheet, &p1, 1.0);
-    polyline(&mut sheet, &p1, &pretrain.train, fill_strong(blue()), PEN_LIGHT);
+    polyline(
+        &mut sheet,
+        &p1,
+        &pretrain.train,
+        fill_strong(blue()),
+        PEN_LIGHT,
+    );
     polyline(&mut sheet, &p1, &pretrain.val, blue(), PEN);
     val_dots(&mut sheet, &p1, &pretrain.val, blue());
     sheet.label(
@@ -195,10 +227,14 @@ fn main() {
         p1.x0 + p1.w,
         top - 20.0 - LABEL_TEXT,
         LEGEND_TEXT,
-        dim_color(),
+        role::annotation::dimensions(),
         1,
     );
-    let best = pretrain.val.iter().cloned().fold((0.0, f64::MAX), |a, b| if b.1 < a.1 { b } else { a });
+    let best = pretrain
+        .val
+        .iter()
+        .cloned()
+        .fold((0.0, f64::MAX), |a, b| if b.1 < a.1 { b } else { a });
     sheet.label_padded(
         &format!("best {:.2}", best.1),
         p1.x(best.0) - 22.0,
@@ -220,8 +256,20 @@ fn main() {
         hi,
     };
     axes(&mut sheet, &p2, 1.0);
-    polyline(&mut sheet, &p2, &control.train, fill_strong(gray()), PEN_LIGHT);
-    polyline(&mut sheet, &p2, &finetune.train, fill_strong(green()), PEN_LIGHT);
+    polyline(
+        &mut sheet,
+        &p2,
+        &control.train,
+        fill_strong(gray()),
+        PEN_LIGHT,
+    );
+    polyline(
+        &mut sheet,
+        &p2,
+        &finetune.train,
+        fill_strong(green()),
+        PEN_LIGHT,
+    );
     polyline(&mut sheet, &p2, &control.val, gray(), PEN);
     polyline(&mut sheet, &p2, &finetune.val, green(), PEN);
     val_dots(&mut sheet, &p2, &control.val, gray());
@@ -234,8 +282,16 @@ fn main() {
         green(),
         -1,
     );
-    let a_best = control.val.iter().cloned().fold((0.0, f64::MAX), |a, b| if b.1 < a.1 { b } else { a });
-    let b_best = finetune.val.iter().cloned().fold((0.0, f64::MAX), |a, b| if b.1 < a.1 { b } else { a });
+    let a_best = control
+        .val
+        .iter()
+        .cloned()
+        .fold((0.0, f64::MAX), |a, b| if b.1 < a.1 { b } else { a });
+    let b_best = finetune
+        .val
+        .iter()
+        .cloned()
+        .fold((0.0, f64::MAX), |a, b| if b.1 < a.1 { b } else { a });
     sheet.label_padded(
         &format!("A: control, from scratch / best {:.2}", a_best.1),
         p2.x(a_best.0) + 26.0,
@@ -257,7 +313,7 @@ fn main() {
         p2.x0 + p2.w,
         top - 20.0 - LABEL_TEXT,
         LEGEND_TEXT,
-        dim_color(),
+        role::annotation::dimensions(),
         1,
     );
     sheet.hud_title(&[
@@ -266,12 +322,6 @@ fn main() {
     ]);
     sheet.attribution(Some("Virtua-12M-v0.1 / one Apple M4 Pro, MLX"));
 
-    let here = std::path::PathBuf::from(env!("CARGO_MANIFEST_DIR"));
-    let post = here
-        .parent()
-        .unwrap()
-        .parent()
-        .unwrap()
-        .join("src/content/blog/virtua-grotesk");
-    sheet.save(&renderer, &post.join("fig-losscurve.png"));
+    let outputs = OutputPaths::from_args();
+    sheet.save(&renderer, &outputs.blog("fig-losscurve.png"));
 }

@@ -17,39 +17,13 @@
 //!
 //! Inputs read at render time, from sibling checkouts:
 //!     ~/GH/repos/virtua-grotesk/sources/VirtuaGrotesk-{Regular,Bold}.ufo
-//!     ~/GH/repos/font-garden-lab/runs/vNN/pred.ufo   (newest run, auto-detected)
+//!     ~/GH/repos/font-garden-lab/runs/v08/pred.ufo   (pinned in inputs.rs)
 //!     ~/GH/repos/google-fonts/ofl/geistmono/GeistMono[wght].ttf
 
 use designbot::prelude::*;
 use designbot_render::Renderer;
-use kurbo::Affine;
 #[allow(unused_imports)]
 use virtua_grotesk_figures::*;
-
-/// Newest font-garden-lab run that produced a pred.ufo, e.g. runs/v07 ->
-/// (".../runs/v07/pred.ufo", "VIRTUA-12M-0.7"). Keeps the figures pointed at
-/// the latest model with no code edit per run.
-fn latest_pred(home: &str) -> (std::path::PathBuf, String) {
-    let runs = std::path::PathBuf::from(home).join("GH/repos/font-garden-lab/runs");
-    let mut best: Option<(u32, std::path::PathBuf)> = None;
-    for entry in std::fs::read_dir(&runs).unwrap().flatten() {
-        let name = entry.file_name().to_string_lossy().to_string();
-        if let Some(num) = name.strip_prefix('v').and_then(|s| s.parse::<u32>().ok()) {
-            let pred = entry.path().join("pred.ufo");
-            if pred.is_dir() && best.as_ref().is_none_or(|(b, _)| num > *b) {
-                best = Some((num, pred));
-            }
-        }
-    }
-    let (num, pred) = best.expect("no runs/vNN/pred.ufo under font-garden-lab");
-    // a run can pin its exact public name (e.g. the param count changed):
-    // echo "VIRTUA-25M-0.9" > runs/vNN/model-name.txt
-    // a pinned name keeps its own casing; the auto default is uppercase
-    let name = std::fs::read_to_string(pred.parent().unwrap().join("model-name.txt"))
-        .map(|s| s.trim().to_string())
-        .unwrap_or_else(|_| format!("VIRTUA-12M-{}.{}", num / 10, num % 10));
-    (pred, name)
-}
 
 // --- fig-model-review -----------------------------------------------------------
 
@@ -100,7 +74,7 @@ fn fig_review(
         let baseline = band_bottom + 28.0;
 
         // baseline, house blue, behind the glyphs
-        sheet.ctx.no_fill().stroke(blue()).stroke_width(2.0);
+        sheet.ctx.no_fill().stroke(blue()).stroke_width(line::THIN);
         sheet.ctx.line(MARGIN, baseline, W - MARGIN, baseline);
 
         sheet.label(&row.label, MARGIN, band_top - 28.0, 26.0, row.color, -1);
@@ -109,7 +83,14 @@ fn fig_review(
             let slot_center = MARGIN + (j as f64 + 0.5) * slot_w;
             let glif = row.dir.join("glyphs").join(glif_name(name));
             if !glif.is_file() {
-                sheet.label_padded("not in run", slot_center, baseline + 74.0, 24.0, dim_color(), 0);
+                sheet.label_padded(
+                    "not in run",
+                    slot_center,
+                    baseline + 74.0,
+                    24.0,
+                    role::annotation::dimensions(),
+                    0,
+                );
                 continue;
             }
             let o = load_outline(&row.dir.join("glyphs"), name);
@@ -161,7 +142,9 @@ fn fig_bolden_a(
     {
         let step = 16.0 * S;
         let ctx = &mut sheet.ctx;
-        ctx.no_fill().stroke(grid()).stroke_width(2.0);
+        ctx.no_fill()
+            .stroke(role::grid::standard())
+            .stroke_width(line::THIN);
         let mut x = x_reg - (((x_reg - MARGIN) / step).floor()) * step;
         while x <= W - MARGIN {
             ctx.line(x, grid_bottom, x, grid_top);
@@ -240,24 +223,23 @@ fn fig_bolden_a(
 // --- main ------------------------------------------------------------------------
 
 fn main() {
-    let home = std::env::var("HOME").unwrap();
-    let mono_path = format!("{home}/GH/repos/google-fonts/ofl/geistmono/GeistMono[wght].ttf");
-    let sources = std::path::PathBuf::from(&home).join("GH/repos/virtua-grotesk/sources");
+    let mono_path = inputs::geist_mono();
+    let sources = inputs::virtua_sources();
     let reg = sources.join("VirtuaGrotesk-Regular.ufo");
     let bold = sources.join("VirtuaGrotesk-Bold.ufo");
-    let (pred, model_name) = latest_pred(&home);
+    let pred = inputs::model_prediction();
+    let model_name = inputs::MODEL_NAME.to_string();
+    assert!(
+        pred.is_dir(),
+        "missing pinned model input: {}",
+        pred.display()
+    );
     println!("model: {model_name} ({})", pred.display());
 
     let mut renderer = Renderer::new(W as u32, H as u32);
-    let mono = load_family(&mut renderer, &mono_path);
+    let mono = load_family(&mut renderer, mono_path.to_str().unwrap());
 
-    let here = std::path::PathBuf::from(env!("CARGO_MANIFEST_DIR"));
-    let post = here
-        .parent()
-        .unwrap()
-        .parent()
-        .unwrap()
-        .join("src/content/blog/virtua-grotesk");
+    let outputs = OutputPaths::from_args();
 
     fig_review(
         &renderer,
@@ -266,7 +248,7 @@ fn main() {
         &reg,
         &bold,
         &pred,
-        &post.join("fig-model-review.png"),
+        &outputs.blog("fig-model-review.png"),
     );
     fig_bolden_a(
         &renderer,
@@ -275,6 +257,6 @@ fn main() {
         &reg,
         &bold,
         &pred,
-        &post.join("fig-model-bolden-n.png"),
+        &outputs.blog("fig-model-bolden-n.png"),
     );
 }

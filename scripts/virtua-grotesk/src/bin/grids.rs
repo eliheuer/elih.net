@@ -44,28 +44,28 @@ const INSET_X: f64 = (SLOT - (UX1 - UX0) * S) / 2.0;
 
 // Theme tokens, shared with og.rs / figs.rs.
 fn grid_flat() -> Color {
-    Color::rgb(0x30, 0x30, 0x30)
+    role::grid::flat()
 }
 fn grid_2() -> Color {
-    Color::rgb(0x1a, 0x1a, 0x1a)
+    role::grid::faint()
 }
 fn grid_8() -> Color {
-    Color::rgb(0x2c, 0x2c, 0x2c)
+    role::grid::structure()
 }
 fn grid_64() -> Color {
-    Color::rgb(0x42, 0x42, 0x42)
+    role::grid::major()
 }
 fn border() -> Color {
-    Color::rgb(0x4a, 0x4a, 0x4a)
+    color::gray_600()
 }
 fn curve() -> Color {
-    Color::rgb(230, 230, 230)
+    role::bezier::curve()
 }
 fn curve_fill() -> Color {
-    Color::rgba(230, 230, 230, 20)
+    with_alpha(curve(), 20)
 }
 fn crop_handle() -> Color {
-    Color::rgb(0x6a, 0x6a, 0x6a)
+    color::gray_450()
 }
 
 /// Panel-local transform: font units -> canvas.
@@ -81,29 +81,22 @@ fn on8(v: f64) -> bool {
 }
 
 fn main() {
-    let home = std::env::var("HOME").unwrap();
-    let mono_path = format!("{home}/GH/repos/google-fonts/ofl/geistmono/GeistMono[wght].ttf");
-    let glyphs_dir = std::path::PathBuf::from(&home)
-        .join("GH/repos/virtua-grotesk/sources/VirtuaGrotesk-Regular.ufo/glyphs");
+    let mono_path = inputs::geist_mono();
+    let glyphs_dir = inputs::virtua_sources().join("VirtuaGrotesk-Regular.ufo/glyphs");
 
     let mut renderer = Renderer::new(W as u32, H as u32);
-    let mono = load_family(&mut renderer, &mono_path);
+    let mono = load_family(&mut renderer, mono_path.to_str().unwrap());
     let outline = load_outline(&glyphs_dir, "a");
 
-    let here = std::path::PathBuf::from(env!("CARGO_MANIFEST_DIR"));
-    let out = here
-        .parent()
-        .unwrap()
-        .parent()
-        .unwrap()
-        .join("src/content/blog/virtua-grotesk/fig-grid-labels.png");
+    let outputs = OutputPaths::from_args();
+    let out = outputs.blog("fig-grid-labels.png");
 
     let mut sheet = Sheet {
         ctx: Canvas::new(W, H),
         renderer: &renderer,
         mono: mono.clone(),
     };
-    sheet.ctx.background(bg());
+    sheet.ctx.background(role::canvas::background());
 
     let panel_left = |i: usize| MARGIN + i as f64 * (SLOT + GAP) + INSET_X;
     let panel_w = (UX1 - UX0) * S;
@@ -142,14 +135,18 @@ fn main() {
     for i in 0..2 {
         let pl = panel_left(i);
         let place = Affine::new([S, 0.0, 0.0, S, pl - UX0 * S, PANEL_BOTTOM - UY0 * S]);
-        sheet.ctx.fill(curve_fill()).stroke(curve()).stroke_width(PEN);
+        sheet
+            .ctx
+            .fill(curve_fill())
+            .stroke(curve())
+            .stroke_width(PEN);
         sheet.ctx.draw_path(place * outline.path.clone());
     }
 
     // ── mask the crop spill (no clip API; bg is solid) ──
     {
         let ctx = &mut sheet.ctx;
-        ctx.fill(bg()).no_stroke();
+        ctx.fill(role::canvas::background()).no_stroke();
         ctx.rect(0.0, 0.0, W, PANEL_BOTTOM); // below
         ctx.rect(0.0, PANEL_TOP, W, H - PANEL_TOP); // above
         ctx.rect(0.0, 0.0, panel_left(0), H); // left of panel 01
@@ -163,7 +160,9 @@ fn main() {
     for i in 0..2 {
         let pl = panel_left(i);
         sheet.ctx.no_fill().stroke(border()).stroke_width(PEN);
-        sheet.ctx.rect(pl, PANEL_BOTTOM, panel_w, PANEL_TOP - PANEL_BOTTOM);
+        sheet
+            .ctx
+            .rect(pl, PANEL_BOTTOM, panel_w, PANEL_TOP - PANEL_BOTTOM);
     }
 
     // ── handles + point markers, colored by panel scheme ──
@@ -201,7 +200,11 @@ fn main() {
             } else {
                 green()
             };
-            sheet.ctx.fill(bg()).stroke(color).stroke_width(PEN);
+            sheet
+                .ctx
+                .fill(role::canvas::background())
+                .stroke(color)
+                .stroke_width(PEN);
             let (px, py) = (cx(pl, *x), cy(*y));
             match role {
                 PtRole::Smooth => {
@@ -225,7 +228,9 @@ fn main() {
         let text_y = cy(160.0) - 10.0;
         let color = if i == 0 { gray() } else { red() };
         sheet.ctx.no_fill().stroke(color).stroke_width(PEN);
-        sheet.ctx.line(anchor.0 + 16.0, anchor.1, text_x - 14.0, text_y + 8.0);
+        sheet
+            .ctx
+            .line(anchor.0 + 16.0, anchor.1, text_x - 14.0, text_y + 8.0);
         let (l1, l2) = if i == 0 {
             ("x=116: off grid", "correction or mistake?")
         } else {
@@ -243,7 +248,14 @@ fn main() {
 
     // ── panel titles + legends ──
     let title_y = PANEL_TOP + 44.0;
-    sheet.label("01 flat grid / one level", panel_left(0), title_y, 30.0, green(), -1);
+    sheet.label(
+        "01 flat grid / one level",
+        panel_left(0),
+        title_y,
+        30.0,
+        green(),
+        -1,
+    );
     sheet.label(
         "all points equally legal",
         panel_left(0) + panel_w,
@@ -274,9 +286,17 @@ fn main() {
         let dot1 = x1 - 26.0;
         sheet.label(t2, x2, title_y, size, red(), -1);
         sheet.label(t1, x1, title_y, size, green(), -1);
-        sheet.ctx.fill(bg()).stroke(red()).stroke_width(PEN);
+        sheet
+            .ctx
+            .fill(role::canvas::background())
+            .stroke(red())
+            .stroke_width(PEN);
         sheet.ctx.oval(dot2, title_y + 1.0, 16.0, 16.0);
-        sheet.ctx.fill(bg()).stroke(green()).stroke_width(PEN);
+        sheet
+            .ctx
+            .fill(role::canvas::background())
+            .stroke(green())
+            .stroke_width(PEN);
         sheet.ctx.oval(dot1, title_y + 1.0, 16.0, 16.0);
     }
 

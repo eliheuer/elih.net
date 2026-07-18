@@ -41,7 +41,12 @@ fn fig_ohno(renderer: &Renderer, mono: &str, reg: &std::path::Path, out: &std::p
     let top_u = (((H - MARGIN - f.baseline) / S) / 8.0).floor() * 8.0;
     let bot_u = (((MARGIN - f.baseline) / S) / 8.0).ceil() * 8.0;
     draw_grid(&mut sheet, &f, top_u, bot_u);
-    metric_lines(&mut sheet, &f, &[0.0, 576.0, 768.0, -256.0], &[784.0, -16.0]);
+    metric_lines(
+        &mut sheet,
+        &f,
+        &[0.0, 576.0, 768.0, -256.0],
+        &[784.0, -16.0],
+    );
 
     let (x_o, x_h, x_n, x_lo) = (
         0.0,
@@ -54,12 +59,44 @@ fn fig_ohno(renderer: &Renderer, mono: &str, reg: &std::path::Path, out: &std::p
     }
 
     // measured stroke dimensions
-    sheet.dim_h(f.x(x_o + 48.0), f.x(x_o + 156.0), f.y(384.0), "108", green());
-    sheet.dim_v(f.x(x_o + 424.0), f.y(684.0), f.y(784.0), "100", green(), true);
-    sheet.dim_h(f.x(x_h + 80.0), f.x(x_h + 184.0), f.y(600.0), "104", green());
-    sheet.dim_v(f.x(x_h + 384.0), f.y(360.0), f.y(456.0), "96", green(), true);
+    sheet.dim_h(
+        f.x(x_o + 48.0),
+        f.x(x_o + 156.0),
+        f.y(384.0),
+        "108",
+        green(),
+    );
+    sheet.dim_v(
+        f.x(x_o + 424.0),
+        f.y(684.0),
+        f.y(784.0),
+        "100",
+        green(),
+        true,
+    );
+    sheet.dim_h(
+        f.x(x_h + 80.0),
+        f.x(x_h + 184.0),
+        f.y(600.0),
+        "104",
+        green(),
+    );
+    sheet.dim_v(
+        f.x(x_h + 384.0),
+        f.y(360.0),
+        f.y(456.0),
+        "96",
+        green(),
+        true,
+    );
     sheet.dim_h(f.x(x_n + 64.0), f.x(x_n + 160.0), f.y(256.0), "96", green());
-    sheet.dim_h(f.x(x_lo + 32.0), f.x(x_lo + 132.0), f.y(288.0), "100", green());
+    sheet.dim_h(
+        f.x(x_lo + 32.0),
+        f.x(x_lo + 132.0),
+        f.y(288.0),
+        "100",
+        green(),
+    );
 
     // the key innovation, called out on the n's arch (y=500: off 8, on 2)
     correction_callout(
@@ -111,8 +148,21 @@ fn fig_no(renderer: &Renderer, mono: &str, reg: &std::path::Path, out: &std::pat
     annotate(&mut sheet, &o, S, f.x(n.width), f.baseline);
 
     sheet.dim_h(f.x(64.0), f.x(160.0), f.y(256.0), "96", green());
-    sheet.dim_v(f.x(n.width + 304.0), f.y(500.0), f.y(592.0), "92", green(), true);
-    sheet.dim_h(f.x(n.width + 32.0), f.x(n.width + 132.0), f.y(288.0), "100", green());
+    sheet.dim_v(
+        f.x(n.width + 304.0),
+        f.y(500.0),
+        f.y(592.0),
+        "92",
+        green(),
+        true,
+    );
+    sheet.dim_h(
+        f.x(n.width + 32.0),
+        f.x(n.width + 132.0),
+        f.y(288.0),
+        "100",
+        green(),
+    );
 
     // chamfer callout: n bottom-left corner (64,16)-(80,0)
     {
@@ -166,7 +216,9 @@ fn fig_weights(
     let run = (rn.width + ro.width + bn.width + bo.width) * S + PAIR_GAP;
     let f = Frame {
         s: S,
-        x0: MARGIN + (W - 2.0 * MARGIN - run).min(0.0).max(W * -1.0) / 2.0 + (W - 2.0 * MARGIN - run).max(0.0) / 2.0,
+        x0: MARGIN
+            + (W - 2.0 * MARGIN - run).min(0.0).max(W * -1.0) / 2.0
+            + (W - 2.0 * MARGIN - run).max(0.0) / 2.0,
         baseline: 440.0,
     };
 
@@ -187,16 +239,62 @@ fn fig_weights(
 
     // stems and curves, both weights, all measured
     sheet.dim_h(x_rn + 64.0 * S, x_rn + 160.0 * S, f.y(256.0), "96", green());
-    sheet.dim_h(x_ro + 32.0 * S, x_ro + 132.0 * S, f.y(288.0), "100", green());
-    sheet.dim_v(x_ro + 304.0 * S, f.y(500.0), f.y(592.0), "92", green(), true);
-    sheet.dim_h(x_bn + 64.0 * S, x_bn + 256.0 * S, f.y(256.0), "192", green());
-    sheet.dim_h(x_bo + 32.0 * S, x_bo + 228.0 * S, f.y(288.0), "196", green());
-    sheet.dim_v(x_bo + 344.0 * S, f.y(452.0), f.y(592.0), "140", green(), true);
+    sheet.dim_h(
+        x_ro + 32.0 * S,
+        x_ro + 132.0 * S,
+        f.y(288.0),
+        "100",
+        green(),
+    );
+    sheet.dim_v(
+        x_ro + 304.0 * S,
+        f.y(500.0),
+        f.y(592.0),
+        "92",
+        green(),
+        true,
+    );
+    sheet.dim_h(
+        x_bn + 64.0 * S,
+        x_bn + 256.0 * S,
+        f.y(256.0),
+        "192",
+        green(),
+    );
+    sheet.dim_h(
+        x_bo + 32.0 * S,
+        x_bo + 228.0 * S,
+        f.y(288.0),
+        "196",
+        green(),
+    );
+    sheet.dim_v(
+        x_bo + 344.0 * S,
+        f.y(452.0),
+        f.y(592.0),
+        "140",
+        green(),
+        true,
+    );
 
     // pair labels, above the grid
     let label_y = f.y(640.0) + 44.0;
-    sheet.label("01 Regular / stem 96", x_rn, label_y, LABEL_TEXT, green(), -1);
-    sheet.label("02 Bold / stem 192 = 96\u{b7}2", x_bn, label_y, LABEL_TEXT, green(), -1);
+    sheet.label(
+        "01 Regular / stem 96",
+        x_rn,
+        label_y,
+        LABEL_TEXT,
+        green(),
+        -1,
+    );
+    sheet.label(
+        "02 Bold / stem 192 = 96\u{b7}2",
+        x_bn,
+        label_y,
+        LABEL_TEXT,
+        green(),
+        -1,
+    );
 
     // the key innovation, called out on the Regular o's inner wall
     correction_callout(
@@ -214,7 +312,7 @@ fn fig_weights(
     // crop any spill at the margins
     {
         let ctx = &mut sheet.ctx;
-        ctx.fill(bg()).no_stroke();
+        ctx.fill(role::canvas::background()).no_stroke();
         ctx.rect(0.0, 0.0, MARGIN, H);
         ctx.rect(W - MARGIN, 0.0, MARGIN, H);
         ctx.rect(0.0, 0.0, W, MARGIN);
@@ -261,8 +359,22 @@ fn fig_arabic(renderer: &Renderer, mono: &str, reg: &std::path::Path, out: &std:
     annotate(&mut sheet, &heh, S, x_heh, f.baseline);
 
     // name labels, pinned under the header rule, numbered in reading order
-    sheet.label("01 alef / U+0627", center(2.0), HEADER_RULE_Y - 46.0, LABEL_TEXT, green(), 0);
-    sheet.label("02 beh / U+0628", center(1.0), HEADER_RULE_Y - 46.0, LABEL_TEXT, green(), 0);
+    sheet.label(
+        "01 alef / U+0627",
+        center(2.0),
+        HEADER_RULE_Y - 46.0,
+        LABEL_TEXT,
+        green(),
+        0,
+    );
+    sheet.label(
+        "02 beh / U+0628",
+        center(1.0),
+        HEADER_RULE_Y - 46.0,
+        LABEL_TEXT,
+        green(),
+        0,
+    );
     sheet.label(
         "03 heh / medial form",
         center(0.0),
@@ -273,9 +385,21 @@ fn fig_arabic(renderer: &Renderer, mono: &str, reg: &std::path::Path, out: &std:
     );
 
     // measured dimensions: alef stroke, beh boat stroke, the dot's diameter
-    sheet.dim_h(x_alef + 64.0 * S, x_alef + 160.0 * S, f.y(384.0), "96", green());
+    sheet.dim_h(
+        x_alef + 64.0 * S,
+        x_alef + 160.0 * S,
+        f.y(384.0),
+        "96",
+        green(),
+    );
     sheet.dim_v(x_beh + 296.0 * S, f.y(0.0), f.y(72.0), "72", green(), true);
-    sheet.dim_h(x_beh + 42.0 * S, x_beh + 202.0 * S, f.y(-192.0), "160", green());
+    sheet.dim_h(
+        x_beh + 42.0 * S,
+        x_beh + 202.0 * S,
+        f.y(-192.0),
+        "160",
+        green(),
+    );
 
     // the beh's tail is dense with 2-grid work: call one out
     correction_callout(
@@ -297,7 +421,6 @@ fn fig_arabic(renderer: &Renderer, mono: &str, reg: &std::path::Path, out: &std:
     sheet.attribution(None);
     sheet.save(renderer, out);
 }
-
 
 // --- fig-semantic-grid: the whole argument in one image -------------------------------
 //
@@ -335,9 +458,9 @@ fn fig_semantic(renderer: &Renderer, mono: &str, reg: &std::path::Path, out: &st
         let ctx = &mut sheet.ctx;
         let weight = |q: f64| -> (Color, f64) {
             if q.rem_euclid(8.0) == 0.0 {
-                (Color::rgb(0x40, 0x40, 0x40), 2.0)
+                (color::gray_650(), line::THIN)
             } else {
-                (Color::rgb(0x18, 0x18, 0x18), 0.75)
+                (color::gray_925(), line::HAIRLINE)
             }
         };
         let mut u = (U0 / 2.0).ceil() * 2.0;
@@ -365,7 +488,7 @@ fn fig_semantic(renderer: &Renderer, mono: &str, reg: &std::path::Path, out: &st
     // mask the crop spill
     {
         let ctx = &mut sheet.ctx;
-        ctx.fill(bg()).no_stroke();
+        ctx.fill(role::canvas::background()).no_stroke();
         ctx.rect(0.0, 0.0, W, box_bottom);
         ctx.rect(0.0, box_top, W, H - box_top);
         ctx.rect(0.0, 0.0, MARGIN, H);
@@ -376,11 +499,38 @@ fn fig_semantic(renderer: &Renderer, mono: &str, reg: &std::path::Path, out: &st
     sheet.dim_h(f.x(64.0), f.x(160.0), f.y(256.0), "96", green());
     sheet.dim_h(f.x(160.0), f.x(432.0), f.y(256.0), "272", gray());
     sheet.dim_h(f.x(432.0), f.x(528.0), f.y(256.0), "96", green());
-    sheet.dim_h(f.x(n.width + 32.0), f.x(n.width + 132.0), f.y(288.0), "100", red());
+    sheet.dim_h(
+        f.x(n.width + 32.0),
+        f.x(n.width + 132.0),
+        f.y(288.0),
+        "100",
+        red(),
+    );
 
-    sheet.label_padded("(32,288)", f.x(n.width + 32.0) - 16.0, f.y(288.0) + 26.0, SMALL_TEXT, gray(), 1);
-    sheet.label_padded("128", f.x(n.width + 132.0) + 14.0, f.y(352.0) - 7.0, SMALL_TEXT, purple(), -1);
-    sheet.label_padded("128", f.x(n.width + 132.0) + 14.0, f.y(224.0) - 7.0, SMALL_TEXT, purple(), -1);
+    sheet.label_padded(
+        "(32,288)",
+        f.x(n.width + 32.0) - 16.0,
+        f.y(288.0) + 26.0,
+        SMALL_TEXT,
+        gray(),
+        1,
+    );
+    sheet.label_padded(
+        "128",
+        f.x(n.width + 132.0) + 14.0,
+        f.y(352.0) - 7.0,
+        SMALL_TEXT,
+        purple(),
+        -1,
+    );
+    sheet.label_padded(
+        "128",
+        f.x(n.width + 132.0) + 14.0,
+        f.y(224.0) - 7.0,
+        SMALL_TEXT,
+        purple(),
+        -1,
+    );
 
     // ---- info column --------------------------------------------------------------
     let rx = box_right + 56.0;
@@ -403,11 +553,29 @@ fn fig_semantic(renderer: &Renderer, mono: &str, reg: &std::path::Path, out: &st
             if bit == 1 {
                 sheet.ctx.fill(color).stroke(color).stroke_width(PEN_LIGHT);
                 sheet.ctx.rect(x, y0, cell, cell);
-                sheet.label("1", x + cell / 2.0, y0 + cell * 0.26, 28.0, bg(), 0);
+                sheet.label(
+                    "1",
+                    x + cell / 2.0,
+                    y0 + cell * 0.26,
+                    28.0,
+                    role::canvas::background(),
+                    0,
+                );
             } else {
-                sheet.ctx.no_fill().stroke(dim_color()).stroke_width(PEN_LIGHT);
+                sheet
+                    .ctx
+                    .no_fill()
+                    .stroke(role::annotation::dimensions())
+                    .stroke_width(PEN_LIGHT);
                 sheet.ctx.rect(x, y0, cell, cell);
-                sheet.label("0", x + cell / 2.0, y0 + cell * 0.26, 28.0, dim_color(), 0);
+                sheet.label(
+                    "0",
+                    x + cell / 2.0,
+                    y0 + cell * 0.26,
+                    28.0,
+                    role::annotation::dimensions(),
+                    0,
+                );
             }
         }
         let zeros = value.trailing_zeros();
@@ -425,24 +593,56 @@ fn fig_semantic(renderer: &Renderer, mono: &str, reg: &std::path::Path, out: &st
     sheet.label("optical correction", rx, 572.0, body, red(), -1);
 
     sheet.label("Points on the 8-unit grid", rx, 484.0, body, gray(), -1);
-    sheet.label("(held-out Bolds, raw output)", rx, 440.0, SMALL_TEXT, gray(), -1);
+    sheet.label(
+        "(held-out Bolds, raw output)",
+        rx,
+        440.0,
+        SMALL_TEXT,
+        gray(),
+        -1,
+    );
     let bar_max = W - MARGIN - rx - 71.0;
     let bar = |sheet: &mut Sheet, y: f64, frac: f64, color: Color, label: &str, pct: &str| {
         sheet.label(label, rx, y + 50.0, body, color, -1);
         let w = (bar_max * frac / 0.85).max(6.0);
-        sheet.ctx.fill(fill_strong(color)).stroke(color).stroke_width(PEN_LIGHT);
+        sheet
+            .ctx
+            .fill(fill_strong(color))
+            .stroke(color)
+            .stroke_width(PEN_LIGHT);
         sheet.ctx.rect(rx, y, w, 34.0);
         sheet.label(pct, rx + w + 16.0, y + 6.0, body, color, -1);
     };
-    bar(&mut sheet, 336.0, 0.0625, dim_color(), "chance on the 2-grid", "6%");
+    bar(
+        &mut sheet,
+        336.0,
+        0.0625,
+        role::annotation::dimensions(),
+        "chance on the 2-grid",
+        "6%",
+    );
     bar(&mut sheet, 240.0, 0.68, red(), "Virtua-12M-v0.1", "68%");
     bar(&mut sheet, 144.0, 0.85, green(), "human sources", "85%");
 
     legend(&mut sheet, box_right - 16.0, 84.0);
 
     // attribution, bottom of the column
-    sheet.label("Virtua Grotesk / Virtua-12M-v0.1", rx, 64.0 + 36.0, SMALL_TEXT, green(), -1);
-    sheet.label("elih.net/blog/virtua-grotesk", rx, 64.0, SMALL_TEXT, green(), -1);
+    sheet.label(
+        "Virtua Grotesk / Virtua-12M-v0.1",
+        rx,
+        64.0 + 36.0,
+        SMALL_TEXT,
+        green(),
+        -1,
+    );
+    sheet.label(
+        "elih.net/blog/virtua-grotesk",
+        rx,
+        64.0,
+        SMALL_TEXT,
+        green(),
+        -1,
+    );
 
     sheet.save(renderer, out);
 }
@@ -450,26 +650,34 @@ fn fig_semantic(renderer: &Renderer, mono: &str, reg: &std::path::Path, out: &st
 // --- main ------------------------------------------------------------------------
 
 fn main() {
-    let home = std::env::var("HOME").unwrap();
-    let mono_path = format!("{home}/GH/repos/google-fonts/ofl/geistmono/GeistMono[wght].ttf");
-    let sources = std::path::PathBuf::from(&home).join("GH/repos/virtua-grotesk/sources");
+    let mono_path = inputs::geist_mono();
+    let sources = inputs::virtua_sources();
     let reg = sources.join("VirtuaGrotesk-Regular.ufo/glyphs");
     let bold = sources.join("VirtuaGrotesk-Bold.ufo/glyphs");
 
     let mut renderer = Renderer::new(W as u32, H as u32);
-    let mono = load_family(&mut renderer, &mono_path);
+    let mono = load_family(&mut renderer, mono_path.to_str().unwrap());
 
-    let here = std::path::PathBuf::from(env!("CARGO_MANIFEST_DIR"));
-    let post = here
-        .parent()
-        .unwrap()
-        .parent()
-        .unwrap()
-        .join("src/content/blog/virtua-grotesk");
-
-    fig_semantic(&renderer, &mono, &reg, &post.join("fig-semantic-grid.png"));
-    fig_ohno(&renderer, &mono, &reg, &post.join("fig-system-ohno.png"));
-    fig_no(&renderer, &mono, &reg, &post.join("fig-system-no.png"));
-    fig_weights(&renderer, &mono, &reg, &bold, &post.join("fig-system-weights.png"));
-    fig_arabic(&renderer, &mono, &reg, &post.join("fig-system-arabic.png"));
+    let outputs = OutputPaths::from_args();
+    fig_semantic(
+        &renderer,
+        &mono,
+        &reg,
+        &outputs.blog("fig-semantic-grid.png"),
+    );
+    fig_ohno(&renderer, &mono, &reg, &outputs.blog("fig-system-ohno.png"));
+    fig_no(&renderer, &mono, &reg, &outputs.blog("fig-system-no.png"));
+    fig_weights(
+        &renderer,
+        &mono,
+        &reg,
+        &bold,
+        &outputs.blog("fig-system-weights.png"),
+    );
+    fig_arabic(
+        &renderer,
+        &mono,
+        &reg,
+        &outputs.blog("fig-system-arabic.png"),
+    );
 }

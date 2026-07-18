@@ -9,7 +9,6 @@
 //!
 //!     cargo run --release --bin interp
 
-use designbot::prelude::*;
 use designbot_render::Renderer;
 #[allow(unused_imports)]
 use virtua_grotesk_figures::*;
@@ -20,17 +19,16 @@ fn xt(t: f64, x_l: f64, x_r: f64) -> f64 {
 }
 
 fn main() {
-    let home = std::env::var("HOME").unwrap();
-    let mono_path = format!("{home}/GH/repos/google-fonts/ofl/geistmono/GeistMono[wght].ttf");
+    let mono_path = inputs::geist_mono();
     let mut renderer = Renderer::new(W as u32, H as u32);
-    let mono = load_family(&mut renderer, &mono_path);
+    let mono = load_family(&mut renderer, mono_path.to_str().unwrap());
     let mut sheet = new_sheet(&renderer, &mono);
 
     let x_l = MARGIN + 250.0;
     let x_r = W - MARGIN - 250.0;
     let tick_h = 18.0;
-    let minor = Color::rgb(0x30, 0x30, 0x30);
-    let major = Color::rgb(0x66, 0x66, 0x66);
+    let minor = color::gray_800();
+    let major = color::gray_475();
 
     // ---- line 1: em 1024, stem 96 -> 192, grid every 2 (major every 8) ----
     let y1 = H - MARGIN - 470.0;
@@ -41,12 +39,23 @@ fn main() {
     while v <= b1 + 0.01 {
         let x = xt((v - r1) / (b1 - r1), x_l, x_r);
         let is8 = (v as i64) % 8 == 0;
-        sheet.ctx.no_fill().stroke(if is8 { major } else { minor }).stroke_width(PEN_LIGHT);
+        sheet
+            .ctx
+            .no_fill()
+            .stroke(if is8 { major } else { minor })
+            .stroke_width(PEN_LIGHT);
         let h = if is8 { tick_h } else { tick_h * 0.55 };
         sheet.ctx.line(x, y1 - h, x, y1 + h);
         v += 2.0;
     }
-    sheet.label("em 1024 / grid 2", x_l - 40.0, y1 + 92.0, LABEL_TEXT, green(), -1);
+    sheet.label(
+        "em 1024 / grid 2",
+        x_l - 40.0,
+        y1 + 92.0,
+        LABEL_TEXT,
+        green(),
+        -1,
+    );
     // endpoints
     sheet.label_padded("Regular 96", x_l, y1 - 40.0, DIM_TEXT, green(), 0);
     sheet.label_padded("Bold 192", x_r, y1 - 40.0, DIM_TEXT, red(), 0);
@@ -66,7 +75,14 @@ fn main() {
         let x = xt(t, x_l, x_r);
         sheet.ctx.fill(green()).no_stroke();
         sheet.ctx.oval(x - 8.0, y1 - 8.0, 16.0, 16.0);
-        sheet.label(w, x, y1 - 44.0, SMALL_TEXT, dim_color(), 0);
+        sheet.label(
+            w,
+            x,
+            y1 - 44.0,
+            SMALL_TEXT,
+            role::annotation::dimensions(),
+            0,
+        );
         sheet.label(&val.to_string(), x, y1 + 52.0, SMALL_TEXT, green(), 0);
     }
 
@@ -82,7 +98,14 @@ fn main() {
         sheet.ctx.line(x, y2 - tick_h, x, y2 + tick_h);
         v += 10.0;
     }
-    sheet.label("em 1000 / grid 10", x_l - 40.0, y2 + 92.0, LABEL_TEXT, red(), -1);
+    sheet.label(
+        "em 1000 / grid 10",
+        x_l - 40.0,
+        y2 + 92.0,
+        LABEL_TEXT,
+        red(),
+        -1,
+    );
     sheet.label_padded("Regular 90", x_l, y2 - 40.0, DIM_TEXT, gray(), 0);
     sheet.label_padded("Bold 180", x_r, y2 - 40.0, DIM_TEXT, gray(), 0);
     node(&mut sheet, x_l, y2, 9.0);
@@ -91,14 +114,28 @@ fn main() {
     let x_half = xt(0.5, x_l, x_r);
     sheet.ctx.fill(red()).no_stroke();
     sheet.ctx.oval(x_half - 8.0, y2 - 8.0, 16.0, 16.0);
-    sheet.label("1/2", x_half, y2 - 44.0, SMALL_TEXT, dim_color(), 0);
+    sheet.label(
+        "1/2",
+        x_half,
+        y2 - 44.0,
+        SMALL_TEXT,
+        role::annotation::dimensions(),
+        0,
+    );
     sheet.label("135", x_half, y2 + 52.0, SMALL_TEXT, red(), 0);
     sheet.label("off grid", x_half, y2 + 84.0, SMALL_TEXT, red(), 0);
 
     let x_q = xt(0.25, x_l, x_r);
     sheet.ctx.fill(red()).no_stroke();
     sheet.ctx.oval(x_q - 8.0, y2 - 8.0, 16.0, 16.0);
-    sheet.label("1/4", x_q, y2 - 44.0, SMALL_TEXT, dim_color(), 0);
+    sheet.label(
+        "1/4",
+        x_q,
+        y2 - 44.0,
+        SMALL_TEXT,
+        role::annotation::dimensions(),
+        0,
+    );
     sheet.label("112.5", x_q, y2 + 52.0, SMALL_TEXT, red(), 0);
     sheet.label("not integer", x_q, y2 + 84.0, SMALL_TEXT, red(), 0);
 
@@ -106,7 +143,11 @@ fn main() {
     for t in [0.5f64, 0.25] {
         let x = xt(t, x_l, x_r);
         let mut yy = y2 + 40.0;
-        sheet.ctx.no_fill().stroke(Color::rgb(0x3a, 0x3a, 0x3a)).stroke_width(PEN_LIGHT);
+        sheet
+            .ctx
+            .no_fill()
+            .stroke(role::chart::axis())
+            .stroke_width(PEN_LIGHT);
         while yy < y1 - 40.0 {
             sheet.ctx.line(x, yy, x, (yy + 14.0).min(y1 - 40.0));
             yy += 26.0;
@@ -128,12 +169,6 @@ fn main() {
     ]);
     sheet.attribution(Some("Virtua Grotesk / stem width in font units"));
 
-    let here = std::path::PathBuf::from(env!("CARGO_MANIFEST_DIR"));
-    let post = here
-        .parent()
-        .unwrap()
-        .parent()
-        .unwrap()
-        .join("src/content/blog/virtua-grotesk");
-    sheet.save(&renderer, &post.join("fig-interp.png"));
+    let outputs = OutputPaths::from_args();
+    sheet.save(&renderer, &outputs.blog("fig-interp.png"));
 }

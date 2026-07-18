@@ -8,12 +8,16 @@
 //!
 //!     cargo run --bin card
 //!
-//! Writes ../../src/content/blog/virtua-grotesk/share-card.png and
-//! ../../public/og/virtua-grotesk.png.
+//! This is a legacy reference renderer. It writes only to the ignored build
+//! directory; `og.rs` exclusively owns the published share-card assets.
 
 use designbot::prelude::*;
 use designbot_render::Renderer;
 use kurbo::{Affine, BezPath};
+use virtua_grotesk_figures::{
+    inputs,
+    style::{color, line},
+};
 
 const W: f64 = 2400.0;
 const H: f64 = 1260.0;
@@ -77,7 +81,12 @@ fn load_outline(glif: &std::path::Path) -> Outline {
         }
         path.close_path();
     }
-    Outline { path, points, handles, width: glyph.width }
+    Outline {
+        path,
+        points,
+        handles,
+        width: glyph.width,
+    }
 }
 
 fn push_on_curve(points: &mut Vec<(f64, f64, Role)>, p: &norad::ContourPoint, k: usize, n: usize) {
@@ -89,21 +98,19 @@ fn push_on_curve(points: &mut Vec<(f64, f64, Role)>, p: &norad::ContourPoint, k:
 }
 
 fn main() {
-    let home = std::env::var("HOME").unwrap();
-    let glyphs_dir =
-        std::path::PathBuf::from(&home).join("GH/repos/virtua-grotesk/sources/VirtuaGrotesk-Regular.ufo/glyphs");
+    let glyphs_dir = inputs::virtua_sources().join("VirtuaGrotesk-Regular.ufo/glyphs");
 
     let outlines: Vec<Outline> = GLYPHS
         .iter()
         .map(|name| load_outline(&glyphs_dir.join(format!("{name}.glif"))))
         .collect();
 
-    let total_advance: f64 = outlines.iter().map(|o| o.width).sum::<f64>()
-        + LETTER_SPACE * (outlines.len() - 1) as f64;
+    let total_advance: f64 =
+        outlines.iter().map(|o| o.width).sum::<f64>() + LETTER_SPACE * (outlines.len() - 1) as f64;
     let mut cursor = (W - total_advance) / 2.0;
 
     let mut ctx = Canvas::new(W, H);
-    ctx.background(Color::rgb(10, 10, 10));
+    ctx.background(color::black_deep());
 
     // ── the powers-of-two grid, aligned to the first glyph's origin ──
     // minor = 16 units, major = 64, super = 256 (all in font units = px here)
@@ -111,28 +118,46 @@ fn main() {
     let mut gx = origin_x % 16.0 - 16.0;
     while gx < W {
         let u = ((gx - origin_x).round() as i64).rem_euclid(256);
-        let c = if u == 0 { 66 } else if u % 64 == 0 { 44 } else { 24 };
-        ctx.stroke(Color::rgb(c, c, c)).stroke_width(2.0);
+        let color = if u == 0 {
+            color::gray_625()
+        } else if u % 64 == 0 {
+            color::gray_825()
+        } else {
+            color::gray_925()
+        };
+        ctx.stroke(color).stroke_width(line::THIN);
         ctx.line(gx, 0.0, gx, H);
         gx += 16.0;
     }
     let mut gy = BASELINE_Y % 16.0 - 16.0;
     while gy < H {
         let u = ((gy - BASELINE_Y).round() as i64).rem_euclid(256);
-        let c = if u == 0 { 66 } else if u % 64 == 0 { 44 } else { 24 };
-        ctx.stroke(Color::rgb(c, c, c)).stroke_width(2.0);
+        let color = if u == 0 {
+            color::gray_625()
+        } else if u % 64 == 0 {
+            color::gray_825()
+        } else {
+            color::gray_925()
+        };
+        ctx.stroke(color).stroke_width(line::THIN);
         ctx.line(0.0, gy, W, gy);
         gy += 16.0;
     }
 
     // ── vertical metrics: ascender 832, cap 768, x-height 576, baseline 0,
     //    descender -256 — the power-of-two sums from DESIGN.md ──
-    for (y, orange) in [(832.0, false), (768.0, false), (576.0, false), (0.0, true), (-256.0, false)] {
+    for (y, orange) in [
+        (832.0, false),
+        (768.0, false),
+        (576.0, false),
+        (0.0, true),
+        (-256.0, false),
+    ] {
         let py = BASELINE_Y + y;
         if orange {
-            ctx.stroke(Color::rgb(255, 78, 0)).stroke_width(3.0);
+            ctx.stroke(color::orange_deep()).stroke_width(line::STRONG);
         } else {
-            ctx.stroke(Color::rgb(96, 96, 96)).stroke_width(2.0);
+            ctx.stroke(color::gray_500()).stroke_width(line::THIN);
         }
         ctx.line(0.0, py, W, py);
     }
@@ -141,13 +166,13 @@ fn main() {
     for outline in &outlines {
         let to_canvas = Affine::translate((cursor, BASELINE_Y));
 
-        ctx.stroke(Color::rgb(120, 120, 120)).stroke_width(3.0);
+        ctx.stroke(color::gray_400()).stroke_width(line::STRONG);
         for ((x1, y1), (x2, y2)) in &outline.handles {
             ctx.line(cursor + x1, BASELINE_Y + y1, cursor + x2, BASELINE_Y + y2);
         }
 
         ctx.no_fill();
-        ctx.stroke(Color::rgb(230, 230, 230)).stroke_width(6.0);
+        ctx.stroke(color::gray_100()).stroke_width(line::HERO);
         ctx.draw_path(to_canvas * outline.path.clone());
 
         ctx.no_stroke();
@@ -155,15 +180,15 @@ fn main() {
             let (px, py) = (cursor + x, BASELINE_Y + y);
             match role {
                 Role::Smooth => {
-                    ctx.fill(Color::rgb(24, 184, 111));
+                    ctx.fill(color::green_muted());
                     ctx.oval(px - 11.0, py - 11.0, 22.0, 22.0);
                 }
                 Role::Corner => {
-                    ctx.fill(Color::rgb(255, 152, 15));
+                    ctx.fill(color::orange_bright());
                     ctx.rect(px - 10.0, py - 10.0, 20.0, 20.0);
                 }
                 Role::Off => {
-                    ctx.fill(Color::rgb(140, 108, 255));
+                    ctx.fill(color::purple());
                     ctx.oval(px - 8.0, py - 8.0, 16.0, 16.0);
                 }
             }
@@ -172,14 +197,9 @@ fn main() {
     }
 
     let renderer = Renderer::new(W as u32, H as u32);
-    let here = std::path::PathBuf::from(env!("CARGO_MANIFEST_DIR"));
-    let repo = here.parent().unwrap().parent().unwrap();
-    for out in [
-        repo.join("src/content/blog/virtua-grotesk/share-card.png"),
-        repo.join("public/og/virtua-grotesk.png"),
-    ] {
-        std::fs::create_dir_all(out.parent().unwrap()).unwrap();
-        renderer.render_to_png(&ctx, out.to_str().unwrap()).unwrap();
-        println!("wrote {}", out.display());
-    }
+    let out = std::path::PathBuf::from(env!("CARGO_MANIFEST_DIR"))
+        .join("build/legacy-card/share-card.png");
+    std::fs::create_dir_all(out.parent().unwrap()).unwrap();
+    renderer.render_to_png(&ctx, out.to_str().unwrap()).unwrap();
+    println!("wrote {}", out.display());
 }

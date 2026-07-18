@@ -28,16 +28,17 @@ fn ink(o: &Outline) -> (f64, f64) {
 }
 
 fn main() {
-    let home = std::env::var("HOME").unwrap();
-    let mono_path = format!("{home}/GH/repos/google-fonts/ofl/geistmono/GeistMono[wght].ttf");
-    let glyphs_dir = std::path::PathBuf::from(&home)
-        .join("GH/repos/virtua-grotesk/sources/VirtuaGrotesk-Regular.ufo/glyphs");
+    let mono_path = inputs::geist_mono();
+    let glyphs_dir = inputs::virtua_sources().join("VirtuaGrotesk-Regular.ufo/glyphs");
 
     let mut renderer = Renderer::new(W as u32, H as u32);
-    let mono = load_family(&mut renderer, &mono_path);
+    let mono = load_family(&mut renderer, mono_path.to_str().unwrap());
     let mut sheet = new_sheet(&renderer, &mono);
 
-    let outlines: Vec<Outline> = GLYPHS.iter().map(|g| load_outline(&glyphs_dir, g)).collect();
+    let outlines: Vec<Outline> = GLYPHS
+        .iter()
+        .map(|g| load_outline(&glyphs_dir, g))
+        .collect();
     let run: f64 = outlines.iter().map(|o| o.width).sum();
 
     const S: f64 = 1.0;
@@ -89,7 +90,13 @@ fn main() {
     let mut ox = 0.0;
     for (j, o) in outlines.iter().enumerate() {
         let (i0, i1) = ink(o);
-        advance_row(&mut sheet, &f, row_y(j as i64), &[(ox, o.width)], &[(i0, i1)]);
+        advance_row(
+            &mut sheet,
+            &f,
+            row_y(j as i64),
+            &[(ox, o.width)],
+            &[(i0, i1)],
+        );
         ox += o.width;
     }
 
@@ -102,17 +109,10 @@ fn main() {
 
     legend(&mut sheet, W - MARGIN - 16.0, f.baseline - 214.0);
 
-    sheet.hud_title(&[
-        "Virtua Grotesk",
-        "powers-of-two grid / upm 1024 = 2^10",
-    ]);
+    sheet.hud_title(&["Virtua Grotesk", "powers-of-two grid / upm 1024 = 2^10"]);
     sheet.attribution(Some("Regular 400 / SIL Open Font License (OFL) v1.1"));
 
-    let here = std::path::PathBuf::from(env!("CARGO_MANIFEST_DIR"));
-    let root = here.parent().unwrap().parent().unwrap();
-    sheet.save(
-        &renderer,
-        &root.join("src/content/blog/virtua-grotesk/share-card.png"),
-    );
-    sheet.save(&renderer, &root.join("public/og/virtua-grotesk.png"));
+    let outputs = OutputPaths::from_args();
+    sheet.save(&renderer, &outputs.blog("share-card.png"));
+    sheet.save(&renderer, &outputs.og("virtua-grotesk.png"));
 }

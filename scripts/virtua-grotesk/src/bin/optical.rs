@@ -12,7 +12,6 @@
 //!
 //! Writes ../../src/content/blog/virtua-grotesk/fig-optical-correction.png.
 
-use designbot::prelude::*;
 use designbot_render::Renderer;
 use kurbo::{Affine, BezPath};
 #[allow(unused_imports)]
@@ -21,11 +20,10 @@ use virtua_grotesk_figures::*;
 const UNIT: f64 = 13.0; // canvas px per unit: 8-cell = 104px, 2-cell = 26px
 
 fn main() {
-    let home = std::env::var("HOME").unwrap();
-    let mono_path = format!("{home}/GH/repos/google-fonts/ofl/geistmono/GeistMono[wght].ttf");
+    let mono_path = inputs::geist_mono();
 
     let mut renderer = Renderer::new(W as u32, H as u32);
-    let mono = load_family(&mut renderer, &mono_path);
+    let mono = load_family(&mut renderer, mono_path.to_str().unwrap());
     let mut sheet = new_sheet(&renderer, &mono);
 
     // arch geometry, in units: on-curve ends + apex, extremum handles
@@ -54,9 +52,9 @@ fn main() {
             let x = origin_x + u as f64 * UNIT;
             if x >= MARGIN && x <= W - MARGIN {
                 if u.rem_euclid(8) == 0 {
-                    ctx.stroke(grid()).stroke_width(PEN_LIGHT);
+                    ctx.stroke(role::grid::standard()).stroke_width(PEN_LIGHT);
                 } else {
-                    ctx.stroke(Color::rgb(0x1a, 0x1a, 0x1a)).stroke_width(1.5);
+                    ctx.stroke(role::grid::faint()).stroke_width(line::FINE);
                 }
                 ctx.line(x, y0, x, y1);
             }
@@ -66,9 +64,9 @@ fn main() {
         while v <= 80 {
             let y = origin_y + v as f64 * UNIT;
             if v.rem_euclid(8) == 0 {
-                ctx.stroke(grid()).stroke_width(PEN_LIGHT);
+                ctx.stroke(role::grid::standard()).stroke_width(PEN_LIGHT);
             } else {
-                ctx.stroke(Color::rgb(0x1a, 0x1a, 0x1a)).stroke_width(1.5);
+                ctx.stroke(role::grid::faint()).stroke_width(line::FINE);
             }
             ctx.line(MARGIN, y, W - MARGIN, y);
             v += 2;
@@ -77,7 +75,11 @@ fn main() {
 
     // handles
     for (on, off) in [(l, l_up), (t, t_left), (t, t_right), (r, r_up)] {
-        sheet.ctx.no_fill().stroke(handle_color()).stroke_width(PEN_LIGHT);
+        sheet
+            .ctx
+            .no_fill()
+            .stroke(role::bezier::handles())
+            .stroke_width(PEN_LIGHT);
         sheet.ctx.line(cx(on.0), cy(on.1), cx(off.0), cy(off.1));
     }
 
@@ -88,7 +90,11 @@ fn main() {
         path.curve_to(l_up, t_left, t);
         path.curve_to(t_right, r_up, r);
         let to_canvas = Affine::translate((origin_x, origin_y)) * Affine::scale(UNIT);
-        sheet.ctx.no_fill().stroke(curve_color()).stroke_width(5.0);
+        sheet
+            .ctx
+            .no_fill()
+            .stroke(role::bezier::curve())
+            .stroke_width(line::HEAVY);
         sheet.ctx.draw_path(to_canvas * path);
     }
 
@@ -104,7 +110,11 @@ fn main() {
     ] {
         let color = if on8(p.0, p.1) { green() } else { red() };
         let (px, py) = (cx(p.0), cy(p.1));
-        sheet.ctx.fill(bg()).stroke(color).stroke_width(PEN);
+        sheet
+            .ctx
+            .fill(role::canvas::background())
+            .stroke(color)
+            .stroke_width(PEN);
         match role {
             PtRole::Smooth => {
                 sheet.ctx.oval(px - 11.0, py - 11.0, 22.0, 22.0);
@@ -136,12 +146,6 @@ fn main() {
     ]);
     sheet.attribution(None);
 
-    let here = std::path::PathBuf::from(env!("CARGO_MANIFEST_DIR"));
-    let out = here
-        .parent()
-        .unwrap()
-        .parent()
-        .unwrap()
-        .join("src/content/blog/virtua-grotesk/fig-optical-correction.png");
-    sheet.save(&renderer, &out);
+    let outputs = OutputPaths::from_args();
+    sheet.save(&renderer, &outputs.blog("fig-optical-correction.png"));
 }

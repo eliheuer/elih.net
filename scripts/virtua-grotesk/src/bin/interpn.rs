@@ -14,6 +14,12 @@ use kurbo::{Affine, PathEl, Point};
 #[allow(unused_imports)]
 use virtua_grotesk_figures::*;
 
+// --- figure style -----------------------------------------------------------
+// Geometry specific to this figure. Colors live in the shared palette in
+// lib.rs so the same named colors can be reused by other figures.
+
+const GLYPH_FILL_ALPHA: u8 = 34;
+
 fn snap2(v: f64) -> f64 {
     (v / 2.0).round() * 2.0
 }
@@ -66,14 +72,13 @@ fn interp(a: &Outline, b: &Outline, t: f64) -> Outline {
 }
 
 fn main() {
-    let home = std::env::var("HOME").unwrap();
-    let mono_path = format!("{home}/GH/repos/google-fonts/ofl/geistmono/GeistMono[wght].ttf");
-    let sources = std::path::PathBuf::from(&home).join("GH/repos/virtua-grotesk/sources");
+    let mono_path = inputs::geist_mono();
+    let sources = inputs::virtua_sources();
     let reg_dir = sources.join("VirtuaGrotesk-Regular.ufo/glyphs");
     let bold_dir = sources.join("VirtuaGrotesk-Bold.ufo/glyphs");
 
     let mut renderer = Renderer::new(W as u32, H as u32);
-    let mono = load_family(&mut renderer, &mono_path);
+    let mono = load_family(&mut renderer, mono_path.to_str().unwrap());
     let mut sheet = new_sheet(&renderer, &mono);
 
     let n_reg = load_outline(&reg_dir, "n");
@@ -81,7 +86,7 @@ fn main() {
 
     let weights: [(f64, &str, i64); 3] = [
         (0.0, "Regular", 96),
-        (0.5, "1/2", 144),
+        (0.5, "midpoint\ninterpolation", 144),
         (1.0, "Bold", 192),
     ];
     let cols = weights.len() as f64;
@@ -95,11 +100,15 @@ fn main() {
     let ink_h = 584.0; // baseline..x-height+overshoot
     let baseline = ((H - ink_h * s) / 2.0 / gp).round() * gp - gp;
     let edge = 72.0; // horizontal inset for the outlines
-    let grid = Color::rgb(0x2c, 0x2c, 0x2c);
+    let grid = gray_825();
 
     // uniform 8-unit grid, phase 0 so lines coincide with every edge;
     // the edge lines themselves are skipped (they'd double the image border)
-    sheet.ctx.no_fill().stroke(grid).stroke_width(PEN_LIGHT);
+    sheet
+        .ctx
+        .no_fill()
+        .stroke(grid)
+        .stroke_width(role::line::GRID);
     let mut gx = gp;
     while gx <= W - gp + 0.1 {
         sheet.ctx.line(gx, 0.0, gx, H);
@@ -113,7 +122,10 @@ fn main() {
 
     let _ = edge;
     // precompute the three outlines and their ink extents
-    let outs: Vec<Outline> = weights.iter().map(|(t, _, _)| interp(&n_reg, &n_bold, *t)).collect();
+    let outs: Vec<Outline> = weights
+        .iter()
+        .map(|(t, _, _)| interp(&n_reg, &n_bold, *t))
+        .collect();
     let ink: Vec<(f64, f64)> = outs
         .iter()
         .map(|o| {
@@ -135,11 +147,10 @@ fn main() {
     let mut lab = Labeler::new();
 
     // one hue per weight so the overlapping outlines stay distinct
-    let hues = [
-        Color::rgb(0xff, 0x45, 0x35), // Regular: red
-        Color::rgb(0xff, 0x98, 0x22), // 1/2: orange
-        Color::rgb(0xff, 0xd2, 0x3c), // Bold: yellow
-    ];
+    let hues = [orange(), yellow(), green()];
+    let handle = ultramarine();
+    let structure_point = purple();
+    let correction_point = red();
     for (i, o) in outs.iter().enumerate() {
         let (il, ir) = ink[i];
         let x0 = origins[i];
@@ -147,24 +158,48 @@ fn main() {
         let place = Affine::new([s, 0.0, 0.0, s, x0, baseline]);
         let canvas_path = place * o.path.clone();
         lab.ink(canvas_path.clone());
-        let (hr, hg, hb) = (hues[i].r, hues[i].g, hues[i].b);
-        sheet.ctx
-            .fill(Color::rgba(hr, hg, hb, 34))
+        sheet
+            .ctx
+            .fill(with_alpha(hues[i], GLYPH_FILL_ALPHA))
             .stroke(hues[i])
-            .stroke_width(PEN);
+            .stroke_width(role::line::STANDARD);
         sheet.ctx.draw_path(place * o.path.clone());
-        draw_points_handle_stroke(&mut sheet, o, s, x0, baseline, purple());
+        // Handles stay blue; structural points are purple; corrections red.
+        draw_points_colored(
+            &mut sheet,
+            o,
+            s,
+            x0,
+            baseline,
+            handle,
+            structure_point,
+            correction_point,
+        );
 
         let stem = weights[i].2 as f64;
         let ink_w = ir - il;
         // dimensions in the glyph's own hue so spans read as belonging to it
-        dim_arrow(&mut sheet, &mut lab, x0 + il * s, x0 + (il + stem) * s,
-                  baseline + 200.0 * s, &fmt_val(stem as i64), hues[i]);
+        dim_arrow(
+            &mut sheet,
+            &mut lab,
+            x0 + il * s,
+            x0 + (il + stem) * s,
+            baseline + 200.0 * s,
+            &fmt_val(stem as i64),
+            hues[i],
+        );
         let counter = (ink_w - 2.0 * stem) as i64;
-        dim_arrow(&mut sheet, &mut lab, x0 + (il + stem) * s, x0 + (ir - stem) * s,
-                  baseline + 260.0 * s, &fmt_val(counter), hues[i]);
+        dim_arrow(
+            &mut sheet,
+            &mut lab,
+            x0 + (il + stem) * s,
+            x0 + (ir - stem) * s,
+            baseline + 260.0 * s,
+            &fmt_val(counter),
+            hues[i],
+        );
 
-        // handle lengths (purple, like the system sheets): the four longest
+        // Handle-length labels use the same blue as the handle geometry.
         let mut hl: Vec<(f64, f64, f64, f64, f64)> = o
             .handles
             .iter()
@@ -175,13 +210,13 @@ fn main() {
             .collect();
         hl.sort_by(|a, b| b.0.total_cmp(&a.0));
         let glyph_ctr = (il + ir) / 2.0;
-        for (len, ax, ay, hx, hy) in hl.into_iter().take(2) {
+        for (len, ax, ay, hx, hy) in hl.into_iter() {
             lab.marker(x0 + hx * s, baseline + hy * s);
             let (mx, my) = ((ax + hx) / 2.0, (ay + hy) / 2.0);
             let (cmx, cmy) = (x0 + mx * s, baseline + my * s);
             let dir = outward_dir(&canvas_path, cmx, cmy, 26.0);
             lab.anchor(cmx, cmy);
-            lab.queue(cmx, cmy, dir, fmt_val(len.round() as i64), purple(), false, i);
+            lab.queue(cmx, cmy, dir, fmt_val(len.round() as i64), handle, false, i);
         }
 
         // longest axis-aligned line segments, length + sum in the glyph hue
@@ -190,7 +225,10 @@ fn main() {
         let mut start = cur;
         for el in o.path.elements() {
             match el {
-                PathEl::MoveTo(pt) => { cur = (pt.x, pt.y); start = cur; }
+                PathEl::MoveTo(pt) => {
+                    cur = (pt.x, pt.y);
+                    start = cur;
+                }
                 PathEl::LineTo(pt) => {
                     let nxt = (pt.x, pt.y);
                     if (nxt.0 - cur.0).abs() < 0.01 || (nxt.1 - cur.1).abs() < 0.01 {
@@ -209,9 +247,21 @@ fn main() {
         segs.sort_by(|a, b| b.0.total_cmp(&a.0));
         for (len, ax, ay, bx, by) in segs.into_iter().take(if i == 0 { 1 } else { 0 }) {
             let (mx, my) = ((ax + bx) / 2.0, (ay + by) / 2.0);
-            let dir = if mx < glyph_ctr { (1.0, 0.0) } else { (-1.0, 0.0) };
+            let dir = if mx < glyph_ctr {
+                (1.0, 0.0)
+            } else {
+                (-1.0, 0.0)
+            };
             let (cmx, cmy) = (x0 + mx * s, baseline + my * s);
-            lab.queue(cmx, cmy, dir, fmt_val(len.round() as i64), hues[i], false, i);
+            lab.queue(
+                cmx,
+                cmy,
+                dir,
+                fmt_val(len.round() as i64),
+                hues[i],
+                false,
+                i,
+            );
         }
 
         // queue a coordinate for EVERY on-curve point; placed after the
@@ -222,27 +272,37 @@ fn main() {
             let cpt = (x0 + px * s, baseline + py * s);
             lab.anchor(cpt.0, cpt.1);
             let dir = outward_dir(&canvas_path, cpt.0, cpt.1, 26.0);
-            lab.queue(cpt.0, cpt.1, dir, format!("{},{}", *px as i64, *py as i64), gray(), true, i);
+            lab.queue(
+                cpt.0,
+                cpt.1,
+                dir,
+                format!("{},{}", *px as i64, *py as i64),
+                gray(),
+                true,
+                i,
+            );
         }
-
 
         // weight label inside the counter, above the baseline
         let wl_x = x0 + (il + ink_w / 2.0) * s;
-        let wl_y = baseline + 56.0 * s;
-        sheet.label_padded(weights[i].1, wl_x, wl_y, LABEL_TEXT, dim_color(), 0);
-        lab.obstacle_text(wl_x, wl_y, LABEL_TEXT, weights[i].1);
-
+        let mut wl_y = baseline + 56.0 * s;
+        for line in weights[i].1.split('\n').rev() {
+            sheet.label_padded(
+                line,
+                wl_x,
+                wl_y,
+                LABEL_TEXT,
+                role::annotation::dimensions(),
+                0,
+            );
+            lab.obstacle_text(wl_x, wl_y, LABEL_TEXT, line);
+            wl_y += LABEL_TEXT + 14.0;
+        }
     }
 
     // all queued labels placed simultaneously (annealing, lib.rs Labeler)
     lab.place_all(&mut sheet);
 
-    let here = std::path::PathBuf::from(env!("CARGO_MANIFEST_DIR"));
-    let post = here
-        .parent()
-        .unwrap()
-        .parent()
-        .unwrap()
-        .join("src/content/blog/virtua-grotesk");
-    sheet.save(&renderer, &post.join("fig-interp-outlines.png"));
+    let outputs = OutputPaths::from_args();
+    sheet.save(&renderer, &outputs.blog("fig-interp-outlines.png"));
 }

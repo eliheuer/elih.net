@@ -12,8 +12,8 @@
 //!
 //!     cd scripts/virtua-grotesk && cargo run --release --bin figs
 //!
-//! Inputs (sibling checkout); repoint the glyphs in main() at a fresh run:
-//!     ~/GH/repos/font-garden-lab/runs/v02/complete-R.svg
+//! Inputs are pinned in inputs.rs:
+//!     ~/GH/repos/font-garden-lab/runs/v08/complete-R.svg
 //!     ~/GH/repos/font-garden-lab/runs/night1/bolden-g.svg
 //!     ~/GH/repos/google-fonts/ofl/geistmono/GeistMono[wght].ttf
 
@@ -59,9 +59,9 @@ impl Role {
     /// (fill, stroke), fills kept ~40% so the grid reads through, like og.rs.
     fn colors(self) -> (Color, Color) {
         match self {
-            Role::Reference => (Color::rgba(0x8a, 0x8a, 0x8a, 90), gray()),
-            Role::Given => (Color::rgba(0x15, 0xc4, 0x74, 110), green()),
-            Role::Model => (Color::rgba(0xff, 0x45, 0x35, 104), red()),
+            Role::Reference => (with_alpha(gray(), 90), gray()),
+            Role::Given => (with_alpha(green(), 110), green()),
+            Role::Model => (with_alpha(red(), 104), red()),
         }
     }
 }
@@ -106,7 +106,11 @@ fn parse_svg(path: &std::path::Path) -> Vec<Panel> {
         paths.push((d, fill));
     }
 
-    assert_eq!(labels.len(), paths.len(), "label/path count mismatch in {path:?}");
+    assert_eq!(
+        labels.len(),
+        paths.len(),
+        "label/path count mismatch in {path:?}"
+    );
 
     labels
         .into_iter()
@@ -156,7 +160,9 @@ fn render_figure(
     let grid_left = MARGIN - ((MARGIN % step + step) % step);
     {
         let ctx = &mut sheet.ctx;
-        ctx.no_fill().stroke(grid()).stroke_width(2.0);
+        ctx.no_fill()
+            .stroke(role::grid::standard())
+            .stroke_width(line::THIN);
         let mut x = grid_left;
         while x <= W - MARGIN {
             ctx.line(x, grid_bottom, x, grid_top);
@@ -215,7 +221,7 @@ fn render_figure(
     // ── mask glyph spill at the grid box (no clip API; bg is solid) ──
     {
         let ctx = &mut sheet.ctx;
-        ctx.fill(bg()).no_stroke();
+        ctx.fill(role::canvas::background()).no_stroke();
         ctx.rect(0.0, 0.0, W, grid_bottom);
         ctx.rect(0.0, grid_top, W, H - grid_top);
         ctx.rect(0.0, 0.0, MARGIN, H);
@@ -239,30 +245,32 @@ fn render_figure(
         sheet.metric_tag("descender -256", grid_left, baseline_y - 256.0, true, -1);
     }
 
-    sheet.label_padded(title, MARGIN + 2.0, MARGIN + 4.0 + SMALL_TEXT + 14.0, FRAME_TEXT, green(), -1);
+    sheet.label_padded(
+        title,
+        MARGIN + 2.0,
+        MARGIN + 4.0 + SMALL_TEXT + 14.0,
+        FRAME_TEXT,
+        green(),
+        -1,
+    );
     sheet.label_padded(caption, MARGIN + 2.0, MARGIN + 4.0, SMALL_TEXT, green(), -1);
     sheet.attribution(Some(right));
 
     std::fs::create_dir_all(out.parent().unwrap()).unwrap();
-    renderer.render_to_png(&sheet.ctx, out.to_str().unwrap()).unwrap();
+    renderer
+        .render_to_png(&sheet.ctx, out.to_str().unwrap())
+        .unwrap();
     println!("wrote {}", out.display());
 }
 
 fn main() {
-    let home = std::env::var("HOME").unwrap();
-    let lab = std::path::PathBuf::from(&home).join("GH/repos/font-garden-lab");
-    let mono_path = format!("{home}/GH/repos/google-fonts/ofl/geistmono/GeistMono[wght].ttf");
+    let lab = inputs::font_garden();
+    let mono_path = inputs::geist_mono();
 
     let mut renderer = Renderer::new(W as u32, H as u32);
-    let mono = load_family(&mut renderer, &mono_path);
+    let mono = load_family(&mut renderer, mono_path.to_str().unwrap());
 
-    let here = std::path::PathBuf::from(env!("CARGO_MANIFEST_DIR"));
-    let post = here
-        .parent()
-        .unwrap()
-        .parent()
-        .unwrap()
-        .join("src/content/blog/virtua-grotesk");
+    let outputs = OutputPaths::from_args();
 
     // (eval SVG under font-garden-lab, output PNG, header, footer caption).
     // The model panels come from whichever eval run last covered the glyph;
@@ -283,7 +291,7 @@ fn main() {
     };
     let figures = [
         (
-            "runs/v08/complete-R.svg",
+            inputs::COMPLETION_SVG,
             "fig-complete-r.png",
             &cap_geom,
             "Glyph completion",
@@ -291,7 +299,7 @@ fn main() {
             "the model finishes a held-out glyph from 40% of its outline",
         ),
         (
-            "runs/night1/bolden-g.svg",
+            inputs::BOLDEN_SVG,
             "fig-bolden-g.png",
             &desc_geom,
             "Weight transfer",
@@ -302,6 +310,15 @@ fn main() {
 
     for (svg, png, geom, title, right, caption) in figures {
         let panels = parse_svg(&lab.join(svg));
-        render_figure(&renderer, &mono, &panels, geom, title, right, caption, &post.join(png));
+        render_figure(
+            &renderer,
+            &mono,
+            &panels,
+            geom,
+            title,
+            right,
+            caption,
+            &outputs.blog(png),
+        );
     }
 }

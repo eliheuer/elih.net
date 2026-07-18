@@ -1,22 +1,9 @@
-//! The shared design system for every Virtua Grotesk post figure.
+//! Shared drawing mechanics for every Virtua Grotesk post figure.
 //!
-//! One palette, one frame, one annotation engine. The bins under src/bin/
-//! import everything from here, so a figure cannot drift from the family
-//! by construction; `check_margins.py` lints the rendered output against
-//! the same spec.
-//!
-//! FRAME (2520 x 1320, the 1.91:1 social-card ratio):
-//!   - outermost ink exactly MARGIN (64) from every canvas edge
-//!   - green rules at FOOTER_RULE_Y / HEADER_RULE_Y (112 / 1208)
-//!   - frame text (34px mono caps) exactly 24px off its rule
-//!   - content block equidistant from the two rules and the side margins
-//!
-//! PEN (the social treatment, from the OG card's "heavier pen" pass):
-//!   - PEN 3.0 for rules, metric lines, dimensions, glyph contours
-//!   - PEN_LIGHT 2.0 for the background grid and bezier handles
-//!   - two glyph fill strengths: fill() for annotated technical sheets
-//!     (grid and point colors read through), fill_strong() for hero
-//!     compositions like the OG card
+//! Visual decisions live in `style.rs`: base color swatches, line and type
+//! scales, and semantic role mappings. This file owns reusable mechanics:
+//! UFO loading, frames, labels, dimensions, point markers, and collision-aware
+//! annotation placement. Binaries under `src/bin/` own content and layout.
 //!
 //! POINT LANGUAGE (the key innovation, drawn not told):
 //!   - circle = smooth on-curve, square = corner, small circle = off-curve
@@ -26,74 +13,80 @@
 use designbot::prelude::*;
 use designbot_render::Renderer;
 use kurbo::{Affine, BezPath, Point as KPoint, Shape};
+use std::path::{Path, PathBuf};
 
-// --- frame ------------------------------------------------------------------------
-
-pub const W: f64 = 2520.0;
-pub const H: f64 = 1320.0;
-pub const MARGIN: f64 = 64.0;
-// Frameless spec: content runs to MARGIN on all four sides. The old rule
-// constants now name the content-zone bounds so existing centering math
-// expands to full bleed automatically.
-pub const HEADER_RULE_Y: f64 = H - MARGIN; // content zone top
-pub const FOOTER_RULE_Y: f64 = MARGIN; // content zone bottom
-
-// --- pen + type scale ---------------------------------------------------------------
-
-pub const PEN: f64 = 3.0; // rules, metric lines, dims, contours
-pub const PEN_LIGHT: f64 = 2.0; // background grid, handles
-pub const FRAME_TEXT: f64 = 34.0; // title / caption rows
-pub const TAG_TEXT: f64 = 30.0; // blue metric tags
-pub const DIM_TEXT: f64 = 30.0; // dimension numbers
-pub const LABEL_TEXT: f64 = 28.0; // panel / pair labels
-pub const LEGEND_TEXT: f64 = 26.0; // legends, callouts
-pub const SMALL_TEXT: f64 = 24.0; // coordinates, handle lengths
-
-// --- palette ------------------------------------------------------------------------
-
-pub fn bg() -> Color {
-    Color::rgb(0x10, 0x10, 0x10)
-}
-pub fn grid() -> Color {
-    Color::rgb(0x28, 0x28, 0x28)
-}
-pub fn green() -> Color {
-    Color::rgb(0x15, 0xc4, 0x74)
-}
-pub fn red() -> Color {
-    Color::rgb(0xff, 0x45, 0x35)
-}
-pub fn blue() -> Color {
-    Color::rgb(0x4a, 0x78, 0xff)
-}
-pub fn gray() -> Color {
-    Color::rgb(0x8a, 0x8a, 0x8a)
-}
-pub fn dim_color() -> Color {
-    Color::rgb(0x5a, 0x5a, 0x5a)
-}
-pub fn purple() -> Color {
-    Color::rgb(0x8c, 0x6c, 0xff)
-}
-pub fn handle_color() -> Color {
-    Color::rgb(0x6a, 0x6a, 0x6a)
-}
-pub fn curve_color() -> Color {
-    Color::rgb(230, 230, 230)
-}
-
-/// Translucent fill for annotated technical sheets.
-pub fn fill_of(stroke: Color) -> Color {
-    Color::rgba(stroke.r, stroke.g, stroke.b, 64)
-}
-/// Rich fill for hero compositions (the OG card's vibrance).
-pub fn fill_strong(stroke: Color) -> Color {
-    Color::rgba(stroke.r, stroke.g, stroke.b, 104)
-}
+pub mod inputs;
+pub mod style;
+pub use style::*;
 
 /// Handle lengths worth calling out: the values the system actually
 /// reuses (all with high 2-adic valuation or stem-adjacent).
 pub const FAVORED: [f64; 7] = [64.0, 96.0, 128.0, 160.0, 192.0, 224.0, 256.0];
+
+// --- output ownership ---------------------------------------------------------------
+
+/// Output paths for a figure binary.
+///
+/// Renders go to the ignored build directory by default. Passing `--publish`
+/// is the only way a generator may overwrite an asset used by the site.
+pub struct OutputPaths {
+    repo_root: PathBuf,
+    preview_root: PathBuf,
+    publish: bool,
+}
+
+impl OutputPaths {
+    pub fn from_args() -> Self {
+        let mut publish = false;
+        for arg in std::env::args().skip(1) {
+            match arg.as_str() {
+                "--preview" => publish = false,
+                "--publish" => publish = true,
+                _ => panic!("unknown argument {arg:?}; use --preview or --publish"),
+            }
+        }
+
+        let manifest = PathBuf::from(env!("CARGO_MANIFEST_DIR"));
+        let repo_root = manifest
+            .parent()
+            .and_then(Path::parent)
+            .expect("figure crate must live at scripts/virtua-grotesk")
+            .to_path_buf();
+        let preview_root = manifest.join("build/preview");
+        println!(
+            "output mode: {}",
+            if publish {
+                "PUBLISH (tracked site assets)"
+            } else {
+                "preview (ignored build directory)"
+            }
+        );
+
+        Self {
+            repo_root,
+            preview_root,
+            publish,
+        }
+    }
+
+    pub fn blog(&self, filename: &str) -> PathBuf {
+        if self.publish {
+            self.repo_root
+                .join("src/content/blog/virtua-grotesk")
+                .join(filename)
+        } else {
+            self.preview_root.join("blog").join(filename)
+        }
+    }
+
+    pub fn og(&self, filename: &str) -> PathBuf {
+        if self.publish {
+            self.repo_root.join("public/og").join(filename)
+        } else {
+            self.preview_root.join("og").join(filename)
+        }
+    }
+}
 
 // --- UFO outline loading, components resolved ----------------------------------------
 
@@ -123,11 +116,20 @@ pub fn glif_name(glyph: &str) -> String {
     s + ".glif"
 }
 
-fn push_on_curve(points: &mut Vec<(f64, f64, PtRole)>, p: &norad::ContourPoint, k: usize, n: usize) {
+fn push_on_curve(
+    points: &mut Vec<(f64, f64, PtRole)>,
+    p: &norad::ContourPoint,
+    k: usize,
+    n: usize,
+) {
     if k == n {
         return;
     }
-    let role = if p.smooth { PtRole::Smooth } else { PtRole::Corner };
+    let role = if p.smooth {
+        PtRole::Smooth
+    } else {
+        PtRole::Corner
+    };
     points.push((p.x, p.y, role));
 }
 
@@ -147,7 +149,11 @@ pub fn load_outline(glyphs_dir: &std::path::Path, name: &str) -> Outline {
         };
         let sp = &pts[start];
         path.move_to((sp.x, sp.y));
-        let role = if sp.smooth { PtRole::Smooth } else { PtRole::Corner };
+        let role = if sp.smooth {
+            PtRole::Smooth
+        } else {
+            PtRole::Corner
+        };
         points.push((sp.x, sp.y, role));
         let mut prev_on = (sp.x, sp.y);
         let mut pending: Vec<(f64, f64)> = Vec::new();
@@ -261,7 +267,7 @@ pub fn new_sheet<'a>(renderer: &'a Renderer, mono: &str) -> Sheet<'a> {
         renderer,
         mono: mono.to_string(),
     };
-    sheet.ctx.background(bg());
+    sheet.ctx.background(role::canvas::background());
     sheet
 }
 
@@ -296,7 +302,7 @@ impl Sheet<'_> {
             0 => x - w / 2.0,
             _ => x - w,
         };
-        self.ctx.fill(bg()).no_stroke();
+        self.ctx.fill(role::canvas::background()).no_stroke();
         self.ctx
             .rect(x0 - pad, y - 0.28 * size, w + 2.0 * pad, 1.3 * size);
         self.label(txt, x0, y, size, color, -1);
@@ -309,8 +315,15 @@ impl Sheet<'_> {
         let box_w = ((w + 16.0) / 16.0).ceil() * 16.0;
         let box_h = 32.0;
         let x0 = if align < 0 { x_edge } else { x_edge - box_w };
-        let y0 = if above { y_line + 16.0 } else { y_line - box_h - 16.0 };
-        self.ctx.fill(bg()).stroke(blue()).stroke_width(PEN);
+        let y0 = if above {
+            y_line + 16.0
+        } else {
+            y_line - box_h - 16.0
+        };
+        self.ctx
+            .fill(role::canvas::background())
+            .stroke(blue())
+            .stroke_width(PEN);
         self.ctx.rect(x0, y0, box_w, box_h);
         let baseline = y0 + (box_h - 0.73 * size) / 2.0;
         self.label(txt, x0 + box_w / 2.0, baseline, size, blue(), 0);
@@ -319,7 +332,7 @@ impl Sheet<'_> {
     /// Diagonal hatching clipped to a rect (the sidebearing texture).
     pub fn hatch(&mut self, x0: f64, y0: f64, x1: f64, y1: f64, color: Color) {
         let h = y1 - y0;
-        self.ctx.stroke(color).stroke_width(2.5).no_fill();
+        self.ctx.stroke(color).stroke_width(line::MEDIUM).no_fill();
         let step = 6.0;
         let mut t = x0 - h;
         while t < x1 {
@@ -414,7 +427,9 @@ pub fn draw_grid(sheet: &mut Sheet, f: &Frame, top_u: f64, bottom_u: f64) {
     let step = 16.0 * f.s;
     let (y0, y1) = (f.y(bottom_u), f.y(top_u));
     let ctx = &mut sheet.ctx;
-    ctx.no_fill().stroke(grid()).stroke_width(PEN_LIGHT);
+    ctx.no_fill()
+        .stroke(role::grid::standard())
+        .stroke_width(PEN_LIGHT);
     let mut x = f.x(0.0) - ((f.x(0.0) - MARGIN) / step).floor() * step;
     while x <= W - MARGIN {
         ctx.line(x, y0, x, y1);
@@ -467,7 +482,14 @@ pub fn advance_row(
             green(),
             0,
         );
-        sheet.label(&format!("{}", ink0.round()), ix0 + 10.0, y + 26.0, LEGEND_TEXT, red(), -1);
+        sheet.label(
+            &format!("{}", ink0.round()),
+            ix0 + 10.0,
+            y + 26.0,
+            LEGEND_TEXT,
+            red(),
+            -1,
+        );
         sheet.label(
             &format!("{}", (adv - ink1).round()),
             ix1 - 10.0,
@@ -491,23 +513,34 @@ pub fn draw_body(sheet: &mut Sheet, o: &Outline, s: f64, x0: f64, baseline: f64)
     let place = Affine::new([s, 0.0, 0.0, s, x0, baseline]);
     sheet
         .ctx
-        .fill(Color::rgba(190, 190, 190, 36))
-        .stroke(Color::rgb(0xbe, 0xbe, 0xbe))
+        .fill(with_alpha(gray_200(), 36))
+        .stroke(gray_200())
         .stroke_width(PEN);
     sheet.ctx.draw_path(place * o.path.clone());
 }
 
 /// Glyph body in an arbitrary color with the rich hero fill.
-pub fn draw_body_strong(sheet: &mut Sheet, o: &Outline, s: f64, x0: f64, baseline: f64, color: Color) {
+pub fn draw_body_strong(
+    sheet: &mut Sheet,
+    o: &Outline,
+    s: f64,
+    x0: f64,
+    baseline: f64,
+    color: Color,
+) {
     let place = Affine::new([s, 0.0, 0.0, s, x0, baseline]);
-    sheet.ctx.fill(fill_strong(color)).stroke(color).stroke_width(PEN);
+    sheet
+        .ctx
+        .fill(fill_strong(color))
+        .stroke(color)
+        .stroke_width(PEN);
     sheet.ctx.draw_path(place * o.path.clone());
 }
 
 /// Handles + point markers colored by GRID LEVEL: green on the 8-unit
 /// machine grid, red off 8 (the human's 2-unit optical corrections).
 pub fn draw_points(sheet: &mut Sheet, o: &Outline, s: f64, x0: f64, baseline: f64) {
-    draw_points_handle_stroke(sheet, o, s, x0, baseline, handle_color());
+    draw_points_handle_stroke(sheet, o, s, x0, baseline, role::bezier::handles());
 }
 
 /// draw_points with a chosen handle-line color (e.g. purple to match
@@ -520,6 +553,21 @@ pub fn draw_points_handle_stroke(
     baseline: f64,
     stroke: Color,
 ) {
+    draw_points_colored(sheet, o, s, x0, baseline, stroke, green(), red());
+}
+
+/// Full control over the point language colors: handle stroke, on-8
+/// marker color, off-8 marker color.
+pub fn draw_points_colored(
+    sheet: &mut Sheet,
+    o: &Outline,
+    s: f64,
+    x0: f64,
+    baseline: f64,
+    stroke: Color,
+    on8_col: Color,
+    off8_col: Color,
+) {
     sheet.ctx.no_fill().stroke(stroke).stroke_width(PEN_LIGHT);
     for ((ax, ay), (hx, hy)) in &o.handles {
         sheet.ctx.line(
@@ -530,15 +578,30 @@ pub fn draw_points_handle_stroke(
         );
     }
     for (px, py, role) in &o.points {
-        let color = if on8(*px, *py) { green() } else { red() };
-        marker(sheet, x0 + px * s, baseline + py * s, *role, color);
+        let (color, fill) = if on8(*px, *py) {
+            (on8_col, role::canvas::background())
+        } else {
+            (off8_col, off8_col) // corrections draw solid
+        };
+        marker_with_fill(sheet, x0 + px * s, baseline + py * s, *role, color, fill);
     }
 }
 
 /// Handles + point markers in one color (for role-colored sheets like the
 /// model review, where color means input/output/reference instead).
-pub fn draw_points_mono(sheet: &mut Sheet, o: &Outline, s: f64, x0: f64, baseline: f64, color: Color) {
-    sheet.ctx.no_fill().stroke(handle_color()).stroke_width(PEN_LIGHT);
+pub fn draw_points_mono(
+    sheet: &mut Sheet,
+    o: &Outline,
+    s: f64,
+    x0: f64,
+    baseline: f64,
+    color: Color,
+) {
+    sheet
+        .ctx
+        .no_fill()
+        .stroke(role::bezier::handles())
+        .stroke_width(PEN_LIGHT);
     for ((ax, ay), (hx, hy)) in &o.handles {
         sheet.ctx.line(
             x0 + ax * s,
@@ -553,7 +616,11 @@ pub fn draw_points_mono(sheet: &mut Sheet, o: &Outline, s: f64, x0: f64, baselin
 }
 
 fn marker(sheet: &mut Sheet, cx: f64, cy: f64, role: PtRole, color: Color) {
-    sheet.ctx.fill(bg()).stroke(color).stroke_width(PEN);
+    marker_with_fill(sheet, cx, cy, role, color, role::canvas::background());
+}
+
+fn marker_with_fill(sheet: &mut Sheet, cx: f64, cy: f64, role: PtRole, color: Color, fill: Color) {
+    sheet.ctx.fill(fill).stroke(color).stroke_width(PEN);
     match role {
         PtRole::Smooth => {
             sheet.ctx.oval(cx - 8.0, cy - 8.0, 16.0, 16.0);
@@ -580,7 +647,14 @@ pub fn handle_labels(sheet: &mut Sheet, o: &Outline, s: f64, x0: f64, baseline: 
             let ly = if *ay >= 440.0 { my - 30.0 } else { my + 12.0 };
             sheet.label_padded(&format!("{len}"), mx, ly, SMALL_TEXT, purple(), 0);
         } else {
-            sheet.label_padded(&format!("{len}"), mx + 14.0, my - 7.0, SMALL_TEXT, purple(), -1);
+            sheet.label_padded(
+                &format!("{len}"),
+                mx + 14.0,
+                my - 7.0,
+                SMALL_TEXT,
+                purple(),
+                -1,
+            );
         }
     }
 }
@@ -629,8 +703,7 @@ pub fn extrema_labels(sheet: &mut Sheet, o: &Outline, s: f64, x0: f64, baseline:
             _ => anchor,
         };
         tx = tx.clamp(MARGIN + 10.0, W - MARGIN - 10.0 - w);
-        let ty = (baseline + p.1 * s + dxy.1)
-            .clamp(MARGIN + 8.0, H - MARGIN - SMALL_TEXT);
+        let ty = (baseline + p.1 * s + dxy.1).clamp(MARGIN + 8.0, H - MARGIN - SMALL_TEXT);
         sheet.label_padded(&txt, tx, ty, SMALL_TEXT, gray(), -1);
     }
 }
@@ -656,16 +729,28 @@ pub fn legend(sheet: &mut Sheet, x_right: f64, y: f64) {
     let dot1 = x1 - 26.0;
     sheet.label(t2, x2, y, size, red(), -1);
     sheet.label(t1, x1, y, size, green(), -1);
-    sheet.ctx.fill(bg()).stroke(red()).stroke_width(PEN);
+    sheet
+        .ctx
+        .fill(role::canvas::background())
+        .stroke(red())
+        .stroke_width(PEN);
     sheet.ctx.oval(dot2, y + 1.0, 15.0, 15.0);
-    sheet.ctx.fill(bg()).stroke(green()).stroke_width(PEN);
+    sheet
+        .ctx
+        .fill(role::canvas::background())
+        .stroke(green())
+        .stroke_width(PEN);
     sheet.ctx.oval(dot1, y + 1.0, 15.0, 15.0);
 }
 
 /// A blue knockout node circle at a line intersection (the little circles
 /// where cell dividers meet rules and dimension rows).
 pub fn node(sheet: &mut Sheet, x: f64, y: f64, r: f64) {
-    sheet.ctx.fill(bg()).stroke(blue()).stroke_width(PEN);
+    sheet
+        .ctx
+        .fill(role::canvas::background())
+        .stroke(blue())
+        .stroke_width(PEN);
     sheet.ctx.oval(x - r, y - r, r * 2.0, r * 2.0);
 }
 
@@ -752,12 +837,11 @@ pub fn outward_dir(path: &BezPath, x: f64, y: f64, r: f64) -> (f64, f64) {
         }
     }
     let n = (sx * sx + sy * sy).sqrt();
-    if n < 1e-6 { (0.0, -1.0) } else { (sx / n, sy / n) }
-}
-
-fn rot(d: (f64, f64), deg: f64) -> (f64, f64) {
-    let a = deg.to_radians();
-    (d.0 * a.cos() - d.1 * a.sin(), d.0 * a.sin() + d.1 * a.cos())
+    if n < 1e-6 {
+        (0.0, -1.0)
+    } else {
+        (sx / n, sy / n)
+    }
 }
 
 pub struct Labeler {
@@ -776,7 +860,13 @@ impl Default for Labeler {
 
 impl Labeler {
     pub fn new() -> Self {
-        Labeler { placed: Vec::new(), ink: Vec::new(), anchors: Vec::new(), markers: Vec::new(), queued: Vec::new() }
+        Labeler {
+            placed: Vec::new(),
+            ink: Vec::new(),
+            anchors: Vec::new(),
+            markers: Vec::new(),
+            queued: Vec::new(),
+        }
     }
 
     fn text_w(txt: &str) -> f64 {
@@ -791,7 +881,8 @@ impl Labeler {
     /// Register already-drawn centered text as an obstacle.
     pub fn obstacle_text(&mut self, cx: f64, y: f64, size: f64, txt: &str) {
         let w = txt.len() as f64 * size * 0.62 + 18.0;
-        self.placed.push((cx - w / 2.0, y - 10.0, cx + w / 2.0, y + size + 12.0));
+        self.placed
+            .push((cx - w / 2.0, y - 10.0, cx + w / 2.0, y + size + 12.0));
     }
 
     /// Register a glyph outline (canvas coordinates) labels must not cover.
@@ -825,7 +916,9 @@ impl Labeler {
             KPoint::new(r.2, r.3),
             KPoint::new((r.0 + r.2) / 2.0, (r.1 + r.3) / 2.0),
         ];
-        self.ink.iter().any(|p| probes.iter().any(|pt| p.contains(*pt)))
+        self.ink
+            .iter()
+            .any(|p| probes.iter().any(|pt| p.contains(*pt)))
     }
 
     /// Queue a label for simultaneous placement (see `place_all`).
@@ -845,7 +938,8 @@ impl Labeler {
         avoid_ink: bool,
         owner: usize,
     ) {
-        self.queued.push((px, py, dir, txt, color, avoid_ink, owner));
+        self.queued
+            .push((px, py, dir, txt, color, avoid_ink, owner));
     }
 
     /// Place every queued label at once by simulated annealing over
@@ -892,15 +986,21 @@ impl Labeler {
                     let r = (cx - w / 2.0, cy - 10.0, cx + w / 2.0, cy + 26.0);
                     let dbg = std::env::var("DEBUG_LABELS").is_ok() && txt == "64,16" && gi < 2;
                     if r.0 < 6.0 || r.2 > W - 6.0 || r.1 < 6.0 || r.3 > H - 6.0 {
-                        if dbg { eprintln!("  rej canvas k={k} gi={gi} c=({cx:.0},{cy:.0})"); }
+                        if dbg {
+                            eprintln!("  rej canvas k={k} gi={gi} c=({cx:.0},{cy:.0})");
+                        }
                         continue;
                     }
                     if self.overlaps(r) {
-                        if dbg { eprintln!("  rej fixed  k={k} gi={gi} c=({cx:.0},{cy:.0})"); }
+                        if dbg {
+                            eprintln!("  rej fixed  k={k} gi={gi} c=({cx:.0},{cy:.0})");
+                        }
                         continue; // fixed obstacles are hard constraints
                     }
                     if *avoid_ink && self.ink_hit(r) {
-                        if dbg { eprintln!("  rej ink    k={k} gi={gi} c=({cx:.0},{cy:.0})"); }
+                        if dbg {
+                            eprintln!("  rej ink    k={k} gi={gi} c=({cx:.0},{cy:.0})");
+                        }
                         continue;
                     }
                     // hard rule: a label box never covers any drawn marker
@@ -908,8 +1008,10 @@ impl Labeler {
                     // already keeps the box off it)
                     if self.markers.iter().any(|(mx, my)| {
                         ((mx - px).abs() > 0.1 || (my - py).abs() > 0.1)
-                            && *mx > r.0 - 10.0 && *mx < r.2 + 10.0
-                            && *my > r.1 - 10.0 && *my < r.3 + 10.0
+                            && *mx > r.0 - 10.0
+                            && *mx < r.2 + 10.0
+                            && *my > r.1 - 10.0
+                            && *my < r.3 + 10.0
                     }) {
                         if std::env::var("DEBUG_LABELS").is_ok() && txt == "64,16" && gi < 2 {
                             eprintln!("  rej marker k={k} gi={gi} c=({cx:.0},{cy:.0})");
@@ -932,9 +1034,7 @@ impl Labeler {
                         if in_other_col && !in_own_col {
                             cost += 400.0;
                         }
-                        if cx > bb.x0 && cx < bb.x1
-                            && cy + 8.0 > bb.y0 && cy + 8.0 < bb.y1
-                        {
+                        if cx > bb.x0 && cx < bb.x1 && cy + 8.0 > bb.y0 && cy + 8.0 < bb.y1 {
                             cost += 500.0;
                         }
                     }
@@ -947,7 +1047,12 @@ impl Labeler {
                             cost += 140.0;
                         }
                     }
-                    list.push(Cand { x: cx, y: cy, rect: r, cost });
+                    list.push(Cand {
+                        x: cx,
+                        y: cy,
+                        rect: r,
+                        cost,
+                    });
                 }
             }
             if std::env::var("DEBUG_LABELS").is_ok() && txt == "64,16" {
@@ -956,8 +1061,7 @@ impl Labeler {
                     eprintln!("  ({:>5.0},{:>5.0}) cost {:>6.1}", c.x, c.y, c.cost);
                 }
             }
-            {
-            }
+            {}
             cands.push(list);
         }
 
@@ -965,9 +1069,7 @@ impl Labeler {
         let n = reqs.len();
         let mut pick: Vec<Option<usize>> = cands
             .iter()
-            .map(|l| {
-                (0..l.len()).min_by(|a, b| l[*a].cost.total_cmp(&l[*b].cost))
-            })
+            .map(|l| (0..l.len()).min_by(|a, b| l[*a].cost.total_cmp(&l[*b].cost)))
             .collect();
         let isect = |a: (f64, f64, f64, f64), b: (f64, f64, f64, f64)| {
             a.0 < b.2 && b.0 < a.2 && a.1 < b.3 && b.1 < a.3
@@ -992,7 +1094,9 @@ impl Labeler {
         // simulated annealing, deterministic LCG
         let mut rng: u64 = 0x9E3779B97F4A7C15;
         let mut next = |m: usize| -> usize {
-            rng = rng.wrapping_mul(6364136223846793005).wrapping_add(1442695040888963407);
+            rng = rng
+                .wrapping_mul(6364136223846793005)
+                .wrapping_add(1442695040888963407);
             ((rng >> 33) as usize) % m.max(1)
         };
         let mut temp = 2600.0f64; // hot enough to hop over one overlap
@@ -1036,7 +1140,8 @@ impl Labeler {
         });
         for i in order {
             let free_vs_kept = |ci: usize, kept: &Vec<(usize, usize)>| {
-                kept.iter().all(|(j, cj)| !isect(cands[i][ci].rect, cands[*j][*cj].rect))
+                kept.iter()
+                    .all(|(j, cj)| !isect(cands[i][ci].rect, cands[*j][*cj].rect))
             };
             let chosen = match pick[i] {
                 Some(ci) if free_vs_kept(ci, &kept) => Some(ci),
@@ -1062,10 +1167,7 @@ impl Labeler {
         if std::env::var("DEBUG_LABELS").is_ok() {
             for i in 0..n {
                 let chosen = pick[i].map(|c| cands[i][c].cost);
-                let best = cands[i]
-                    .iter()
-                    .map(|c| c.cost)
-                    .fold(f64::MAX, f64::min);
+                let best = cands[i].iter().map(|c| c.cost).fold(f64::MAX, f64::min);
                 if let Some(ch) = chosen {
                     if ch > best + 60.0 {
                         eprintln!(
