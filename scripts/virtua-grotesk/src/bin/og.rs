@@ -1,7 +1,7 @@
 //! OG / share card for the Virtua Grotesk post: the word "Grid" at 1:1
 //! (one font unit = one canvas pixel at scale 1), on the family frame with
-//! the full point language — green points on the 8-unit machine grid, red
-//! points off 8 on the 2-unit human grid. Hero fill (fill_strong), the
+//! the full point language — forest-teal points on the 8-unit machine grid,
+//! red points off 8 on the 2-unit human grid. Hero fill (fill_strong), the
 //! design grid, vertical metrics, and the advance/sidebearing dimension
 //! zone below the baseline.
 //!
@@ -23,12 +23,24 @@ const TITLE: &str = "Virtua Grotesk: Grid Systems as Datasets";
 // EDIT HERE: composition controls. Measurements remain close to the baseline
 // so the outlines can use more of the canvas without losing drawing detail.
 const SCALE: f64 = 1.18;
+// Temporarily enable this while art directing positions in exact grid units.
+// Set it back to false for the final image.
 const SHOW_BACKGROUND_GRID: bool = false;
+// Social platforms add their own title treatment over the lower part of the
+// card. Keep this false for the share image; it remains available for variants.
+const SHOW_TITLE: bool = false;
+const STROKE_WIDTH: f64 = line::HERO;
+const POINT_SIZE: f64 = 20.0;
+const GLYPH_FILL_ALPHA: u8 = 220;
 const STRUCTURE_GRID_UNIT: f64 = 8.0;
-const MAJOR_GRID_UNIT: f64 = 32.0;
+const BACKGROUND_GRID_UNIT: f64 = 64.0;
 const TOP_OVERSHOOT: f64 = 784.0;
-const MEASUREMENT_ROW_BOTTOM: f64 = 180.0;
-const MEASUREMENT_ROW_GAP: f64 = 36.0;
+const MEASUREMENT_ROW_OFFSETS: [f64; 4] = [0.0, 0.0, 0.0, 0.0];
+const MEASUREMENT_LABEL_OFFSET: f64 = 30.0;
+const MEASUREMENT_EDGE_LABEL_INSET: f64 = 18.0;
+const MEASUREMENT_TEXT_SIZE: f64 = 40.0;
+const MEASUREMENT_TEXT_WEIGHT: f32 = 550.0;
+const TITLE_BASELINE_OFFSET: f64 = 16.0;
 
 fn ink(o: &Outline) -> (f64, f64) {
     let mut lo = f64::INFINITY;
@@ -40,13 +52,54 @@ fn ink(o: &Outline) -> (f64, f64) {
     (lo, hi)
 }
 
-fn mix_color(start: Color, end: Color, t: f64) -> Color {
-    let channel = |a: u8, b: u8| (a as f64 + (b as f64 - a as f64) * t).round() as u8;
-    Color::rgb(
-        channel(start.r, end.r),
-        channel(start.g, end.g),
-        channel(start.b, end.b),
-    )
+/// A local, deliberately simple version of the arrow dimensions used in the
+/// n interpolation figure. Placement is controlled by the constants above.
+fn measurement_arrow(
+    sheet: &mut Sheet,
+    x0: f64,
+    x1: f64,
+    y: f64,
+    text: &str,
+    color: Color,
+    label_x: f64,
+    label_align: i8,
+) {
+    let span = (x1 - x0).abs();
+    let inset = (span * 0.10).clamp(3.0, 6.0);
+    let arrow = (span * 0.28).clamp(9.0, 20.0);
+    let (a, b) = (x0 + inset, x1 - inset);
+    sheet.ctx.no_fill().stroke(color).stroke_width(STROKE_WIDTH);
+    sheet.ctx.line(a, y, b, y);
+    for (tip, direction) in [(a, 1.0), (b, -1.0)] {
+        sheet
+            .ctx
+            .line(tip, y, tip + direction * arrow, y + arrow / 2.0);
+        sheet
+            .ctx
+            .line(tip, y, tip + direction * arrow, y - arrow / 2.0);
+    }
+    sheet.label_weighted(
+        text,
+        label_x,
+        y + MEASUREMENT_LABEL_OFFSET,
+        MEASUREMENT_TEXT_SIZE,
+        color,
+        label_align,
+        MEASUREMENT_TEXT_WEIGHT,
+    );
+}
+
+fn construction_node(sheet: &mut Sheet, x: f64, y: f64) {
+    marker_with_fill_sized(
+        sheet,
+        x,
+        y,
+        PtRole::Smooth,
+        role::og::construction(),
+        role::og::background(),
+        POINT_SIZE,
+        STROKE_WIDTH,
+    );
 }
 
 fn default_source_from_designspace(designspace_path: &Path) -> PathBuf {
@@ -75,27 +128,25 @@ fn default_source_from_designspace(designspace_path: &Path) -> PathBuf {
         .join(&source.filename)
 }
 
-/// The real source lattice: every 8 font units is visible, with every fourth
-/// line emphasized to retain the more legible 32-unit rhythm.
+/// A sparse background lattice linked to the source coordinate system.
 fn draw_edge_grid(sheet: &mut Sheet, f: &Frame) {
-    for (unit, color, width) in [
-        (STRUCTURE_GRID_UNIT, role::og::grid_minor(), line::HAIRLINE),
-        (MAJOR_GRID_UNIT, role::og::grid_major(), line::FINE),
-    ] {
-        let step = unit * f.s;
-        sheet.ctx.no_fill().stroke(color).stroke_width(width);
+    let step = BACKGROUND_GRID_UNIT * f.s;
+    sheet
+        .ctx
+        .no_fill()
+        .stroke(role::og::grid_minor())
+        .stroke_width(STROKE_WIDTH);
 
-        let mut x = f.x(0.0).rem_euclid(step);
-        while x < W {
-            sheet.ctx.line(x, 0.0, x, H);
-            x += step;
-        }
+    let mut x = f.x(0.0).rem_euclid(step);
+    while x < W {
+        sheet.ctx.line(x, 0.0, x, H);
+        x += step;
+    }
 
-        let mut y = f.y(0.0).rem_euclid(step);
-        while y < H {
-            sheet.ctx.line(0.0, y, W, y);
-            y += step;
-        }
+    let mut y = f.y(0.0).rem_euclid(step);
+    while y < H {
+        sheet.ctx.line(0.0, y, W, y);
+        y += step;
     }
 }
 
@@ -122,7 +173,7 @@ fn metric_lines_inside_run(sheet: &mut Sheet, f: &Frame, run: f64, solid: &[f64]
     let ctx = &mut sheet.ctx;
     ctx.no_fill()
         .stroke(role::og::construction())
-        .stroke_width(PEN);
+        .stroke_width(STROKE_WIDTH);
     ctx.line_dash(&[10.0, 10.0]);
     for &uy in dashed {
         ctx.line(x0, f.y(uy), x1, f.y(uy));
@@ -178,96 +229,154 @@ fn main() {
     if SHOW_BACKGROUND_GRID {
         draw_edge_grid(&mut sheet, &f);
     }
-    metric_lines_inside_run(&mut sheet, &f, run, &[0.0, 576.0, 768.0], &[784.0, -16.0]);
+    // Optically align the lower specimen boundary to the same margin as the
+    // other three sides, even though it sits slightly below the true descender.
+    let visual_descender = (side_margin - f.baseline) / f.s;
+    metric_lines_inside_run(
+        &mut sheet,
+        &f,
+        run,
+        &[0.0, 576.0, 768.0, visual_descender],
+        &[TOP_OVERSHOOT, -16.0],
+    );
 
     // advance-boundary cell dividers: each sort in its own cell, the
-    // divider dropping from the top overshoot down to the deeper of the
-    // two adjacent dimension rows, with knockout nodes at the ends
-    let row_y = |j: i64| {
-        if j % 2 == 0 {
-            MEASUREMENT_ROW_BOTTOM
-        } else {
-            MEASUREMENT_ROW_BOTTOM + MEASUREMENT_ROW_GAP
-        }
-    };
-    {
-        let mut bounds = vec![0.0];
-        let mut acc = 0.0;
-        for o in &outlines {
-            acc += o.width;
-            bounds.push(acc);
-        }
-        let n = outlines.len() as i64;
-        for (i, &b) in bounds.iter().enumerate() {
-            let i = i as i64;
-            let deepest = row_y(i.min(n - 1)).min(row_y((i - 1).clamp(0, n - 1)));
-            cell_dividers_colored(
-                &mut sheet,
-                &[f.x(b)],
-                f.y(784.0),
-                deepest,
-                role::og::construction(),
-                role::og::background(),
-            );
+    // divider spanning the optically balanced specimen box, with knockout
+    // nodes at the ends.
+    let mut bounds = vec![0.0];
+    let mut acc = 0.0;
+    for o in &outlines {
+        acc += o.width;
+        bounds.push(acc);
+    }
+    for &b in &bounds {
+        cell_dividers_colored(
+            &mut sheet,
+            &[f.x(b)],
+            f.y(TOP_OVERSHOOT),
+            side_margin,
+            role::og::construction(),
+            role::og::background(),
+            STROKE_WIDTH,
+        );
+    }
+
+    // One blue knockout node at every construction-line intersection,
+    // including both overshoot lines and the optically aligned bottom rule.
+    let metric_ys = [
+        f.y(TOP_OVERSHOOT),
+        f.y(768.0),
+        f.y(576.0),
+        f.y(0.0),
+        f.y(-16.0),
+        side_margin,
+    ];
+    for &b in &bounds {
+        for &y in &metric_ys {
+            construction_node(&mut sheet, f.x(b), y);
         }
     }
 
     // glyphs: hero fill + grid-level point language
-    let first_center = outlines.first().expect("at least one glyph").width / 2.0;
-    let last = outlines.last().expect("at least one glyph");
-    let last_center = run - last.width / 2.0;
+    let body_colors = [
+        role::og::gradient_1(),
+        role::og::gradient_2(),
+        role::og::gradient_3(),
+        role::og::gradient_4(),
+    ];
     let mut ox = 0.0;
-    for o in &outlines {
-        let center = ox + o.width / 2.0;
-        let t = ((center - first_center) / (last_center - first_center)).clamp(0.0, 1.0);
-        let body_color = mix_color(role::og::gradient_start(), role::og::gradient_end(), t);
-        draw_body_strong(&mut sheet, o, SCALE, f.x(ox), f.baseline, body_color);
-        draw_points_colored_on(
+    for (o, body_color) in outlines.iter().zip(body_colors) {
+        draw_body_styled(
             &mut sheet,
             o,
             SCALE,
             f.x(ox),
             f.baseline,
             body_color,
+            GLYPH_FILL_ALPHA,
+            role::og::construction(),
+            STROKE_WIDTH,
+        );
+        draw_points_styled(
+            &mut sheet,
+            o,
+            SCALE,
+            f.x(ox),
+            f.baseline,
+            role::og::construction(),
             role::og::structure_point(),
             role::og::correction_point(),
             role::og::background(),
+            PointStyle {
+                smooth_size: POINT_SIZE,
+                corner_size: POINT_SIZE,
+                off_curve_size: POINT_SIZE,
+                correction_filled: false,
+                stroke_width: STROKE_WIDTH,
+            },
         );
         ox += o.width;
     }
 
-    // advance / sidebearing dimension zone, staggered rows like a real sheet
+    // Locally placed arrow dimensions. The four row offsets above are
+    // intentionally direct art-direction controls.
+    let measurement_center = (side_margin + f.baseline) / 2.0;
     let mut ox = 0.0;
     for (j, o) in outlines.iter().enumerate() {
         let (i0, i1) = ink(o);
-        advance_row_colored(
+        let y = measurement_center + MEASUREMENT_ROW_OFFSETS[j];
+        let x0 = f.x(ox);
+        let xi0 = f.x(ox + i0);
+        let xi1 = f.x(ox + i1);
+        let x1 = f.x(ox + o.width);
+        measurement_arrow(
             &mut sheet,
-            &f,
-            row_y(j as i64),
-            &[(ox, o.width)],
-            &[(i0, i1)],
-            role::og::dimension_line(),
-            role::og::correction_point(),
+            x0,
+            xi0,
+            y,
+            &format!("{}", i0.round()),
             role::og::structure_point(),
-            role::og::correction_point(),
-            role::og::background(),
+            x0 + MEASUREMENT_EDGE_LABEL_INSET,
+            -1,
+        );
+        measurement_arrow(
+            &mut sheet,
+            xi0,
+            xi1,
+            y,
+            &format!("{}", (i1 - i0).round()),
+            role::og::structure_point(),
+            (xi0 + xi1) / 2.0,
+            0,
+        );
+        measurement_arrow(
+            &mut sheet,
+            xi1,
+            x1,
+            y,
+            &format!("{}", (o.width - i1).round()),
+            role::og::structure_point(),
+            x1 - MEASUREMENT_EDGE_LABEL_INSET,
+            1,
         );
         ox += o.width;
     }
 
-    // Fit the post title to the exact width of the outer blue boundaries.
-    // Its baseline uses the same inset as the top and side margins.
-    let title_width = f.x(run) - f.x(0.0);
-    let title_unit_width = renderer.text_width(TITLE, Some(&virtua), 1.0, &[]);
-    let title_size = title_width / title_unit_width;
-    sheet
-        .ctx
-        .font(&virtua)
-        .clear_font_variations()
-        .font_size(title_size)
-        .fill(role::og::title())
-        .text_align(TextAlign::Left)
-        .text(TITLE, f.x(0.0), side_margin);
+    if SHOW_TITLE {
+        // Fit the post title to the exact width of the outer blue boundaries.
+        // Its baseline uses the same inset as the top and side margins.
+        let title_width = f.x(run) - f.x(0.0);
+        let title_unit_width = renderer.text_width(TITLE, Some(&virtua), 1.0, &[]);
+        let title_size = title_width / title_unit_width;
+        sheet
+            .ctx
+            .font(&virtua)
+            .clear_font_variations()
+            .font_size(title_size)
+            .fill(role::og::title())
+            .text_align(TextAlign::Left)
+            .text(TITLE, f.x(0.0), side_margin + TITLE_BASELINE_OFFSET);
+    }
 
     let outputs = OutputPaths::from_args();
     sheet.save(&renderer, &outputs.blog("share-card.png"));

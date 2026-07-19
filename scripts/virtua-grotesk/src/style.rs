@@ -41,6 +41,7 @@ pub mod type_size {
     pub const MD: f64 = 28.0;
     pub const LG: f64 = 30.0;
     pub const XL: f64 = 34.0;
+    pub const XXL: f64 = 40.0;
 }
 
 // --- primitive color swatches ------------------------------------------------
@@ -131,7 +132,7 @@ pub mod color {
         Color::rgb(0xff, 0xd2, 0x3c)
     }
     pub fn red() -> Color {
-        Color::rgb(0xff, 0x45, 0x35)
+        Color::rgb(0xff, 0x4a, 0x35)
     }
     pub fn blue() -> Color {
         Color::rgb(0x4a, 0x78, 0xff)
@@ -154,34 +155,34 @@ pub mod og_color {
     use super::Color;
 
     pub fn gray_950() -> Color {
-        Color::rgb(0x10, 0x10, 0x10)
+        Color::rgb(0x12, 0x12, 0x12)
     }
     pub fn gray_350() -> Color {
-        Color::rgb(0x8a, 0x8a, 0x8a)
+        Color::rgb(0x92, 0x92, 0x8e)
     }
     pub fn gray_200() -> Color {
-        Color::rgb(0xbe, 0xbe, 0xbe)
+        Color::rgb(0xf2, 0xed, 0xe4)
     }
     pub fn gray_850() -> Color {
-        Color::rgb(0x28, 0x28, 0x28)
+        Color::rgb(0x34, 0x34, 0x34)
     }
     pub fn gray_625() -> Color {
-        Color::rgb(0x42, 0x42, 0x42)
-    }
-    pub fn green() -> Color {
-        Color::rgb(0x15, 0xc4, 0x74)
+        Color::rgb(0x50, 0x50, 0x50)
     }
     pub fn red() -> Color {
-        Color::rgb(0xff, 0x45, 0x35)
+        Color::rgb(0xff, 0x2c, 0x2b)
     }
     pub fn blue() -> Color {
         Color::rgb(0x4a, 0x78, 0xff)
     }
-    pub fn orange_red() -> Color {
-        Color::rgb(0xff, 0x6f, 0x1f)
+    pub fn orange() -> Color {
+        Color::rgb(0xff, 0x85, 0x28)
     }
-    pub fn orange_yellow() -> Color {
-        Color::rgb(0xff, 0xad, 0x2e)
+    pub fn yellow() -> Color {
+        Color::rgb(0xff, 0xd3, 0x3f)
+    }
+    pub fn leaf_green() -> Color {
+        Color::rgb(0x23, 0xad, 0x73)
     }
 }
 
@@ -194,10 +195,10 @@ pub mod role {
         use super::super::{og_color, Color};
 
         pub fn background() -> Color {
-            og_color::gray_950()
+            og_color::gray_350()
         }
         pub fn title() -> Color {
-            og_color::gray_200()
+            og_color::gray_950()
         }
         pub fn dimension_line() -> Color {
             og_color::gray_350()
@@ -209,19 +210,31 @@ pub mod role {
             og_color::gray_625()
         }
         pub fn structure_point() -> Color {
-            og_color::green()
+            og_color::gray_950()
         }
         pub fn correction_point() -> Color {
+            og_color::gray_950()
+        }
+        pub fn glyph() -> Color {
+            og_color::yellow()
+        }
+        pub fn measurement_accent() -> Color {
             og_color::red()
         }
         pub fn construction() -> Color {
-            og_color::blue()
+            og_color::gray_850()
         }
-        pub fn gradient_start() -> Color {
-            og_color::orange_red()
+        pub fn gradient_1() -> Color {
+            og_color::red()
         }
-        pub fn gradient_end() -> Color {
-            og_color::orange_yellow()
+        pub fn gradient_2() -> Color {
+            og_color::orange()
+        }
+        pub fn gradient_3() -> Color {
+            og_color::yellow()
+        }
+        pub fn gradient_4() -> Color {
+            og_color::leaf_green()
         }
     }
 

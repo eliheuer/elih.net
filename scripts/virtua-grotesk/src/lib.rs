@@ -277,9 +277,31 @@ impl Sheet<'_> {
         self.renderer.text_width(txt, Some(&self.mono), size, &[])
     }
 
+    pub fn mono_width_weighted(&self, txt: &str, size: f64, weight: f32) -> f64 {
+        self.renderer.text_width(
+            txt,
+            Some(&self.mono),
+            size,
+            &[(u32::from_be_bytes(*b"wght"), weight)],
+        )
+    }
+
     /// Mono label with its baseline at y. align: -1 left, 0 center, 1 right.
     pub fn label(&mut self, txt: &str, x: f64, y: f64, size: f64, color: Color, align: i8) {
-        let w = self.mono_width(txt, size);
+        self.label_weighted(txt, x, y, size, color, align, 400.0);
+    }
+
+    pub fn label_weighted(
+        &mut self,
+        txt: &str,
+        x: f64,
+        y: f64,
+        size: f64,
+        color: Color,
+        align: i8,
+        weight: f32,
+    ) {
+        let w = self.mono_width_weighted(txt, size, weight);
         let x = match align {
             -1 => x,
             0 => x - w / 2.0,
@@ -288,6 +310,7 @@ impl Sheet<'_> {
         self.ctx
             .font(&self.mono)
             .clear_font_variations()
+            .font_variation("wght", weight)
             .font_size(size)
             .fill(color)
             .text_align(TextAlign::Left)
@@ -310,7 +333,21 @@ impl Sheet<'_> {
         align: i8,
         background: Color,
     ) {
-        let w = self.mono_width(txt, size);
+        self.label_padded_weighted_on(txt, x, y, size, color, align, background, 400.0);
+    }
+
+    pub fn label_padded_weighted_on(
+        &mut self,
+        txt: &str,
+        x: f64,
+        y: f64,
+        size: f64,
+        color: Color,
+        align: i8,
+        background: Color,
+        weight: f32,
+    ) {
+        let w = self.mono_width_weighted(txt, size, weight);
         let pad = 8.0;
         let x0 = match align {
             -1 => x,
@@ -320,7 +357,7 @@ impl Sheet<'_> {
         self.ctx.fill(background).no_stroke();
         self.ctx
             .rect(x0 - pad, y - 0.28 * size, w + 2.0 * pad, 1.3 * size);
-        self.label(txt, x0, y, size, color, -1);
+        self.label_weighted(txt, x0, y, size, color, -1, weight);
     }
 
     /// Metric-line tag docked on a line. align: -1 left edge, 1 right edge.
@@ -346,8 +383,20 @@ impl Sheet<'_> {
 
     /// Diagonal hatching clipped to a rect (the sidebearing texture).
     pub fn hatch(&mut self, x0: f64, y0: f64, x1: f64, y1: f64, color: Color) {
+        self.hatch_with_width(x0, y0, x1, y1, color, line::MEDIUM);
+    }
+
+    pub fn hatch_with_width(
+        &mut self,
+        x0: f64,
+        y0: f64,
+        x1: f64,
+        y1: f64,
+        color: Color,
+        width: f64,
+    ) {
         let h = y1 - y0;
-        self.ctx.stroke(color).stroke_width(line::MEDIUM).no_fill();
+        self.ctx.stroke(color).stroke_width(width).no_fill();
         let step = 6.0;
         let mut t = x0 - h;
         while t < x1 {
@@ -491,6 +540,10 @@ pub fn advance_row(
         green(),
         red(),
         role::canvas::background(),
+        PEN,
+        line::MEDIUM,
+        DIM_TEXT,
+        400.0,
     );
 }
 
@@ -506,40 +559,53 @@ pub fn advance_row_colored(
     value_color: Color,
     bearing_color: Color,
     background: Color,
+    stroke_width: f64,
+    hatch_width: f64,
+    text_size: f64,
+    text_weight: f32,
 ) {
     for ((origin, adv), (ink0, ink1)) in glyphs.iter().zip(inks) {
         let (bx0, bx1) = (f.x(*origin), f.x(origin + adv));
         let (ix0, ix1) = (f.x(*ink0 + origin), f.x(*ink1 + origin));
-        sheet.ctx.no_fill().stroke(line_color).stroke_width(PEN);
+        sheet
+            .ctx
+            .no_fill()
+            .stroke(line_color)
+            .stroke_width(stroke_width);
         sheet.ctx.line(bx0, y, bx1, y);
         sheet.ctx.line(bx0, y - 20.0, bx0, y + 20.0);
         sheet.ctx.line(bx1, y - 20.0, bx1, y + 20.0);
-        sheet.hatch(bx0, y - 14.0, ix0, y + 14.0, hatch_color);
-        sheet.hatch(ix1, y - 14.0, bx1, y + 14.0, hatch_color);
-        sheet.label_padded_on(
+        sheet.hatch_with_width(bx0, y - 14.0, ix0, y + 14.0, hatch_color, hatch_width);
+        sheet.hatch_with_width(ix1, y - 14.0, bx1, y + 14.0, hatch_color, hatch_width);
+        sheet.label_padded_weighted_on(
             &format!("{}", (ink1 - ink0).round()),
             (ix0 + ix1) / 2.0,
             y - 10.0,
-            DIM_TEXT,
+            text_size,
             value_color,
             0,
             background,
+            text_weight,
         );
-        sheet.label(
+        sheet.label_padded_weighted_on(
             &format!("{}", ink0.round()),
-            ix0 + 10.0,
+            (bx0 + ix0) / 2.0,
             y + 26.0,
-            LEGEND_TEXT,
+            text_size,
             bearing_color,
-            -1,
+            0,
+            background,
+            text_weight,
         );
-        sheet.label(
+        sheet.label_padded_weighted_on(
             &format!("{}", (adv - ink1).round()),
-            ix1 - 10.0,
+            (ix1 + bx1) / 2.0,
             y + 26.0,
-            LEGEND_TEXT,
+            text_size,
             bearing_color,
-            1,
+            0,
+            background,
+            text_weight,
         );
     }
 }
@@ -549,6 +615,23 @@ pub fn advance_row_colored(
 pub fn on8(x: f64, y: f64) -> bool {
     x.rem_euclid(8.0) == 0.0 && y.rem_euclid(8.0) == 0.0
 }
+
+#[derive(Clone, Copy)]
+pub struct PointStyle {
+    pub smooth_size: f64,
+    pub corner_size: f64,
+    pub off_curve_size: f64,
+    pub correction_filled: bool,
+    pub stroke_width: f64,
+}
+
+pub const DEFAULT_POINT_STYLE: PointStyle = PointStyle {
+    smooth_size: 16.0,
+    corner_size: 14.0,
+    off_curve_size: 11.0,
+    correction_filled: true,
+    stroke_width: PEN_LIGHT,
+};
 
 /// Glyph body with the technical (translucent) fill: light gray, so the
 /// semantic point colors (green machine / red hand) stay legible on top.
@@ -571,12 +654,62 @@ pub fn draw_body_strong(
     baseline: f64,
     color: Color,
 ) {
+    draw_body_strong_with_width(sheet, o, s, x0, baseline, color, PEN);
+}
+
+pub fn draw_body_strong_with_width(
+    sheet: &mut Sheet,
+    o: &Outline,
+    s: f64,
+    x0: f64,
+    baseline: f64,
+    color: Color,
+    stroke_width: f64,
+) {
+    draw_body_with_alpha_with_width(sheet, o, s, x0, baseline, color, 104, stroke_width);
+}
+
+pub fn draw_body_with_alpha_with_width(
+    sheet: &mut Sheet,
+    o: &Outline,
+    s: f64,
+    x0: f64,
+    baseline: f64,
+    color: Color,
+    fill_alpha: u8,
+    stroke_width: f64,
+) {
+    draw_body_styled(
+        sheet,
+        o,
+        s,
+        x0,
+        baseline,
+        color,
+        fill_alpha,
+        color,
+        stroke_width,
+    );
+}
+
+/// Glyph body with independently editable fill and outline colors.
+pub fn draw_body_styled(
+    sheet: &mut Sheet,
+    o: &Outline,
+    s: f64,
+    x0: f64,
+    baseline: f64,
+    fill_color: Color,
+    fill_alpha: u8,
+    stroke_color: Color,
+    stroke_width: f64,
+) {
     let place = Affine::new([s, 0.0, 0.0, s, x0, baseline]);
     sheet
         .ctx
-        .fill(fill_strong(color))
-        .stroke(color)
-        .stroke_width(PEN);
+        .fill(with_alpha(fill_color, fill_alpha))
+        .stroke(stroke_color)
+        .stroke_width(stroke_width);
     sheet.ctx.draw_path(place * o.path.clone());
 }
 
@@ -636,7 +769,37 @@ pub fn draw_points_colored_on(
     off8_col: Color,
     background: Color,
 ) {
-    sheet.ctx.no_fill().stroke(stroke).stroke_width(PEN_LIGHT);
+    draw_points_styled(
+        sheet,
+        o,
+        s,
+        x0,
+        baseline,
+        stroke,
+        on8_col,
+        off8_col,
+        background,
+        DEFAULT_POINT_STYLE,
+    );
+}
+
+pub fn draw_points_styled(
+    sheet: &mut Sheet,
+    o: &Outline,
+    s: f64,
+    x0: f64,
+    baseline: f64,
+    stroke: Color,
+    on8_col: Color,
+    off8_col: Color,
+    background: Color,
+    style: PointStyle,
+) {
+    sheet
+        .ctx
+        .no_fill()
+        .stroke(stroke)
+        .stroke_width(style.stroke_width);
     for ((ax, ay), (hx, hy)) in &o.handles {
         sheet.ctx.line(
             x0 + ax * s,
@@ -648,10 +811,26 @@ pub fn draw_points_colored_on(
     for (px, py, role) in &o.points {
         let (color, fill) = if on8(*px, *py) {
             (on8_col, background)
+        } else if style.correction_filled {
+            (off8_col, off8_col)
         } else {
-            (off8_col, off8_col) // corrections draw solid
+            (off8_col, background)
         };
-        marker_with_fill(sheet, x0 + px * s, baseline + py * s, *role, color, fill);
+        let size = match role {
+            PtRole::Smooth => style.smooth_size,
+            PtRole::Corner => style.corner_size,
+            PtRole::Off => style.off_curve_size,
+        };
+        marker_with_fill_sized(
+            sheet,
+            x0 + px * s,
+            baseline + py * s,
+            *role,
+            color,
+            fill,
+            size,
+            style.stroke_width,
+        );
     }
 }
 
@@ -695,16 +874,39 @@ pub fn marker_with_fill(
     color: Color,
     fill: Color,
 ) {
-    sheet.ctx.fill(fill).stroke(color).stroke_width(PEN);
+    let size = match role {
+        PtRole::Smooth => 16.0,
+        PtRole::Corner => 14.0,
+        PtRole::Off => 11.0,
+    };
+    marker_with_fill_sized(sheet, cx, cy, role, color, fill, size, PEN);
+}
+
+pub fn marker_with_fill_sized(
+    sheet: &mut Sheet,
+    cx: f64,
+    cy: f64,
+    role: PtRole,
+    color: Color,
+    fill: Color,
+    size: f64,
+    stroke_width: f64,
+) {
+    let half = size / 2.0;
+    sheet
+        .ctx
+        .fill(fill)
+        .stroke(color)
+        .stroke_width(stroke_width);
     match role {
         PtRole::Smooth => {
-            sheet.ctx.oval(cx - 8.0, cy - 8.0, 16.0, 16.0);
+            sheet.ctx.oval(cx - half, cy - half, size, size);
         }
         PtRole::Corner => {
-            sheet.ctx.rect(cx - 7.0, cy - 7.0, 14.0, 14.0);
+            sheet.ctx.rect(cx - half, cy - half, size, size);
         }
         PtRole::Off => {
-            sheet.ctx.oval(cx - 5.5, cy - 5.5, 11.0, 11.0);
+            sheet.ctx.oval(cx - half, cy - half, size, size);
         }
     }
 }
@@ -839,6 +1041,7 @@ pub fn cell_dividers(sheet: &mut Sheet, xs: &[f64], y_top: f64, y_bottom: f64) {
         y_bottom,
         blue(),
         role::canvas::background(),
+        PEN,
     );
 }
 
@@ -850,11 +1053,16 @@ pub fn cell_dividers_colored(
     y_bottom: f64,
     color: Color,
     background: Color,
+    stroke_width: f64,
 ) {
     for &x in xs {
-        sheet.ctx.no_fill().stroke(color).stroke_width(PEN);
+        sheet.ctx.no_fill().stroke(color).stroke_width(stroke_width);
         sheet.ctx.line(x, y_bottom, x, y_top);
-        sheet.ctx.fill(background).stroke(color).stroke_width(PEN);
+        sheet
+            .ctx
+            .fill(background)
+            .stroke(color)
+            .stroke_width(stroke_width);
         sheet.ctx.oval(x - 7.0, y_top - 7.0, 14.0, 14.0);
         sheet.ctx.oval(x - 7.0, y_bottom - 7.0, 14.0, 14.0);
     }
