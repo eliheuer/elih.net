@@ -42,6 +42,7 @@ pub mod type_size {
     pub const LG: f64 = 30.0;
     pub const XL: f64 = 34.0;
     pub const XXL: f64 = 40.0;
+    pub const XXXL: f64 = 44.0;
 }
 
 // --- primitive color swatches ------------------------------------------------
@@ -157,8 +158,17 @@ pub mod og_color {
     pub fn gray_950() -> Color {
         Color::rgb(0x12, 0x12, 0x12)
     }
+    pub fn gray_900() -> Color {
+        Color::rgb(0x23, 0x23, 0x23)
+    }
     pub fn gray_350() -> Color {
         Color::rgb(0x92, 0x92, 0x8e)
+    }
+    pub fn gray_300() -> Color {
+        Color::rgb(0xb8, 0xb8, 0xb3)
+    }
+    pub fn gray_225() -> Color {
+        Color::rgb(0xd8, 0xd8, 0xd2)
     }
     pub fn gray_200() -> Color {
         Color::rgb(0xf2, 0xed, 0xe4)
@@ -198,10 +208,10 @@ pub mod role {
             og_color::gray_350()
         }
         pub fn title() -> Color {
-            og_color::gray_950()
+            og_color::gray_900()
         }
         pub fn dimension_line() -> Color {
-            og_color::gray_350()
+            og_color::gray_900()
         }
         pub fn grid_minor() -> Color {
             og_color::gray_850()
@@ -210,10 +220,16 @@ pub mod role {
             og_color::gray_625()
         }
         pub fn structure_point() -> Color {
-            og_color::gray_950()
+            og_color::gray_900()
         }
         pub fn correction_point() -> Color {
-            og_color::gray_950()
+            og_color::gray_900()
+        }
+        pub fn structure_point_fill() -> Color {
+            og_color::gray_300()
+        }
+        pub fn correction_point_fill() -> Color {
+            og_color::gray_225()
         }
         pub fn glyph() -> Color {
             og_color::yellow()
@@ -222,7 +238,7 @@ pub mod role {
             og_color::red()
         }
         pub fn construction() -> Color {
-            og_color::gray_850()
+            og_color::gray_900()
         }
         pub fn gradient_1() -> Color {
             og_color::red()

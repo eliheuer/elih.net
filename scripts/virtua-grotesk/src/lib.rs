@@ -779,6 +779,7 @@ pub fn draw_points_colored_on(
         on8_col,
         off8_col,
         background,
+        background,
         DEFAULT_POINT_STYLE,
     );
 }
@@ -792,7 +793,8 @@ pub fn draw_points_styled(
     stroke: Color,
     on8_col: Color,
     off8_col: Color,
-    background: Color,
+    on8_fill: Color,
+    off8_fill: Color,
     style: PointStyle,
 ) {
     sheet
@@ -810,11 +812,11 @@ pub fn draw_points_styled(
     }
     for (px, py, role) in &o.points {
         let (color, fill) = if on8(*px, *py) {
-            (on8_col, background)
+            (on8_col, on8_fill)
         } else if style.correction_filled {
             (off8_col, off8_col)
         } else {
-            (off8_col, background)
+            (off8_col, off8_fill)
         };
         let size = match role {
             PtRole::Smooth => style.smooth_size,

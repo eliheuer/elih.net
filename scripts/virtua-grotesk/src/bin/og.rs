@@ -20,6 +20,132 @@ use virtua_grotesk_figures::*;
 const GLYPHS: &[&str] = &["G", "r", "i", "d"];
 const TITLE: &str = "Virtua Grotesk: Grid Systems as Datasets";
 
+#[derive(Clone, Copy)]
+struct GlyphMeasurement {
+    glyph: usize,
+    x0: f64,
+    y0: f64,
+    x1: f64,
+    y1: f64,
+    value: i64,
+    offset: f64,
+    end_inset: f64,
+    label_dx: f64,
+    label_dy: f64,
+    sum_dx: f64,
+    sum_dy: f64,
+}
+
+const POINT_MEASUREMENT_END_INSET: f64 = 20.0;
+const EDGE_MEASUREMENT_END_INSET: f64 = 10.0;
+const HORIZONTAL_VALUE_BASELINE_OFFSET: f64 = 16.0;
+const HORIZONTAL_SUM_BASELINE_OFFSET: f64 = -38.0;
+const VERTICAL_LABEL_GAP: f64 = 16.0;
+const VERTICAL_LABEL_BASELINE_OFFSET: f64 = -12.0;
+
+// EDIT HERE: individually placed glyph measurements in source-font units.
+// Each entry can move independently without changing any glyph geometry.
+const GLYPH_MEASUREMENTS: [GlyphMeasurement; 7] = [
+    GlyphMeasurement {
+        glyph: 0,
+        x0: 48.0,
+        y0: 384.0,
+        x1: 156.0,
+        y1: 384.0,
+        value: 108,
+        offset: 0.0,
+        end_inset: POINT_MEASUREMENT_END_INSET,
+        label_dx: 0.0,
+        label_dy: 0.0,
+        sum_dx: 0.0,
+        sum_dy: 0.0,
+    },
+    GlyphMeasurement {
+        glyph: 0,
+        x0: 560.0,
+        y0: 320.0,
+        x1: 560.0,
+        y1: 416.0,
+        value: 96,
+        offset: 0.0,
+        end_inset: EDGE_MEASUREMENT_END_INSET,
+        label_dx: 0.0,
+        label_dy: 0.0,
+        sum_dx: 0.0,
+        sum_dy: 0.0,
+    },
+    GlyphMeasurement {
+        glyph: 0,
+        x0: 664.0,
+        y0: 80.0,
+        x1: 760.0,
+        y1: 80.0,
+        value: 96,
+        offset: 0.0,
+        end_inset: EDGE_MEASUREMENT_END_INSET,
+        label_dx: 0.0,
+        label_dy: 0.0,
+        sum_dx: 0.0,
+        sum_dy: 0.0,
+    },
+    GlyphMeasurement {
+        glyph: 1,
+        x0: 64.0,
+        y0: 224.0,
+        x1: 160.0,
+        y1: 224.0,
+        value: 96,
+        offset: 0.0,
+        end_inset: EDGE_MEASUREMENT_END_INSET,
+        label_dx: 0.0,
+        label_dy: 0.0,
+        sum_dx: 0.0,
+        sum_dy: 0.0,
+    },
+    GlyphMeasurement {
+        glyph: 2,
+        x0: 64.0,
+        y0: 288.0,
+        x1: 160.0,
+        y1: 288.0,
+        value: 96,
+        offset: 0.0,
+        end_inset: EDGE_MEASUREMENT_END_INSET,
+        label_dx: 0.0,
+        label_dy: 0.0,
+        sum_dx: 0.0,
+        sum_dy: 0.0,
+    },
+    GlyphMeasurement {
+        glyph: 3,
+        x0: 32.0,
+        y0: 288.0,
+        x1: 132.0,
+        y1: 288.0,
+        value: 100,
+        offset: 0.0,
+        end_inset: POINT_MEASUREMENT_END_INSET,
+        label_dx: 0.0,
+        label_dy: 0.0,
+        sum_dx: 0.0,
+        sum_dy: 0.0,
+    },
+    GlyphMeasurement {
+        glyph: 3,
+        x0: 480.0,
+        y0: 680.0,
+        x1: 576.0,
+        y1: 680.0,
+        value: 96,
+        offset: 0.0,
+        end_inset: EDGE_MEASUREMENT_END_INSET,
+        label_dx: 0.0,
+        label_dy: 0.0,
+        sum_dx: 0.0,
+        sum_dy: 0.0,
+    },
+];
+
 // EDIT HERE: composition controls. Measurements remain close to the baseline
 // so the outlines can use more of the canvas without losing drawing detail.
 const SCALE: f64 = 1.18;
@@ -31,15 +157,17 @@ const SHOW_BACKGROUND_GRID: bool = false;
 const SHOW_TITLE: bool = false;
 const STROKE_WIDTH: f64 = line::HERO;
 const POINT_SIZE: f64 = 20.0;
-const GLYPH_FILL_ALPHA: u8 = 220;
+const GLYPH_FILL_ALPHA: u8 = 255;
 const STRUCTURE_GRID_UNIT: f64 = 8.0;
 const BACKGROUND_GRID_UNIT: f64 = 64.0;
 const TOP_OVERSHOOT: f64 = 784.0;
 const MEASUREMENT_ROW_OFFSETS: [f64; 4] = [0.0, 0.0, 0.0, 0.0];
 const MEASUREMENT_LABEL_OFFSET: f64 = 30.0;
 const MEASUREMENT_EDGE_LABEL_INSET: f64 = 18.0;
-const MEASUREMENT_TEXT_SIZE: f64 = 40.0;
+const MEASUREMENT_TEXT_SIZE: f64 = type_size::LG;
 const MEASUREMENT_TEXT_WEIGHT: f32 = 550.0;
+const GLYPH_MEASUREMENT_CAP_HALF_LENGTH: f64 = 12.0;
+const GLYPH_MEASUREMENT_LINE_GAP: f64 = 34.0;
 const TITLE_BASELINE_OFFSET: f64 = 16.0;
 
 fn ink(o: &Outline) -> (f64, f64) {
@@ -52,9 +180,9 @@ fn ink(o: &Outline) -> (f64, f64) {
     (lo, hi)
 }
 
-/// A local, deliberately simple version of the arrow dimensions used in the
-/// n interpolation figure. Placement is controlled by the constants above.
-fn measurement_arrow(
+/// Compact capped dimensions remain legible when a sidebearing is too narrow
+/// to contain opposing arrowheads. Placement uses the constants above.
+fn measurement_span(
     sheet: &mut Sheet,
     x0: f64,
     x1: f64,
@@ -64,20 +192,11 @@ fn measurement_arrow(
     label_x: f64,
     label_align: i8,
 ) {
-    let span = (x1 - x0).abs();
-    let inset = (span * 0.10).clamp(3.0, 6.0);
-    let arrow = (span * 0.28).clamp(9.0, 20.0);
-    let (a, b) = (x0 + inset, x1 - inset);
+    let tick = 12.0;
     sheet.ctx.no_fill().stroke(color).stroke_width(STROKE_WIDTH);
-    sheet.ctx.line(a, y, b, y);
-    for (tip, direction) in [(a, 1.0), (b, -1.0)] {
-        sheet
-            .ctx
-            .line(tip, y, tip + direction * arrow, y + arrow / 2.0);
-        sheet
-            .ctx
-            .line(tip, y, tip + direction * arrow, y - arrow / 2.0);
-    }
+    sheet.ctx.line(x0, y, x1, y);
+    sheet.ctx.line(x0, y - tick, x0, y + tick);
+    sheet.ctx.line(x1, y - tick, x1, y + tick);
     sheet.label_weighted(
         text,
         label_x,
@@ -89,6 +208,85 @@ fn measurement_arrow(
     );
 }
 
+fn glyph_measurement(sheet: &mut Sheet, f: &Frame, origin: f64, m: GlyphMeasurement) {
+    let p0 = (f.x(origin + m.x0), f.y(m.y0));
+    let p1 = (f.x(origin + m.x1), f.y(m.y1));
+    let dx = p1.0 - p0.0;
+    let dy = p1.1 - p0.1;
+    let length = (dx * dx + dy * dy).sqrt();
+    let direction = (dx / length, dy / length);
+    let normal = (-dy / length, dx / length);
+    let q0 = (
+        p0.0 + normal.0 * m.offset + direction.0 * m.end_inset,
+        p0.1 + normal.1 * m.offset + direction.1 * m.end_inset,
+    );
+    let q1 = (
+        p1.0 + normal.0 * m.offset - direction.0 * m.end_inset,
+        p1.1 + normal.1 * m.offset - direction.1 * m.end_inset,
+    );
+    let cap = GLYPH_MEASUREMENT_CAP_HALF_LENGTH;
+    let color = role::og::construction();
+    sheet.ctx.no_fill().stroke(color).stroke_width(STROKE_WIDTH);
+    sheet.ctx.line(q0.0, q0.1, q1.0, q1.1);
+    for q in [q0, q1] {
+        sheet.ctx.line(
+            q.0 - normal.0 * cap,
+            q.1 - normal.1 * cap,
+            q.0 + normal.0 * cap,
+            q.1 + normal.1 * cap,
+        );
+    }
+    let midpoint = ((q0.0 + q1.0) / 2.0, (q0.1 + q1.1) / 2.0);
+    let decomposition = p2sum(m.value);
+    let parts: Vec<&str> = decomposition.split('+').collect();
+    let sum_lines = if parts.len() > 2 {
+        vec![parts[..2].join("+"), format!("+{}", parts[2..].join("+"))]
+    } else {
+        vec![decomposition]
+    };
+
+    let horizontal = dx.abs() >= dy.abs();
+    let (value_x, value_y, value_align, sum_x, sum_y, sum_align) = if horizontal {
+        (
+            midpoint.0 + m.label_dx,
+            midpoint.1 + HORIZONTAL_VALUE_BASELINE_OFFSET + m.label_dy,
+            0,
+            midpoint.0 + m.sum_dx,
+            midpoint.1 + HORIZONTAL_SUM_BASELINE_OFFSET + m.sum_dy,
+            0,
+        )
+    } else {
+        (
+            midpoint.0 - VERTICAL_LABEL_GAP + m.label_dx,
+            midpoint.1 + VERTICAL_LABEL_BASELINE_OFFSET + m.label_dy,
+            1,
+            midpoint.0 + VERTICAL_LABEL_GAP + m.sum_dx,
+            midpoint.1 + VERTICAL_LABEL_BASELINE_OFFSET + m.sum_dy,
+            -1,
+        )
+    };
+    sheet.label_weighted(
+        &m.value.to_string(),
+        value_x,
+        value_y,
+        MEASUREMENT_TEXT_SIZE,
+        color,
+        value_align,
+        MEASUREMENT_TEXT_WEIGHT,
+    );
+    for (index, line) in sum_lines.iter().enumerate() {
+        sheet.label_weighted(
+            line,
+            sum_x,
+            sum_y - index as f64 * GLYPH_MEASUREMENT_LINE_GAP,
+            MEASUREMENT_TEXT_SIZE,
+            color,
+            sum_align,
+            MEASUREMENT_TEXT_WEIGHT,
+        );
+    }
+}
+
 fn construction_node(sheet: &mut Sheet, x: f64, y: f64) {
     marker_with_fill_sized(
         sheet,
@@ -96,7 +294,7 @@ fn construction_node(sheet: &mut Sheet, x: f64, y: f64) {
         y,
         PtRole::Smooth,
         role::og::construction(),
-        role::og::background(),
+        role::og::structure_point_fill(),
         POINT_SIZE,
         STROKE_WIDTH,
     );
@@ -256,12 +454,12 @@ fn main() {
             f.y(TOP_OVERSHOOT),
             side_margin,
             role::og::construction(),
-            role::og::background(),
+            role::og::structure_point_fill(),
             STROKE_WIDTH,
         );
     }
 
-    // One blue knockout node at every construction-line intersection,
+    // One knockout node at every construction-line intersection,
     // including both overshoot lines and the optically aligned bottom rule.
     let metric_ys = [
         f.y(TOP_OVERSHOOT),
@@ -306,7 +504,8 @@ fn main() {
             role::og::construction(),
             role::og::structure_point(),
             role::og::correction_point(),
-            role::og::background(),
+            role::og::structure_point_fill(),
+            role::og::correction_point_fill(),
             PointStyle {
                 smooth_size: POINT_SIZE,
                 corner_size: POINT_SIZE,
@@ -318,7 +517,11 @@ fn main() {
         ox += o.width;
     }
 
-    // Locally placed arrow dimensions. The four row offsets above are
+    for measurement in GLYPH_MEASUREMENTS {
+        glyph_measurement(&mut sheet, &f, bounds[measurement.glyph], measurement);
+    }
+
+    // Locally placed capped dimensions. The four row offsets above are
     // intentionally direct art-direction controls.
     let measurement_center = (side_margin + f.baseline) / 2.0;
     let mut ox = 0.0;
@@ -329,7 +532,7 @@ fn main() {
         let xi0 = f.x(ox + i0);
         let xi1 = f.x(ox + i1);
         let x1 = f.x(ox + o.width);
-        measurement_arrow(
+        measurement_span(
             &mut sheet,
             x0,
             xi0,
@@ -339,7 +542,7 @@ fn main() {
             x0 + MEASUREMENT_EDGE_LABEL_INSET,
             -1,
         );
-        measurement_arrow(
+        measurement_span(
             &mut sheet,
             xi0,
             xi1,
@@ -349,7 +552,7 @@ fn main() {
             (xi0 + xi1) / 2.0,
             0,
         );
-        measurement_arrow(
+        measurement_span(
             &mut sheet,
             xi1,
             x1,
