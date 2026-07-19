@@ -17,6 +17,7 @@ use kurbo::{Affine, BezPath};
 use virtua_grotesk_figures::{
     inputs,
     style::{color, line},
+    write_png,
 };
 
 const W: f64 = 2400.0;
@@ -199,7 +200,5 @@ fn main() {
     let renderer = Renderer::new(W as u32, H as u32);
     let out = std::path::PathBuf::from(env!("CARGO_MANIFEST_DIR"))
         .join("build/legacy-card/share-card.png");
-    std::fs::create_dir_all(out.parent().unwrap()).unwrap();
-    renderer.render_to_png(&ctx, out.to_str().unwrap()).unwrap();
-    println!("wrote {}", out.display());
+    write_png(&renderer, &ctx, &out);
 }

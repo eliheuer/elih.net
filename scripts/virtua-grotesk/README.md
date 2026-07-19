@@ -37,6 +37,43 @@ The broad shared line and type roles retain their historical names (`PEN`,
 `PEN_LIGHT`, `FRAME_TEXT`, and so on) as compatibility mappings. Their actual
 values come from the primitive scales in `style.rs`.
 
+## Color and export guardrails
+
+These rules belong to this blog-figure crate for now. They are deliberately a
+thin policy layer around DesignBot, not a change to the upstream DesignBot
+renderer.
+
+- Define coordinated saturated palettes in OKLCH through `oklch_srgb` in
+  `src/style.rs`, not by giving several hues the same HSL saturation or pushing
+  individual RGB channels to `255`. OKLCH chroma is a much better starting
+  point for even visual intensity across hues.
+- Use a shared chroma target for a palette, then review the result on its real
+  background at full size and thumbnail size. Equal OKLCH chroma improves the
+  baseline but cannot cancel the effects of area, surround, display, or human
+  adaptation. Record any resulting hue-specific optical correction as a named
+  delta beside the shared target; do not hide it in a replacement RGB value.
+- Let `oklch_srgb` reduce chroma at constant lightness and hue when a requested
+  color is outside sRGB. Do not clamp RGB channels independently; clipping one
+  channel can make one hue look substantially louder than the rest.
+- Write every generated PNG through `write_png` (normally via `Sheet::save`).
+  It marks the pixels as sRGB and supplies the standard gAMA/cHRM fallbacks so
+  browsers and social-media ingestion pipelines do not have to guess the
+  source color space.
+- Keep the OG palette separate from the generic illustration palette. A color
+  correction for a large share card should not silently alter every figure in
+  the article.
+
+When these Rust sources seed social-media renderers in the upstream
+`virtua-grotesk` repository, copy the color-management layer with them:
+
+1. `oklch_srgb` and the palette comments from `src/style.rs`;
+2. `write_png` and `tag_png_as_srgb` from `src/lib.rs`;
+3. the `crc32fast` dependency from `Cargo.toml`;
+4. the semantic palette mappings, rather than only the final RGB values.
+
+That handoff keeps the upstream compositions visually related to the blog
+figures while allowing their formats and art direction to evolve separately.
+
 ## Verify and rebuild
 
 From `scripts/virtua-grotesk`:

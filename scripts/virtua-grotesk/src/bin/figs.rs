@@ -256,11 +256,7 @@ fn render_figure(
     sheet.label_padded(caption, MARGIN + 2.0, MARGIN + 4.0, SMALL_TEXT, green(), -1);
     sheet.attribution(Some(right));
 
-    std::fs::create_dir_all(out.parent().unwrap()).unwrap();
-    renderer
-        .render_to_png(&sheet.ctx, out.to_str().unwrap())
-        .unwrap();
-    println!("wrote {}", out.display());
+    write_png(renderer, &sheet.ctx, out);
 }
 
 fn main() {

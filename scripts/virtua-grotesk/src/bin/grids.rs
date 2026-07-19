@@ -306,9 +306,5 @@ fn main() {
     ]);
     sheet.attribution(None);
 
-    std::fs::create_dir_all(out.parent().unwrap()).unwrap();
-    renderer
-        .render_to_png(&sheet.ctx, out.to_str().unwrap())
-        .unwrap();
-    println!("wrote {}", out.display());
+    write_png(&renderer, &sheet.ctx, &out);
 }

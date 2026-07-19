@@ -11,6 +11,89 @@
 
 use designbot::prelude::Color;
 
+// --- perceptual color -------------------------------------------------------
+
+/// Convert an OKLCH swatch to 8-bit sRGB, reducing chroma at constant
+/// lightness and hue when the requested color falls outside the sRGB gamut.
+///
+/// Why this exists:
+/// - sRGB channel values and HSL "saturation" are not perceptually uniform.
+///   A red and a green with the same numeric HSL saturation can look wildly
+///   different in strength.
+/// - OKLCH is substantially more uniform, so a shared chroma is a useful
+///   starting point for a visually even palette.
+/// - Equal OKLCH chroma is still not a promise of identical appearance. The
+///   CIE notes that surround, area, adaptation, and viewing conditions all
+///   affect perceived saturation. Always review the palette at final size on
+///   its actual background.
+/// - Different hues hit the edge of sRGB at different chroma values. Reducing
+///   chroma while holding lightness and hue is much safer than clipping an RGB
+///   channel to 255, which is what made the old red disproportionately vivid.
+///
+/// References:
+/// https://www.w3.org/TR/css-color-4/#ok-lab
+/// https://www.w3.org/TR/css-color-4/#gamut-mapping
+/// https://cie.co.at/eilv/198
+fn oklch_srgb(lightness: f64, requested_chroma: f64, hue_degrees: f64) -> Color {
+    fn linear_srgb(lightness: f64, chroma: f64, hue_degrees: f64) -> [f64; 3] {
+        let hue = hue_degrees.to_radians();
+        let a = chroma * hue.cos();
+        let b = chroma * hue.sin();
+
+        let l_root = lightness + 0.396_337_777_4 * a + 0.215_803_757_3 * b;
+        let m_root = lightness - 0.105_561_345_8 * a - 0.063_854_172_8 * b;
+        let s_root = lightness - 0.089_484_177_5 * a - 1.291_485_548 * b;
+        let l = l_root.powi(3);
+        let m = m_root.powi(3);
+        let s = s_root.powi(3);
+
+        [
+            4.076_741_662_1 * l - 3.307_711_591_3 * m + 0.230_969_929_2 * s,
+            -1.268_438_004_6 * l + 2.609_757_401_1 * m - 0.341_319_396_5 * s,
+            -0.004_196_086_3 * l - 0.703_418_614_7 * m + 1.707_614_701 * s,
+        ]
+    }
+
+    fn in_srgb_gamut(rgb: [f64; 3]) -> bool {
+        rgb.into_iter()
+            .all(|channel| (0.0..=1.0).contains(&channel))
+    }
+
+    fn encode_srgb(channel: f64) -> u8 {
+        let encoded = if channel <= 0.003_130_8 {
+            12.92 * channel
+        } else {
+            1.055 * channel.powf(1.0 / 2.4) - 0.055
+        };
+        (encoded.clamp(0.0, 1.0) * 255.0).round() as u8
+    }
+
+    // Find the largest in-gamut chroma while preserving the requested L and h.
+    // This is the same broad strategy used by the CSS Color 4 gamut-mapping
+    // algorithms, without their more elaborate just-noticeable-difference step.
+    let mut low = 0.0;
+    let mut high = requested_chroma;
+    let mut rgb = linear_srgb(lightness, requested_chroma, hue_degrees);
+    if !in_srgb_gamut(rgb) {
+        for _ in 0..24 {
+            let middle = (low + high) / 2.0;
+            let candidate = linear_srgb(lightness, middle, hue_degrees);
+            if in_srgb_gamut(candidate) {
+                low = middle;
+                rgb = candidate;
+            } else {
+                high = middle;
+            }
+        }
+    }
+
+    Color::rgb(
+        encode_srgb(rgb[0]),
+        encode_srgb(rgb[1]),
+        encode_srgb(rgb[2]),
+    )
+}
+
 // --- canvas -----------------------------------------------------------------
 
 pub const W: f64 = 2520.0;
@@ -153,7 +236,17 @@ pub use color::*;
 // inline illustrations in the post.
 
 pub mod og_color {
-    use super::Color;
+    use super::{oklch_srgb, Color};
+
+    // The four hero hues begin with a common OKLCH chroma. Their lightness
+    // still varies deliberately to make the sequence read red -> orange ->
+    // yellow -> green. Small named optical corrections are allowed after the
+    // common baseline has been reviewed in the actual composition; they must
+    // stay explicit here rather than becoming unexplained RGB tweaks. Keep
+    // this palette in sRGB because social sites commonly normalize uploads to
+    // sRGB during recompression.
+    const HERO_CHROMA: f64 = 0.16;
+    const RED_OPTICAL_CHROMA_BOOST: f64 = 0.015;
 
     pub fn gray_950() -> Color {
         Color::rgb(0x12, 0x12, 0x12)
@@ -180,19 +273,19 @@ pub mod og_color {
         Color::rgb(0x50, 0x50, 0x50)
     }
     pub fn red() -> Color {
-        Color::rgb(0xff, 0x2c, 0x2b)
+        oklch_srgb(0.66, HERO_CHROMA + RED_OPTICAL_CHROMA_BOOST, 28.0)
     }
     pub fn blue() -> Color {
         Color::rgb(0x4a, 0x78, 0xff)
     }
     pub fn orange() -> Color {
-        Color::rgb(0xff, 0x85, 0x28)
+        oklch_srgb(0.74, HERO_CHROMA, 52.0)
     }
     pub fn yellow() -> Color {
-        Color::rgb(0xff, 0xd3, 0x3f)
+        oklch_srgb(0.88, HERO_CHROMA, 92.0)
     }
     pub fn leaf_green() -> Color {
-        Color::rgb(0x23, 0xad, 0x73)
+        oklch_srgb(0.67, HERO_CHROMA, 159.0)
     }
 }
 

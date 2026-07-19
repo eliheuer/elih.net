@@ -23,6 +23,95 @@ pub use style::*;
 /// reuses (all with high 2-adic valuation or stem-adjacent).
 pub const FAVORED: [f64; 7] = [64.0, 96.0, 128.0, 160.0, 192.0, 224.0, 256.0];
 
+// --- color-managed PNG output ------------------------------------------------------
+
+// This is intentionally local to the blog-figure crate. If these renderers
+// seed social assets in the upstream Virtua Grotesk repo, copy this output
+// policy with them; do not copy only the drawing code and lose the guardrail.
+
+/// Add explicit sRGB, gAMA, and cHRM chunks to a DesignBot-rendered PNG.
+///
+/// DesignBot currently emits valid pixel data but no color-space chunk. An
+/// untagged RGB image is device-dependent, so a browser or social-media image
+/// pipeline may guess differently when it decodes and recompresses the file.
+/// These figures are authored in 8-bit sRGB; tagging that fact makes the first
+/// conversion deterministic. Relative-colorimetric intent is appropriate for
+/// flat graphic colors because in-gamut colors should remain unchanged. Do not
+/// use the PNG "saturation" intent here: it explicitly permits sacrificing hue
+/// and lightness to preserve saturation.
+///
+/// The fallback gAMA/cHRM values are the exact sRGB values recommended by the
+/// PNG specification for decoders that do not understand the sRGB chunk:
+/// https://www.w3.org/TR/png-3/#sRGB-chunk
+fn tag_png_as_srgb(path: &Path) {
+    const SIGNATURE: &[u8; 8] = b"\x89PNG\r\n\x1a\n";
+    const SRGB_GAMMA: u32 = 45_455;
+    const SRGB_CHROMATICITIES: [u32; 8] = [
+        31_270, 32_900, // white point
+        64_000, 33_000, // red
+        30_000, 60_000, // green
+        15_000, 6_000, // blue
+    ];
+
+    fn chunk(bytes: &[u8], name: &[u8; 4]) -> Option<(usize, usize)> {
+        let mut offset = 8;
+        while offset + 12 <= bytes.len() {
+            let length = u32::from_be_bytes(bytes[offset..offset + 4].try_into().unwrap()) as usize;
+            let end = offset + 12 + length;
+            assert!(end <= bytes.len(), "truncated PNG chunk in generated image");
+            if &bytes[offset + 4..offset + 8] == name {
+                return Some((offset, end));
+            }
+            offset = end;
+        }
+        None
+    }
+
+    fn push_chunk(out: &mut Vec<u8>, name: &[u8; 4], data: &[u8]) {
+        out.extend_from_slice(&(data.len() as u32).to_be_bytes());
+        out.extend_from_slice(name);
+        out.extend_from_slice(data);
+        let mut crc = crc32fast::Hasher::new();
+        crc.update(name);
+        crc.update(data);
+        out.extend_from_slice(&crc.finalize().to_be_bytes());
+    }
+
+    let bytes = std::fs::read(path).unwrap();
+    assert_eq!(&bytes[..8], SIGNATURE, "renderer did not produce a PNG");
+    assert!(
+        chunk(&bytes, b"cICP").is_none() && chunk(&bytes, b"iCCP").is_none(),
+        "generated PNG already declares a non-sRGB color profile"
+    );
+    if chunk(&bytes, b"sRGB").is_some() {
+        return;
+    }
+
+    let (_, ihdr_end) = chunk(&bytes, b"IHDR").expect("generated PNG has no IHDR chunk");
+    let mut tagged = Vec::with_capacity(bytes.len() + 96);
+    tagged.extend_from_slice(&bytes[..ihdr_end]);
+    push_chunk(&mut tagged, b"sRGB", &[1]); // relative colorimetric
+    push_chunk(&mut tagged, b"gAMA", &SRGB_GAMMA.to_be_bytes());
+    let chromaticities: Vec<u8> = SRGB_CHROMATICITIES
+        .into_iter()
+        .flat_map(u32::to_be_bytes)
+        .collect();
+    push_chunk(&mut tagged, b"cHRM", &chromaticities);
+    tagged.extend_from_slice(&bytes[ihdr_end..]);
+    std::fs::write(path, tagged).unwrap();
+}
+
+/// Render a PNG and normalize its color metadata. All figure binaries should
+/// use this function, directly or through `Sheet::save`.
+pub fn write_png(renderer: &Renderer, context: &Canvas, out: &Path) {
+    std::fs::create_dir_all(out.parent().unwrap()).unwrap();
+    renderer
+        .render_to_png(context, out.to_str().unwrap())
+        .unwrap();
+    tag_png_as_srgb(out);
+    println!("wrote {}", out.display());
+}
+
 // --- output ownership ---------------------------------------------------------------
 
 /// Output paths for a figure binary.
@@ -461,11 +550,7 @@ impl Sheet<'_> {
     }
 
     pub fn save(&self, renderer: &Renderer, out: &std::path::Path) {
-        std::fs::create_dir_all(out.parent().unwrap()).unwrap();
-        renderer
-            .render_to_png(&self.ctx, out.to_str().unwrap())
-            .unwrap();
-        println!("wrote {}", out.display());
+        write_png(renderer, &self.ctx, out);
     }
 }
 
