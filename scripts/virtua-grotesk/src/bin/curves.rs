@@ -102,31 +102,24 @@ fn polyline(sheet: &mut Sheet, p: &Panel, pts: &[(f64, f64)], color: Color, widt
 fn val_dots(sheet: &mut Sheet, p: &Panel, pts: &[(f64, f64)], color: Color) {
     sheet.ctx.fill(color).no_stroke();
     for &(s, l) in pts {
-        sheet.ctx.oval(p.x(s) - 6.0, p.y(l) - 6.0, 12.0, 12.0);
+        sheet.ctx.oval(p.x(s) - 10.0, p.y(l) - 10.0, 20.0, 20.0);
     }
     // ring the best checkpoint (the weights that shipped)
     if let Some(&(s, l)) = pts.iter().min_by(|a, b| a.1.total_cmp(&b.1)) {
         sheet.ctx.no_fill().stroke(color).stroke_width(PEN);
-        sheet.ctx.oval(p.x(s) - 13.0, p.y(l) - 13.0, 26.0, 26.0);
+        sheet.ctx.oval(p.x(s) - 22.0, p.y(l) - 22.0, 44.0, 44.0);
     }
 }
 
 fn axes(sheet: &mut Sheet, p: &Panel, tick: f64) {
     let ink = role::chart::axis();
     let faint = role::chart::grid();
-    // y ticks: horizontal hairlines + values at left
+    // Horizontal guides only. The article explains the scale; the graphic is
+    // optimized for the trajectories and their endpoints.
     let mut v = (p.lo / tick).ceil() * tick;
     while v <= p.hi + 1e-9 {
         sheet.ctx.no_fill().stroke(faint).stroke_width(PEN_LIGHT);
         sheet.ctx.line(p.x0, p.y(v), p.x0 + p.w, p.y(v));
-        sheet.label(
-            &format!("{v:.0}"),
-            p.x0 - 16.0,
-            p.y(v) - 8.0,
-            SMALL_TEXT,
-            role::annotation::dimensions(),
-            1,
-        );
         v += tick;
     }
     // x ticks every 2k steps
@@ -134,22 +127,6 @@ fn axes(sheet: &mut Sheet, p: &Panel, tick: f64) {
     while s <= p.max_step {
         sheet.ctx.no_fill().stroke(ink).stroke_width(PEN_LIGHT);
         sheet.ctx.line(p.x(s), p.y0, p.x(s), p.y0 - 10.0);
-        let last = s + 2000.0 > p.max_step;
-        let txt = if s == 0.0 {
-            "0".into()
-        } else if last {
-            format!("{}k steps", s / 1000.0)
-        } else {
-            format!("{}k", s / 1000.0)
-        };
-        sheet.label(
-            &txt,
-            p.x(s),
-            p.y0 - 14.0 - SMALL_TEXT,
-            SMALL_TEXT,
-            role::annotation::dimensions(),
-            0,
-        );
         s += 2000.0;
     }
     // frame: bottom + left rules only
@@ -187,18 +164,18 @@ fn main() {
     let mono = load_family(&mut renderer, mono_path.to_str().unwrap());
     let mut sheet = new_sheet(&renderer, &mono);
 
-    let top = H - MARGIN - 170.0; // clear of the two-line HUD title
-    let bottom = MARGIN + 110.0; // room for step labels above attribution
-    let gap = 210.0;
-    let left_w = 940.0;
-    let right_w = W - 2.0 * MARGIN - left_w - gap;
+    let top = H - MARGIN;
+    let bottom = MARGIN;
+    let gap = 120.0;
+    let left_w = (W - 2.0 * MARGIN - gap) / 2.0;
+    let right_w = left_w;
 
     // left: pretraining on OFL (its own val set, so its own panel)
     let (lo, hi) = range(&[&pretrain]);
     let p1 = Panel {
-        x0: MARGIN + 56.0,
+        x0: MARGIN,
         y0: bottom,
-        w: left_w - 56.0,
+        w: left_w,
         h: top - bottom,
         max_step: max_step(&[&pretrain]),
         lo,
@@ -209,38 +186,22 @@ fn main() {
         &mut sheet,
         &p1,
         &pretrain.train,
-        fill_strong(blue()),
-        PEN_LIGHT,
+        fill_strong(role::figure::red()),
+        line::REGULAR,
     );
-    polyline(&mut sheet, &p1, &pretrain.val, blue(), PEN);
-    val_dots(&mut sheet, &p1, &pretrain.val, blue());
-    sheet.label(
-        "B1: pretrain, 29k OFL pairs",
-        p1.x0,
-        top + 18.0,
-        LABEL_TEXT,
-        blue(),
-        -1,
-    );
-    sheet.label(
-        "val = 290 held-out OFL pairs",
-        p1.x0 + p1.w,
-        top - 20.0 - LABEL_TEXT,
-        LEGEND_TEXT,
-        role::annotation::dimensions(),
-        1,
-    );
+    polyline(&mut sheet, &p1, &pretrain.val, role::figure::red(), 10.0);
+    val_dots(&mut sheet, &p1, &pretrain.val, role::figure::red());
     let best = pretrain
         .val
         .iter()
         .cloned()
         .fold((0.0, f64::MAX), |a, b| if b.1 < a.1 { b } else { a });
     sheet.label_padded(
-        &format!("best {:.2}", best.1),
+        &format!("{:.2}", best.1),
         p1.x(best.0) - 22.0,
-        p1.y(best.1) - 9.0,
-        LEGEND_TEXT,
-        blue(),
+        p1.y(best.1) + 42.0,
+        type_size::XXXL,
+        role::figure::pen(),
         1,
     );
 
@@ -260,28 +221,20 @@ fn main() {
         &mut sheet,
         &p2,
         &control.train,
-        fill_strong(gray()),
-        PEN_LIGHT,
+        fill_strong(role::figure::orange()),
+        line::REGULAR,
     );
     polyline(
         &mut sheet,
         &p2,
         &finetune.train,
-        fill_strong(green()),
-        PEN_LIGHT,
+        fill_strong(role::figure::green()),
+        line::REGULAR,
     );
-    polyline(&mut sheet, &p2, &control.val, gray(), PEN);
-    polyline(&mut sheet, &p2, &finetune.val, green(), PEN);
-    val_dots(&mut sheet, &p2, &control.val, gray());
-    val_dots(&mut sheet, &p2, &finetune.val, green());
-    sheet.label(
-        "A vs B2: same graded corpus, same val set",
-        p2.x0,
-        top + 18.0,
-        LABEL_TEXT,
-        green(),
-        -1,
-    );
+    polyline(&mut sheet, &p2, &control.val, role::figure::orange(), 10.0);
+    polyline(&mut sheet, &p2, &finetune.val, role::figure::green(), 10.0);
+    val_dots(&mut sheet, &p2, &control.val, role::figure::orange());
+    val_dots(&mut sheet, &p2, &finetune.val, role::figure::green());
     let a_best = control
         .val
         .iter()
@@ -293,34 +246,21 @@ fn main() {
         .cloned()
         .fold((0.0, f64::MAX), |a, b| if b.1 < a.1 { b } else { a });
     sheet.label_padded(
-        &format!("A: control, from scratch / best {:.2}", a_best.1),
+        &format!("{:.2}", a_best.1),
         p2.x(a_best.0) + 26.0,
-        p2.y(a_best.1) + 30.0,
-        LEGEND_TEXT,
-        gray(),
+        p2.y(a_best.1) + 42.0,
+        type_size::XXXL,
+        role::figure::pen(),
         -1,
     );
     sheet.label_padded(
-        &format!("B2: from pretrained weights / best {:.2}", b_best.1),
+        &format!("{:.2}", b_best.1),
         p2.x(b_best.0) + 26.0,
-        p2.y(b_best.1) - 44.0,
-        LEGEND_TEXT,
-        green(),
+        p2.y(b_best.1) - 10.0,
+        type_size::XXXL,
+        role::figure::pen(),
         -1,
     );
-    sheet.label(
-        "faint = train loss / dots = val checkpoints / ring = shipped",
-        p2.x0 + p2.w,
-        top - 20.0 - LABEL_TEXT,
-        LEGEND_TEXT,
-        role::annotation::dimensions(),
-        1,
-    );
-    sheet.hud_title(&[
-        "The v0.8 A/B as training curves",
-        "read from runs/v08/run.log / val loss, lower is better",
-    ]);
-    sheet.attribution(Some("Virtua-12M-v0.1 / one Apple M4 Pro, MLX"));
 
     let outputs = OutputPaths::from_args();
     sheet.save(&renderer, &outputs.blog("fig-losscurve.png"));

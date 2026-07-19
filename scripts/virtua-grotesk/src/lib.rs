@@ -718,6 +718,53 @@ pub const DEFAULT_POINT_STYLE: PointStyle = PointStyle {
     stroke_width: PEN_LIGHT,
 };
 
+/// Large, uniform point language for the simplified inline figures. Point
+/// roles still use circle/square geometry, but every marker has equal visual
+/// weight and remains legible when the figure is shown as a small card.
+pub const FIGURE_POINT_STYLE: PointStyle = PointStyle {
+    smooth_size: 20.0,
+    corner_size: 20.0,
+    off_curve_size: 20.0,
+    correction_filled: false,
+    stroke_width: line::HERO,
+};
+
+/// Draw an opaque, OG-style glyph with one near-black pen color and the two
+/// light-gray point tiers. The fill color is the only figure-specific choice.
+pub fn draw_figure_glyph(
+    sheet: &mut Sheet,
+    o: &Outline,
+    s: f64,
+    x0: f64,
+    baseline: f64,
+    fill: Color,
+) {
+    draw_body_styled(
+        sheet,
+        o,
+        s,
+        x0,
+        baseline,
+        fill,
+        255,
+        role::figure::pen(),
+        line::HERO,
+    );
+    draw_points_styled(
+        sheet,
+        o,
+        s,
+        x0,
+        baseline,
+        role::figure::pen(),
+        role::figure::pen(),
+        role::figure::pen(),
+        role::figure::point_fill(),
+        role::figure::correction_point_fill(),
+        FIGURE_POINT_STYLE,
+    );
+}
+
 /// Glyph body with the technical (translucent) fill: light gray, so the
 /// semantic point colors (green machine / red hand) stay legible on top.
 pub fn draw_body(sheet: &mut Sheet, o: &Outline, s: f64, x0: f64, baseline: f64) {

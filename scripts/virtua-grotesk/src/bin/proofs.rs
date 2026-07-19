@@ -1,169 +1,107 @@
-//! The §10 proof figures for the Virtua Grotesk post, four sheets in the
-//! house dimension-sheet language:
-//!
-//!   fig-fractions.png : one stem, two ems — 96/1024 terminates, 96/1000 never
-//!   fig-midpoint.png  : de Casteljau at t=1/2 — midpoints all the way down
-//!   fig-ladder.png    : how far can an em halve — 1024 vs 1000 vs 729 vs 700
-//!   fig-bits.png      : grid level = trailing zeros (2-adic valuation / CTZ)
-//!
-//! Run from this directory:
-//!
-//!     cargo run --release --bin proofs
-//!
-//! Writes into ../../src/content/blog/virtua-grotesk/.
+//! Four graphic proofs for the powers-of-two section. Each composition keeps
+//! one visual argument and omits prose already present in the article.
 
 use designbot::prelude::*;
 use designbot_render::Renderer;
-#[allow(unused_imports)]
 use virtua_grotesk_figures::*;
 
-fn grid_16() -> Color {
-    role::grid::fine()
-}
-fn grid_64() -> Color {
-    color::gray_700()
-}
-fn dim() -> Color {
-    color::gray_600()
-}
-fn curve() -> Color {
-    role::bezier::curve()
-}
-
-// --- fig-fractions ------------------------------------------------------------
-
-/// One row of bit cells. `bits` as 0/1, `color` for the 1-cells.
 fn bit_row(sheet: &mut Sheet, x0: f64, y0: f64, cell: f64, gap: f64, bits: &[u8], color: Color) {
-    for (i, b) in bits.iter().enumerate() {
+    for (i, bit) in bits.iter().enumerate() {
         let x = x0 + i as f64 * (cell + gap);
-        if *b == 1 {
-            sheet.ctx.fill(color).stroke(color).stroke_width(line::THIN);
-            sheet.ctx.rect(x, y0, cell, cell);
-            sheet.label(
-                "1",
-                x + cell / 2.0,
-                y0 + cell * 0.28,
-                cell * 0.6,
-                role::canvas::background(),
-                0,
-            );
-        } else {
-            sheet.ctx.no_fill().stroke(dim()).stroke_width(line::THIN);
-            sheet.ctx.rect(x, y0, cell, cell);
-            sheet.label("0", x + cell / 2.0, y0 + cell * 0.28, cell * 0.6, dim(), 0);
-        }
+        sheet
+            .ctx
+            .fill(if *bit == 1 {
+                color
+            } else {
+                role::figure::background()
+            })
+            .stroke(role::figure::pen())
+            .stroke_width(line::HERO);
+        sheet.ctx.rect(x, y0, cell, cell);
+        sheet.label(
+            if *bit == 1 { "1" } else { "0" },
+            x + cell / 2.0,
+            y0 + cell * 0.28,
+            cell * 0.58,
+            role::figure::pen(),
+            0,
+        );
     }
 }
 
 fn fig_fractions(renderer: &Renderer, mono: &str, out: &std::path::Path) {
     let mut sheet = new_sheet(renderer, mono);
 
-    // 96/1000 = 12/125: first fractional bits, computed by long division.
     let mut num = 12u32;
-    let mut bits_b = Vec::new();
-    for _ in 0..40 {
+    let mut repeating = Vec::new();
+    for _ in 0..32 {
         num *= 2;
         if num >= 125 {
-            bits_b.push(1u8);
+            repeating.push(1u8);
             num -= 125;
         } else {
-            bits_b.push(0u8);
+            repeating.push(0u8);
         }
     }
-    let bits_a: [u8; 5] = [0, 0, 0, 1, 1]; // 3/32 = 0.00011
+    let exact = [0, 0, 0, 1, 1];
 
-    let cell = 40.0;
-    let gap = 8.0;
-    let prefix_size = 44.0;
-
-    // row A: the binary em
-    let x0_block = 238.0;
-    let ya = 808.0;
-    sheet.label("96 / 1024", x0_block, ya + 180.0, 36.0, green(), -1);
-    sheet.label(
-        "= 3/32, the stem over the binary em",
-        x0_block + 260.0,
-        ya + 180.0,
-        26.0,
-        gray(),
-        -1,
-    );
-    sheet.label("0.", x0_block, ya + 10.0, prefix_size, curve(), -1);
-    let x0 = x0_block + 60.0;
-    bit_row(&mut sheet, x0, ya, cell, gap, &bits_a, green());
-    let end_x = x0 + bits_a.len() as f64 * (cell + gap) + 30.0;
-    sheet.label("exact after 5 bits", end_x, ya + 10.0, 30.0, green(), -1);
-    sheet.label(
-        "= 0.09375, held verbatim",
-        x0_block,
-        ya - 70.0,
-        26.0,
-        gray(),
-        -1,
+    let left = 286.0;
+    sheet.label("1024", MARGIN, 936.0, 58.0, role::figure::pen(), -1);
+    sheet.label("0.", left - 74.0, 846.0, 82.0, role::figure::pen(), 1);
+    bit_row(
+        &mut sheet,
+        left,
+        780.0,
+        184.0,
+        20.0,
+        &exact,
+        role::figure::green(),
     );
 
-    // row B: the decimal em
-    let yb = 388.0;
-    sheet.label("96 / 1000", x0_block, yb + 180.0, 36.0, red(), -1);
-    sheet.label(
-        "= 12/125, the same stem over the decimal em",
-        x0_block + 260.0,
-        yb + 180.0,
-        26.0,
-        gray(),
-        -1,
+    sheet.label("1000", MARGIN, 410.0, 58.0, role::figure::pen(), -1);
+    sheet.label("0.", left - 74.0, 338.0, 82.0, role::figure::pen(), 1);
+    bit_row(
+        &mut sheet,
+        left,
+        292.0,
+        58.0,
+        8.0,
+        &repeating,
+        role::figure::red(),
     );
-    sheet.label("0.", x0_block, yb + 10.0, prefix_size, curve(), -1);
-    bit_row(&mut sheet, x0, yb, cell, gap, &bits_b, red());
-    let end_x = x0 + bits_b.len() as f64 * (cell + gap) + 20.0;
-    sheet.label("\u{2026}", end_x, yb + 10.0, prefix_size, red(), -1);
-    sheet.label(
-        "repeats forever, period 100 bits. A 64-bit float holds 0.09600000000000000200",
-        x0_block,
-        yb - 70.0,
-        26.0,
-        red(),
-        -1,
-    );
+    sheet.label("…", W - MARGIN, 324.0, 86.0, role::figure::red(), 1);
 
-    sheet.hud_title(&[
-        "One stem, two ems",
-        "a binary machine writes 96/1024 down exactly; 96/1000 it can only approximate",
-    ]);
-    sheet.attribution(None);
     sheet.save(renderer, out);
 }
-
-// --- fig-midpoint ---------------------------------------------------------------
 
 fn fig_midpoint(renderer: &Renderer, mono: &str, out: &std::path::Path) {
     let mut sheet = new_sheet(renderer, mono);
 
-    // panel: font units x 0..640, y 0..512 at S px/unit
-    const S: f64 = 1.6;
-    const PX: f64 = 460.0; // canvas x of unit x=0, block centered
-    const PY: f64 = 248.0; // canvas y of unit y=0, panel centered between the rules
+    const S: f64 = 2.05;
+    const PX: f64 = 604.0;
+    const PY: f64 = 168.0;
     let cx = |ux: f64| PX + ux * S;
     let cy = |uy: f64| PY + uy * S;
-    let (ux1, uy1) = (640.0, 512.0);
 
-    // grid: 16 faint, 64 bright
-    for (step, color, width) in [(16.0, grid_16(), 1.5), (64.0, grid_64(), 2.5)] {
-        sheet.ctx.no_fill().stroke(color).stroke_width(width);
-        let mut u = 0.0;
-        while u <= ux1 {
-            sheet.ctx.line(cx(u), cy(0.0), cx(u), cy(uy1));
-            u += step;
-        }
-        let mut u = 0.0;
-        while u <= uy1 {
-            sheet.ctx.line(cx(0.0), cy(u), cx(ux1), cy(u));
-            u += step;
-        }
+    // A single 64-unit lattice supplies scale without turning back into graph
+    // paper. It reaches the image edges like the hero's construction lines.
+    sheet
+        .ctx
+        .no_fill()
+        .stroke(role::grid::standard())
+        .stroke_width(line::THIN);
+    let mut x = MARGIN;
+    while x <= W - MARGIN {
+        sheet.ctx.line(x, MARGIN, x, H - MARGIN);
+        x += 64.0 * S;
+    }
+    let mut y = MARGIN;
+    while y <= H - MARGIN {
+        sheet.ctx.line(MARGIN, y, W - MARGIN, y);
+        y += 64.0 * S;
     }
 
-    // the arch, control points on the 64-grid
-    let p: [(f64, f64); 4] = [
+    let p = [
         (64.0, 128.0),
         (192.0, 448.0),
         (448.0, 448.0),
@@ -175,359 +113,172 @@ fn fig_midpoint(renderer: &Renderer, mono: &str, out: &std::path::Path) {
     let m23 = mid(p[2], p[3]);
     let mm0 = mid(m01, m12);
     let mm1 = mid(m12, m23);
-    let c = mid(mm0, mm1);
+    let split = mid(mm0, mm1);
 
-    // control polygon
+    let line_between = |sheet: &mut Sheet, a: (f64, f64), b: (f64, f64), color: Color| {
+        sheet.ctx.no_fill().stroke(color).stroke_width(line::HERO);
+        sheet.ctx.line(cx(a.0), cy(a.1), cx(b.0), cy(b.1));
+    };
+    for pair in p.windows(2) {
+        line_between(&mut sheet, pair[0], pair[1], role::figure::red());
+    }
+    line_between(&mut sheet, m01, m12, role::figure::orange());
+    line_between(&mut sheet, m12, m23, role::figure::orange());
+    line_between(&mut sheet, mm0, mm1, role::figure::yellow());
+
+    let mut curve = kurbo::BezPath::new();
+    curve.move_to((cx(p[0].0), cy(p[0].1)));
+    curve.curve_to(
+        (cx(p[1].0), cy(p[1].1)),
+        (cx(p[2].0), cy(p[2].1)),
+        (cx(p[3].0), cy(p[3].1)),
+    );
     sheet
         .ctx
         .no_fill()
-        .stroke(gray())
-        .stroke_width(line::MEDIUM);
-    for w in p.windows(2) {
+        .stroke(role::figure::pen())
+        .stroke_width(10.0);
+    sheet.ctx.draw_path(curve);
+
+    let marker = |sheet: &mut Sheet, p: (f64, f64), fill: Color, square: bool| {
         sheet
             .ctx
-            .line(cx(w[0].0), cy(w[0].1), cx(w[1].0), cy(w[1].1));
-    }
-    // round-1 and round-2 construction lines
-    sheet.ctx.stroke(green()).stroke_width(line::MEDIUM);
-    sheet.ctx.line(cx(m01.0), cy(m01.1), cx(m12.0), cy(m12.1));
-    sheet.ctx.line(cx(m12.0), cy(m12.1), cx(m23.0), cy(m23.1));
-    sheet.ctx.stroke(purple()).stroke_width(line::MEDIUM);
-    sheet.ctx.line(cx(mm0.0), cy(mm0.1), cx(mm1.0), cy(mm1.1));
-
-    // the curve itself
-    {
-        let mut path = kurbo::BezPath::new();
-        path.move_to((cx(p[0].0), cy(p[0].1)));
-        path.curve_to(
-            (cx(p[1].0), cy(p[1].1)),
-            (cx(p[2].0), cy(p[2].1)),
-            (cx(p[3].0), cy(p[3].1)),
-        );
-        sheet
-            .ctx
-            .no_fill()
-            .stroke(curve())
-            .stroke_width(line::CURVE);
-        sheet.ctx.draw_path(path);
-    }
-
-    // markers, knocked out with bg
-    let dot = |pt: (f64, f64), color: Color, r: f64, square: bool, ctx_sheet: &mut Sheet| {
-        ctx_sheet
-            .ctx
-            .fill(role::canvas::background())
-            .stroke(color)
-            .stroke_width(line::MEDIUM);
+            .fill(fill)
+            .stroke(role::figure::pen())
+            .stroke_width(line::HERO);
         if square {
-            ctx_sheet
-                .ctx
-                .rect(cx(pt.0) - r, cy(pt.1) - r, 2.0 * r, 2.0 * r);
+            sheet.ctx.rect(cx(p.0) - 13.0, cy(p.1) - 13.0, 26.0, 26.0);
         } else {
-            ctx_sheet
-                .ctx
-                .oval(cx(pt.0) - r, cy(pt.1) - r, 2.0 * r, 2.0 * r);
+            sheet.ctx.oval(cx(p.0) - 13.0, cy(p.1) - 13.0, 26.0, 26.0);
         }
     };
-    for q in p {
-        dot(q, gray(), 9.0, true, &mut sheet);
+    for point in p {
+        marker(&mut sheet, point, role::figure::red(), true);
     }
-    for q in [m01, m12, m23] {
-        dot(q, green(), 9.0, false, &mut sheet);
+    for point in [m01, m12, m23] {
+        marker(&mut sheet, point, role::figure::orange(), false);
     }
-    for q in [mm0, mm1] {
-        dot(q, purple(), 9.0, false, &mut sheet);
+    for point in [mm0, mm1] {
+        marker(&mut sheet, point, role::figure::yellow(), false);
     }
-    dot(c, red(), 11.0, false, &mut sheet);
+    marker(&mut sheet, split, role::figure::green(), false);
 
-    // coordinate labels
-    let coord = |v: (f64, f64)| format!("({},{})", v.0, v.1);
-    sheet.label_padded(
-        &coord(p[0]),
-        cx(p[0].0) - 20.0,
-        cy(p[0].1) - 50.0,
-        24.0,
-        gray(),
-        -1,
-    );
-    sheet.label_padded(
-        &coord(p[1]),
-        cx(p[1].0) - 60.0,
-        cy(p[1].1) + 30.0,
-        24.0,
-        gray(),
-        -1,
-    );
-    sheet.label_padded(
-        &coord(p[2]),
-        cx(p[2].0) - 60.0,
-        cy(p[2].1) + 30.0,
-        24.0,
-        gray(),
-        -1,
-    );
-    sheet.label_padded(
-        &coord(p[3]),
-        cx(p[3].0) - 60.0,
-        cy(p[3].1) - 50.0,
-        24.0,
-        gray(),
-        -1,
-    );
-    sheet.label_padded(&coord(m01), cx(m01.0) - 200.0, cy(m01.1), 24.0, green(), -1);
-    sheet.label_padded(
-        &coord(m12),
-        cx(m12.0) - 60.0,
-        cy(m12.1) + 62.0,
-        24.0,
-        green(),
-        -1,
-    );
-    sheet.label_padded(&coord(m23), cx(m23.0) + 30.0, cy(m23.1), 24.0, green(), -1);
-    sheet.label_padded(
-        &coord(mm0),
-        cx(mm0.0) - 210.0,
-        cy(mm0.1) + 26.0,
-        24.0,
-        purple(),
-        -1,
-    );
-    sheet.label_padded(
-        &coord(mm1),
-        cx(mm1.0) + 40.0,
-        cy(mm1.1) + 26.0,
-        24.0,
-        purple(),
-        -1,
-    );
-    sheet.label_padded(&coord(c), cx(c.0) - 55.0, cy(c.1) - 56.0, 24.0, red(), -1);
-
-    // legend, right of the panel
-    let lx = cx(ux1) + 90.0;
-    let rows: [(&str, Color, bool); 4] = [
-        ("CONTROL POINTS · ON 64", gray(), true),
-        ("ROUND 1 MIDPOINTS · ON 32", green(), false),
-        ("ROUND 2 MIDPOINTS · ON 16", purple(), false),
-        ("SPLIT POINT · ON 16", red(), false),
-    ];
-    for (i, (txt, color, square)) in rows.iter().enumerate() {
-        let y = 960.0 - i as f64 * 60.0;
-        sheet
-            .ctx
-            .fill(role::canvas::background())
-            .stroke(*color)
-            .stroke_width(line::MEDIUM);
-        if *square {
-            sheet.ctx.rect(lx, y - 2.0, 18.0, 18.0);
-        } else {
-            sheet.ctx.oval(lx, y - 2.0, 18.0, 18.0);
-        }
-        sheet.label(txt, lx + 36.0, y, 26.0, *color, -1);
-    }
-    sheet.label(
-        "a midpoint of two multiples of 2^k",
-        lx,
-        640.0,
-        24.0,
-        gray(),
-        -1,
-    );
-    sheet.label("is a multiple of 2^(k-1):", lx, 604.0, 24.0, gray(), -1);
-    sheet.label("each round descends one rung,", lx, 568.0, 24.0, gray(), -1);
-    sheet.label("and the ladder has ten.", lx, 532.0, 24.0, gray(), -1);
-
-    sheet.hud_title(&[
-        "De Casteljau at t = 1/2",
-        "midpoints all the way down, and midpoints of dyadic points are dyadic",
-    ]);
-    sheet.attribution(None);
     sheet.save(renderer, out);
 }
-
-// --- fig-ladder -----------------------------------------------------------------
 
 fn fig_ladder(renderer: &Renderer, mono: &str, out: &std::path::Path) {
     let mut sheet = new_sheet(renderer, mono);
 
-    let col_x = [387.0, 969.0, 1551.0, 2133.0];
-    let titles = ["em 1024", "em 1000", "em 729 = 3^6", "em 700"];
-    let y_top = 1000.0;
-    let dy = 72.0;
-    let box_w = 180.0;
-    let box_h = 46.0;
-
-    struct Chain<'a> {
-        values: Vec<u32>,
-        div: &'a str,
-        color: Color,
-        dead_end: Option<&'a str>,
-        verdict: (&'a str, Color),
-    }
-    let chains = [
-        Chain {
-            values: vec![1024, 512, 256, 128, 64, 32, 16, 8, 4, 2, 1],
-            div: "\u{f7}2",
-            color: green(),
-            dead_end: None,
-            verdict: ("ten rungs, em to unit", green()),
-        },
-        Chain {
-            values: vec![1000, 500, 250, 125],
-            div: "\u{f7}2",
-            color: gray(),
-            dead_end: Some("125 is odd \u{b7} dead end"),
-            verdict: ("three rungs", red()),
-        },
-        Chain {
-            values: vec![729, 243, 81, 27, 9, 3, 1],
-            div: "\u{f7}3",
-            color: gray(),
-            dead_end: None,
-            verdict: ("six rungs, but 1/3 is no float", red()),
-        },
-        Chain {
-            values: vec![700, 350, 175],
-            div: "\u{f7}2",
-            color: gray(),
-            dead_end: Some("175 is odd \u{b7} dead end"),
-            verdict: ("two rungs", red()),
-        },
+    let xs = [360.0, 960.0, 1560.0, 2160.0];
+    let chains: [(&[u32], Color); 4] = [
+        (
+            &[1024, 512, 256, 128, 64, 32, 16, 8, 4, 2, 1],
+            role::figure::green(),
+        ),
+        (&[1000, 500, 250, 125], role::figure::red()),
+        (&[729, 243, 81, 27, 9, 3, 1], role::figure::orange()),
+        (&[700, 350, 175], role::figure::yellow()),
     ];
+    const DY: f64 = 102.0;
+    const BW: f64 = 320.0;
+    const BH: f64 = 76.0;
+    const TOP: f64 = 1170.0;
 
-    for (i, chain) in chains.iter().enumerate() {
-        let x = col_x[i];
-        sheet.label(titles[i], x, 1104.0, 30.0, chain.color, 0);
-        for (j, v) in chain.values.iter().enumerate() {
-            let y_c = y_top - j as f64 * dy; // box center
+    for ((values, color), x) in chains.iter().zip(xs) {
+        for (i, value) in values.iter().enumerate() {
+            let y = TOP - i as f64 * DY;
             sheet
                 .ctx
-                .no_fill()
-                .stroke(chain.color)
-                .stroke_width(line::MEDIUM);
-            sheet
-                .ctx
-                .rect(x - box_w / 2.0, y_c - box_h / 2.0, box_w, box_h);
-            sheet.label(&v.to_string(), x, y_c - 9.0, 26.0, chain.color, 0);
-            if j + 1 < chain.values.len() {
-                sheet.label(
-                    chain.div,
-                    x + box_w / 2.0 + 28.0,
-                    y_c - dy / 2.0 - 9.0,
-                    22.0,
-                    dim(),
-                    -1,
-                );
-                sheet.ctx.no_fill().stroke(dim()).stroke_width(line::THIN);
+                .fill(*color)
+                .stroke(role::figure::pen())
+                .stroke_width(line::HERO);
+            sheet.ctx.rect(x - BW / 2.0, y - BH / 2.0, BW, BH);
+            sheet.label(
+                &value.to_string(),
+                x,
+                y - 13.0,
+                type_size::XXXL,
+                role::figure::pen(),
+                0,
+            );
+            if i + 1 < values.len() {
                 sheet
                     .ctx
-                    .line(x, y_c - box_h / 2.0, x, y_c - dy + box_h / 2.0);
+                    .no_fill()
+                    .stroke(role::figure::pen())
+                    .stroke_width(line::HERO);
+                sheet.ctx.line(x, y - BH / 2.0, x, y - DY + BH / 2.0);
             }
         }
-        if let Some(msg) = chain.dead_end {
-            let y_c = y_top - chain.values.len() as f64 * dy;
-            sheet.label("\u{d7}", x, y_c - 9.0, 34.0, red(), 0);
-            sheet.label(msg, x, y_c - 60.0, 24.0, red(), 0);
+        if values.last().copied() != Some(1) {
+            let y = TOP - values.len() as f64 * DY;
+            sheet.label("×", x, y - 4.0, 82.0, role::figure::pen(), 0);
         }
-        sheet.label(chain.verdict.0, x, 196.0, 24.0, chain.verdict.1, 0);
     }
 
-    sheet.hud_title(&[
-        "How far can an em halve?",
-        "only a binary em ladders from the em to the unit",
-    ]);
-    sheet.attribution(None);
     sheet.save(renderer, out);
 }
-
-// --- fig-bits -------------------------------------------------------------------
 
 fn fig_bits(renderer: &Renderer, mono: &str, out: &std::path::Path) {
     let mut sheet = new_sheet(renderer, mono);
 
-    let rows: [(&str, u32, Color); 5] = [
-        ("the em", 1024, green()),
-        ("cap height", 768, green()),
-        ("x-height", 576, green()),
-        ("stem", 96, green()),
-        ("correction", 116, red()),
+    let rows = [1024u32, 768, 576, 96, 116];
+    let colors = [
+        role::figure::red(),
+        role::figure::orange(),
+        role::figure::yellow(),
+        role::figure::green(),
+        role::figure::red(),
     ];
-    let cell = 104.0;
-    let gap = 12.0;
-    let bits_x0 = 820.0;
-    let n_bits = 11usize;
+    const CELL: f64 = 128.0;
+    const GAP: f64 = 12.0;
+    const X0: f64 = 760.0;
+    const BITS: usize = 11;
 
-    for (i, (name, value, color)) in rows.iter().enumerate() {
-        let y0 = 956.0 - i as f64 * 168.0; // cell bottom
-        let level = value.trailing_zeros() as usize;
-
-        sheet.label(name, MARGIN, y0 + 20.0, 26.0, gray(), -1);
-        sheet.label(&value.to_string(), 760.0, y0 + 20.0, 34.0, *color, 1);
-
-        for b in 0..n_bits {
-            let bit_index = n_bits - 1 - b; // msb first
-            let x = bits_x0 + b as f64 * (cell + gap);
-            let is_one = (value >> bit_index) & 1 == 1;
-            if is_one {
-                sheet
-                    .ctx
-                    .fill(*color)
-                    .stroke(*color)
-                    .stroke_width(line::THIN);
-                sheet.ctx.rect(x, y0, cell, cell);
-                sheet.label(
-                    "1",
-                    x + cell / 2.0,
-                    y0 + cell * 0.32,
-                    46.0,
-                    role::canvas::background(),
-                    0,
-                );
-            } else {
-                sheet.ctx.no_fill().stroke(dim()).stroke_width(line::THIN);
-                sheet.ctx.rect(x, y0, cell, cell);
-                sheet.label("0", x + cell / 2.0, y0 + cell * 0.32, 46.0, dim(), 0);
-            }
+    for ((value, color), row) in rows.into_iter().zip(colors).zip(0..) {
+        let y = 1070.0 - row as f64 * 220.0;
+        sheet.label(
+            &value.to_string(),
+            680.0,
+            y + 28.0,
+            64.0,
+            role::figure::pen(),
+            1,
+        );
+        for b in 0..BITS {
+            let bit_index = BITS - 1 - b;
+            let bit = ((value >> bit_index) & 1) as u8;
+            bit_row(
+                &mut sheet,
+                X0 + b as f64 * (CELL + GAP),
+                y,
+                CELL,
+                0.0,
+                &[bit],
+                color,
+            );
         }
-
-        // bracket under the trailing-zero run
-        if level > 0 {
-            let x_start = bits_x0 + (n_bits - level) as f64 * (cell + gap);
-            let x_end = bits_x0 + n_bits as f64 * (cell + gap) - gap;
-            let yb = y0 - 22.0;
-            sheet
-                .ctx
-                .no_fill()
-                .stroke(*color)
-                .stroke_width(line::MEDIUM);
-            sheet.ctx.line(x_start, yb, x_end, yb);
-            sheet.ctx.line(x_start, yb, x_start, yb + 12.0);
-            sheet.ctx.line(x_end, yb, x_end, yb + 12.0);
-        }
-
-        let tag = if *value == 116 {
-            format!("{} zeros \u{2192} on 4, off 8", level)
-        } else {
-            format!("{} zeros \u{2192} on {}", level, 1u32 << level)
-        };
-        sheet.label(&tag, W - MARGIN, y0 + 20.0, 26.0, *color, 1);
+        let zeros = value.trailing_zeros() as usize;
+        let x_start = X0 + (BITS - zeros) as f64 * (CELL + GAP);
+        let x_end = X0 + BITS as f64 * (CELL + GAP) - GAP;
+        let by = y - 22.0;
+        sheet
+            .ctx
+            .no_fill()
+            .stroke(role::figure::pen())
+            .stroke_width(line::HERO);
+        sheet.ctx.line(x_start, by, x_end, by);
+        sheet.ctx.line(x_start, by, x_start, by + 14.0);
+        sheet.ctx.line(x_end, by, x_end, by + 14.0);
     }
 
-    sheet.hud_title(&[
-        "The level is in the low bits",
-        "grid level = trailing zeros; hardware reads it in one instruction, CTZ",
-    ]);
-    sheet.attribution(None);
     sheet.save(renderer, out);
 }
 
-// --- main -----------------------------------------------------------------------
-
 fn main() {
     let mono_path = inputs::geist_mono();
-
     let mut renderer = Renderer::new(W as u32, H as u32);
     let mono = load_family(&mut renderer, mono_path.to_str().unwrap());
-
     let outputs = OutputPaths::from_args();
     fig_fractions(&renderer, &mono, &outputs.blog("fig-fractions.png"));
     fig_midpoint(&renderer, &mono, &outputs.blog("fig-midpoint.png"));

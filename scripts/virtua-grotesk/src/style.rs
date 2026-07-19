@@ -132,7 +132,16 @@ pub mod type_size {
 // Names describe appearance only. No swatch name encodes a drawing purpose.
 
 pub mod color {
-    use super::Color;
+    use super::{oklch_srgb, Color};
+
+    // Inline blog figures intentionally repeat the OG palette's perceptual
+    // recipe without importing `og_color`. The two palettes can still be art
+    // directed independently, but begin from the same reviewed appearance.
+    // Keep these colors in OKLCH so a later hue adjustment does not silently
+    // reintroduce the uneven saturation that showed up after social-media
+    // recompression.
+    const FIGURE_CHROMA: f64 = 0.16;
+    const RED_OPTICAL_CHROMA_BOOST: f64 = 0.015;
 
     pub fn black_deep() -> Color {
         Color::rgb(0x0a, 0x0a, 0x0a)
@@ -186,7 +195,7 @@ pub mod color {
         Color::rgb(0x78, 0x78, 0x78)
     }
     pub fn gray_350() -> Color {
-        Color::rgb(0x8a, 0x8a, 0x8a)
+        Color::rgb(0x92, 0x92, 0x8e)
     }
     pub fn gray() -> Color {
         gray_350()
@@ -198,34 +207,34 @@ pub mod color {
         Color::rgb(0xe6, 0xe6, 0xe6)
     }
     pub fn green() -> Color {
-        Color::rgb(0x15, 0xc4, 0x74)
+        oklch_srgb(0.67, FIGURE_CHROMA, 159.0)
     }
     pub fn green_muted() -> Color {
-        Color::rgb(0x18, 0xb8, 0x6f)
+        oklch_srgb(0.63, FIGURE_CHROMA - 0.02, 159.0)
     }
     pub fn orange() -> Color {
-        Color::rgb(0xff, 0x98, 0x22)
+        oklch_srgb(0.74, FIGURE_CHROMA, 52.0)
     }
     pub fn orange_bright() -> Color {
-        Color::rgb(0xff, 0x98, 0x0f)
+        oklch_srgb(0.78, FIGURE_CHROMA, 52.0)
     }
     pub fn orange_deep() -> Color {
-        Color::rgb(0xff, 0x4e, 0x00)
+        oklch_srgb(0.66, FIGURE_CHROMA, 42.0)
     }
     pub fn yellow() -> Color {
-        Color::rgb(0xff, 0xd2, 0x3c)
+        oklch_srgb(0.88, FIGURE_CHROMA, 92.0)
     }
     pub fn red() -> Color {
-        Color::rgb(0xff, 0x4a, 0x35)
+        oklch_srgb(0.66, FIGURE_CHROMA + RED_OPTICAL_CHROMA_BOOST, 28.0)
     }
     pub fn blue() -> Color {
-        Color::rgb(0x4a, 0x78, 0xff)
+        oklch_srgb(0.65, 0.15, 258.0)
     }
     pub fn ultramarine() -> Color {
         Color::rgb(0x3d, 0x6b, 0xaa)
     }
     pub fn purple() -> Color {
-        Color::rgb(0x8c, 0x6c, 0xff)
+        oklch_srgb(0.65, 0.17, 302.0)
     }
 }
 
@@ -294,6 +303,38 @@ pub mod og_color {
 // drawing jobs, so palette edits and role edits remain separate decisions.
 
 pub mod role {
+    /// Shared appearance of the inline blog figures. This intentionally
+    /// mirrors the OG image while remaining a separate mapping layer, so the
+    /// hero can still be art directed independently later.
+    pub mod figure {
+        use super::super::{color, Color};
+
+        pub fn background() -> Color {
+            color::gray_350()
+        }
+        pub fn pen() -> Color {
+            color::gray_900()
+        }
+        pub fn point_fill() -> Color {
+            color::gray_200()
+        }
+        pub fn correction_point_fill() -> Color {
+            color::gray_100()
+        }
+        pub fn red() -> Color {
+            color::red()
+        }
+        pub fn orange() -> Color {
+            color::orange()
+        }
+        pub fn yellow() -> Color {
+            color::yellow()
+        }
+        pub fn green() -> Color {
+            color::green()
+        }
+    }
+
     pub mod og {
         use super::super::{og_color, Color};
 
@@ -351,7 +392,7 @@ pub mod role {
         use super::super::{color, Color};
 
         pub fn background() -> Color {
-            color::gray_950()
+            color::gray_350()
         }
     }
 
@@ -359,22 +400,22 @@ pub mod role {
         use super::super::{color, Color};
 
         pub fn standard() -> Color {
-            color::gray_850()
+            color::gray_650()
         }
         pub fn faint() -> Color {
-            color::gray_900()
+            color::gray_475()
         }
         pub fn fine() -> Color {
-            color::gray_875()
+            color::gray_600()
         }
         pub fn flat() -> Color {
-            color::gray_800()
+            color::gray_600()
         }
         pub fn structure() -> Color {
-            color::gray_825()
+            color::gray_650()
         }
         pub fn major() -> Color {
-            color::gray_625()
+            color::gray_800()
         }
     }
 
@@ -382,10 +423,10 @@ pub mod role {
         use super::super::{color, Color};
 
         pub fn dimensions() -> Color {
-            color::gray_550()
+            color::gray_900()
         }
         pub fn secondary() -> Color {
-            color::gray_350()
+            color::gray_850()
         }
     }
 
@@ -393,10 +434,10 @@ pub mod role {
         use super::super::{color, Color};
 
         pub fn handles() -> Color {
-            color::gray_450()
+            color::gray_900()
         }
         pub fn curve() -> Color {
-            color::gray_100()
+            color::gray_900()
         }
     }
 
@@ -404,10 +445,10 @@ pub mod role {
         use super::super::{color, Color};
 
         pub fn axis() -> Color {
-            color::gray_700()
+            color::gray_900()
         }
         pub fn grid() -> Color {
-            color::gray_875()
+            color::gray_600()
         }
     }
 

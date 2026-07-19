@@ -28,25 +28,15 @@ fn fig_ohno(renderer: &Renderer, mono: &str, reg: &std::path::Path, out: &std::p
     let n = load_outline(reg, "n");
     let o = load_outline(reg, "o");
 
-    const S: f64 = 0.84;
+    const S: f64 = 0.86;
     let run: f64 = (cap_o.width + cap_h.width + n.width + o.width) * S;
-    let content_h = (784.0 + 256.0) * S + 50.0;
-    let bottom = FOOTER_RULE_Y + (HEADER_RULE_Y - FOOTER_RULE_Y - content_h) / 2.0;
     let f = Frame {
         s: S,
         x0: MARGIN + (W - 2.0 * MARGIN - run) / 2.0,
-        baseline: bottom + 256.0 * S,
+        baseline: 250.0,
     };
 
-    let top_u = (((H - MARGIN - f.baseline) / S) / 8.0).floor() * 8.0;
-    let bot_u = (((MARGIN - f.baseline) / S) / 8.0).ceil() * 8.0;
-    draw_grid(&mut sheet, &f, top_u, bot_u);
-    metric_lines(
-        &mut sheet,
-        &f,
-        &[0.0, 576.0, 768.0, -256.0],
-        &[784.0, -16.0],
-    );
+    metric_lines(&mut sheet, &f, &[0.0, 576.0, 768.0], &[784.0, -16.0]);
 
     let (x_o, x_h, x_n, x_lo) = (
         0.0,
@@ -54,8 +44,13 @@ fn fig_ohno(renderer: &Renderer, mono: &str, reg: &std::path::Path, out: &std::p
         cap_o.width + cap_h.width,
         cap_o.width + cap_h.width + n.width,
     );
-    for (outline, ox) in [(&cap_o, x_o), (&cap_h, x_h), (&n, x_n), (&o, x_lo)] {
-        annotate(&mut sheet, outline, S, f.x(ox), f.baseline);
+    for (outline, ox, fill) in [
+        (&cap_o, x_o, role::figure::red()),
+        (&cap_h, x_h, role::figure::orange()),
+        (&n, x_n, role::figure::yellow()),
+        (&o, x_lo, role::figure::green()),
+    ] {
+        draw_figure_glyph(&mut sheet, outline, S, f.x(ox), f.baseline, fill);
     }
 
     // measured stroke dimensions
@@ -64,14 +59,14 @@ fn fig_ohno(renderer: &Renderer, mono: &str, reg: &std::path::Path, out: &std::p
         f.x(x_o + 156.0),
         f.y(384.0),
         "108",
-        green(),
+        role::figure::pen(),
     );
     sheet.dim_v(
         f.x(x_o + 424.0),
         f.y(684.0),
         f.y(784.0),
         "100",
-        green(),
+        role::figure::pen(),
         true,
     );
     sheet.dim_h(
@@ -79,47 +74,30 @@ fn fig_ohno(renderer: &Renderer, mono: &str, reg: &std::path::Path, out: &std::p
         f.x(x_h + 184.0),
         f.y(600.0),
         "104",
-        green(),
+        role::figure::pen(),
     );
     sheet.dim_v(
         f.x(x_h + 384.0),
         f.y(360.0),
         f.y(456.0),
         "96",
-        green(),
+        role::figure::pen(),
         true,
     );
-    sheet.dim_h(f.x(x_n + 64.0), f.x(x_n + 160.0), f.y(256.0), "96", green());
+    sheet.dim_h(
+        f.x(x_n + 64.0),
+        f.x(x_n + 160.0),
+        f.y(256.0),
+        "96",
+        role::figure::pen(),
+    );
     sheet.dim_h(
         f.x(x_lo + 32.0),
         f.x(x_lo + 132.0),
         f.y(288.0),
         "100",
-        green(),
+        role::figure::pen(),
     );
-
-    // the key innovation, called out on the n's arch (y=500: off 8, on 2)
-    correction_callout(
-        &mut sheet,
-        (f.x(x_n + 296.0), f.y(500.0)),
-        (f.x(x_n + 240.0), f.y(676.0)),
-        -1,
-    );
-
-    sheet.metric_tag("CAP / ASC 768 = 512+256", W - MARGIN, f.y(768.0), false, 1);
-    sheet.metric_tag("X-HEIGHT 576 = 512+64", MARGIN, f.y(576.0), true, -1);
-    sheet.metric_tag("BASELINE 0", MARGIN, f.y(0.0), true, -1);
-    sheet.metric_tag("DESCENDER -256 = -(2^8)", MARGIN, f.y(-256.0), true, -1);
-    sheet.metric_tag("OVERSHOOT +16", W - MARGIN, f.y(784.0), true, 1);
-    sheet.metric_tag("OVERSHOOT -16", W - MARGIN, f.y(-16.0), false, 1);
-
-    legend(&mut sheet, W - MARGIN, f.y(-150.0));
-
-    sheet.hud_title(&[
-        "The Latin system / OHno",
-        "metrics on 64, stems on 8, curves = stem \u{b1} 4",
-    ]);
-    sheet.attribution(Some("em 1024 = 2^10"));
     sheet.save(renderer, out);
 }
 
@@ -131,29 +109,32 @@ fn fig_no(renderer: &Renderer, mono: &str, reg: &std::path::Path, out: &std::pat
     let n = load_outline(reg, "n");
     let o = load_outline(reg, "o");
 
-    const S: f64 = 1.5;
+    const S: f64 = 1.62;
     let run = (n.width + o.width) * S;
     let f = Frame {
         s: S,
         x0: MARGIN + (W - 2.0 * MARGIN - run) / 2.0,
-        baseline: 330.0,
+        baseline: 214.0,
     };
-
-    let top_u = (((H - MARGIN - f.baseline) / S) / 8.0).floor() * 8.0;
-    let bot_u = (((MARGIN - f.baseline) / S) / 8.0).ceil() * 8.0;
-    draw_grid(&mut sheet, &f, top_u, bot_u);
     metric_lines(&mut sheet, &f, &[0.0, 576.0], &[-16.0, 592.0]);
 
-    annotate(&mut sheet, &n, S, f.x(0.0), f.baseline);
-    annotate(&mut sheet, &o, S, f.x(n.width), f.baseline);
+    draw_figure_glyph(&mut sheet, &n, S, f.x(0.0), f.baseline, role::figure::red());
+    draw_figure_glyph(
+        &mut sheet,
+        &o,
+        S,
+        f.x(n.width),
+        f.baseline,
+        role::figure::green(),
+    );
 
-    sheet.dim_h(f.x(64.0), f.x(160.0), f.y(256.0), "96", green());
+    sheet.dim_h(f.x(64.0), f.x(160.0), f.y(256.0), "96", role::figure::pen());
     sheet.dim_v(
         f.x(n.width + 304.0),
         f.y(500.0),
         f.y(592.0),
         "92",
-        green(),
+        role::figure::pen(),
         true,
     );
     sheet.dim_h(
@@ -161,37 +142,8 @@ fn fig_no(renderer: &Renderer, mono: &str, reg: &std::path::Path, out: &std::pat
         f.x(n.width + 132.0),
         f.y(288.0),
         "100",
-        green(),
+        role::figure::pen(),
     );
-
-    // chamfer callout: n bottom-left corner (64,16)-(80,0)
-    {
-        let (cx, cy) = (f.x(72.0), f.y(8.0));
-        sheet.ctx.no_fill().stroke(green()).stroke_width(PEN);
-        sheet.ctx.line(cx - 14.0, cy - 14.0, cx - 90.0, cy - 90.0);
-        sheet.label_padded("chamfer 16", cx - 104.0, cy - 116.0, DIM_TEXT, green(), 1);
-    }
-
-    sheet.metric_tag("x-height 576", MARGIN, f.y(576.0), true, -1);
-    sheet.metric_tag("baseline 0", MARGIN, f.y(0.0), true, -1);
-    sheet.metric_tag("overshoot +16", W - MARGIN, f.y(592.0), false, 1);
-    sheet.metric_tag("overshoot -16", W - MARGIN, f.y(-16.0), false, 1);
-
-    advance_row(
-        &mut sheet,
-        &f,
-        188.0,
-        &[(0.0, n.width), (n.width, o.width)],
-        &[(64.0, 528.0), (32.0, 584.0)],
-    );
-
-    legend(&mut sheet, W - MARGIN, f.y(400.0));
-
-    sheet.hud_title(&[
-        "The lowercase system / no",
-        "stem 96 = 3\u{b7}32; curves 96\u{b1}4, the correction grid at work",
-    ]);
-    sheet.attribution(None);
     sheet.save(renderer, out);
 }
 
@@ -211,20 +163,16 @@ fn fig_weights(
     let bn = load_outline(bold, "n");
     let bo = load_outline(bold, "o");
 
-    const S: f64 = 0.95;
-    const PAIR_GAP: f64 = 96.0;
+    const S: f64 = 0.91;
+    const PAIR_GAP: f64 = 72.0;
     let run = (rn.width + ro.width + bn.width + bo.width) * S + PAIR_GAP;
     let f = Frame {
         s: S,
         x0: MARGIN
             + (W - 2.0 * MARGIN - run).min(0.0).max(W * -1.0) / 2.0
             + (W - 2.0 * MARGIN - run).max(0.0) / 2.0,
-        baseline: 440.0,
+        baseline: 270.0,
     };
-
-    let top_u = (((H - MARGIN - f.baseline) / S) / 8.0).floor() * 8.0;
-    let bot_u = (((MARGIN - f.baseline) / S) / 8.0).ceil() * 8.0;
-    draw_grid(&mut sheet, &f, top_u, bot_u);
     metric_lines(&mut sheet, &f, &[0.0, 576.0], &[-16.0, 592.0]);
 
     let x_rn = f.x(0.0);
@@ -232,26 +180,36 @@ fn fig_weights(
     let x_bn = f.x(rn.width + ro.width) + PAIR_GAP;
     let x_bo = x_bn + bn.width * S;
 
-    annotate(&mut sheet, &rn, S, x_rn, f.baseline);
-    annotate(&mut sheet, &ro, S, x_ro, f.baseline);
-    annotate(&mut sheet, &bn, S, x_bn, f.baseline);
-    annotate(&mut sheet, &bo, S, x_bo, f.baseline);
+    for (outline, x, fill) in [
+        (&rn, x_rn, role::figure::red()),
+        (&ro, x_ro, role::figure::orange()),
+        (&bn, x_bn, role::figure::yellow()),
+        (&bo, x_bo, role::figure::green()),
+    ] {
+        draw_figure_glyph(&mut sheet, outline, S, x, f.baseline, fill);
+    }
 
     // stems and curves, both weights, all measured
-    sheet.dim_h(x_rn + 64.0 * S, x_rn + 160.0 * S, f.y(256.0), "96", green());
+    sheet.dim_h(
+        x_rn + 64.0 * S,
+        x_rn + 160.0 * S,
+        f.y(256.0),
+        "96",
+        role::figure::pen(),
+    );
     sheet.dim_h(
         x_ro + 32.0 * S,
         x_ro + 132.0 * S,
         f.y(288.0),
         "100",
-        green(),
+        role::figure::pen(),
     );
     sheet.dim_v(
         x_ro + 304.0 * S,
         f.y(500.0),
         f.y(592.0),
         "92",
-        green(),
+        role::figure::pen(),
         true,
     );
     sheet.dim_h(
@@ -259,70 +217,23 @@ fn fig_weights(
         x_bn + 256.0 * S,
         f.y(256.0),
         "192",
-        green(),
+        role::figure::pen(),
     );
     sheet.dim_h(
         x_bo + 32.0 * S,
         x_bo + 228.0 * S,
         f.y(288.0),
         "196",
-        green(),
+        role::figure::pen(),
     );
     sheet.dim_v(
         x_bo + 344.0 * S,
         f.y(452.0),
         f.y(592.0),
         "140",
-        green(),
+        role::figure::pen(),
         true,
     );
-
-    // pair labels, above the grid
-    let label_y = f.y(640.0) + 44.0;
-    sheet.label(
-        "01 Regular / stem 96",
-        x_rn,
-        label_y,
-        LABEL_TEXT,
-        green(),
-        -1,
-    );
-    sheet.label(
-        "02 Bold / stem 192 = 96\u{b7}2",
-        x_bn,
-        label_y,
-        LABEL_TEXT,
-        green(),
-        -1,
-    );
-
-    // the key innovation, called out on the Regular o's inner wall
-    correction_callout(
-        &mut sheet,
-        (x_ro + 132.0 * S, f.y(288.0) - 40.0),
-        (x_ro + 260.0 * S, f.y(-120.0)),
-        -1,
-    );
-
-    sheet.metric_tag("x-height 576", MARGIN, f.y(576.0), true, -1);
-    sheet.metric_tag("baseline 0", MARGIN, f.y(0.0), true, -1);
-
-    legend(&mut sheet, W - MARGIN - 16.0, label_y);
-
-    // crop any spill at the margins
-    {
-        let ctx = &mut sheet.ctx;
-        ctx.fill(role::canvas::background()).no_stroke();
-        ctx.rect(0.0, 0.0, MARGIN, H);
-        ctx.rect(W - MARGIN, 0.0, MARGIN, H);
-        ctx.rect(0.0, 0.0, W, MARGIN);
-        ctx.rect(0.0, H - MARGIN, W, MARGIN);
-    }
-    sheet.hud_title(&[
-        "Two masters, one system",
-        "stem 192 = 96\u{b7}2, and again curve 196 = stem + 4",
-    ]);
-    sheet.attribution(None);
     sheet.save(renderer, out);
 }
 
@@ -335,16 +246,12 @@ fn fig_arabic(renderer: &Renderer, mono: &str, reg: &std::path::Path, out: &std:
     let beh = load_outline(reg, "beh-ar"); // components resolved: boat + dot
     let heh = load_outline(reg, "heh-ar.medi");
 
-    const S: f64 = 0.98;
+    const S: f64 = 1.12;
     let f = Frame {
         s: S,
         x0: MARGIN,
-        baseline: 452.0,
+        baseline: 390.0,
     };
-
-    let top_u = (((H - MARGIN - f.baseline) / S) / 8.0).floor() * 8.0;
-    let bot_u = (((MARGIN - f.baseline) / S) / 8.0).ceil() * 8.0;
-    draw_grid(&mut sheet, &f, top_u, bot_u);
     metric_lines(&mut sheet, &f, &[0.0, 768.0], &[]);
 
     // three slots, read right to left: alef, beh, medial heh
@@ -354,35 +261,23 @@ fn fig_arabic(renderer: &Renderer, mono: &str, reg: &std::path::Path, out: &std:
     let x_beh = center(1.0) - beh.width * S / 2.0;
     let x_heh = center(0.0) - heh.width * S / 2.0;
 
-    annotate(&mut sheet, &alef, S, x_alef, f.baseline);
-    annotate(&mut sheet, &beh, S, x_beh, f.baseline);
-    annotate(&mut sheet, &heh, S, x_heh, f.baseline);
-
-    // name labels, pinned under the header rule, numbered in reading order
-    sheet.label(
-        "01 alef / U+0627",
-        center(2.0),
-        HEADER_RULE_Y - 46.0,
-        LABEL_TEXT,
-        green(),
-        0,
+    draw_figure_glyph(
+        &mut sheet,
+        &alef,
+        S,
+        x_alef,
+        f.baseline,
+        role::figure::green(),
     );
-    sheet.label(
-        "02 beh / U+0628",
-        center(1.0),
-        HEADER_RULE_Y - 46.0,
-        LABEL_TEXT,
-        green(),
-        0,
+    draw_figure_glyph(
+        &mut sheet,
+        &beh,
+        S,
+        x_beh,
+        f.baseline,
+        role::figure::orange(),
     );
-    sheet.label(
-        "03 heh / medial form",
-        center(0.0),
-        HEADER_RULE_Y - 46.0,
-        LABEL_TEXT,
-        green(),
-        0,
-    );
+    draw_figure_glyph(&mut sheet, &heh, S, x_heh, f.baseline, role::figure::red());
 
     // measured dimensions: alef stroke, beh boat stroke, the dot's diameter
     sheet.dim_h(
@@ -390,35 +285,23 @@ fn fig_arabic(renderer: &Renderer, mono: &str, reg: &std::path::Path, out: &std:
         x_alef + 160.0 * S,
         f.y(384.0),
         "96",
-        green(),
+        role::figure::pen(),
     );
-    sheet.dim_v(x_beh + 296.0 * S, f.y(0.0), f.y(72.0), "72", green(), true);
+    sheet.dim_v(
+        x_beh + 296.0 * S,
+        f.y(0.0),
+        f.y(72.0),
+        "72",
+        role::figure::pen(),
+        true,
+    );
     sheet.dim_h(
         x_beh + 42.0 * S,
         x_beh + 202.0 * S,
         f.y(-192.0),
         "160",
-        green(),
+        role::figure::pen(),
     );
-
-    // the beh's tail is dense with 2-grid work: call one out
-    correction_callout(
-        &mut sheet,
-        (x_beh + 538.0 * S, f.y(322.0)),
-        (x_beh + 400.0 * S, f.y(560.0)),
-        -1,
-    );
-
-    sheet.metric_tag("alef / cap 768", MARGIN, f.y(768.0), false, -1);
-    sheet.metric_tag("baseline 0", MARGIN, f.y(0.0), true, -1);
-
-    legend(&mut sheet, W - MARGIN, 240.0);
-
-    sheet.hud_title(&[
-        "The Arabic system / reads right to left",
-        "the alef is pure structure; the beh's curves are corrections",
-    ]);
-    sheet.attribution(None);
     sheet.save(renderer, out);
 }
 
@@ -537,10 +420,10 @@ fn fig_semantic(renderer: &Renderer, mono: &str, reg: &std::path::Path, out: &st
     let body = DIM_TEXT;
 
     sheet.label("The self-labeling grid,", rx, 1216.0, body, green(), -1);
-    sheet.label("built on powers-of-two", rx, 1172.0, body, green(), -1);
+    sheet.label("built on powers of two", rx, 1172.0, body, green(), -1);
 
     sheet.label("Every integer is a sum of", rx, 1084.0, body, gray(), -1);
-    sheet.label("powers-of-two. The meaning", rx, 1040.0, body, gray(), -1);
+    sheet.label("powers of two. The meaning", rx, 1040.0, body, gray(), -1);
     sheet.label("is the trailing zeros:", rx, 996.0, body, gray(), -1);
 
     let bit_row = |sheet: &mut Sheet, value: u32, y0: f64, color: Color, tag: &str| {

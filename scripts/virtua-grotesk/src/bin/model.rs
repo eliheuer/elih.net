@@ -30,7 +30,7 @@ use virtua_grotesk_figures::*;
 fn fig_review(
     renderer: &Renderer,
     mono: &str,
-    model_name: &str,
+    _model_name: &str,
     reg: &std::path::Path,
     bold: &std::path::Path,
     pred: &std::path::Path,
@@ -39,29 +39,25 @@ fn fig_review(
     let mut sheet = new_sheet(renderer, mono);
 
     const GLYPHS: [&str; 6] = ["K", "E", "M", "n", "b", "c"];
-    const S: f64 = 0.32;
+    const S: f64 = 0.43;
 
     // three bands between the rules, top to bottom
     let band_h = (HEADER_RULE_Y - FOOTER_RULE_Y) / 3.0;
     struct Row<'a> {
-        label: String,
         color: Color,
         dir: &'a std::path::Path,
     }
     let rows = [
         Row {
-            label: "01 input / human Regular".into(),
-            color: green(),
+            color: role::figure::red(),
             dir: reg,
         },
         Row {
-            label: format!("02 output / {model_name}"),
-            color: red(),
+            color: role::figure::orange(),
             dir: pred,
         },
         Row {
-            label: "03 reference / human Bold".into(),
-            color: gray(),
+            color: role::figure::green(),
             dir: bold,
         },
     ];
@@ -71,13 +67,15 @@ fn fig_review(
     for (i, row) in rows.iter().enumerate() {
         let band_top = HEADER_RULE_Y - i as f64 * band_h;
         let band_bottom = band_top - band_h;
-        let baseline = band_bottom + 28.0;
+        let baseline = band_bottom + 44.0;
 
         // baseline, house blue, behind the glyphs
-        sheet.ctx.no_fill().stroke(blue()).stroke_width(line::THIN);
+        sheet
+            .ctx
+            .no_fill()
+            .stroke(role::figure::pen())
+            .stroke_width(line::THIN);
         sheet.ctx.line(MARGIN, baseline, W - MARGIN, baseline);
-
-        sheet.label(&row.label, MARGIN, band_top - 28.0, 26.0, row.color, -1);
 
         for (j, name) in GLYPHS.iter().enumerate() {
             let slot_center = MARGIN + (j as f64 + 0.5) * slot_w;
@@ -88,18 +86,26 @@ fn fig_review(
                     slot_center,
                     baseline + 74.0,
                     24.0,
-                    role::annotation::dimensions(),
+                    role::figure::pen(),
                     0,
                 );
                 continue;
             }
             let o = load_outline(&row.dir.join("glyphs"), name);
             let x = slot_center - o.width * S / 2.0;
-            draw_body_strong(&mut sheet, &o, S, x, baseline, row.color);
+            draw_body_styled(
+                &mut sheet,
+                &o,
+                S,
+                x,
+                baseline,
+                row.color,
+                255,
+                role::figure::pen(),
+                line::HERO,
+            );
         }
     }
-
-    sheet.attribution(Some(&format!("held-out review / model: {model_name}")));
     sheet.save(renderer, out);
 }
 
@@ -108,7 +114,7 @@ fn fig_review(
 fn fig_bolden_a(
     renderer: &Renderer,
     mono: &str,
-    model_name: &str,
+    _model_name: &str,
     reg: &std::path::Path,
     bold: &std::path::Path,
     pred: &std::path::Path,
@@ -116,10 +122,8 @@ fn fig_bolden_a(
 ) {
     let mut sheet = new_sheet(renderer, mono);
 
-    const S: f64 = 1.45;
-    const BASELINE: f64 = 242.0;
-    let grid_bottom = MARGIN;
-    let grid_top = H - MARGIN;
+    const S: f64 = 1.62;
+    const BASELINE: f64 = 214.0;
 
     // the Regular a from the sources; the Bold a from the detected run's
     // pred.ufo when it has one (keeps the label truthful), else the
@@ -133,34 +137,15 @@ fn fig_bolden_a(
     };
 
     // run layout: centered between the margins
-    let gap = 320.0;
+    let gap = 260.0;
     let run_w = o_reg.width * S + gap + o_bold.width * S;
     let x_reg = MARGIN + (W - 2.0 * MARGIN - run_w) / 2.0;
     let x_bold = x_reg + o_reg.width * S + gap;
 
-    // 16-unit design grid, anchored to the Regular's origin
-    {
-        let step = 16.0 * S;
-        let ctx = &mut sheet.ctx;
-        ctx.no_fill()
-            .stroke(role::grid::standard())
-            .stroke_width(line::THIN);
-        let mut x = x_reg - (((x_reg - MARGIN) / step).floor()) * step;
-        while x <= W - MARGIN {
-            ctx.line(x, grid_bottom, x, grid_top);
-            x += step;
-        }
-        let mut y = BASELINE - (((BASELINE - grid_bottom) / step).floor()) * step;
-        while y <= grid_top {
-            ctx.line(MARGIN, y, W - MARGIN, y);
-            y += step;
-        }
-    }
-
     // vertical metrics: solid baseline + x-height, dashed overshoots
     {
         let ctx = &mut sheet.ctx;
-        ctx.no_fill().stroke(blue()).stroke_width(PEN);
+        ctx.no_fill().stroke(blue()).stroke_width(line::HERO);
         ctx.line_dash(&[10.0, 10.0]);
         for uy in [-16.0, 592.0] {
             ctx.line(MARGIN, BASELINE + uy * S, W - MARGIN, BASELINE + uy * S);
@@ -172,10 +157,15 @@ fn fig_bolden_a(
     }
 
     // glyphs with the Runebender point language on top
-    draw_body_strong(&mut sheet, &o_reg, S, x_reg, BASELINE, green());
-    draw_body_strong(&mut sheet, &o_bold, S, x_bold, BASELINE, red());
-    draw_points_mono(&mut sheet, &o_reg, S, x_reg, BASELINE, green());
-    draw_points_mono(&mut sheet, &o_bold, S, x_bold, BASELINE, red());
+    draw_figure_glyph(&mut sheet, &o_reg, S, x_reg, BASELINE, role::figure::red());
+    draw_figure_glyph(
+        &mut sheet,
+        &o_bold,
+        S,
+        x_bold,
+        BASELINE,
+        role::figure::green(),
+    );
 
     // arrow between, at half x-height
     {
@@ -183,40 +173,11 @@ fn fig_bolden_a(
         let x0 = x_reg + o_reg.width * S + 70.0;
         let x1 = x_bold - 70.0;
         let ctx = &mut sheet.ctx;
-        ctx.no_fill().stroke(gray()).stroke_width(PEN);
+        ctx.no_fill().stroke(role::figure::pen()).stroke_width(10.0);
         ctx.line(x0, y, x1, y);
-        ctx.line(x1 - 22.0, y + 14.0, x1, y);
-        ctx.line(x1 - 22.0, y - 14.0, x1, y);
+        ctx.line(x1 - 32.0, y + 22.0, x1, y);
+        ctx.line(x1 - 32.0, y - 22.0, x1, y);
     }
-
-    // metric tags, docked at the left margin
-    sheet.metric_tag("x-height 576", MARGIN, BASELINE + 576.0 * S, true, -1);
-    sheet.metric_tag("baseline 0", MARGIN, BASELINE, true, -1);
-
-    // captions under the run, centered per glyph
-    let label_y = 132.0;
-    sheet.label(
-        "Regular / drawn by hand",
-        x_reg + o_reg.width * S / 2.0,
-        label_y,
-        26.0,
-        green(),
-        0,
-    );
-    sheet.label(
-        &format!("Bold / drawn by {model_name}"),
-        x_bold + o_bold.width * S / 2.0,
-        label_y,
-        26.0,
-        red(),
-        0,
-    );
-
-    sheet.hud_title(&[
-        "Weight transfer / Regular to Bold",
-        "the model draws the held-out Bold n from the Regular input",
-    ]);
-    sheet.attribution(Some(&format!("model: {model_name}")));
     sheet.save(renderer, out);
 }
 

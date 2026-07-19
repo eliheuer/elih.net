@@ -17,7 +17,7 @@ use kurbo::{Affine, BezPath};
 #[allow(unused_imports)]
 use virtua_grotesk_figures::*;
 
-const UNIT: f64 = 13.0; // canvas px per unit: 8-cell = 104px, 2-cell = 26px
+const UNIT: f64 = 15.0; // canvas px per unit: 8-cell = 120px, 2-cell = 30px
 
 fn main() {
     let mono_path = inputs::geist_mono();
@@ -35,42 +35,42 @@ fn main() {
     let t_right = (104.0, 68.0);
     let r_up = (128.0, 40.0);
 
-    // frame: arch centered, content -8..80 units vertically
+    // Frame: the arch itself fills the card. No title or legend competes with
+    // the one idea this figure needs to communicate.
     let origin_x = MARGIN + (W - 2.0 * MARGIN - 128.0 * UNIT) / 2.0;
     let origin_y = MARGIN + (H - 2.0 * MARGIN - 88.0 * UNIT) / 2.0 + 8.0 * UNIT;
     let cx = |ux: f64| origin_x + ux * UNIT;
     let cy = |uy: f64| origin_y + uy * UNIT;
 
-    // two-level grid across the content zone
+    // The structural 8-unit lattice stays visible; the single correction
+    // line at 68 makes the +4 overshoot legible without a dense 2-unit mesh.
     {
         let (y0, y1) = (cy(-8.0), cy(80.0));
         let ctx = &mut sheet.ctx;
-        let u_lo = ((MARGIN - origin_x) / UNIT / 2.0).floor() as i64 * 2;
-        let u_hi = ((W - MARGIN - origin_x) / UNIT / 2.0).ceil() as i64 * 2;
+        let u_lo = ((MARGIN - origin_x) / UNIT / 8.0).floor() as i64 * 8;
+        let u_hi = ((W - MARGIN - origin_x) / UNIT / 8.0).ceil() as i64 * 8;
         let mut u = u_lo;
         while u <= u_hi {
             let x = origin_x + u as f64 * UNIT;
             if x >= MARGIN && x <= W - MARGIN {
-                if u.rem_euclid(8) == 0 {
-                    ctx.stroke(role::grid::standard()).stroke_width(PEN_LIGHT);
-                } else {
-                    ctx.stroke(role::grid::faint()).stroke_width(line::FINE);
-                }
+                ctx.stroke(role::grid::standard()).stroke_width(line::THIN);
                 ctx.line(x, y0, x, y1);
             }
-            u += 2;
+            u += 8;
         }
         let mut v = -8i64;
         while v <= 80 {
             let y = origin_y + v as f64 * UNIT;
-            if v.rem_euclid(8) == 0 {
-                ctx.stroke(role::grid::standard()).stroke_width(PEN_LIGHT);
-            } else {
-                ctx.stroke(role::grid::faint()).stroke_width(line::FINE);
-            }
+            ctx.stroke(role::grid::standard()).stroke_width(line::THIN);
             ctx.line(MARGIN, y, W - MARGIN, y);
-            v += 2;
+            v += 8;
         }
+        ctx.no_fill()
+            .stroke(role::figure::red())
+            .stroke_width(line::REGULAR)
+            .line_dash(&[12.0, 12.0]);
+        ctx.line(MARGIN, cy(68.0), W - MARGIN, cy(68.0));
+        ctx.line_dash(&[]);
     }
 
     // handles
@@ -79,7 +79,7 @@ fn main() {
             .ctx
             .no_fill()
             .stroke(role::bezier::handles())
-            .stroke_width(PEN_LIGHT);
+            .stroke_width(line::HERO);
         sheet.ctx.line(cx(on.0), cy(on.1), cx(off.0), cy(off.1));
     }
 
@@ -93,8 +93,8 @@ fn main() {
         sheet
             .ctx
             .no_fill()
-            .stroke(role::bezier::curve())
-            .stroke_width(line::HEAVY);
+            .stroke(role::figure::orange())
+            .stroke_width(12.0);
         sheet.ctx.draw_path(to_canvas * path);
     }
 
@@ -108,43 +108,39 @@ fn main() {
         (t_right, PtRole::Off),
         (r_up, PtRole::Off),
     ] {
-        let color = if on8(p.0, p.1) { green() } else { red() };
+        let fill = if on8(p.0, p.1) {
+            role::figure::point_fill()
+        } else {
+            role::figure::correction_point_fill()
+        };
         let (px, py) = (cx(p.0), cy(p.1));
         sheet
             .ctx
-            .fill(role::canvas::background())
-            .stroke(color)
-            .stroke_width(PEN);
+            .fill(fill)
+            .stroke(role::figure::pen())
+            .stroke_width(line::HERO);
         match role {
             PtRole::Smooth => {
-                sheet.ctx.oval(px - 11.0, py - 11.0, 22.0, 22.0);
+                sheet.ctx.oval(px - 13.0, py - 13.0, 26.0, 26.0);
             }
             PtRole::Corner => {
-                sheet.ctx.rect(px - 10.0, py - 10.0, 20.0, 20.0);
+                sheet.ctx.rect(px - 13.0, py - 13.0, 26.0, 26.0);
             }
             PtRole::Off => {
-                sheet.ctx.oval(px - 8.0, py - 8.0, 16.0, 16.0);
+                sheet.ctx.oval(px - 13.0, py - 13.0, 26.0, 26.0);
             }
         }
     }
 
     // the +4: dimension from the 64-line (grid intent) to the apex
-    sheet.dim_v(cx(88.0), cy(64.0), cy(68.0), "+4", red(), true);
-
-    // callout + legend
-    correction_callout(
-        &mut sheet,
-        (cx(64.0) + 14.0, cy(68.0) + 8.0),
-        (cx(78.0), cy(78.0)),
-        -1,
+    sheet.dim_v(
+        cx(88.0),
+        cy(64.0),
+        cy(68.0),
+        "+4",
+        role::figure::pen(),
+        true,
     );
-    legend(&mut sheet, W - MARGIN - 16.0, cy(-6.0));
-
-    sheet.hud_title(&[
-        "Optical correction / the two-layer grid",
-        "structure lands on 8; the eye's +4 lands on 2",
-    ]);
-    sheet.attribution(None);
 
     let outputs = OutputPaths::from_args();
     sheet.save(&renderer, &outputs.blog("fig-optical-correction.png"));
