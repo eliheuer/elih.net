@@ -3,20 +3,37 @@ import { SITE } from '@/consts'
 import type { CollectionEntry } from 'astro:content'
 
 interface Props {
-  post: CollectionEntry<'blog'> | CollectionEntry<'fonts'> | CollectionEntry<'software'>
+  post:
+    | CollectionEntry<'blog'>
+    | CollectionEntry<'fonts'>
+    | CollectionEntry<'software'>
 }
 
 const { post } = Astro.props
 
 const title = post.data.title || SITE.title
 const description = post.data.description || SITE.description
-const defaultImage = new URL('/static/1200x630.png', Astro.site).toString()
-const author = 'authors' in post.data && post.data.authors ? post.data.authors.join(', ') : SITE.author
+const author =
+  'authors' in post.data && post.data.authors
+    ? post.data.authors.join(', ')
+    : SITE.author
 
 // We'll use a direct path to the image in the public directory
-const postId = post.id.split('/')[0]; // Get the post ID (folder name)
-const socialImageUrl = new URL(`/og/${postId}.png`, Astro.site).toString();
-
+const postId = post.id.split('/')[0] // Get the post ID (folder name)
+const socialImageUrl = new URL(`/og/${postId}.png`, Astro.site).toString()
+const socialImageDimensions = {
+  'diffuse-value-capture': { width: 1200, height: 630 },
+  img2bez: { width: 2400, height: 1260 },
+  'virtua-grotesk': { width: 2520, height: 1320 },
+} as const
+const socialImageSize = socialImageDimensions[
+  postId as keyof typeof socialImageDimensions
+] ?? {
+  width: 1200,
+  height: 630,
+}
+const socialImageWidth = String(socialImageSize.width)
+const socialImageHeight = String(socialImageSize.height)
 ---
 
 <title>{`${title} | ${SITE.title}`}</title>
@@ -27,8 +44,9 @@ const socialImageUrl = new URL(`/og/${postId}.png`, Astro.site).toString();
 <meta property="og:title" content={title} />
 <meta property="og:description" content={description} />
 <meta property="og:image" content={socialImageUrl} />
-<meta property="og:image:width" content="2400" />
-<meta property="og:image:height" content="1260" />
+<meta property="og:image:type" content="image/png" />
+<meta property="og:image:width" content={socialImageWidth} />
+<meta property="og:image:height" content={socialImageHeight} />
 <meta property="og:image:alt" content={title} />
 <meta property="og:type" content="website" />
 <meta property="og:locale" content={SITE.locale} />

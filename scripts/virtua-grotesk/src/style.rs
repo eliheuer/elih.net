@@ -168,7 +168,7 @@ pub mod og_color {
         Color::rgb(0xb8, 0xb8, 0xb3)
     }
     pub fn gray_225() -> Color {
-        Color::rgb(0xd8, 0xd8, 0xd2)
+        Color::rgb(0xef, 0xef, 0xe9)
     }
     pub fn gray_200() -> Color {
         Color::rgb(0xf2, 0xed, 0xe4)

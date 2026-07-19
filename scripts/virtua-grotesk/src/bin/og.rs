@@ -38,8 +38,8 @@ struct GlyphMeasurement {
 
 const POINT_MEASUREMENT_END_INSET: f64 = 20.0;
 const EDGE_MEASUREMENT_END_INSET: f64 = 10.0;
-const HORIZONTAL_VALUE_BASELINE_OFFSET: f64 = 16.0;
-const HORIZONTAL_SUM_BASELINE_OFFSET: f64 = -38.0;
+const HORIZONTAL_VALUE_BASELINE_OFFSET: f64 = 20.0;
+const HORIZONTAL_SUM_BASELINE_OFFSET: f64 = -48.0;
 const VERTICAL_LABEL_GAP: f64 = 16.0;
 const VERTICAL_LABEL_BASELINE_OFFSET: f64 = -12.0;
 
@@ -162,12 +162,13 @@ const STRUCTURE_GRID_UNIT: f64 = 8.0;
 const BACKGROUND_GRID_UNIT: f64 = 64.0;
 const TOP_OVERSHOOT: f64 = 784.0;
 const MEASUREMENT_ROW_OFFSETS: [f64; 4] = [0.0, 0.0, 0.0, 0.0];
+const BOTTOM_MEASUREMENT_RAISE: f64 = 48.0;
 const MEASUREMENT_LABEL_OFFSET: f64 = 30.0;
 const MEASUREMENT_EDGE_LABEL_INSET: f64 = 18.0;
-const MEASUREMENT_TEXT_SIZE: f64 = type_size::LG;
-const MEASUREMENT_TEXT_WEIGHT: f32 = 550.0;
+const MEASUREMENT_TEXT_SIZE: f64 = 32.0;
+const MEASUREMENT_TEXT_WEIGHT: f32 = 600.0;
 const GLYPH_MEASUREMENT_CAP_HALF_LENGTH: f64 = 12.0;
-const GLYPH_MEASUREMENT_LINE_GAP: f64 = 34.0;
+const GLYPH_MEASUREMENT_LINE_GAP: f64 = 28.0;
 const TITLE_BASELINE_OFFSET: f64 = 16.0;
 
 fn ink(o: &Outline) -> (f64, f64) {
@@ -403,12 +404,12 @@ fn main() {
         "Virtua Grotesk Regular font does not exist: {}; build the font first",
         virtua_path.display()
     );
-
     let mut renderer = Renderer::new(W as u32, H as u32);
     let mono = load_family(&mut renderer, mono_path.to_str().unwrap());
     let virtua = load_family(&mut renderer, virtua_path.to_str().unwrap());
     let mut sheet = new_sheet(&renderer, &mono);
     sheet.ctx.background(role::og::background());
+    sheet.ctx.line_cap("round");
 
     let outlines: Vec<Outline> = GLYPHS
         .iter()
@@ -523,7 +524,7 @@ fn main() {
 
     // Locally placed capped dimensions. The four row offsets above are
     // intentionally direct art-direction controls.
-    let measurement_center = (side_margin + f.baseline) / 2.0;
+    let measurement_center = (side_margin + f.baseline) / 2.0 + BOTTOM_MEASUREMENT_RAISE;
     let mut ox = 0.0;
     for (j, o) in outlines.iter().enumerate() {
         let (i0, i1) = ink(o);
