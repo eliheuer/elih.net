@@ -54,6 +54,16 @@
       line-height: 0.95;
     }
 
+    /* Section headings can wrap with a descender on the first line (e.g.
+       "Weight Transfer / as Local Prediction"), whose tail met the cap
+       below at 0.95 leading. Shrink the glyphs ~10% and hand the space
+       back as leading: 1.8 * 1.0556 == 2 * 0.95, so the line box and the
+       baseline rhythm are unchanged while the descender clears. */
+    &.tight-headings :is(h2, h3) {
+      font-size: 1.8em;
+      line-height: 1.0556;
+    }
+
     h1, h2, h3 { font-size: 2em; }
     h4, h5, h6 { font-size: 1em; }
 
@@ -61,6 +71,7 @@
        phones (the root font-size has already scaled down as well). */
     @media (max-width: 639.98px) {
       h1, h2, h3 { font-size: 1.6em; }
+      &.tight-headings :is(h2, h3) { font-size: 1.44em; }
     }
 
     a {
