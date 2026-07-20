@@ -57,15 +57,70 @@ answers a modernist ideal that the rigid version betrayed: technology
 people can live in harmony with, not technology that extinguishes human dignity.
 The old impulse is worth another look.
 
-The problem is data. A neural network only knows what it is trained on.
+The problem holding back machine learning for type design is data.
 Most fonts were never built as training data. Their coordinates land
 wherever the designer put them. Their contours are as individual as
-handwriting. That is fine for a rasterizer. It is a problem for an AI
-production pipeline: the network trains on the sources, the linter
-checks generated glyphs, and the agent edits the files through a
-harness. Today's font AI trains on exactly this accidental data:
-scraped fonts and Google Fonts as they come, heterogeneous in every
-dimension that matters.
+handwriting. That is fine for a rasterizer, but it is a problem for
+data engineers working with font sources. Today's font AI trains on
+exactly this accidental data: scraped fonts, Google Fonts, and
+proprietary datasets without strict engineering guidelines across
+designs, heterogeneous in every dimension that matters.
+
+A typeface is not a collection of characters drawn in isolation. It
+is many drawings that work as one system, and holding them together
+is most of the work. Font datasets need the same discipline. A
+collection assembled without it is many fonts in one place, not
+training data capable of delivering useful models.
+
+Modernism began as a reaction, and the argument was explicit. At the
+1914 Werkbund congress in Cologne, Hermann Muthesius argued for
+Typisierung, standard types for industrial production, on the grounds
+that only standardization could deliver reliable quality at scale.
+Henry van de Velde answered that imposing canons and types on artists
+makes their inspiration sterile, and that an artist cannot be
+subjected to rules. The dispute nearly broke the Werkbund. Jan
+Tschichold called ornament "an attitude of childish naivety" in 1928,
+and put centered setting and serifs in the aristocratic and
+hand-press eras they came from. What these designers objected to was
+not beauty but the designer's ego imposed on everyone else's visual
+environment. Massimo Vignelli later called that visual pollution,
+"degrading our environment just like all other types of pollution,"
+and objected to work made "just to satisfy the ego of designers or
+clients."
+
+Josef Müller-Brockmann wanted graphics to become "an anonymous
+vehicle for the message to be transmitted," and described his own
+method plainly: "subjectivity is removed in favour of a
+geometric grid that determines the arrangement of words and images."
+He treated objective information as something the public was owed,
+and ornament as a way of taking it from them.
+
+Tschichold changed his mind. The Nazis briefly imprisoned him and he
+fled to Switzerland, and he came to see his own manifesto's
+absolutism as of a piece with the intolerance he had escaped. He
+spent his second career on classical book typography: serif faces,
+centered titles, symmetrical pages. What he gave up was the dogma,
+not the engineering. Sabon, released in 1967, had to set identically
+on hand composition, Linotype and Monotype at once. Linotype's
+duplexing forced the roman and italic to share character widths.
+Monotype's 18-unit system required every letter to be an even number
+of units wide. The German standard baseline left almost no room for
+descenders, so he made short descenders look intentional.
+
+That is the whole problem in one career. It is the problem I am
+trying to solve with the models I am training. The grid was never the
+enemy. Rigid rules were, because they could not hold the exceptions
+the eye needs, and Tschichold could only resolve that by being a
+master craftsman working inside a unit system. A model can learn the
+system and the exceptions together, because the sources record both.
+An old-style in the Plantin tradition is being drawn now with the
+model trained on Virtua Grotesk. I think Tschichold would have
+approved.
+
+A century later the same argument is open again. Design now runs on
+designer identity and on parasocial attachment to creators, more than
+on engineered systems built for the people who have to live with the
+result.
 
 ### 02. Replica and the Coarse Grid
 
