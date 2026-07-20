@@ -34,7 +34,9 @@ fn fig_fractions(renderer: &Renderer, mono: &str, out: &std::path::Path) {
 
     let mut num = 12u32;
     let mut repeating = Vec::new();
-    for _ in 0..32 {
+    // Twelve bits are enough to show the repeating structure at card size;
+    // the ellipsis makes clear that the expansion continues indefinitely.
+    for _ in 0..12 {
         num *= 2;
         if num >= 125 {
             repeating.push(1u8);
@@ -45,31 +47,53 @@ fn fig_fractions(renderer: &Renderer, mono: &str, out: &std::path::Path) {
     }
     let exact = [0, 0, 0, 1, 1];
 
-    let left = 286.0;
-    sheet.label("1024", MARGIN, 936.0, 58.0, role::figure::pen(), -1);
-    sheet.label("0.", left - 74.0, 846.0, 82.0, role::figure::pen(), 1);
+    let exact_cell = 240.0;
+    let exact_gap = 28.0;
+    let exact_width = exact.len() as f64 * exact_cell + (exact.len() - 1) as f64 * exact_gap;
+    let exact_left = (W - exact_width) / 2.0 + 100.0;
+    sheet.label("1024", MARGIN, 1020.0, 76.0, role::figure::pen(), -1);
+    sheet.label(
+        "0.",
+        exact_left - 92.0,
+        886.0,
+        104.0,
+        role::figure::pen(),
+        1,
+    );
     bit_row(
         &mut sheet,
-        left,
-        780.0,
-        184.0,
-        20.0,
+        exact_left,
+        770.0,
+        exact_cell,
+        exact_gap,
         &exact,
         role::figure::green(),
     );
 
-    sheet.label("1000", MARGIN, 410.0, 58.0, role::figure::pen(), -1);
-    sheet.label("0.", left - 74.0, 338.0, 82.0, role::figure::pen(), 1);
+    let repeat_cell = 152.0;
+    let repeat_gap = 14.0;
+    let repeat_width =
+        repeating.len() as f64 * repeat_cell + (repeating.len() - 1) as f64 * repeat_gap;
+    let repeat_left = (W - repeat_width) / 2.0 + 100.0;
+    sheet.label("1000", MARGIN, 402.0, 76.0, role::figure::pen(), -1);
+    sheet.label(
+        "0.",
+        repeat_left - 92.0,
+        304.0,
+        104.0,
+        role::figure::pen(),
+        1,
+    );
     bit_row(
         &mut sheet,
-        left,
-        292.0,
-        58.0,
-        8.0,
+        repeat_left,
+        244.0,
+        repeat_cell,
+        repeat_gap,
         &repeating,
         role::figure::red(),
     );
-    sheet.label("…", W - MARGIN, 324.0, 86.0, role::figure::red(), 1);
+    sheet.label("…", W - MARGIN, 286.0, 104.0, role::figure::red(), 1);
 
     sheet.save(renderer, out);
 }
@@ -77,9 +101,9 @@ fn fig_fractions(renderer: &Renderer, mono: &str, out: &std::path::Path) {
 fn fig_midpoint(renderer: &Renderer, mono: &str, out: &std::path::Path) {
     let mut sheet = new_sheet(renderer, mono);
 
-    const S: f64 = 2.05;
-    const PX: f64 = 604.0;
-    const PY: f64 = 168.0;
+    const S: f64 = 2.60;
+    const PX: f64 = 594.0;
+    const PY: f64 = 100.0;
     let cx = |ux: f64| PX + ux * S;
     let cy = |uy: f64| PY + uy * S;
 
@@ -169,7 +193,7 @@ fn fig_midpoint(renderer: &Renderer, mono: &str, out: &std::path::Path) {
 fn fig_ladder(renderer: &Renderer, mono: &str, out: &std::path::Path) {
     let mut sheet = new_sheet(renderer, mono);
 
-    let xs = [360.0, 960.0, 1560.0, 2160.0];
+    let xs = [320.0, 946.0, 1574.0, 2200.0];
     let chains: [(&[u32], Color); 4] = [
         (
             &[1024, 512, 256, 128, 64, 32, 16, 8, 4, 2, 1],
@@ -179,10 +203,10 @@ fn fig_ladder(renderer: &Renderer, mono: &str, out: &std::path::Path) {
         (&[729, 243, 81, 27, 9, 3, 1], role::figure::orange()),
         (&[700, 350, 175], role::figure::yellow()),
     ];
-    const DY: f64 = 102.0;
-    const BW: f64 = 320.0;
-    const BH: f64 = 76.0;
-    const TOP: f64 = 1170.0;
+    const DY: f64 = 108.0;
+    const BW: f64 = 440.0;
+    const BH: f64 = 88.0;
+    const TOP: f64 = 1180.0;
 
     for ((values, color), x) in chains.iter().zip(xs) {
         for (i, value) in values.iter().enumerate() {
@@ -197,7 +221,7 @@ fn fig_ladder(renderer: &Renderer, mono: &str, out: &std::path::Path) {
                 &value.to_string(),
                 x,
                 y - 13.0,
-                type_size::XXXL,
+                64.0,
                 role::figure::pen(),
                 0,
             );
@@ -212,7 +236,7 @@ fn fig_ladder(renderer: &Renderer, mono: &str, out: &std::path::Path) {
         }
         if values.last().copied() != Some(1) {
             let y = TOP - values.len() as f64 * DY;
-            sheet.label("×", x, y - 4.0, 82.0, role::figure::pen(), 0);
+            sheet.label("×", x, y - 4.0, 96.0, role::figure::pen(), 0);
         }
     }
 
@@ -230,18 +254,18 @@ fn fig_bits(renderer: &Renderer, mono: &str, out: &std::path::Path) {
         role::figure::green(),
         role::figure::red(),
     ];
-    const CELL: f64 = 128.0;
-    const GAP: f64 = 12.0;
-    const X0: f64 = 760.0;
+    const CELL: f64 = 144.0;
+    const GAP: f64 = 8.0;
+    const X0: f64 = 650.0;
     const BITS: usize = 11;
 
     for ((value, color), row) in rows.into_iter().zip(colors).zip(0..) {
         let y = 1070.0 - row as f64 * 220.0;
         sheet.label(
             &value.to_string(),
-            680.0,
+            570.0,
             y + 28.0,
-            64.0,
+            76.0,
             role::figure::pen(),
             1,
         );

@@ -59,15 +59,8 @@ fn border() -> Color {
     color::gray_600()
 }
 fn curve() -> Color {
-    role::bezier::curve()
+    role::figure::pen()
 }
-fn curve_fill() -> Color {
-    with_alpha(curve(), 20)
-}
-fn crop_handle() -> Color {
-    color::gray_450()
-}
-
 /// Panel-local transform: font units -> canvas.
 fn cx(panel_left: f64, ux: f64) -> f64 {
     panel_left + (ux - UX0) * S
@@ -119,15 +112,15 @@ fn main() {
         };
         if i == 0 {
             // flat: one lattice, one color
-            draw_lattice(8.0, grid_flat(), 2.0, &mut sheet.ctx);
+            draw_lattice(8.0, grid_flat(), line::THIN, &mut sheet.ctx);
         } else {
             // nested: three levels at three intensities
-            draw_lattice(2.0, grid_2(), 1.0, &mut sheet.ctx);
-            draw_lattice(8.0, grid_8(), 2.0, &mut sheet.ctx);
-            draw_lattice(64.0, grid_64(), 2.5, &mut sheet.ctx);
+            draw_lattice(2.0, grid_2(), line::HAIRLINE, &mut sheet.ctx);
+            draw_lattice(8.0, grid_8(), line::THIN, &mut sheet.ctx);
+            draw_lattice(64.0, grid_64(), line::REGULAR, &mut sheet.ctx);
         }
         // baseline, house blue
-        sheet.ctx.no_fill().stroke(blue()).stroke_width(PEN);
+        sheet.ctx.no_fill().stroke(blue()).stroke_width(line::HERO);
         sheet.ctx.line(cx(pl, UX0), cy(0.0), cx(pl, UX1), cy(0.0));
     }
 
@@ -135,11 +128,15 @@ fn main() {
     for i in 0..2 {
         let pl = panel_left(i);
         let place = Affine::new([S, 0.0, 0.0, S, pl - UX0 * S, PANEL_BOTTOM - UY0 * S]);
+        // The glyph is deliberately identical in both panels; only the grid
+        // changes. One shared fill prevents color from implying a second
+        // variable and keeps crop spill visually continuous.
+        let fill = role::figure::orange();
         sheet
             .ctx
-            .fill(curve_fill())
+            .fill(fill)
             .stroke(curve())
-            .stroke_width(PEN);
+            .stroke_width(line::HERO);
         sheet.ctx.draw_path(place * outline.path.clone());
     }
 
@@ -159,7 +156,11 @@ fn main() {
     // ── panel borders ──
     for i in 0..2 {
         let pl = panel_left(i);
-        sheet.ctx.no_fill().stroke(border()).stroke_width(PEN);
+        sheet
+            .ctx
+            .no_fill()
+            .stroke(border())
+            .stroke_width(line::HERO);
         sheet
             .ctx
             .rect(pl, PANEL_BOTTOM, panel_w, PANEL_TOP - PANEL_BOTTOM);
@@ -176,15 +177,11 @@ fn main() {
             if !(in_window(*x1, *y1) && in_window(*x2, *y2)) {
                 continue;
             }
-            let correction = !on8(*x2) || !on8(*y2);
-            let color = if i == 0 {
-                crop_handle()
-            } else if correction {
-                red()
-            } else {
-                crop_handle()
-            };
-            sheet.ctx.no_fill().stroke(color).stroke_width(PEN);
+            sheet
+                .ctx
+                .no_fill()
+                .stroke(role::figure::pen())
+                .stroke_width(line::HERO);
             sheet.ctx.line(cx(pl, *x1), cy(*y1), cx(pl, *x2), cy(*y2));
         }
         // markers, knocked out with the background color
@@ -193,118 +190,30 @@ fn main() {
                 continue;
             }
             let correction = !on8(*x) || !on8(*y);
-            let color = if i == 0 {
-                gray()
-            } else if correction {
-                red()
+            let fill = if i == 1 && correction {
+                role::figure::correction_point_fill()
             } else {
-                green()
+                role::figure::point_fill()
             };
             sheet
                 .ctx
-                .fill(role::canvas::background())
-                .stroke(color)
-                .stroke_width(PEN);
+                .fill(fill)
+                .stroke(role::figure::pen())
+                .stroke_width(line::HERO);
             let (px, py) = (cx(pl, *x), cy(*y));
             match role {
                 PtRole::Smooth => {
-                    sheet.ctx.oval(px - 9.0, py - 9.0, 18.0, 18.0);
+                    sheet.ctx.oval(px - 13.0, py - 13.0, 26.0, 26.0);
                 }
                 PtRole::Corner => {
-                    sheet.ctx.rect(px - 8.0, py - 8.0, 16.0, 16.0);
+                    sheet.ctx.rect(px - 13.0, py - 13.0, 26.0, 26.0);
                 }
                 PtRole::Off => {
-                    sheet.ctx.oval(px - 7.0, py - 7.0, 14.0, 14.0);
+                    sheet.ctx.oval(px - 13.0, py - 13.0, 26.0, 26.0);
                 }
             }
         }
     }
-
-    // ── callouts: leader from the text to the x=116 anchor ──
-    for i in 0..2 {
-        let pl = panel_left(i);
-        let anchor = (cx(pl, 116.0), cy(160.0));
-        let text_x = cx(pl, 250.0);
-        let text_y = cy(160.0) - 10.0;
-        let color = if i == 0 { gray() } else { red() };
-        sheet.ctx.no_fill().stroke(color).stroke_width(PEN);
-        sheet
-            .ctx
-            .line(anchor.0 + 16.0, anchor.1, text_x - 14.0, text_y + 8.0);
-        let (l1, l2) = if i == 0 {
-            ("x=116: off grid", "correction or mistake?")
-        } else {
-            ("x=116: on 2, off 8", "optical correction")
-        };
-        sheet.label_padded(l1, text_x, text_y + 20.0, 26.0, color, -1);
-        sheet.label_padded(l2, text_x, text_y - 22.0, 26.0, color, -1);
-    }
-
-    // ── baseline tags ──
-    for i in 0..2 {
-        let pl = panel_left(i);
-        sheet.label_padded("baseline 0", pl + 14.0, cy(0.0) + 12.0, 26.0, blue(), -1);
-    }
-
-    // ── panel titles + legends ──
-    let title_y = PANEL_TOP + 44.0;
-    sheet.label(
-        "01 flat grid / one level",
-        panel_left(0),
-        title_y,
-        30.0,
-        green(),
-        -1,
-    );
-    sheet.label(
-        "all points equally legal",
-        panel_left(0) + panel_w,
-        title_y,
-        26.0,
-        gray(),
-        1,
-    );
-    sheet.label(
-        "02 nested grid / 64 \u{b7} 8 \u{b7} 2",
-        panel_left(1),
-        title_y,
-        30.0,
-        green(),
-        -1,
-    );
-    {
-        // right-aligned legend: [green oval] ON 8   [red oval] ON 2, OFF 8
-        let size = 26.0;
-        let t2 = "on 2, off 8";
-        let t1 = "on 8";
-        let w2 = sheet.mono_width(t2, size);
-        let w1 = sheet.mono_width(t1, size);
-        let right = panel_left(1) + panel_w;
-        let x2 = right - w2;
-        let dot2 = x2 - 26.0;
-        let x1 = dot2 - 36.0 - w1;
-        let dot1 = x1 - 26.0;
-        sheet.label(t2, x2, title_y, size, red(), -1);
-        sheet.label(t1, x1, title_y, size, green(), -1);
-        sheet
-            .ctx
-            .fill(role::canvas::background())
-            .stroke(red())
-            .stroke_width(PEN);
-        sheet.ctx.oval(dot2, title_y + 1.0, 16.0, 16.0);
-        sheet
-            .ctx
-            .fill(role::canvas::background())
-            .stroke(green())
-            .stroke_width(PEN);
-        sheet.ctx.oval(dot1, title_y + 1.0, 16.0, 16.0);
-    }
-
-    sheet.hud_title(&[
-        "Grid as labeling function",
-        "same outline both panels; only the nested grid labels the corrections",
-    ]);
-    sheet.attribution(None);
 
     write_png(&renderer, &sheet.ctx, &out);
 }

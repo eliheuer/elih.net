@@ -1,8 +1,8 @@
 //! Design-system dimension sheets for the Virtua Grotesk post, §03 — the
 //! figures that replace the measurement tables:
 //!
-//!   fig-system-ohno.png    : the full Latin system on "OHno"
 //!   fig-system-no.png      : the lowercase system on "no", zoomable
+//!   fig-system-ho.png      : the capital system on "HO", zoomable
 //!   fig-system-weights.png : "no no" — Regular beside Bold, stems 96 -> 192
 //!   fig-system-arabic.png  : alef, beh, medial heh — right to left, same grid
 //!
@@ -18,132 +18,436 @@ use designbot::prelude::Color;
 use designbot_render::Renderer;
 use virtua_grotesk_figures::*;
 
-// --- fig-system-ohno ---------------------------------------------------------------
+// --- shared system-figure drawing language ----------------------------------------
 
-fn fig_ohno(renderer: &Renderer, mono: &str, reg: &std::path::Path, out: &std::path::Path) {
-    let mut sheet = new_sheet(renderer, mono);
+// Keep these equal to the reviewed OG image. The inline system figures are a
+// continuation of that drawing, not a second annotation system.
+const SYSTEM_STROKE: f64 = line::HERO;
+const SYSTEM_GRID_MINOR_STROKE: f64 = line::FINE;
+const SYSTEM_GRID_MAJOR_STROKE: f64 = line::THIN;
+const SYSTEM_GRID_UNIT: f64 = 8.0;
+const SYSTEM_GRID_MAJOR_UNIT: f64 = 64.0;
+const SYSTEM_POINT_SIZE: f64 = 20.0;
+const SYSTEM_MEASUREMENT_TEXT_SIZE: f64 = 32.0;
+const SYSTEM_MEASUREMENT_TEXT_WEIGHT: f32 = 600.0;
+const SYSTEM_MEASUREMENT_CAP: f64 = 12.0;
+const SYSTEM_MEASUREMENT_LINE_GAP: f64 = 28.0;
+const SYSTEM_POINT_END_INSET: f64 = 30.0;
+const SYSTEM_EDGE_END_INSET: f64 = 20.0;
 
-    let cap_o = load_outline(reg, "O");
-    let cap_h = load_outline(reg, "H");
-    let n = load_outline(reg, "n");
-    let o = load_outline(reg, "o");
+#[derive(Clone, Copy)]
+struct SystemMeasurement {
+    glyph: usize,
+    p0: (f64, f64),
+    p1: (f64, f64),
+    value: i64,
+    offset: f64,
+    label_shift: (f64, f64),
+    end_inset: f64,
+}
 
-    const S: f64 = 0.86;
-    let run: f64 = (cap_o.width + cap_h.width + n.width + o.width) * S;
-    let f = Frame {
-        s: S,
-        x0: MARGIN + (W - 2.0 * MARGIN - run) / 2.0,
-        baseline: 250.0,
-    };
+const fn point_measurement(
+    glyph: usize,
+    p0: (f64, f64),
+    p1: (f64, f64),
+    value: i64,
+) -> SystemMeasurement {
+    SystemMeasurement {
+        glyph,
+        p0,
+        p1,
+        value,
+        offset: 0.0,
+        label_shift: (0.0, 0.0),
+        end_inset: SYSTEM_POINT_END_INSET,
+    }
+}
 
-    metric_lines(&mut sheet, &f, &[0.0, 576.0, 768.0], &[784.0, -16.0]);
+const fn edge_measurement(
+    glyph: usize,
+    p0: (f64, f64),
+    p1: (f64, f64),
+    value: i64,
+) -> SystemMeasurement {
+    SystemMeasurement {
+        glyph,
+        p0,
+        p1,
+        value,
+        offset: 0.0,
+        label_shift: (0.0, 0.0),
+        end_inset: SYSTEM_EDGE_END_INSET,
+    }
+}
 
-    let (x_o, x_h, x_n, x_lo) = (
-        0.0,
-        cap_o.width,
-        cap_o.width + cap_h.width,
-        cap_o.width + cap_h.width + n.width,
+const fn offset_measurement(mut measurement: SystemMeasurement, offset: f64) -> SystemMeasurement {
+    measurement.offset = offset;
+    measurement
+}
+
+const fn shift_measurement_label(
+    mut measurement: SystemMeasurement,
+    dx: f64,
+    dy: f64,
+) -> SystemMeasurement {
+    measurement.label_shift = (dx, dy);
+    measurement
+}
+
+fn system_construction_node(sheet: &mut Sheet, x: f64, y: f64) {
+    marker_with_fill_sized(
+        sheet,
+        x,
+        y,
+        PtRole::Smooth,
+        role::figure::pen(),
+        role::figure::point_fill(),
+        SYSTEM_POINT_SIZE,
+        SYSTEM_STROKE,
     );
-    for (outline, ox, fill) in [
-        (&cap_o, x_o, role::figure::red()),
-        (&cap_h, x_h, role::figure::orange()),
-        (&n, x_n, role::figure::yellow()),
-        (&o, x_lo, role::figure::green()),
-    ] {
-        draw_figure_glyph(&mut sheet, outline, S, f.x(ox), f.baseline, fill);
+}
+
+/// The real 8-unit source grid. Vertical coordinates restart at each sort
+/// boundary, as they do in a font editor. Every eighth line marks 64 units.
+fn system_background_grid(
+    sheet: &mut Sheet,
+    frame: &Frame,
+    glyphs: &[(&Outline, f64)],
+    bottom: f64,
+    top: f64,
+) {
+    let x0 = frame.x(0.0);
+    let x1 = frame.x(glyphs
+        .last()
+        .map(|(outline, origin)| origin + outline.width)
+        .unwrap_or(0.0));
+
+    let mut v = bottom;
+    while v <= top {
+        let major = v.rem_euclid(SYSTEM_GRID_MAJOR_UNIT) == 0.0;
+        sheet
+            .ctx
+            .no_fill()
+            .stroke(if major {
+                role::grid::standard()
+            } else {
+                role::grid::faint()
+            })
+            .stroke_width(if major {
+                SYSTEM_GRID_MAJOR_STROKE
+            } else {
+                SYSTEM_GRID_MINOR_STROKE
+            });
+        sheet.ctx.line(x0, frame.y(v), x1, frame.y(v));
+        v += SYSTEM_GRID_UNIT;
     }
 
-    // measured stroke dimensions
-    sheet.dim_h(
-        f.x(x_o + 48.0),
-        f.x(x_o + 156.0),
-        f.y(384.0),
-        "108",
-        role::figure::pen(),
+    for (outline, origin) in glyphs {
+        let mut u = 0.0;
+        while u <= outline.width {
+            let major = u.rem_euclid(SYSTEM_GRID_MAJOR_UNIT) == 0.0;
+            sheet
+                .ctx
+                .no_fill()
+                .stroke(if major {
+                    role::grid::standard()
+                } else {
+                    role::grid::faint()
+                })
+                .stroke_width(if major {
+                    SYSTEM_GRID_MAJOR_STROKE
+                } else {
+                    SYSTEM_GRID_MINOR_STROKE
+                });
+            let x = frame.x(origin + u);
+            sheet.ctx.line(x, frame.y(bottom), x, frame.y(top));
+            u += SYSTEM_GRID_UNIT;
+        }
+    }
+}
+
+/// Metric rules, advance boundaries, and intersection nodes use the same
+/// geometry and pen as the OG image. The frame ends at the true overshoots.
+fn system_metric_system(
+    sheet: &mut Sheet,
+    frame: &Frame,
+    run: f64,
+    bounds: &[f64],
+    solid: &[f64],
+    dashed: &[f64],
+    top: f64,
+    bottom: f64,
+) {
+    let x0 = frame.x(0.0);
+    let x1 = frame.x(run);
+    let color = role::figure::pen();
+
+    sheet
+        .ctx
+        .no_fill()
+        .stroke(color)
+        .stroke_width(SYSTEM_STROKE);
+    sheet.ctx.line_dash(&[10.0, 10.0]);
+    for &uy in dashed {
+        sheet.ctx.line(x0, frame.y(uy), x1, frame.y(uy));
+    }
+    sheet.ctx.line_dash(&[]);
+    for &uy in solid {
+        sheet.ctx.line(x0, frame.y(uy), x1, frame.y(uy));
+    }
+
+    let xs: Vec<f64> = bounds.iter().map(|bound| frame.x(*bound)).collect();
+    cell_dividers_colored(
+        sheet,
+        &xs,
+        frame.y(top),
+        frame.y(bottom),
+        color,
+        role::figure::point_fill(),
+        SYSTEM_STROKE,
     );
-    sheet.dim_v(
-        f.x(x_o + 424.0),
-        f.y(684.0),
-        f.y(784.0),
-        "100",
-        role::figure::pen(),
-        true,
+
+    let mut ys: Vec<f64> = dashed.iter().map(|uy| frame.y(*uy)).collect();
+    ys.extend(solid.iter().map(|uy| frame.y(*uy)));
+    for x in xs {
+        for &y in &ys {
+            system_construction_node(sheet, x, y);
+        }
+    }
+}
+
+/// An OG-style capped size label. These are intentionally independent from
+/// the removed advance-width band so the enlarged figures can retain the
+/// useful stroke and counter dimensions without giving space back to metrics.
+fn system_glyph_measurement(
+    sheet: &mut Sheet,
+    frame: &Frame,
+    origin: f64,
+    measurement: SystemMeasurement,
+) {
+    let p0 = (
+        frame.x(origin + measurement.p0.0),
+        frame.y(measurement.p0.1),
     );
-    sheet.dim_h(
-        f.x(x_h + 80.0),
-        f.x(x_h + 184.0),
-        f.y(600.0),
-        "104",
-        role::figure::pen(),
+    let p1 = (
+        frame.x(origin + measurement.p1.0),
+        frame.y(measurement.p1.1),
     );
-    sheet.dim_v(
-        f.x(x_h + 384.0),
-        f.y(360.0),
-        f.y(456.0),
-        "96",
-        role::figure::pen(),
-        true,
+    let dx = p1.0 - p0.0;
+    let dy = p1.1 - p0.1;
+    let length = (dx * dx + dy * dy).sqrt();
+    let direction = (dx / length, dy / length);
+    let normal = (-direction.1, direction.0);
+    let q0 = (
+        p0.0 + normal.0 * measurement.offset + direction.0 * measurement.end_inset,
+        p0.1 + normal.1 * measurement.offset + direction.1 * measurement.end_inset,
     );
-    sheet.dim_h(
-        f.x(x_n + 64.0),
-        f.x(x_n + 160.0),
-        f.y(256.0),
-        "96",
-        role::figure::pen(),
+    let q1 = (
+        p1.0 + normal.0 * measurement.offset - direction.0 * measurement.end_inset,
+        p1.1 + normal.1 * measurement.offset - direction.1 * measurement.end_inset,
     );
-    sheet.dim_h(
-        f.x(x_lo + 32.0),
-        f.x(x_lo + 132.0),
-        f.y(288.0),
-        "100",
-        role::figure::pen(),
-    );
-    sheet.save(renderer, out);
+    let color = role::figure::pen();
+
+    sheet
+        .ctx
+        .no_fill()
+        .stroke(color)
+        .stroke_width(SYSTEM_STROKE);
+    sheet.ctx.line(q0.0, q0.1, q1.0, q1.1);
+    for q in [q0, q1] {
+        sheet.ctx.line(
+            q.0 - normal.0 * SYSTEM_MEASUREMENT_CAP,
+            q.1 - normal.1 * SYSTEM_MEASUREMENT_CAP,
+            q.0 + normal.0 * SYSTEM_MEASUREMENT_CAP,
+            q.1 + normal.1 * SYSTEM_MEASUREMENT_CAP,
+        );
+    }
+
+    let midpoint = ((q0.0 + q1.0) / 2.0, (q0.1 + q1.1) / 2.0);
+    let decomposition = p2sum(measurement.value);
+    let parts: Vec<&str> = decomposition.split('+').collect();
+    let sum_lines = if parts.len() > 2 {
+        vec![parts[..2].join("+"), format!("+{}", parts[2..].join("+"))]
+    } else {
+        vec![decomposition]
+    };
+
+    if dx.abs() >= dy.abs() {
+        sheet.label_weighted(
+            &measurement.value.to_string(),
+            midpoint.0 + measurement.label_shift.0,
+            midpoint.1 + 20.0 + measurement.label_shift.1,
+            SYSTEM_MEASUREMENT_TEXT_SIZE,
+            color,
+            0,
+            SYSTEM_MEASUREMENT_TEXT_WEIGHT,
+        );
+        for (index, line) in sum_lines.iter().enumerate() {
+            sheet.label_weighted(
+                line,
+                midpoint.0 + measurement.label_shift.0,
+                midpoint.1 - 48.0 + measurement.label_shift.1
+                    - index as f64 * SYSTEM_MEASUREMENT_LINE_GAP,
+                SYSTEM_MEASUREMENT_TEXT_SIZE,
+                color,
+                0,
+                SYSTEM_MEASUREMENT_TEXT_WEIGHT,
+            );
+        }
+    } else {
+        sheet.label_weighted(
+            &measurement.value.to_string(),
+            midpoint.0 - 16.0 + measurement.label_shift.0,
+            midpoint.1 - 12.0 + measurement.label_shift.1,
+            SYSTEM_MEASUREMENT_TEXT_SIZE,
+            color,
+            1,
+            SYSTEM_MEASUREMENT_TEXT_WEIGHT,
+        );
+        for (index, line) in sum_lines.iter().enumerate() {
+            sheet.label_weighted(
+                line,
+                midpoint.0 + 16.0 + measurement.label_shift.0,
+                midpoint.1 - 12.0 + measurement.label_shift.1
+                    - index as f64 * SYSTEM_MEASUREMENT_LINE_GAP,
+                SYSTEM_MEASUREMENT_TEXT_SIZE,
+                color,
+                -1,
+                SYSTEM_MEASUREMENT_TEXT_WEIGHT,
+            );
+        }
+    }
+}
+
+fn system_frame(run: f64, bottom: f64, top: f64) -> Frame {
+    let s = ((W - 2.0 * MARGIN) / run).min((H - 2.0 * MARGIN) / (top - bottom));
+    Frame {
+        s,
+        x0: (W - run * s) / 2.0,
+        baseline: MARGIN - bottom * s,
+    }
 }
 
 // --- fig-system-no -----------------------------------------------------------------
 
 fn fig_no(renderer: &Renderer, mono: &str, reg: &std::path::Path, out: &std::path::Path) {
     let mut sheet = new_sheet(renderer, mono);
+    sheet.ctx.line_cap("round");
 
     let n = load_outline(reg, "n");
     let o = load_outline(reg, "o");
 
-    const S: f64 = 1.62;
-    let run = (n.width + o.width) * S;
-    let f = Frame {
-        s: S,
-        x0: MARGIN + (W - 2.0 * MARGIN - run) / 2.0,
-        baseline: 214.0,
-    };
-    metric_lines(&mut sheet, &f, &[0.0, 576.0], &[-16.0, 592.0]);
+    const BOTTOM: f64 = -16.0;
+    const TOP: f64 = 592.0;
+    let run_units = n.width + o.width;
+    let f = system_frame(run_units, BOTTOM, TOP);
 
-    draw_figure_glyph(&mut sheet, &n, S, f.x(0.0), f.baseline, role::figure::red());
-    draw_figure_glyph(
+    let x_n = 0.0;
+    let x_o = n.width;
+    let glyphs = [(&n, x_n), (&o, x_o)];
+    let bounds = [x_n, x_o, run_units];
+    system_background_grid(&mut sheet, &f, &glyphs, BOTTOM, TOP);
+    system_metric_system(
         &mut sheet,
-        &o,
-        S,
-        f.x(n.width),
-        f.baseline,
-        role::figure::green(),
+        &f,
+        run_units,
+        &bounds,
+        &[0.0, 576.0],
+        &[-16.0, 592.0],
+        TOP,
+        BOTTOM,
     );
 
-    sheet.dim_h(f.x(64.0), f.x(160.0), f.y(256.0), "96", role::figure::pen());
-    sheet.dim_v(
-        f.x(n.width + 304.0),
-        f.y(500.0),
-        f.y(592.0),
-        "92",
-        role::figure::pen(),
-        true,
+    for (outline, ox, fill) in [
+        (&n, x_n, role::figure::yellow()),
+        (&o, x_o, role::figure::green()),
+    ] {
+        draw_figure_glyph(&mut sheet, outline, f.s, f.x(ox), f.baseline, fill);
+    }
+
+    // Representative stroke sizes plus the open n counter and closed o
+    // counter. Values and endpoints are taken directly from the current UFO.
+    const MEASUREMENTS: [SystemMeasurement; 6] = [
+        edge_measurement(0, (64.0, 288.0), (160.0, 288.0), 96),
+        edge_measurement(0, (160.0, 288.0), (432.0, 288.0), 272),
+        point_measurement(1, (32.0, 288.0), (132.0, 288.0), 100),
+        point_measurement(1, (304.0, 504.0), (304.0, 592.0), 88),
+        point_measurement(1, (132.0, 288.0), (484.0, 288.0), 352),
+        shift_measurement_label(
+            offset_measurement(
+                point_measurement(1, (304.0, 72.0), (304.0, 504.0), 432),
+                -192.0,
+            ),
+            0.0,
+            96.0,
+        ),
+    ];
+    let origins = [x_n, x_o];
+    for measurement in MEASUREMENTS {
+        system_glyph_measurement(&mut sheet, &f, origins[measurement.glyph], measurement);
+    }
+    sheet.save(renderer, out);
+}
+
+// --- fig-system-ho -----------------------------------------------------------------
+
+fn fig_ho(renderer: &Renderer, mono: &str, reg: &std::path::Path, out: &std::path::Path) {
+    let mut sheet = new_sheet(renderer, mono);
+    sheet.ctx.line_cap("round");
+
+    let h = load_outline(reg, "H");
+    let o = load_outline(reg, "O");
+
+    const BOTTOM: f64 = -16.0;
+    const TOP: f64 = 784.0;
+    let run_units = h.width + o.width;
+    let f = system_frame(run_units, BOTTOM, TOP);
+
+    let x_h = 0.0;
+    let x_o = h.width;
+    let glyphs = [(&h, x_h), (&o, x_o)];
+    let bounds = [x_h, x_o, run_units];
+    system_background_grid(&mut sheet, &f, &glyphs, BOTTOM, TOP);
+    system_metric_system(
+        &mut sheet,
+        &f,
+        run_units,
+        &bounds,
+        &[0.0, 768.0],
+        &[-16.0, 784.0],
+        TOP,
+        BOTTOM,
     );
-    sheet.dim_h(
-        f.x(n.width + 32.0),
-        f.x(n.width + 132.0),
-        f.y(288.0),
-        "100",
-        role::figure::pen(),
-    );
+
+    for (outline, ox, fill) in [
+        (&h, x_h, role::figure::orange()),
+        (&o, x_o, role::figure::red()),
+    ] {
+        draw_figure_glyph(&mut sheet, outline, f.s, f.x(ox), f.baseline, fill);
+    }
+
+    // The H opening and O counter join the representative stem and crossbar
+    // sizes. Values and endpoints are taken directly from the current UFO.
+    const MEASUREMENTS: [SystemMeasurement; 7] = [
+        point_measurement(0, (80.0, 600.0), (184.0, 600.0), 104),
+        edge_measurement(0, (184.0, 600.0), (584.0, 600.0), 400),
+        edge_measurement(0, (384.0, 360.0), (384.0, 456.0), 96),
+        point_measurement(1, (48.0, 384.0), (156.0, 384.0), 108),
+        point_measurement(1, (424.0, 684.0), (424.0, 784.0), 100),
+        point_measurement(1, (156.0, 384.0), (692.0, 384.0), 536),
+        shift_measurement_label(
+            offset_measurement(
+                point_measurement(1, (424.0, 84.0), (424.0, 684.0), 600),
+                -256.0,
+            ),
+            0.0,
+            96.0,
+        ),
+    ];
+    let origins = [x_h, x_o];
+    for measurement in MEASUREMENTS {
+        system_glyph_measurement(&mut sheet, &f, origins[measurement.glyph], measurement);
+    }
     sheet.save(renderer, out);
 }
 
@@ -313,219 +617,128 @@ fn fig_arabic(renderer: &Renderer, mono: &str, reg: &std::path::Path, out: &std:
 // has one) but their trailing zeros. Bottom right: the measured proof that
 // Virtua-12M-v0.1 learned the tiers from geometry alone.
 
+/// Graphic reduction of the original semantic-grid dashboard. The left side
+/// shows the real measured outlines; the right side shows the two bit patterns
+/// and the two observed rates. Layout constants stay local and explicit so
+/// this composition remains easy to art-direct by hand.
 fn fig_semantic(renderer: &Renderer, mono: &str, reg: &std::path::Path, out: &std::path::Path) {
     let mut sheet = new_sheet(renderer, mono);
-
     let n = load_outline(reg, "n");
     let o = load_outline(reg, "o");
 
-    // FRAMELESS EXPERIMENT: no rules, no title/caption rows. The grid runs
-    // to the 64px margin on all four sides; attribution lives in the info
-    // column. Window bounds stay exact 8-multiples.
-    const V0: f64 = 48.0;
-    const V1: f64 = 608.0; // 560 units tall
-    const U0: f64 = -8.0;
-    const U1: f64 = 760.0; // 768 units wide = 96 cells of 8
-    let box_bottom = MARGIN;
-    let box_top = H - MARGIN;
-    let s_zoom = (box_top - box_bottom) / (V1 - V0);
-    let f = Frame {
-        s: s_zoom,
-        x0: MARGIN - U0 * s_zoom,
-        baseline: box_bottom - V0 * s_zoom,
+    const DIVIDER_X: f64 = 1580.0;
+    const S: f64 = 1.18;
+    const BASELINE: f64 = 278.0;
+    let run = (n.width + o.width) * S;
+    let x0 = MARGIN + (DIVIDER_X - MARGIN - run) / 2.0;
+    let frame = Frame {
+        s: S,
+        x0,
+        baseline: BASELINE,
     };
-    let box_right = f.x(U1);
 
-    // the two-layer grid: majors every 8 (structure), minors every 2
-    {
-        let ctx = &mut sheet.ctx;
-        let weight = |q: f64| -> (Color, f64) {
-            if q.rem_euclid(8.0) == 0.0 {
-                (color::gray_650(), line::THIN)
-            } else {
-                (color::gray_925(), line::HAIRLINE)
-            }
-        };
-        let mut u = (U0 / 2.0).ceil() * 2.0;
-        while u <= U1 {
-            let (color, wpen) = weight(u);
-            ctx.no_fill().stroke(color).stroke_width(wpen);
-            ctx.line(f.x0 + u * s_zoom, box_bottom, f.x0 + u * s_zoom, box_top);
-            u += 2.0;
-        }
-        let mut v = (V0 / 2.0).ceil() * 2.0;
-        while v <= V1 {
-            let (color, wpen) = weight(v);
-            ctx.no_fill().stroke(color).stroke_width(wpen);
-            ctx.line(MARGIN, f.y(v), box_right, f.y(v));
-            v += 2.0;
-        }
-    }
-
-    for (outline, ox) in [(&n, 0.0), (&o, n.width)] {
-        draw_body(&mut sheet, outline, s_zoom, f.x(ox), f.baseline);
-        draw_points(&mut sheet, outline, s_zoom, f.x(ox), f.baseline);
-    }
-    handle_labels(&mut sheet, &n, s_zoom, f.x(0.0), f.baseline);
-
-    // mask the crop spill
-    {
-        let ctx = &mut sheet.ctx;
-        ctx.fill(role::canvas::background()).no_stroke();
-        ctx.rect(0.0, 0.0, W, box_bottom);
-        ctx.rect(0.0, box_top, W, H - box_top);
-        ctx.rect(0.0, 0.0, MARGIN, H);
-        ctx.rect(box_right, 0.0, W - box_right, H);
-    }
-
-    // dimension chains, color = layer
-    sheet.dim_h(f.x(64.0), f.x(160.0), f.y(256.0), "96", green());
-    sheet.dim_h(f.x(160.0), f.x(432.0), f.y(256.0), "272", gray());
-    sheet.dim_h(f.x(432.0), f.x(528.0), f.y(256.0), "96", green());
-    sheet.dim_h(
-        f.x(n.width + 32.0),
-        f.x(n.width + 132.0),
-        f.y(288.0),
-        "100",
-        red(),
-    );
-
-    sheet.label_padded(
-        "(32,288)",
-        f.x(n.width + 32.0) - 16.0,
-        f.y(288.0) + 26.0,
-        SMALL_TEXT,
-        gray(),
-        1,
-    );
-    sheet.label_padded(
-        "128",
-        f.x(n.width + 132.0) + 14.0,
-        f.y(352.0) - 7.0,
-        SMALL_TEXT,
-        purple(),
-        -1,
-    );
-    sheet.label_padded(
-        "128",
-        f.x(n.width + 132.0) + 14.0,
-        f.y(224.0) - 7.0,
-        SMALL_TEXT,
-        purple(),
-        -1,
-    );
-
-    // ---- info column --------------------------------------------------------------
-    let rx = box_right + 56.0;
-    let body = DIM_TEXT;
-
-    sheet.label("The self-labeling grid,", rx, 1216.0, body, green(), -1);
-    sheet.label("built on powers of two", rx, 1172.0, body, green(), -1);
-
-    sheet.label("Every integer is a sum of", rx, 1084.0, body, gray(), -1);
-    sheet.label("powers of two. The meaning", rx, 1040.0, body, gray(), -1);
-    sheet.label("is the trailing zeros:", rx, 996.0, body, gray(), -1);
-
-    let bit_row = |sheet: &mut Sheet, value: u32, y0: f64, color: Color, tag: &str| {
-        let cell = 44.0;
-        let gap = 6.0;
-        sheet.label(&value.to_string(), rx + 56.0, y0 + 10.0, body, color, 1);
-        for b in 0..7u32 {
-            let bit = (value >> (6 - b)) & 1;
-            let x = rx + 72.0 + b as f64 * (cell + gap);
-            if bit == 1 {
-                sheet.ctx.fill(color).stroke(color).stroke_width(PEN_LIGHT);
-                sheet.ctx.rect(x, y0, cell, cell);
-                sheet.label(
-                    "1",
-                    x + cell / 2.0,
-                    y0 + cell * 0.26,
-                    28.0,
-                    role::canvas::background(),
-                    0,
-                );
-            } else {
-                sheet
-                    .ctx
-                    .no_fill()
-                    .stroke(role::annotation::dimensions())
-                    .stroke_width(PEN_LIGHT);
-                sheet.ctx.rect(x, y0, cell, cell);
-                sheet.label(
-                    "0",
-                    x + cell / 2.0,
-                    y0 + cell * 0.26,
-                    28.0,
-                    role::annotation::dimensions(),
-                    0,
-                );
-            }
-        }
-        let zeros = value.trailing_zeros();
-        let x_start = rx + 72.0 + (7 - zeros) as f64 * (cell + gap);
-        let x_end = rx + 72.0 + 7.0 * (cell + gap) - gap;
-        sheet.ctx.no_fill().stroke(color).stroke_width(PEN);
-        sheet.ctx.line(x_start, y0 - 12.0, x_end, y0 - 12.0);
-        sheet.ctx.line(x_start, y0 - 12.0, x_start, y0 - 4.0);
-        sheet.ctx.line(x_end, y0 - 12.0, x_end, y0 - 4.0);
-        sheet.label(tag, x_end, y0 - 56.0, body, color, 1);
-    };
-    bit_row(&mut sheet, 96, 888.0, green(), "on 32: structure");
-    bit_row(&mut sheet, 100, 744.0, red(), "on 4: correction");
-    sheet.label("100 = 96 + 4: the curve's", rx, 616.0, body, red(), -1);
-    sheet.label("optical correction", rx, 572.0, body, red(), -1);
-
-    sheet.label("Points on the 8-unit grid", rx, 484.0, body, gray(), -1);
-    sheet.label(
-        "(held-out Bolds, raw output)",
-        rx,
-        440.0,
-        SMALL_TEXT,
-        gray(),
-        -1,
-    );
-    let bar_max = W - MARGIN - rx - 71.0;
-    let bar = |sheet: &mut Sheet, y: f64, frac: f64, color: Color, label: &str, pct: &str| {
-        sheet.label(label, rx, y + 50.0, body, color, -1);
-        let w = (bar_max * frac / 0.85).max(6.0);
+    // Metrics stop at the divider; the data column has its own rhythm.
+    for (y, dashed) in [(0.0, false), (576.0, false), (-16.0, true), (592.0, true)] {
         sheet
             .ctx
-            .fill(fill_strong(color))
-            .stroke(color)
-            .stroke_width(PEN_LIGHT);
-        sheet.ctx.rect(rx, y, w, 34.0);
-        sheet.label(pct, rx + w + 16.0, y + 6.0, body, color, -1);
-    };
-    bar(
+            .no_fill()
+            .stroke(blue())
+            .stroke_width(line::HERO)
+            .line_dash(if dashed { &[12.0, 12.0] } else { &[] });
+        sheet
+            .ctx
+            .line(MARGIN, frame.y(y), DIVIDER_X - 44.0, frame.y(y));
+    }
+    sheet.ctx.line_dash(&[]);
+
+    draw_figure_glyph(&mut sheet, &n, S, x0, BASELINE, role::figure::red());
+    draw_figure_glyph(
         &mut sheet,
-        336.0,
-        0.0625,
-        role::annotation::dimensions(),
-        "chance on the 2-grid",
-        "6%",
+        &o,
+        S,
+        x0 + n.width * S,
+        BASELINE,
+        role::figure::green(),
     );
-    bar(&mut sheet, 240.0, 0.68, red(), "Virtua-12M-v0.1", "68%");
-    bar(&mut sheet, 144.0, 0.85, green(), "human sources", "85%");
+    sheet.dim_h(
+        x0 + 64.0 * S,
+        x0 + 160.0 * S,
+        BASELINE + 250.0 * S,
+        "96",
+        role::figure::pen(),
+    );
+    sheet.dim_h(
+        x0 + (n.width + 32.0) * S,
+        x0 + (n.width + 132.0) * S,
+        BASELINE + 310.0 * S,
+        "100",
+        role::figure::pen(),
+    );
 
-    legend(&mut sheet, box_right - 16.0, 84.0);
+    sheet
+        .ctx
+        .no_fill()
+        .stroke(role::figure::pen())
+        .stroke_width(line::HERO);
+    sheet.ctx.line(DIVIDER_X, MARGIN, DIVIDER_X, H - MARGIN);
 
-    // attribution, bottom of the column
-    sheet.label(
-        "Virtua Grotesk / Virtua-12M-v0.1",
-        rx,
-        64.0 + 36.0,
-        SMALL_TEXT,
-        green(),
-        -1,
-    );
-    sheet.label(
-        "elih.net/blog/virtua-grotesk",
-        rx,
-        64.0,
-        SMALL_TEXT,
-        green(),
-        -1,
-    );
+    let rx = DIVIDER_X + 90.0;
+    let cell = 86.0;
+    let gap = 10.0;
+    let draw_bits = |sheet: &mut Sheet, value: u32, y: f64, fill: Color| {
+        sheet.label(
+            &value.to_string(),
+            rx,
+            y + 20.0,
+            54.0,
+            role::figure::pen(),
+            -1,
+        );
+        for bit in 0..7 {
+            let x = rx + 150.0 + bit as f64 * (cell + gap);
+            let one = (value >> (6 - bit)) & 1 == 1;
+            sheet
+                .ctx
+                .fill(if one {
+                    fill
+                } else {
+                    role::figure::background()
+                })
+                .stroke(role::figure::pen())
+                .stroke_width(line::HERO);
+            sheet.ctx.rect(x, y, cell, cell);
+            sheet.label(
+                if one { "1" } else { "0" },
+                x + cell / 2.0,
+                y + 22.0,
+                44.0,
+                role::figure::pen(),
+                0,
+            );
+        }
+    };
+    draw_bits(&mut sheet, 96, 1000.0, role::figure::orange());
+    draw_bits(&mut sheet, 100, 790.0, role::figure::yellow());
+
+    let bar_w = 690.0;
+    let draw_bar = |sheet: &mut Sheet, pct: f64, y: f64, fill: Color| {
+        sheet
+            .ctx
+            .fill(fill)
+            .stroke(role::figure::pen())
+            .stroke_width(line::HERO);
+        sheet.ctx.rect(rx, y, bar_w * pct / 100.0, 92.0);
+        sheet.label(
+            &format!("{}", pct as i64),
+            rx + bar_w * pct / 100.0 + 26.0,
+            y + 22.0,
+            54.0,
+            role::figure::pen(),
+            -1,
+        );
+    };
+    draw_bar(&mut sheet, 68.0, 450.0, role::figure::orange());
+    draw_bar(&mut sheet, 85.0, 230.0, role::figure::green());
 
     sheet.save(renderer, out);
 }
@@ -548,8 +761,8 @@ fn main() {
         &reg,
         &outputs.blog("fig-semantic-grid.png"),
     );
-    fig_ohno(&renderer, &mono, &reg, &outputs.blog("fig-system-ohno.png"));
     fig_no(&renderer, &mono, &reg, &outputs.blog("fig-system-no.png"));
+    fig_ho(&renderer, &mono, &reg, &outputs.blog("fig-system-ho.png"));
     fig_weights(
         &renderer,
         &mono,
