@@ -31,7 +31,7 @@ is free and open-source under the SIL Open Font License (OFL) v1.1.
 <ol>
 <li><a href="#01-the-modernist-impulse"><span class="n">01</span>The Modernist Impulse</a></li>
 <li><a href="#02-replica-and-the-coarse-grid"><span class="n">02</span>Replica and the Coarse Grid</a></li>
-<li><a href="#03-the-semantic-grid-hierarchy"><span class="n">03</span>The Semantic Grid Hierarchy</a></li>
+<li><a href="#03-hierarchical-semantic-grid-systems"><span class="n">03</span>Hierarchical Semantic Grid Systems</a></li>
 <li><a href="#04-aesthetic-discipline--machine-legibility"><span class="n">04</span>Aesthetic Discipline &amp; Machine Legibility</a></li>
 <li><a href="#05-glyphs-as-sentences"><span class="n">05</span>Glyphs as Sentences</a></li>
 <li><a href="#06-a-small-model-learns-to-draw"><span class="n">06</span>A Small Model Learns to Draw</a></li>
@@ -57,87 +57,27 @@ answers a modernist ideal that the rigid version betrayed: technology
 people can live in harmony with, not technology that extinguishes human dignity.
 The old impulse is worth another look.
 
-The problem holding back machine learning for type design is data.
 Most fonts were never built as training data. Their coordinates land
 wherever the designer put them. Their contours are as individual as
 handwriting. That is fine for a rasterizer, but it is a problem for
-data engineers working with font sources. Today's font AI trains on
-exactly this accidental data: scraped fonts, Google Fonts, and
-proprietary datasets without strict engineering guidelines across
-designs, heterogeneous in every dimension that matters.
+data engineers working with font sources. Many font AI/ML projects
+train on exactly this accidental data: scraped fonts and Google
+Fonts, heterogeneous in every dimension that matters.
 
 A typeface is not a collection of characters drawn in isolation. It
 is many drawings that work as one system, and holding them together
 is most of the work. Font datasets need the same discipline. A
-collection assembled without it is many fonts in one place, not
-training data capable of delivering useful models.
-
-Modernism began as a reaction to a very similar situation. At the
-1914 Werkbund congress in Cologne, Hermann Muthesius argued for
-Typisierung, standard types for industrial production. Henry van de
-Velde and the artists rejected it, and the fight nearly broke the
-Werkbund. Jan Tschichold
-wrote in 1928 that the use of ornament "comes from an attitude of
-childish naivety." What these designers objected to was
-not beauty but the designer's ego imposed on everyone else's visual
-environment. Massimo Vignelli later called that visual pollution,
-"degrading our environment just like all other types of pollution,"
-and objected to work made "just to satisfy the ego of designers or
-clients."
-
-Josef Müller-Brockmann described his own method plainly: "In my
-designs for posters, advertisements, brochures and exhibitions,
-subjectivity is suppressed in favour of a geometric grid that
-determines the arrangement of the type and images." Anonymous was his
-word for the result, and he meant it as a compliment: "By anonymous I
-mean neutral, rational typography which has nothing to do with banal
-typography." Subjective interpretation, he held, falsifies the
-message.
-
-Tschichold changed his mind. The Nazis arrested him in Munich in
-March 1933 and held him six weeks for "un-German" typography, and he
-left for Basel that August. In 1946, answering Max Bill's charge that
-he had betrayed modernism, he wrote that the New Typography's
-"military will-to-order and its claim to sole power" belonged to the
-same German inclination to the absolute that "unleashed Hitler's rule
-and the Second World War." He spent his second career on classical
-book typography: serif faces, centered titles, symmetrical pages, and
-500 Penguin paperbacks. In 1967 he went back to the ornament line and
-corrected it. "It is not so simple," he wrote. "The desire for
-ornament is elemental and not childish-naive."
-
-What he gave up was the dogma, not the engineering. Sabon, released
-that same year, had to set identically on hand composition, Linotype
-and Monotype at once. Linotype's duplexing forced roman, italic and
-bold to share character widths. Monotype's matrix case rationed width
-values, so letters had to come out a unit wider or narrower than he
-wanted them. The brief also required the face to run 5 percent
-narrower than Monotype Garamond.
-
-That is the whole problem in one career. It is the problem I am
-trying to solve with the models I am training. The grid was never the
-enemy. Rigid rules were, because they could not hold the exceptions
-the eye needs, and Tschichold could only resolve that by being a
-master craftsman working inside a unit system. A model can learn the
-system and the exceptions together, because the sources record both.
-An old-style in the Plantin tradition is being drawn now with the
-model trained on Virtua Grotesk. I think Tschichold would have
-approved.
-
-A century later the same argument is open again. Design now runs on
-designer identity and on parasocial attachment to creators, more than
-on engineered systems built for the people who have to live with the
-result. AI slop is now flooding the visual environment, which makes
-Vignelli's warning look prophetic.
+collection assembled without it is not training data capable of
+delivering useful models in 2026.
 
 ### 02. Replica and the Coarse Grid
 
 The clearest precedent for Virtua Grotesk is [LL Replica](https://lineto.com/typefaces/replica)
 (Norm: Dimitri Bruni and Manuel Krebs; Lineto, 2008). Norm took the
-drawing grid in their font editor and made it ten times coarser. FontLab
-provides a 700-unit grid. Instead of using all 700 positions, they used
-a 70-unit grid. Every node and Bézier handle had fewer legal positions.
-The freedom was deliberate.
+drawing grid in their font editor and made it ten times coarser.
+FontLab's standard cap height is 700 units. Instead of 700 positions
+across it they had 70, a step of 10 units, and every node and Bézier
+control point had to land on one.
 
 Two details make Replica more than a constraint exercise. First, the
 bevels: its corners are cut exactly one grid unit wide, so the grid is
@@ -145,35 +85,41 @@ bevels: its corners are cut exactly one grid unit wide, so the grid is
 have no pointed apexes, so the letters can be set tight. The constraint
 produced the aesthetic, and the aesthetic advertises the constraint.
 
-### 03. The Semantic Grid Hierarchy
+### 03. Hierarchical Semantic Grid Systems
 
 Virtua Grotesk's answer to Replica's flat grid is a nested one, in
 powers of two up to the em itself. The em is the coordinate space a
 glyph is drawn in, and its size is given in units per em (UPM).
 Virtua Grotesk's is 1024, 2^10, rather than the industry's usual
-1000. That is less exotic than it sounds. A
-power-of-two em is the TrueType convention (2048 is standard, and
-[Inter](https://rsms.me/inter/) uses it); Virtua Grotesk extends the
-same logic down through every dimension. The full specification lives
-in the repo as
+1000. That is less exotic than it sounds. A power-of-two em is the
+TrueType convention, 2048 is standard and
+[Inter](https://rsms.me/inter/) uses it. Virtua Grotesk extends the
+same logic down through every dimension.
+
+Every measurement is a sum of powers of two, each power used once. 64
+takes one. 96 takes two, 64 + 32. 112 takes three, 64 + 32 + 16.
+Fewer is better. Where two values take the same number, the one whose
+powers run consecutively wins: in 96 = 64 + 32 each power is half the
+one before it, while 80 = 64 + 16 skips a step.
+
+That count is the value's Hamming weight, or popcount, the number of
+1s when it is written in binary. Virtua Grotesk uses it to rank handle
+lengths and structural spans. One is a pure power: 64, 128, 256. Two
+is an elegant sum: 96 = 64 + 32, or 272 = 256 + 16. Three is
+acceptable: 104 = 64 + 32 + 8. Four or more is flagged for review.
+
+A low popcount means a structural value. A high one means the
+letterform needed something the round numbers could not give. 64 is
+too light for a stem and 128 too heavy, so stems are 96 = 64 + 32;
+where 96 is too light, 112 = 64 + 32 + 16. The sums are a second
+semantic hierarchy, parallel to the nested grid.
+
+The full specification lives in the repo as
 [`DESIGN.md`](https://github.com/eliheuer/virtua-grotesk/blob/main/DESIGN.md),
 and it is enforced programmatically. From the repo root, `make
 grid-qa` runs [a Python
 script](https://github.com/eliheuer/virtua-grotesk/blob/main/scripts/grid_qa.py)
-that grades every glyph in both masters for compliance. Every point
-must sit on the 2-grid. On-curve points should sit on the 8-grid, with
-off-8 points reported by the QA tool. Handle lengths and structural spans
-are scored as short sums of powers of two. When a pure power does not fit the
-letterform, the value is a short sum: 64 is too light for a stem and
-128 too heavy, so stems are 96 = 64 + 32; where 96 is too light,
-112 = 64 + 32 + 16. The sums are a second semantic hierarchy,
-parallel to the nested grid: the fewer the powers, the more
-structural the value. The score is binary popcount, the count
-of ones in the value's binary form: 1 is a pure power (64, 128, 256),
-2 an elegant sum (96 = 64 + 32, 272 = 256 + 16), 3 acceptable
-(104 = 64 + 32 + 8), 4 or more flagged for review. Between sums with
-the same count, adjacent powers rank cleaner: 96 = 64 + 32, n plus
-half of n, over 80 = 64 + 16, n plus a quarter of n. The report is
+that grades every glyph in both masters for compliance. The report is
 what the AI agent harness acts on: it fixes what the script flags,
 renders the result, and runs the script again.
 
@@ -185,24 +131,19 @@ The coarse default is also what gives the spacing its rhythm, a small
 set of recurring intervals instead of 100s of bespoke ones,
 snapped tighter only where the eye insists.
 
-![Annotated specimen drawn with designbot: the word OHno set in Virtua Grotesk Regular on the design grid, every on-curve and off-curve point marked, green points on the 8-unit structure grid and red points off 8 on the 2-unit correction grid, with blue tags for cap height 768, x-height 576, baseline, descender minus 256 and the overshoots, and green dimensions measuring the O curves at 108 and 100, the H stem at 104 and bar at 96, the n stem at 96, and the o curve at 100.](./fig-system-ohno.png)
+![The lowercase n and o from Virtua Grotesk Regular enlarged over the uniform 8-unit source grid, with every on-curve and off-curve point marked and capped labels measuring representative strokes and counters.](./fig-system-no.png)
 
-![Annotated specimen drawn with designbot: the word no set large in Virtua Grotesk Regular with full point annotation, the n stem measured at 96, the o curves at 100 and 92, purple handle lengths of 64, 96, 128 and 160, a 16-unit chamfer called out at the n's foot, and hatched sidebearings with ink widths dimensioned below the baseline.](./fig-system-no.png)
+![The capital H and O from Virtua Grotesk Regular enlarged over the uniform 8-unit source grid, with every on-curve and off-curve point marked and capped labels measuring representative strokes and counters.](./fig-system-ho.png)
 
-![Annotated specimen drawn with designbot: the word no twice, Regular then Bold, with full point annotation, green points on the structure grid and red optical corrections, stems measured at 96 and 192, curve strokes at 100 and 196, and a red callout naming an off-8 point an optical correction.](./fig-system-weights.png)
-
-![Annotated specimen drawn with designbot: alef, beh and medial heh reading right to left with full point annotation. The alef sits entirely on the 8-unit structure grid at stroke 96; the beh's calligraphic tail is dense with red 2-grid optical corrections, its boat stroke measures 72 and its dot 160 across.](./fig-system-arabic.png)
-
-The two tiers divide the work. Structure lives on the 8-unit grid:
-stems, sidebearings, chamfers, and every value a tool generates.
-Large optical corrections sit on it as well. Only corrections finer
-than 8 units drop to the 2-unit grid, and for now only a person can
-judge those. A point on 2 but off 8 can only be a deliberate
+Structure lives on the 8-unit grid: stems, sidebearings, chamfers,
+and every value a tool generates. Large optical corrections sit there
+too. Only corrections finer than 8 units drop to the 2-unit grid, and
+for now only a person can judge those. A point on 2 but off 8 can only be a deliberate
 correction, so the label is in the coordinate itself. The machine
 drafts on 8, a person refines on 2, and the difference between the
 two versions is a labeled training set.
 
-![A cubic arch over the two-level grid, drawn with designbot: every point lands on the 8-unit structure grid in green, except the apex and its two handles, pulled 4 units up onto the 2-unit grid, marked in red with a plus-4 dimension and a callout labeling the move an optical correction.](./fig-optical-correction.png)
+![A yellow cubic arch band with separate chamfered feet and a dark gray outline over a full-bleed two-level source grid. The outer and inner curves show their construction handles. Dark gray lines mark the 8-unit structure grid and lighter gray lines mark the 2-unit correction grid. Green points sit on the structure grid. Red points mark corrections between the 8-unit lines.](./fig-optical-correction.png)
 
 ### 04. Aesthetic Discipline & Machine Legibility
 
@@ -210,6 +151,19 @@ Andrej Karpathy calls a large language model [a zip file of the
 internet](https://www.youtube.com/watch?v=zjkBMFhNj_g): billions of
 parameters that compress terabytes of text into a lossy gestalt. A
 trained model is a compression of its training data.
+
+Karpathy has
+[bet](https://x.com/karpathy/status/1814038096218083497) that models
+will get "very very small," and blames their current size on waste:
+"we're asking them to memorize the internet and, remarkably, they
+do." He calls the small alternative a [cognitive
+core](https://x.com/karpathy/status/1938626382248149433), a model
+that keeps "the algorithms for thought" and looks the rest up.
+
+Virtua-12M-v0.1 is never asked to remember everything in the Google
+Fonts catalog. It is asked to learn one design system: the basic
+rules and the grid used to draw in a specific way. That is why 12.54
+million parameters is enough, and why the checkpoint is 48 MB.
 
 Font engineers already build compression systems. A variable font is a base
 outline plus a set of interpolation deltas, and reconstructs every weight on
@@ -235,27 +189,29 @@ human-drawn sources land on it 85 percent of the time. Drawing
 held-out glyphs whose Bolds it never saw, Virtua-12M-v0.1 lands on it
 68 percent of the time, most of the way from chance to the human
 hand. When it leaves the structure grid it tends to land on
-correction values rather than at random, and it keeps the E, a glyph
-with only straight line segments on the structure grid at every point.
-Nobody labeled the tiers, and no auxiliary loss rewards them. The model
+correction values rather than at random. Nobody labeled the tiers,
+and no auxiliary loss rewards them. The model
 learned them as plain statistics. The obvious objection is that a
 next-token model reproducing its training statistics is doing exactly
 what it should. That is the point. This is not only about frequencies:
 where the human sources leave the structure grid, the model tends to
 leave it at the same points.
 
-![The whole argument in one annotated specimen, drawn with designbot. Left: a zoomed crop of the word no sitting on the two-tier grid itself, with every point marked and the n's stem measured at 96 and the o's curve wall at 100. Right: 96 and 100 written in binary, followed by bars showing the share of points landing exactly on the 8-unit grid in held-out raw model output: chance 6 percent, Virtua-12M-v0.1 68 percent, human sources 85 percent.](./fig-semantic-grid.png)
+One honest caveat about where the win comes from. The model reads
+each coordinate as a single token and never sees digits, so at the
+token level base two is invisible to it. What it learns from is
+coarseness, regularity, and the nested tiers: a small set of legal
+values, each recurring and meaning one thing, corrections rare
+against a regular background. That trick would work in base ten too.
 
-One honest caveat: for the model itself, the win is coarseness,
-regularity, and the nested tiers, not base two. It reads each
-coordinate as a single token and never sees digits, so it would learn
-a base-ten version of these tiers just as well. A small set of legal
-values, each one recurring and meaning one thing, with corrections
-rare against a regular background: that is the whole trick, and none
-of it needs the base to be two. But the model is only part of
-the pipeline, and in the last section of this post I will argue that
-base two is the best possible choice for a system like this, and font UPMs
-in general.
+A 1000 em would even carry these same power-of-two values: put the
+stem at 96 and 192 on a 1000 em and it interpolates just as cleanly,
+because the arithmetic is on the stem width, not the em. Base two
+pays off further down the pipeline, wherever a coordinate is divided
+by the em. 96/1024 is 0.09375, exact in binary; 96/1000 repeats
+forever. Normalization and display scaling ride on that division, and
+section 09 makes the case that base two is the best choice for it,
+and for font UPMs in general.
 
 ### 05. Glyphs as Sentences
 
@@ -469,8 +425,6 @@ omitted.
 The training curves, parsed from the run log: the pretrained arm
 starts the fine-tune below the control's best and stays below it.
 
-![Two training-curve panels drawn with designbot from the v0.8 run log. Left: pretraining on 29,000 OFL pairs, validation loss on 290 held-out OFL pairs falling to a best of 1.53, faint train loss beneath. Right: the A/B on the same Virtua Grotesk validation set, the gray from-scratch control bottoming at 3.16 while the green fine-tune from pretrained weights starts lower and bottoms at 2.72, dots at every 500-step checkpoint and a ring on the shipped best checkpoint.](./fig-losscurve.png)
-
 How much hand-graded data does the fine-tune need? The same fine-tune
 with the corpus cut down: twelve pairs score 28.0 ± 1.9 MAE,
 twenty-five 25.5 ± 0.9, fifty 24.0 ± 1.6, every seed of every run
@@ -515,14 +469,14 @@ clean glyph with every point on the grid. The stem steps 96, 144,
 
 ![Three large lowercase n outlines on one continuous 8-unit grid: the n at Regular in red, at the 1/2 interpolation in orange, and at Bold in yellow, translucent fills overlapping, every on-curve and off-curve point marked. Stem dimensions read 96 (64+32), 144 (128+16), 192 (128+64); counter dimensions 272 (256+16), 232 (128+64+32+8), 192 (128+64); purple handle lengths of 64 and 128. Uncrowded points carry bare coordinate labels beside them, like 80,0 at the feet and 328,592 to 432,592 at the apexes, the same apex y with x interpolating. Every interpolated point lands on the grid, so the intermediate weight is a clean, grid-native glyph.](./fig-interp-outlines.png)
 
-The reason is arithmetic. Interpolation is halving, and a power-of-two
-grid is closed under halving: the midpoint of two grid points is on
-the grid, or one level finer down the same ladder, exactly. A
-1000-unit em is not closed: halving a 10-unit interval gives 5, then
-2.5, then 1.25, values off any clean level that must be rounded back,
-a small error in every sample. This is why a font built to be training
-data belongs on 1024, not 1000: one em makes noise-free data, the
-other cannot. Section 09 proves the general case.
+The reason is arithmetic. The masters sit on the grid, and their
+stems differ by 96, a number that keeps splitting evenly as the
+weight is halved, so every interpolated stem lands back on the grid:
+96, 144, 192. The glyph between the masters is as clean as the masters
+themselves. A decimal design does not close this way, as the figure
+below shows. That closure is a property of the power-of-two grid, and
+section 09 proves why the em itself must be the power of two, not just
+the grid.
 
 ![Two aligned number lines drawn with designbot, showing the n stem interpolated from Regular to Bold at binary-fraction weights. The top line is the 1024 em on a 2-unit grid, stem 96 to 192, with the weights 1/8, 1/4, 3/8, 1/2, 5/8, 3/4, 7/8 all landing exactly on grid ticks at 108, 120, 132, 144, 156, 168, 180 in green. The bottom line is the 1000 em on a 10-unit grid, stem 90 to 180, with the same weights falling off the grid: 1/2 lands at 135 between ticks, 1/4 lands at 112.5, not even an integer, both marked in red. Dashed guides connect the same weight on both lines.](./fig-interp.png)
 
@@ -645,6 +599,15 @@ power of two, because the em is the denominator of every normalized
 coordinate.
 
 ![Two rows of binary digits drawn with designbot. The top row shows 96/1024 as 0.00011 in binary, terminating after five bits, marked exact. The bottom row shows 96/1000 as a stream of binary digits running off the edge, marked as repeating forever with period one hundred bits.](./fig-fractions.png)
+
+Rounding is the mild failure. The sharp one is that some of the
+design's own proportions have no integer coordinate. A vertical metric
+is a ratio of the em. Virtua Grotesk's cap height is 3/4 of the em and
+its x-height is 9/16, which on 1024 are 768 and 576. On a 1000 em the
+cap height still lands at 750, but 9/16 of 1000 is 562.5, and no font
+stores half a unit. The proportion the designer chose cannot be
+written down. A binary proportion is a whole coordinate only on a
+binary em, and this holds in the source, before any arithmetic runs.
 
 This is the founding decision of digital typography. Knuth hit it in
 TeX, [watching 0.4 print back as 0.39999](https://research.swtch.com/fp-knuth),
