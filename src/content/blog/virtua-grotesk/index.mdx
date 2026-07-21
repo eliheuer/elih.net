@@ -304,12 +304,11 @@ is nearly homogeneous, then ask how small the model can get.
 [Simon Cozens](https://simoncozens.github.io/state-of-ai-font-generation/),
 surveying the field, is blunt: "vectorization of glyph images has been
 historically very bad," and his own Google Fonts model "completely
-failed." The model failure is a data problem, upstream of any model. The
-bad vectorization I fixed and wrote about in
-[another blog post about my img2bez tool](/blog/img2bez), which places
-points on a glyph's structure, not just its silhouette, and puts outlines
-straight onto the 2-unit grid. It runs throughout the pipeline and harness
-that Virtua Grotesk uses.
+failed." The model failure is a data problem, upstream of any model. I
+fixed the bad vectorization with [img2bez](/blog/img2bez), a tracer that
+places points on a glyph's structure, not just its silhouette, and puts
+outlines straight onto the 2-unit grid. It runs throughout the pipeline
+and harness that Virtua Grotesk uses.
 
 ### 06. A Small Model Learns to Draw
 
@@ -484,7 +483,7 @@ percent of pairs to 9. This is catastrophic forgetting, the price of
 fine-tuning a small model on a narrow corpus. The v0.1 instinct was to mix
 the old data back in; the conclusion has since sharpened the other way.
 Heterogeneous font collections aren't training data for this at all
-(Section 02), so the direction now is to retire the borrowed fonts
+(Section 01), so the direction now is to retire the borrowed fonts
 entirely and let the Virtua Grotesk family, built out across weights, be
 the whole dataset. Virtua-12M-v0.1 is a specialist, not a general tool:
 
@@ -514,8 +513,9 @@ outlines, freed from the per-glyph boxes digital type inherited from
 metal. An outline font is a compression scheme for the Latin letter, one
 fixed shape reused everywhere, and it strains on other scripts: Arabic in
 its manuscript forms is one continuous, context-dependent stroke, and the
-current workaround fakes with thousands of glyphs and rules what a hand
-does in one motion. A generative font draws each glyph in context. The
+current workaround uses thousands of glyphs and substitution rules to fake
+what a hand does in one motion. A generative font draws each glyph in
+context. The
 first ones will be built on a grid like this.
 
 <h3 id="09-the-mathematics-of-2n">09. The Mathematics of 2ⁿ</h3>
