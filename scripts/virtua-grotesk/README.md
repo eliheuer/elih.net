@@ -147,7 +147,7 @@ Active figure groups:
 | `figs` | `fig-complete-r.png`, `fig-bolden-g.png` |
 | `optical` | `fig-optical-correction.png` |
 | `grids` | `fig-grid-labels.png` |
-| `proofs` | `fig-fractions.png`, `fig-midpoint.png`, `fig-ladder.png`, `fig-bits.png` |
+| `proofs` | `fig-midpoint.png`, `fig-ladder.png`, `fig-bits.png` |
 | `model` | `fig-model-bolden-n.png` |
 | `system` | system sheets and `fig-semantic-grid.png` |
 | `interp` | `fig-interp.png` |

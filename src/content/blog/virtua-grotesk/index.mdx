@@ -490,67 +490,58 @@ even remains a secret because nobody ever believes you anyways”</p>
 <p>—roon ([@tszzl](https://x.com/tszzl)), 2026.</p>
 </div>
 
-The most common pushback on this draft was: why powers of two? Concede
-the narrow point first: any grid shrinks the vocabulary, and a decimal
-grid would tokenize just as cleanly. The transformer doesn't care: I find
-no evidence a network prefers binary bins to decimal, and when the field
-quantizes it reaches for [256 bins](https://arxiv.org/abs/2002.10880) out
-of habit. If the model were the whole pipeline, the skeptics would be
+When I shared an early version of this draft, a lot of the pushback was
+on the powers-of-two focus. I will concede the narrow point first: any
+grid shrinks the vocabulary, and a decimal grid would tokenize just as
+cleanly. The transformer doesn't care: I find no evidence a network
+prefers a binary grid to a decimal one, and when the field quantizes it
+reaches for [256 positions](https://arxiv.org/abs/2002.10880) out of
+habit. If the model were the whole pipeline, the skeptics would be
 right.
 
-It isn't. The rest of the pipeline imposes five constraints: normalize
-exactly; be closed under the drawing operations; keep the hierarchy a
-chain so its levels carry meaning; make the ladder as deep as the em
-allows; and meet the machine at every boundary, rendering included. Each
-is software the design has to live inside. This section takes them in
-order, then tests the rivals.
+The model is not the whole pipeline. The rest of it imposes five
+constraints:
+
+1. **Normalize exactly.** Any coordinate divided by the em must come out
+   an exact binary fraction, not a rounded one, and the design's
+   proportions (cap height, x-height) must land on whole coordinates.
+2. **Close under the operations.** Halving, interpolating, and
+   subdividing a glyph must land back on the grid.
+3. **Keep the hierarchy a chain.** Each grid nests strictly inside the
+   next, so every point has one unambiguous level.
+4. **Make the ladder deep.** The em should split into as many nested
+   grid levels as it can.
+5. **Meet the machine at every boundary.** The grid must line up with the
+   machine's own grids everywhere, down to the pixels at render time.
+
+None of these are aesthetic. Each comes from software the font runs
+through, the machine's arithmetic, the file formats, the rasterizer, and
+a design either fits the machine's numbers or rounds against them at
+every step. This section takes the five in order, then tests the rival
+bases.
 
 **Normalize exactly.** A binary computer stores a fraction exactly only
-when its denominator is a power of two: the dyadic rationals, the
-machine's native numbers. Divide Virtua Grotesk's 96-unit stem by its 1024
-em and you get 0.09375, exact; divide by the traditional 1000 em and 0.096
-has no finite binary form, so the machine holds 0.09600000000000000200.
-Every coordinate is normalized, interpolated, and scaled thousands of
-times before anyone sees a letter, and each step either is exact or
-quietly rounds.
+when its denominator is a power of two. Divide Virtua Grotesk's 96-unit
+stem by its 1024 em and you get 0.09375, exact; divide by the traditional
+1000 em and 0.096 has no finite binary form, so the machine holds
+0.09600000000000000200. The em is the denominator, not the drawing grid: a
+1000 em with an 8-unit grid still fails, since 8/1000 = 1/125 doesn't
+terminate in binary either. Every coordinate is scaled thousands of times
+before anyone sees a letter, and each step is either exact or quietly
+wrong.
 
-The denominator is the em, not the drawing grid: a 1000 em with an 8-unit
-grid doesn't help, since 8/1000 = 1/125 has no finite binary form either.
-The em itself must be the power of two, because it's the denominator of
-every normalized coordinate.
+Rounding is the mild failure. The sharp one: some proportions have no
+integer coordinate at all. Cap height is 3/4 of the em and x-height 9/16,
+which on 1024 are 768 and 576. On a 1000 em, 9/16 comes to 562.5, and no
+font stores half a unit, so the proportion can't be written down. A binary
+proportion is a whole coordinate only on a binary em.
 
-![Two rows of binary digits drawn with designbot. The top row shows 96/1024 as 0.00011 in binary, terminating after five bits, marked exact. The bottom row shows 96/1000 as a stream of binary digits running off the edge, marked as repeating forever with period one hundred bits.](./fig-fractions.png)
-
-Rounding is the mild failure. The sharp one: some of the design's own
-proportions have no integer coordinate. Cap height is 3/4 of the em,
-x-height 9/16: on 1024, 768 and 576. On a 1000 em the cap height still
-lands at 750, but 9/16 of 1000 is 562.5, and no font stores half a unit;
-the proportion the designer chose can't be written down. A binary
-proportion is a whole coordinate only on a binary em, in the source,
-before any arithmetic runs.
-
-This is the founding decision of digital typography. Knuth hit it in TeX,
-[watching 0.4 print back as 0.39999](https://research.swtch.com/fp-knuth),
-and rebuilt on scaled points of 2⁻¹⁶ of a printer's point. In METAFONT
-every number is a multiple of 2⁻¹⁶, so typing .1
-[gets 6554/65536](https://ctan.org/pkg/mfbook). The modern formats agree:
-TrueType rasterizes in 26.6 fixed point, variable fonts store axis
-positions in
-[units of 2⁻¹⁴](https://learn.microsoft.com/en-us/typography/opentype/spec/otvarcommonformats),
-and OpenType
+None of this is new. Knuth built TeX and METAFONT on binary fractions
+after [watching 0.4 print back as 0.39999](https://research.swtch.com/fp-knuth),
+and the formats still agree: TrueType computes in fixed point, a variable
+font rounds any in-between weight to a binary fraction, and OpenType
 [recommends a power-of-two em](https://learn.microsoft.com/en-us/typography/opentype/spec/ttch01)
-because scaling is then a bit shift. A design on the dyadic grid is the
-only one this stack writes down exactly.
-
-Deployment is already dyadic: a variable font can't express t = 1/3
-between masters: the format snaps it to 5461/16384 first. Dyadic training
-weights are the only ones the shipping format can express.
-
-The same arithmetic appears on the ML side. Karpathy, tuning
-[nanoGPT](https://github.com/karpathy/nanoGPT), found a 25 percent
-speedup by padding the vocabulary from 50,257 to 50,304, the nearest
-multiple of 64, and signed off,
-["Careful with your Powers of 2."](https://x.com/karpathy/status/1621578354024677377)
+because scaling is then a bit shift.
 
 | operation | em 1024 | em 1000 |
 | --- | --- | --- |
@@ -559,10 +550,10 @@ multiple of 64, and signed off,
 | scale to a pixel size | bit shift | division |
 | divide the em in thirds | approximate | approximate |
 
-The last row is the honest one: binary buys no thirds, and neither does
-decimal; the divisions that resist the base are exactly the ones the
-eye corrects anyway. The operations that must be exact (halving,
-doubling, scaling, interpolating) are the four base two does perfectly.
+The last row is the honest one: binary buys no thirds, but neither does
+decimal, and thirds are the divisions the eye corrects anyway. The
+operations that must be exact, halving, doubling, scaling, interpolating,
+are the four base two does perfectly.
 
 **Close under the operations.** The keystone. The numbers reachable from
 the integers by taking midpoints are exactly the dyadic rationals, and
@@ -573,14 +564,12 @@ The dyadic grid isn't a lattice the operations tolerate; it's the lattice
 they generate. Start from any grid, run the arithmetic, and the points
 that appear are dyadic.
 
-![A cubic Bézier arch drawn with designbot over a full-bleed 64-unit grid and split at one half by the de Casteljau construction. The original control polygon is red, first-round midpoint lines are orange, second-round midpoint lines are yellow, and the final split point is green.](./fig-midpoint.png)
+![A centered cubic Bézier arch drawn with designbot over a full-bleed 8-unit grid. The original control polygon is red, first-round midpoint lines are orange, second-round midpoint lines are yellow, and the central split point is green. Blue points mark quarter subdivisions. Purple points mark eighth subdivisions.](./fig-midpoint.png)
 
-The figure subdivides an arch: control points on the 64-grid, first
-midpoints on the 32, second on the 16, split point on the 16. A midpoint
-of two multiples of 2ᵏ is a multiple of 2ᵏ⁻¹, so each round descends at
-most one rung, and a ten-rung ladder absorbs the whole operation. On a
-decimal grid the numbers leave the system at the second halving: 10 halves
-once, to 5, and dies.
+The figure runs one subdivision. A midpoint of two multiples of 2ᵏ is a
+multiple of 2ᵏ⁻¹, so each round drops one rung and a ten-rung ladder
+absorbs the whole operation. A decimal grid dies at the second halving:
+10 to 5 to 2.5.
 
 Exactness and closure are half the answer; the other half is where this
 parts ways with Replica. Replica's grid is one flat layer, every legal
@@ -594,9 +583,8 @@ way down. The grids tiling a 1024 em run 1024, 512, 256… to 2: ten nested
 levels, each a strict subset of the one above. Virtua Grotesk assigns
 meanings: 64 for vertical metrics, 8 for structure, 2 for corrections. An
 optical correction is never off-grid; it's on the fine grid and off the
-coarse one, section 03's rule as data design. The ladder is a property of
-the base: powers of two dividing 1000 stop at 8, those dividing Replica's
-700 stop at 4; a binary em ladders from the unit to the em.
+coarse one, section 03's rule as data design. Only a power of two ladders
+this way, from the unit all the way up to the em.
 
 ![Four vertical stacks of colored rectangles drawn with designbot, one per candidate em. The green 1024 stack halves ten times down to 1. The red 1000 stack stops at 125. The orange 729 stack divides by three down to 1. The yellow 700 stack stops at 175.](./fig-ladder.png)
 
@@ -688,9 +676,7 @@ familiar offsets.
 **Every modality shares the lattice.** Render a 1024-em glyph at 1024
 pixels and one font unit is one pixel (the specimen atop this post is
 drawn that way). The image models feeding img2bez downsample by eight, so
-their latent space is a 128 × 128 lattice where each cell covers an 8 × 8
-block of font units: the structure grid reappears inside the diffusion
-model.
+the 8-unit structure grid reappears as their 128 × 128 latent lattice.
 
 Knuth walked this ground forty years ago. METAFONT had to put ideal curves
 onto coarse pixel grids, and his 1986

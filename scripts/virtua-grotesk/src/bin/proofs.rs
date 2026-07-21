@@ -30,115 +30,59 @@ fn bit_row(sheet: &mut Sheet, x0: f64, y0: f64, cell: f64, gap: f64, bits: &[u8]
     }
 }
 
-fn fig_fractions(renderer: &Renderer, mono: &str, out: &std::path::Path) {
-    let mut sheet = new_sheet(renderer, mono);
-    sheet.ctx.line_cap("round");
-
-    let mut num = 12u32;
-    let mut repeating = Vec::new();
-    // Twelve bits are enough to show the repeating structure at card size;
-    // the ellipsis makes clear that the expansion continues indefinitely.
-    for _ in 0..12 {
-        num *= 2;
-        if num >= 125 {
-            repeating.push(1u8);
-            num -= 125;
-        } else {
-            repeating.push(0u8);
-        }
-    }
-    let exact = [0, 0, 0, 1, 1];
-
-    let exact_cell = 270.0;
-    let exact_gap = 24.0;
-    let exact_width = exact.len() as f64 * exact_cell + (exact.len() - 1) as f64 * exact_gap;
-    let exact_left = (W - exact_width) / 2.0 + 100.0;
-    sheet.label_weighted("1024", MARGIN, 1002.0, 96.0, role::figure::pen(), -1, 560.0);
-    sheet.label_weighted(
-        "0.",
-        exact_left - 92.0,
-        846.0,
-        116.0,
-        role::figure::pen(),
-        1,
-        560.0,
-    );
-    bit_row(
-        &mut sheet,
-        exact_left,
-        700.0,
-        exact_cell,
-        exact_gap,
-        &exact,
-        role::figure::green(),
-    );
-
-    let repeat_cell = 160.0;
-    let repeat_gap = 10.0;
-    let repeat_width =
-        repeating.len() as f64 * repeat_cell + (repeating.len() - 1) as f64 * repeat_gap;
-    let repeat_left = (W - repeat_width) / 2.0 + 100.0;
-    sheet.label_weighted("1000", MARGIN, 444.0, 96.0, role::figure::pen(), -1, 560.0);
-    sheet.label_weighted(
-        "0.",
-        repeat_left - 92.0,
-        282.0,
-        116.0,
-        role::figure::pen(),
-        1,
-        560.0,
-    );
-    bit_row(
-        &mut sheet,
-        repeat_left,
-        176.0,
-        repeat_cell,
-        repeat_gap,
-        &repeating,
-        role::figure::red(),
-    );
-    sheet.label_weighted("…", W - MARGIN, 232.0, 116.0, role::figure::red(), 1, 560.0);
-
-    sheet.save(renderer, out);
-}
-
 fn fig_midpoint(renderer: &Renderer, mono: &str, out: &std::path::Path) {
     let mut sheet = new_sheet(renderer, mono);
     sheet.ctx.line_cap("round");
 
-    const S: f64 = 2.80;
-    const PX: f64 = 430.0;
-    // Center the complete construction, not only the visible curve. The
-    // negative source-space offset balances the control polygon at the top
-    // against the curve endpoints at the bottom.
-    const PY: f64 = -146.0;
-    let cx = |ux: f64| PX + ux * S;
-    let cy = |uy: f64| PY + uy * S;
+    // Match the section 03 arch directly: one 8-unit grid, one 10 px pen,
+    // and the same source-unit scale. Geometry and layout stay local so the
+    // construction can be art-directed without changing the shared system.
+    const UNIT: f64 = 15.0;
+    const STROKE: f64 = line::EXTRA_HEAVY;
+    const POINT_SIZE: f64 = 44.0;
+    const CONSTRUCTION_WIDTH: f64 = 128.0;
+    const CONSTRUCTION_HEIGHT: f64 = 80.0;
+    let origin_x = (W - CONSTRUCTION_WIDTH * UNIT) / 2.0;
+    let origin_y = (H - CONSTRUCTION_HEIGHT * UNIT) / 2.0;
+    let cx = |ux: f64| origin_x + ux * UNIT;
+    let cy = |uy: f64| origin_y + uy * UNIT;
 
-    // A single 64-unit lattice supplies scale without turning back into graph
-    // paper. It reaches the image edges like the hero's construction lines.
-    sheet
-        .ctx
-        .no_fill()
-        .stroke(role::grid::standard())
-        .stroke_width(line::THIN);
-    let mut x = 0.0;
-    while x <= W {
-        sheet.ctx.line(x, 0.0, x, H);
-        x += 64.0 * S;
-    }
-    let mut y = 0.0;
-    while y <= H {
-        sheet.ctx.line(0.0, y, W, y);
-        y += 64.0 * S;
+    // The grid phase is tied to the construction origin, so every original
+    // control point lands on the visible 8-unit lattice.
+    {
+        let u_lo = ((-origin_x / UNIT) / 8.0).floor() as i64 * 8;
+        let u_hi = (((W - origin_x) / UNIT) / 8.0).ceil() as i64 * 8;
+        let v_lo = ((-origin_y / UNIT) / 8.0).floor() as i64 * 8;
+        let v_hi = (((H - origin_y) / UNIT) / 8.0).ceil() as i64 * 8;
+
+        let mut u = u_lo;
+        while u <= u_hi {
+            sheet
+                .ctx
+                .no_fill()
+                .stroke(role::grid::subtle())
+                .stroke_width(STROKE);
+            let x = origin_x + u as f64 * UNIT;
+            sheet.ctx.line(x, 0.0, x, H);
+            u += 8;
+        }
+        let mut v = v_lo;
+        while v <= v_hi {
+            sheet
+                .ctx
+                .no_fill()
+                .stroke(role::grid::subtle())
+                .stroke_width(STROKE);
+            let y = origin_y + v as f64 * UNIT;
+            sheet.ctx.line(0.0, y, W, y);
+            v += 8;
+        }
     }
 
-    let p = [
-        (64.0, 128.0),
-        (192.0, 448.0),
-        (448.0, 448.0),
-        (576.0, 128.0),
-    ];
+    // Preserve the original cubic, normalized to the section 03 source scale.
+    // Its four original controls all sit on the 8-unit grid. The later colored
+    // points show repeated dyadic subdivision.
+    let p = [(0.0, 0.0), (32.0, 80.0), (96.0, 80.0), (128.0, 0.0)];
     let mid = |a: (f64, f64), b: (f64, f64)| ((a.0 + b.0) / 2.0, (a.1 + b.1) / 2.0);
     let m01 = mid(p[0], p[1]);
     let m12 = mid(p[1], p[2]);
@@ -148,7 +92,7 @@ fn fig_midpoint(renderer: &Renderer, mono: &str, out: &std::path::Path) {
     let split = mid(mm0, mm1);
 
     let line_between = |sheet: &mut Sheet, a: (f64, f64), b: (f64, f64), color: Color| {
-        sheet.ctx.no_fill().stroke(color).stroke_width(12.0);
+        sheet.ctx.no_fill().stroke(color).stroke_width(STROKE);
         sheet.ctx.line(cx(a.0), cy(a.1), cx(b.0), cy(b.1));
     };
     for pair in p.windows(2) {
@@ -169,7 +113,7 @@ fn fig_midpoint(renderer: &Renderer, mono: &str, out: &std::path::Path) {
         .ctx
         .no_fill()
         .stroke(role::figure::pen())
-        .stroke_width(18.0);
+        .stroke_width(STROKE);
     sheet.ctx.draw_path(curve);
 
     let marker = |sheet: &mut Sheet, p: (f64, f64), fill: Color, square: bool| {
@@ -177,11 +121,16 @@ fn fig_midpoint(renderer: &Renderer, mono: &str, out: &std::path::Path) {
             .ctx
             .fill(fill)
             .stroke(role::figure::pen())
-            .stroke_width(10.0);
+            .stroke_width(STROKE);
+        let radius = POINT_SIZE / 2.0;
         if square {
-            sheet.ctx.rect(cx(p.0) - 18.0, cy(p.1) - 18.0, 36.0, 36.0);
+            sheet
+                .ctx
+                .rect(cx(p.0) - radius, cy(p.1) - radius, POINT_SIZE, POINT_SIZE);
         } else {
-            sheet.ctx.oval(cx(p.0) - 18.0, cy(p.1) - 18.0, 36.0, 36.0);
+            sheet
+                .ctx
+                .oval(cx(p.0) - radius, cy(p.1) - radius, POINT_SIZE, POINT_SIZE);
         }
     };
     for point in p {
@@ -194,6 +143,28 @@ fn fig_midpoint(renderer: &Renderer, mono: &str, out: &std::path::Path) {
         marker(&mut sheet, point, role::figure::yellow(), false);
     }
     marker(&mut sheet, split, role::figure::green(), false);
+
+    // Continue the same midpoint operation recursively. Quarter points are
+    // blue and eighth points are purple. Keeping these later rounds to points
+    // preserves the clean primary construction while showing that subdivision
+    // keeps generating positions on the same dyadic ladder.
+    let cubic_point = |t: f64| {
+        let mt = 1.0 - t;
+        let b0 = mt * mt * mt;
+        let b1 = 3.0 * mt * mt * t;
+        let b2 = 3.0 * mt * t * t;
+        let b3 = t * t * t;
+        (
+            b0 * p[0].0 + b1 * p[1].0 + b2 * p[2].0 + b3 * p[3].0,
+            b0 * p[0].1 + b1 * p[1].1 + b2 * p[2].1 + b3 * p[3].1,
+        )
+    };
+    for t in [0.25, 0.75] {
+        marker(&mut sheet, cubic_point(t), role::figure::blue(), false);
+    }
+    for t in [0.125, 0.375, 0.625, 0.875] {
+        marker(&mut sheet, cubic_point(t), role::figure::purple(), false);
+    }
 
     sheet.save(renderer, out);
 }
@@ -315,7 +286,6 @@ fn main() {
     let mut renderer = Renderer::new(W as u32, H as u32);
     let mono = load_family(&mut renderer, mono_path.to_str().unwrap());
     let outputs = OutputPaths::from_args();
-    fig_fractions(&renderer, &mono, &outputs.blog("fig-fractions.png"));
     fig_midpoint(&renderer, &mono, &outputs.blog("fig-midpoint.png"));
     fig_ladder(&renderer, &mono, &outputs.blog("fig-ladder.png"));
     fig_bits(&renderer, &mono, &outputs.blog("fig-bits.png"));
