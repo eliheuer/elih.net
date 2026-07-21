@@ -1,14 +1,8 @@
-//! Model-demo figures for the Virtua Grotesk post, §07, in the green
-//! dimension-sheet house style (same family as og.rs / figs.rs):
+//! Model-demo figure for the Virtua Grotesk post, §07, in the shared
+//! technical-drawing house style:
 //!
-//!   fig-model-review.png   : held-out review sheet, 3 rows x 6 glyphs —
-//!                            human Regular, model Bold, and human Bold
-//!                            reference
-//!   fig-model-bolden-a.png : the hero — Regular a (green, hand) to
-//!                            Bold a (red, drawn by Virtua-12M-0.7)
-//!
-//! Margin discipline: 96px margins on all sides; header/footer rules at
-//! 1224 / 112; all content centered between the rules.
+//!   fig-model-bolden-n.png : manually drawn Regular n beside the Bold n
+//!                            drawn by the pinned model run
 //!
 //! Run from this directory:
 //!
@@ -19,18 +13,16 @@
 //!     ~/GH/repos/font-garden-lab/runs/v08/pred.ufo   (pinned in inputs.rs)
 //!     ~/GH/repos/google-fonts/ofl/geistmono/GeistMono[wght].ttf
 
-use designbot::prelude::*;
 use designbot_render::Renderer;
 use kurbo::Shape;
 #[allow(unused_imports)]
 use virtua_grotesk_figures::*;
 
-// --- fig-model-review -----------------------------------------------------------
+// --- fig-model-bolden-n ----------------------------------------------------------
 
-fn fig_review(
+fn fig_bolden_n(
     renderer: &Renderer,
     mono: &str,
-    model_name: &str,
     reg: &std::path::Path,
     bold: &std::path::Path,
     pred: &std::path::Path,
@@ -39,140 +31,19 @@ fn fig_review(
     let mut sheet = new_sheet(renderer, mono);
     sheet.ctx.line_cap("round");
 
-    const GLYPHS: [&str; 6] = ["K", "E", "M", "n", "b", "c"];
-    const S: f64 = 0.40;
-    const COLUMN_GAP: f64 = 166.0;
-    const LABEL_TOP: f64 = H - 89.0;
-    const ROW_STEP: f64 = 400.0;
-    const LABEL_GAP: f64 = 44.0;
-
-    struct Row<'a> {
-        color: Color,
-        dir: &'a std::path::Path,
-        label: String,
-    }
-    let rows = [
-        Row {
-            color: role::figure::red(),
-            dir: reg,
-            label: "INPUT / MANUAL DRAWING / REGULAR".to_string(),
-        },
-        Row {
-            color: role::figure::orange(),
-            dir: pred,
-            label: format!("OUTPUT / {model_name} / BOLD"),
-        },
-        Row {
-            color: role::figure::green(),
-            dir: bold,
-            label: "REFERENCE / MANUAL DRAWING / BOLD".to_string(),
-        },
-    ];
-
-    // Establish one shared six-column grid from the widest version of each
-    // glyph. Every row uses these same optical centers, so the comparison is
-    // stable vertically while the gaps remain visually balanced.
-    let row_outlines: Vec<Vec<Option<Outline>>> = rows
-        .iter()
-        .map(|row| {
-            GLYPHS
-                .iter()
-                .map(|name| {
-                    let glif = row.dir.join("glyphs").join(glif_name(name));
-                    glif.is_file()
-                        .then(|| load_outline(&row.dir.join("glyphs"), name))
-                })
-                .collect()
-        })
-        .collect();
-    let column_widths: Vec<f64> = (0..GLYPHS.len())
-        .map(|column| {
-            row_outlines
-                .iter()
-                .filter_map(|outlines| outlines[column].as_ref())
-                .map(|o| o.path.bounding_box().width() * S)
-                .fold(0.0, f64::max)
-                .max(180.0)
-        })
-        .collect();
-    let run_width =
-        column_widths.iter().sum::<f64>() + COLUMN_GAP * (GLYPHS.len().saturating_sub(1)) as f64;
-    let run_left = (W - run_width) / 2.0;
-    let mut column_left = run_left;
-    let column_centers: Vec<f64> = column_widths
-        .iter()
-        .map(|width| {
-            let center = column_left + width / 2.0;
-            column_left += width + COLUMN_GAP;
-            center
-        })
-        .collect();
-
-    for (row_index, (row, outlines)) in rows.iter().zip(&row_outlines).enumerate() {
-        let label_y = LABEL_TOP - row_index as f64 * ROW_STEP;
-        let row_top_units = outlines
-            .iter()
-            .filter_map(|outline| outline.as_ref())
-            .map(|o| o.path.bounding_box().y1)
-            .fold(0.0, f64::max);
-        let baseline = label_y - LABEL_GAP - row_top_units * S;
-        sheet.label_weighted(
-            &row.label,
-            run_left,
-            label_y,
-            type_size::MD,
-            role::figure::pen(),
-            -1,
-            650.0,
-        );
-
-        for (outline, column_center) in outlines.iter().zip(&column_centers) {
-            let Some(o) = outline.as_ref() else {
-                sheet.label_padded(
-                    "not in run",
-                    *column_center,
-                    baseline + 74.0,
-                    24.0,
-                    role::figure::pen(),
-                    0,
-                );
-                continue;
-            };
-            let bounds = o.path.bounding_box();
-            let ink_center = (bounds.x0 + bounds.x1) / 2.0;
-            let x = column_center - ink_center * S;
-            draw_body_styled(
-                &mut sheet,
-                &o,
-                S,
-                x,
-                baseline,
-                row.color,
-                255,
-                role::figure::pen(),
-                line::HERO,
-            );
-        }
-    }
-    sheet.save(renderer, out);
-}
-
-// --- fig-model-bolden-a ----------------------------------------------------------
-
-fn fig_bolden_a(
-    renderer: &Renderer,
-    mono: &str,
-    _model_name: &str,
-    reg: &std::path::Path,
-    bold: &std::path::Path,
-    pred: &std::path::Path,
-    out: &std::path::Path,
-) {
-    let mut sheet = new_sheet(renderer, mono);
-    sheet.ctx.line_cap("round");
-
-    const S: f64 = 1.72;
-    const BASELINE: f64 = 154.0;
+    const S: f64 = 1.74;
+    const GRID_UNITS: f64 = 32.0;
+    const GRID_STEP: f64 = GRID_UNITS * S;
+    const GRID_COLUMNS: usize = 20;
+    const GRID_ROWS: usize = 21;
+    const PANEL_STROKE: f64 = line::HERO;
+    // Optical midpoint between the exact chamfer-touch size (21.84 px at this
+    // scale and stroke) and the previous 28 px markers.
+    const POINT_SIZE: f64 = 24.92;
+    const PANEL_W: f64 = GRID_COLUMNS as f64 * GRID_STEP;
+    const PANEL_H: f64 = GRID_ROWS as f64 * GRID_STEP;
+    const PANEL_INSET: f64 = (H - PANEL_H) / 2.0;
+    const PANEL_GAP: f64 = W - 2.0 * PANEL_INSET - 2.0 * PANEL_W;
 
     // the Regular a from the sources; the Bold a from the detected run's
     // pred.ufo when it has one (keeps the label truthful), else the
@@ -185,79 +56,96 @@ fn fig_bolden_a(
         load_outline(&bold.join("glyphs"), "n")
     };
 
-    // run layout: centered between the margins
-    let gap = 230.0;
-    let run_w = o_reg.width * S + gap + o_bold.width * S;
-    let x_reg = MARGIN + (W - 2.0 * MARGIN - run_w) / 2.0;
-    let x_bold = x_reg + o_reg.width * S + gap;
+    let panel_lefts = [PANEL_INSET, PANEL_INSET + PANEL_W + PANEL_GAP];
+    let outlines = [&o_reg, &o_bold];
+    let fills = [role::figure::yellow(), role::figure::blue()];
+    let mut placements = Vec::new();
 
-    // Each half uses the real 8-unit source grid. Keeping the grids local
-    // preserves their relationship to the two independent glyph origins.
-    let panel_grid = |sheet: &mut Sheet, left: f64, right: f64, origin: f64| {
-        let step = 8.0 * S;
+    // Center each visible outline inside an identical panel, then snap the
+    // glyph origin and baseline to the shared 32-unit grid. This keeps both
+    // panel grids in the same phase without moving source points off-grid.
+    for (panel_left, outline) in panel_lefts.iter().zip(outlines) {
+        let bounds = outline.path.bounding_box();
+        let centered_x = panel_left + PANEL_W / 2.0 - (bounds.x0 + bounds.x1) * S / 2.0;
+        let centered_baseline = PANEL_INSET + PANEL_H / 2.0 - (bounds.y0 + bounds.y1) * S / 2.0;
+        let x = panel_left + ((centered_x - panel_left) / GRID_STEP).round() * GRID_STEP;
+        let baseline =
+            PANEL_INSET + ((centered_baseline - PANEL_INSET) / GRID_STEP).round() * GRID_STEP;
+        placements.push((x, baseline));
+    }
+
+    // Both panels use the same 32-unit source grid phase. The glyph origins
+    // above are snapped to this grid, so source coordinates remain truthful.
+    let panel_grid = |sheet: &mut Sheet, left: f64| {
+        let right = left + PANEL_W;
+        let top = PANEL_INSET + PANEL_H;
         sheet
             .ctx
             .no_fill()
-            .stroke(role::grid::faint())
-            .stroke_width(line::FINE);
-        let mut x = origin;
-        while x > left {
-            x -= step;
+            .stroke(with_alpha(role::grid::standard(), 128))
+            .stroke_width(line::HERO);
+        for column in 0..=GRID_COLUMNS {
+            let x = left + column as f64 * GRID_STEP;
+            sheet.ctx.line(x, PANEL_INSET, x, top);
         }
-        while x <= right {
-            sheet.ctx.line(x, 0.0, x, H);
-            x += step;
-        }
-        let mut y = BASELINE;
-        while y > 0.0 {
-            y -= step;
-        }
-        while y <= H {
+        for row in 0..=GRID_ROWS {
+            let y = PANEL_INSET + row as f64 * GRID_STEP;
             sheet.ctx.line(left, y, right, y);
-            y += step;
         }
     };
-    let divider = (x_reg + o_reg.width * S + x_bold) / 2.0;
-    panel_grid(&mut sheet, 0.0, divider - 70.0, x_reg);
-    panel_grid(&mut sheet, divider + 70.0, W, x_bold);
-
-    // Shared font metrics use the same dark pen as every other construction.
+    for ((panel_left, (x, baseline)), outline) in
+        panel_lefts.iter().zip(placements.iter()).zip(outlines)
     {
-        let ctx = &mut sheet.ctx;
-        ctx.no_fill()
-            .stroke(role::figure::pen())
-            .stroke_width(line::HERO);
-        ctx.line_dash(&[14.0, 14.0]);
-        for uy in [-16.0, 592.0] {
-            ctx.line(0.0, BASELINE + uy * S, W, BASELINE + uy * S);
-        }
-        ctx.line_dash(&[]);
-        for uy in [0.0, 576.0] {
-            ctx.line(0.0, BASELINE + uy * S, W, BASELINE + uy * S);
-        }
+        panel_grid(&mut sheet, *panel_left);
+
+        draw_body_styled(
+            &mut sheet,
+            outline,
+            S,
+            *x,
+            *baseline,
+            fills[if *panel_left == panel_lefts[0] { 0 } else { 1 }],
+            255,
+            role::figure::pen(),
+            line::HERO,
+        );
     }
 
-    // glyphs with the Runebender point language on top
-    draw_figure_glyph(&mut sheet, &o_reg, S, x_reg, BASELINE, role::figure::red());
-    draw_figure_glyph(
-        &mut sheet,
-        &o_bold,
-        S,
-        x_bold,
-        BASELINE,
-        role::figure::green(),
-    );
+    for (outline, (x, baseline)) in outlines.iter().zip(placements.iter()) {
+        let point_style = PointStyle {
+            smooth_size: POINT_SIZE,
+            corner_size: POINT_SIZE,
+            off_curve_size: POINT_SIZE,
+            correction_filled: false,
+            stroke_width: line::HERO,
+        };
+        let on_color = role::figure::pen();
+        let off_color = role::figure::pen();
+        let on_fill = role::figure::green();
+        let off_fill = role::figure::red();
+        draw_points_styled(
+            &mut sheet,
+            outline,
+            S,
+            *x,
+            *baseline,
+            role::figure::pen(),
+            on_color,
+            off_color,
+            on_fill,
+            off_fill,
+            point_style,
+        );
+    }
 
-    // arrow between, at half x-height
-    {
-        let y = BASELINE + 288.0 * S;
-        let x0 = x_reg + o_reg.width * S + 70.0;
-        let x1 = x_bold - 70.0;
-        let ctx = &mut sheet.ctx;
-        ctx.no_fill().stroke(role::figure::pen()).stroke_width(14.0);
-        ctx.line(x0, y, x1, y);
-        ctx.line(x1 - 38.0, y + 28.0, x1, y);
-        ctx.line(x1 - 38.0, y - 28.0, x1, y);
+    // Borders are drawn last so the local grids stop cleanly at each panel.
+    for panel_left in panel_lefts {
+        sheet
+            .ctx
+            .no_fill()
+            .stroke(role::figure::pen())
+            .stroke_width(PANEL_STROKE);
+        sheet.ctx.rect(panel_left, PANEL_INSET, PANEL_W, PANEL_H);
     }
     sheet.save(renderer, out);
 }
@@ -283,19 +171,9 @@ fn main() {
 
     let outputs = OutputPaths::from_args();
 
-    fig_review(
+    fig_bolden_n(
         &renderer,
         &mono,
-        &model_name,
-        &reg,
-        &bold,
-        &pred,
-        &outputs.blog("fig-model-review.png"),
-    );
-    fig_bolden_a(
-        &renderer,
-        &mono,
-        &model_name,
         &reg,
         &bold,
         &pred,

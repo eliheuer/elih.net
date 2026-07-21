@@ -114,6 +114,7 @@ pub mod line {
     pub const REGULAR: f64 = 4.0;
     pub const HEAVY: f64 = 5.0;
     pub const HERO: f64 = 6.0;
+    pub const EXTRA_HEAVY: f64 = 10.0;
 }
 
 // --- primitive type-size scale ----------------------------------------------
@@ -233,13 +234,16 @@ pub mod color {
         oklch_srgb(0.66, FIGURE_CHROMA + RED_OPTICAL_CHROMA_BOOST, 28.0)
     }
     pub fn blue() -> Color {
-        oklch_srgb(0.65, 0.15, 258.0)
+        oklch_srgb(0.65, FIGURE_CHROMA, 258.0)
     }
     pub fn ultramarine() -> Color {
         Color::rgb(0x3d, 0x6b, 0xaa)
     }
     pub fn purple() -> Color {
-        oklch_srgb(0.65, 0.17, 302.0)
+        oklch_srgb(0.65, FIGURE_CHROMA, 302.0)
+    }
+    pub fn pink() -> Color {
+        oklch_srgb(0.74, FIGURE_CHROMA, 342.0)
     }
 }
 
@@ -290,7 +294,7 @@ pub mod og_color {
         oklch_srgb(0.66, HERO_CHROMA + RED_OPTICAL_CHROMA_BOOST, 28.0)
     }
     pub fn blue() -> Color {
-        Color::rgb(0x4a, 0x78, 0xff)
+        oklch_srgb(0.65, HERO_CHROMA, 258.0)
     }
     pub fn orange() -> Color {
         oklch_srgb(0.74, HERO_CHROMA, 52.0)
@@ -300,6 +304,12 @@ pub mod og_color {
     }
     pub fn leaf_green() -> Color {
         oklch_srgb(0.67, HERO_CHROMA, 159.0)
+    }
+    pub fn purple() -> Color {
+        oklch_srgb(0.65, HERO_CHROMA, 302.0)
+    }
+    pub fn pink() -> Color {
+        oklch_srgb(0.74, HERO_CHROMA, 342.0)
     }
 }
 
@@ -337,6 +347,15 @@ pub mod role {
         }
         pub fn green() -> Color {
             color::green()
+        }
+        pub fn blue() -> Color {
+            color::blue()
+        }
+        pub fn purple() -> Color {
+            color::purple()
+        }
+        pub fn pink() -> Color {
+            color::pink()
         }
     }
 
@@ -436,6 +455,9 @@ pub mod role {
     pub mod grid {
         use super::super::{color, Color};
 
+        pub fn light() -> Color {
+            color::gray_200()
+        }
         pub fn standard() -> Color {
             color::gray_650()
         }

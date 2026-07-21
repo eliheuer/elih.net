@@ -1,9 +1,8 @@
 //! Optical-correction illustration for the Virtua Grotesk post, §03.
 //!
-//! A single cubic arch over the two-level grid. Every coordinate is a
+//! A single cubic arch over the 8-unit grid. Every coordinate is a
 //! multiple of 8 except the apex trio, overshot +4 onto the 2-unit grid.
-//! Grid weight and point fills make the two levels readable without
-//! explanatory copy around the drawing.
+//! Point fills identify the structural and optical-correction tiers.
 //!
 //! Run from this directory:
 //!
@@ -19,9 +18,7 @@ use virtua_grotesk_figures::*;
 // Composition controls. Keep these together so the figure can be art-directed
 // directly without changing the shared illustration system.
 const UNIT: f64 = 15.0; // canvas px per unit: 8-cell = 120px, 2-cell = 30px
-const GRID_2_STROKE: f64 = line::FINE;
-const GRID_8_STROKE: f64 = line::CURVE;
-const DRAWING_STROKE: f64 = 16.0;
+const STROKE: f64 = line::EXTRA_HEAVY;
 const POINT_SIZE: f64 = 44.0;
 const ARCH_WIDTH: f64 = 24.0; // three 8-unit cells at the feet
 const INNER_OVERSHOOT: f64 = 2.0; // lift the inner apex trio onto the 2-unit grid
@@ -65,53 +62,29 @@ fn main() {
     let cx = |ux: f64| origin_x + ux * UNIT;
     let cy = |uy: f64| origin_y + uy * UNIT;
 
-    // Full-bleed nested lattice. Both grids stay neutral so the curve and
-    // points carry the color. The darker 8-unit subset remains legible at
-    // thumbnail size without turning the background into a second subject.
+    // One full-bleed 8-unit lattice. It uses the same stroke width as every
+    // drawn line in the figure, with lower opacity carrying the hierarchy.
     {
         let ctx = &mut sheet.ctx;
-        let u_lo = ((-origin_x / UNIT) / 2.0).floor() as i64 * 2;
-        let u_hi = (((W - origin_x) / UNIT) / 2.0).ceil() as i64 * 2;
-        let v_lo = ((-origin_y / UNIT) / 2.0).floor() as i64 * 2;
-        let v_hi = (((H - origin_y) / UNIT) / 2.0).ceil() as i64 * 2;
+        let u_lo = ((-origin_x / UNIT) / 8.0).floor() as i64 * 8;
+        let u_hi = (((W - origin_x) / UNIT) / 8.0).ceil() as i64 * 8;
+        let v_lo = ((-origin_y / UNIT) / 8.0).floor() as i64 * 8;
+        let v_hi = (((H - origin_y) / UNIT) / 8.0).ceil() as i64 * 8;
 
         let mut u = u_lo;
         while u <= u_hi {
-            if u.rem_euclid(8) != 0 {
-                ctx.no_fill()
-                    .stroke(role::optical::grid_2())
-                    .stroke_width(GRID_2_STROKE);
-                let x = origin_x + u as f64 * UNIT;
-                ctx.line(x, 0.0, x, H);
-            }
-            u += 2;
-        }
-        let mut v = v_lo;
-        while v <= v_hi {
-            if v.rem_euclid(8) != 0 {
-                ctx.no_fill()
-                    .stroke(role::optical::grid_2())
-                    .stroke_width(GRID_2_STROKE);
-                let y = origin_y + v as f64 * UNIT;
-                ctx.line(0.0, y, W, y);
-            }
-            v += 2;
-        }
-
-        let mut u = u_lo - u_lo.rem_euclid(8);
-        while u <= u_hi {
             ctx.no_fill()
-                .stroke(role::optical::grid_8())
-                .stroke_width(GRID_8_STROKE);
+                .stroke(role::grid::light())
+                .stroke_width(STROKE);
             let x = origin_x + u as f64 * UNIT;
             ctx.line(x, 0.0, x, H);
             u += 8;
         }
-        let mut v = v_lo - v_lo.rem_euclid(8);
+        let mut v = v_lo;
         while v <= v_hi {
             ctx.no_fill()
-                .stroke(role::optical::grid_8())
-                .stroke_width(GRID_8_STROKE);
+                .stroke(role::grid::light())
+                .stroke_width(STROKE);
             let y = origin_y + v as f64 * UNIT;
             ctx.line(0.0, y, W, y);
             v += 8;
@@ -139,7 +112,7 @@ fn main() {
             .ctx
             .fill(role::optical::form_fill())
             .stroke(role::optical::curve())
-            .stroke_width(DRAWING_STROKE);
+            .stroke_width(STROKE);
         sheet.ctx.draw_path(to_canvas * path);
     }
 
@@ -158,7 +131,7 @@ fn main() {
             .ctx
             .no_fill()
             .stroke(role::optical::handles())
-            .stroke_width(DRAWING_STROKE);
+            .stroke_width(STROKE);
         sheet.ctx.line(cx(on.0), cy(on.1), cx(off.0), cy(off.1));
     }
 
@@ -193,7 +166,7 @@ fn main() {
             .ctx
             .fill(fill)
             .stroke(role::optical::pen())
-            .stroke_width(DRAWING_STROKE);
+            .stroke_width(STROKE);
         let radius = POINT_SIZE / 2.0;
         match role {
             PtRole::Smooth => {

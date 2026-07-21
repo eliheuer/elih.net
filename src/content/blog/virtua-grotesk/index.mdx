@@ -117,6 +117,8 @@ lengths and structural spans. One is a pure power: 64, 128, 256. Two
 is an elegant sum: 96 = 64 + 32, or 272 = 256 + 16. Three is
 acceptable: 104 = 64 + 32 + 8. Four or more is flagged for review.
 
+![The lowercase n and o from Virtua Grotesk Regular enlarged over the uniform 8-unit source grid, with every on-curve and off-curve point marked and capped labels measuring representative strokes and counters.](./fig-system-no.png)
+
 A low popcount means a structural value. A high one means the
 letterform needed something the round numbers could not give. 64 is
 too light for a stem and 128 too heavy, so stems are 96 = 64 + 32;
@@ -140,8 +142,6 @@ The coarse default is also what gives the spacing its rhythm, a small
 set of recurring intervals instead of 100s of bespoke ones,
 snapped tighter only where the eye insists.
 
-![The lowercase n and o from Virtua Grotesk Regular enlarged over the uniform 8-unit source grid, with every on-curve and off-curve point marked and capped labels measuring representative strokes and counters.](./fig-system-no.png)
-
 ![The capital H and O from Virtua Grotesk Regular enlarged over the uniform 8-unit source grid, with every on-curve and off-curve point marked and capped labels measuring representative strokes and counters.](./fig-system-ho.png)
 
 Structure lives on the 8-unit grid: stems, sidebearings, chamfers,
@@ -152,7 +152,7 @@ correction, so the label is in the coordinate itself. The machine
 drafts on 8, a person refines on 2, and the difference between the
 two versions is a labeled training set.
 
-![A yellow cubic arch band with separate chamfered feet and a dark gray outline over a full-bleed two-level source grid. The outer and inner curves show their construction handles. Dark gray lines mark the 8-unit structure grid and lighter gray lines mark the 2-unit correction grid. Green points sit on the structure grid. Red points mark corrections between the 8-unit lines.](./fig-optical-correction.png)
+![A yellow cubic arch band with separate chamfered feet and a dark gray outline over a full-bleed 8-unit source grid. The grid, outline, handles, and point borders share one line weight. The outer and inner curves show their construction handles. Green points sit on the structure grid. Red points mark corrections between the grid lines.](./fig-optical-correction.png)
 
 ### 04. Aesthetic Discipline & Machine Legibility
 
@@ -368,38 +368,24 @@ reference:
 
 ### 07. Weight Transfer as Local Prediction
 
-Weight transfer has immediate production value: every glyph drawn once
-must be drawn again heavier, same structure. Given the Regular, the model
-draws the Bold. The goal is a workflow where a designer draws the core
-control glyphs by hand (H, O, n, o, e, a, R) and the model bootstraps the
-rest (the remaining glyphs and the second master), with the designer
-correcting on the 2-unit grid.
+Every glyph drawn once must be drawn again heavier, with the same
+structure. Given the Regular, the model draws the Bold. When both masters
+exist, font tools already interpolate for free; the model is for the case
+they can't touch, when the second master doesn't exist yet. The goal is a
+workflow where a designer draws a few control glyphs by hand and the model
+bootstraps the rest, corrected on the 2-unit grid.
 
-Font tools already interpolate, exactly and for free, when both masters
-exist. The model is for the case they can't touch: the second master
-doesn't exist yet. The classical fallbacks, the offset-curve filter
-(thickens mechanically, clogs the joins) and extrapolation or RMX-style
-scaling, approximate a new weight from masters you already have; the
-model learns it from a corpus instead. Every result below is scored on
-this missing-master case, Bolds the model never saw.
+The task is local, which is why it fits a small model. The two masters are
+written into one sequence point by point: a Regular point, then its Bold
+value. The model predicts each Bold as a small offset from the adjacent
+Regular point, and the Regular points stay fixed, so the glyph's structure
+cannot break.
 
-The encoding makes the task local. The two masters are written into one
-sequence, point by point: a Regular point, then its Bold value, then the
-next Regular point. The model predicts each Bold value from the adjacent
-Regular point as a small offset. The Regular points stay fixed. The model
-fills in only the Bold values, so the glyph's structure cannot break.
-
-Virtua-12M-v0.1 beats the baseline, and a controlled comparison shows
-why. Trained only on the graded corpus, it tied the baseline. Pretrained
-on 29,000 Google Fonts pairs and then fine-tuned on the same corpus, it
-beats the baseline on all ten held-out glyphs, every metric. Cleaning the
-data kept the tie; other designers' letterforms broke it.
-
-Ten glyphs were set aside before training; their Bolds were shown to
-neither run. Each number is the mean ± spread of five samples, in font
-units. MAE is average coordinate error; Chamfer scores the shape along the
-outline rather than point placement; IoU is shared ink. (FID needs far
-more than ten samples, so it's omitted.)
+It works. Ten glyphs were held out, their Bolds shown to no run. Against a
+mean-delta baseline, Virtua-12M-v0.1 wins on every metric (MAE is
+coordinate error, Chamfer scores outline shape, IoU shared ink). The
+graded corpus alone only tied the baseline; the win came from pretraining
+first.
 
 | held-out Bold prediction | MAE ↓ | Chamfer ↓ | IoU ↑ |
 | --- | --- | --- | --- |
@@ -407,31 +393,12 @@ more than ten samples, so it's omitted.)
 | graded corpus only (control) | 31.7 ± 0.5 | 35.3 ± 0.7 | 0.567 ± 0.013 |
 | + OFL pretrain (Virtua-12M-v0.1) | **24.0 ± 1.6** | **22.4 ± 1.3** | **0.745 ± 0.016** |
 
-The training curves, parsed from the run log: the pretrained arm
-starts the fine-tune below the control's best and stays below it.
+![Two bordered panels show the lowercase n on a 32-unit design grid. The yellow manually drawn Regular is on the left, and the blue Bold drawn by Virtua-12M-v0.1 is on the right. In both panels, green points are on the 8-unit grid and red points are off it.](./fig-model-bolden-n.png)
 
-How much graded data does the fine-tune need? Cutting the corpus down:
-twelve pairs score 28.0 MAE, twenty-five 25.5, fifty 24.0, every seed
-beating the baseline's 31.3. The curve isn't saturated, and even twelve
-pairs on pretrained weights beat fifty from scratch. Grading more of the
-Bold master is the cheapest next win.
-
-The review sheet shows six held-out glyphs: human Regular in, model
-Bold out, human Bold beneath for reference.
-
-![Held-out glyph boldening test for Virtua-12M-v0.1. For K, E, M, n, b, and c, the red top row shows the manually drawn Regular input, the orange middle row shows the model's Bold output, and the green bottom row shows the manually drawn Bold reference.](./fig-model-review.png)
-
-One transfer up close, the held-out `n`: the hand-drawn Regular, and
-beside it the Bold the model drew from it.
-
-![The lowercase n twice on its real 8-unit design grid, drawn with designbot in the Runebender point language. The red hand-drawn Regular sits on the left. An arrow points to the green Bold drawn by Virtua-12M-v0.1 on the right.](./fig-model-bolden-n.png)
-
-This is a small test (ten glyphs, one font, one run per condition), and
-the numbers will change as the work grows. The output is a draft; a person
-still corrects it on the 2-unit grid. Whether the approach holds at much
-larger scale is what the next runs are for. Section 08 reports what the
-same model does on fonts it wasn't tuned for, including a result that
-didn't work.
+The output is a draft, not a finished Bold; a person still corrects it on
+the 2-unit grid. This is a small test, and the numbers will change as the
+work grows. Section 08 reports what the same model does on fonts it wasn't
+tuned for, including a result that didn't work.
 
 ### 08. The Designspace Is a Data Factory
 
