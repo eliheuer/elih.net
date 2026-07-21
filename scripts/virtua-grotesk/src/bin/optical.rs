@@ -74,7 +74,7 @@ fn main() {
         let mut u = u_lo;
         while u <= u_hi {
             ctx.no_fill()
-                .stroke(role::grid::light())
+                .stroke(role::grid::subtle())
                 .stroke_width(STROKE);
             let x = origin_x + u as f64 * UNIT;
             ctx.line(x, 0.0, x, H);
@@ -83,7 +83,7 @@ fn main() {
         let mut v = v_lo;
         while v <= v_hi {
             ctx.no_fill()
-                .stroke(role::grid::light())
+                .stroke(role::grid::subtle())
                 .stroke_width(STROKE);
             let y = origin_y + v as f64 * UNIT;
             ctx.line(0.0, y, W, y);

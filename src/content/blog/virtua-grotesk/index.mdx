@@ -439,41 +439,24 @@ glyph) onto the 2-unit grid, with
 how v0.1's pretraining data was made: OFL families traced onto the grid,
 many hands before it meets Virtua Grotesk.
 
-That pretraining data has its own held-out test: one positive result,
-one negative. On 290 held-out OFL pairs (1 percent), the pretrained model
-beats the baseline, so the skill is general: it draws Bolds for glyphs it
-never saw. (The held-out unit is the glyph, not the font, so these are new
-glyphs from styles it *has* seen; a font-level split is next.) The
-fine-tune then costs that generality: after specializing on Virtua
-Grotesk the model collapses on OFL, from beating the baseline on 74
-percent of pairs to 9. This is catastrophic forgetting, the price of
-fine-tuning a small model on a narrow corpus. The v0.1 instinct was to mix
-the old data back in; the conclusion has since sharpened the other way.
-Heterogeneous font collections aren't training data for this at all
-(Section 01), so the direction now is to retire the borrowed fonts
-entirely and let the Virtua Grotesk family, built out across weights, be
-the whole dataset. Virtua-12M-v0.1 is a specialist, not a general tool:
-
-| held-out OFL pairs, n = 290 | MAE ↓ | Chamfer ↓ | IoU ↑ | beats baseline |
-| --- | --- | --- | --- | --- |
-| mean-delta baseline (OFL) | 20.8 | 22.9 | 0.61 | |
-| after OFL pretrain | **15.0** | **14.8** | **0.75** | 74% |
-| after Virtua Grotesk fine-tune | 33.5 | 28.9 | 0.50 | 9% |
+That borrowed data taught the lesson that retired it: pretraining on the
+traced OFL families generalized, but fine-tuning on Virtua Grotesk erased
+that skill, the catastrophic forgetting a small model pays for
+specializing on a narrow corpus. Heterogeneous collections aren't training
+data for this (Section 01), so the plan now is to retire the borrowed
+fonts and let the Virtua Grotesk family, built out across weights, be the
+whole dataset.
 
 Karpathy's [Software 2.0](https://karpathy.medium.com/software-2-0-a64152b37c35)
-names the idea: if the weights are the program and training the compiler,
-the dataset is the source code. Grid systems as datasets takes that
-seriously, and the data gets software's tools: a style guide (`DESIGN.md`), a
-linter (the grid is checkable), review (mark colors in the UFOs), and
-version control.
-
-The pieces form one system: [img2bez](/blog/img2bez) traces references
-onto the grid, the model completes outlines and draws Bolds,
-[designbot](https://github.com/eliheuer/designbot) renders the proofs,
-[Runebender](https://runebender.org) is the review surface, and a harness
-runs the report-fix-render loop against `DESIGN.md` with mark colors as
-the human's control. The goal is to finish Virtua Grotesk and ship it to
-Google Fonts.
+names the frame: the weights are the program, training the compiler, the
+dataset the source code. Take that seriously and the data earns software's
+tools: a style guide (`DESIGN.md`), a linter (the grid is checkable),
+review in mark colors, version control. The pieces run as one system,
+[img2bez](/blog/img2bez) tracing references onto the grid, the model
+drawing Bolds, [designbot](https://github.com/eliheuer/designbot)
+rendering proofs, [Runebender](https://runebender.org) the review surface,
+and a harness driving the report-fix-render loop against `DESIGN.md`,
+aimed at finishing Virtua Grotesk and shipping it to Google Fonts.
 
 This is a first step. The aim is fonts that are models, not tables of
 outlines, freed from the per-glyph boxes digital type inherited from
@@ -654,8 +637,7 @@ first collapses.
 
 **The divisor-rich and the golden.** Babylon's 720 and 2520 buy exact
 thirds at the price of a lattice hierarchy and a denominator binary
-arithmetic can't hold, and the thirds they sell are the divisions the eye
-corrects anyway. The golden section fails harder: φ is irrational, so
+arithmetic can't hold. The golden section fails harder: φ is irrational, so
 nothing normalizes exactly. Corbusier matched his grid to the measure of
 man; this grid matches the measure of the machine.
 
@@ -688,10 +670,7 @@ interpolation, `a + t · (b − a)`. With masters on the 2-grid and
 binary-fraction weights, every intermediate value is dyadic and every
 machine computes the identical result; on a decimal em, float error enters
 every coordinate before the snap, differently per machine, and the model
-learns the design plus the noise. There's even a right sampling order:
-the base-2
-[van der Corput sequence](https://en.wikipedia.org/wiki/Van_der_Corput_sequence),
-1/2, 1/4, 3/4, 1/8…, dyadic and evenly spread at every prefix.
+learns the design plus the noise.
 
 **The outputs are checkable, and the taste comes labeled.** A wrong
 coordinate is a lintable defect: an odd number, a stem outside the favored
@@ -714,10 +693,8 @@ block of font units: the structure grid reappears inside the diffusion
 model.
 
 Knuth walked this ground forty years ago. METAFONT had to put ideal curves
-onto coarse pixel grids, and his chapter
-["Discreteness and Discretion"](https://ctan.org/pkg/mfbook) answers the
-analog objection: "the human eye is composed of discrete receptors, and
-visible light has a finite wavelength." Then, in 1986, the design brief:
+onto coarse pixel grids, and his 1986
+[METAFONTbook](https://ctan.org/pkg/mfbook) set the design brief:
 "our goal should not be to make hand-tuning obsolete; it should rather be
 to make hand-tuning tolerable. Let us try to create meta-designs so that
 we would never want to change more than a few pixels per character, say
@@ -737,12 +714,10 @@ page on every machine. Once the pipeline is computational end to end,
 base two is the choice where the design's arithmetic and the
 machine's arithmetic are the same arithmetic.
 
-When the engineering is settled, the tiebreaker is aesthetics.
-Modernism was not innocent of powers of two: A-series paper halves at
-every fold. The Swiss creed was truth to materials, and the true
-material of the computer is the bit. The same taste runs down the
-stack; it is why the sources are UFO, plain one-glyph-per-file XML,
-rather than something more opaque. The powers of two would deserve
-this job on beauty alone; that they are also the machine's own
-numbers is the point of this post. On a binary machine, a design
-drawn in powers of two is not encoded. It is simply written down.
+When the engineering is settled, the tiebreaker is aesthetics. A
+preference for aesthetic beauty is at the core of a lot of the
+technology choices I make; it is why the source files for the project
+are UFO and not Glyphs. Forget the
+technical trade-offs: UFO is the more beautiful name, and being
+cross-platform, cross-application, and human-readable seals it. Powers
+of two deserves the job on beauty alone.

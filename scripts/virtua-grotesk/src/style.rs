@@ -455,6 +455,9 @@ pub mod role {
     pub mod grid {
         use super::super::{color, Color};
 
+        pub fn subtle() -> Color {
+            color::gray_400()
+        }
         pub fn light() -> Color {
             color::gray_200()
         }
