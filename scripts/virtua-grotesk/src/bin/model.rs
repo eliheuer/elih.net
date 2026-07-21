@@ -1,10 +1,9 @@
 //! Model-demo figures for the Virtua Grotesk post, §07, in the green
 //! dimension-sheet house style (same family as og.rs / figs.rs):
 //!
-//!   fig-model-review.png   : held-out review sheet, 3 rows x 7 glyphs —
-//!                            human Regular (green), model Bold (red),
-//!                            human Bold reference (gray; the a was never
-//!                            boldened, so its cell says so)
+//!   fig-model-review.png   : held-out review sheet, 3 rows x 6 glyphs —
+//!                            human Regular, model Bold, and human Bold
+//!                            reference
 //!   fig-model-bolden-a.png : the hero — Regular a (green, hand) to
 //!                            Bold a (red, drawn by Virtua-12M-0.7)
 //!
@@ -22,6 +21,7 @@
 
 use designbot::prelude::*;
 use designbot_render::Renderer;
+use kurbo::Shape;
 #[allow(unused_imports)]
 use virtua_grotesk_figures::*;
 
@@ -30,69 +30,117 @@ use virtua_grotesk_figures::*;
 fn fig_review(
     renderer: &Renderer,
     mono: &str,
-    _model_name: &str,
+    model_name: &str,
     reg: &std::path::Path,
     bold: &std::path::Path,
     pred: &std::path::Path,
     out: &std::path::Path,
 ) {
     let mut sheet = new_sheet(renderer, mono);
+    sheet.ctx.line_cap("round");
 
     const GLYPHS: [&str; 6] = ["K", "E", "M", "n", "b", "c"];
-    const S: f64 = 0.43;
+    const S: f64 = 0.40;
+    const COLUMN_GAP: f64 = 166.0;
+    const LABEL_TOP: f64 = H - 89.0;
+    const ROW_STEP: f64 = 400.0;
+    const LABEL_GAP: f64 = 44.0;
 
-    // three bands between the rules, top to bottom
-    let band_h = (HEADER_RULE_Y - FOOTER_RULE_Y) / 3.0;
     struct Row<'a> {
         color: Color,
         dir: &'a std::path::Path,
+        label: String,
     }
     let rows = [
         Row {
             color: role::figure::red(),
             dir: reg,
+            label: "INPUT / MANUAL DRAWING / REGULAR".to_string(),
         },
         Row {
             color: role::figure::orange(),
             dir: pred,
+            label: format!("OUTPUT / {model_name} / BOLD"),
         },
         Row {
             color: role::figure::green(),
             dir: bold,
+            label: "REFERENCE / MANUAL DRAWING / BOLD".to_string(),
         },
     ];
 
-    let slot_w = (W - 2.0 * MARGIN) / GLYPHS.len() as f64;
+    // Establish one shared six-column grid from the widest version of each
+    // glyph. Every row uses these same optical centers, so the comparison is
+    // stable vertically while the gaps remain visually balanced.
+    let row_outlines: Vec<Vec<Option<Outline>>> = rows
+        .iter()
+        .map(|row| {
+            GLYPHS
+                .iter()
+                .map(|name| {
+                    let glif = row.dir.join("glyphs").join(glif_name(name));
+                    glif.is_file()
+                        .then(|| load_outline(&row.dir.join("glyphs"), name))
+                })
+                .collect()
+        })
+        .collect();
+    let column_widths: Vec<f64> = (0..GLYPHS.len())
+        .map(|column| {
+            row_outlines
+                .iter()
+                .filter_map(|outlines| outlines[column].as_ref())
+                .map(|o| o.path.bounding_box().width() * S)
+                .fold(0.0, f64::max)
+                .max(180.0)
+        })
+        .collect();
+    let run_width =
+        column_widths.iter().sum::<f64>() + COLUMN_GAP * (GLYPHS.len().saturating_sub(1)) as f64;
+    let run_left = (W - run_width) / 2.0;
+    let mut column_left = run_left;
+    let column_centers: Vec<f64> = column_widths
+        .iter()
+        .map(|width| {
+            let center = column_left + width / 2.0;
+            column_left += width + COLUMN_GAP;
+            center
+        })
+        .collect();
 
-    for (i, row) in rows.iter().enumerate() {
-        let band_top = HEADER_RULE_Y - i as f64 * band_h;
-        let band_bottom = band_top - band_h;
-        let baseline = band_bottom + 44.0;
+    for (row_index, (row, outlines)) in rows.iter().zip(&row_outlines).enumerate() {
+        let label_y = LABEL_TOP - row_index as f64 * ROW_STEP;
+        let row_top_units = outlines
+            .iter()
+            .filter_map(|outline| outline.as_ref())
+            .map(|o| o.path.bounding_box().y1)
+            .fold(0.0, f64::max);
+        let baseline = label_y - LABEL_GAP - row_top_units * S;
+        sheet.label_weighted(
+            &row.label,
+            run_left,
+            label_y,
+            type_size::MD,
+            role::figure::pen(),
+            -1,
+            650.0,
+        );
 
-        // baseline, house blue, behind the glyphs
-        sheet
-            .ctx
-            .no_fill()
-            .stroke(role::figure::pen())
-            .stroke_width(line::THIN);
-        sheet.ctx.line(MARGIN, baseline, W - MARGIN, baseline);
-
-        for (j, name) in GLYPHS.iter().enumerate() {
-            let slot_center = MARGIN + (j as f64 + 0.5) * slot_w;
-            let glif = row.dir.join("glyphs").join(glif_name(name));
-            if !glif.is_file() {
+        for (outline, column_center) in outlines.iter().zip(&column_centers) {
+            let Some(o) = outline.as_ref() else {
                 sheet.label_padded(
                     "not in run",
-                    slot_center,
+                    *column_center,
                     baseline + 74.0,
                     24.0,
                     role::figure::pen(),
                     0,
                 );
                 continue;
-            }
-            let o = load_outline(&row.dir.join("glyphs"), name);
-            let x = slot_center - o.width * S / 2.0;
+            };
+            let bounds = o.path.bounding_box();
+            let ink_center = (bounds.x0 + bounds.x1) / 2.0;
+            let x = column_center - ink_center * S;
             draw_body_styled(
                 &mut sheet,
                 &o,
@@ -121,9 +169,10 @@ fn fig_bolden_a(
     out: &std::path::Path,
 ) {
     let mut sheet = new_sheet(renderer, mono);
+    sheet.ctx.line_cap("round");
 
-    const S: f64 = 1.62;
-    const BASELINE: f64 = 214.0;
+    const S: f64 = 1.72;
+    const BASELINE: f64 = 154.0;
 
     // the Regular a from the sources; the Bold a from the detected run's
     // pred.ufo when it has one (keeps the label truthful), else the
@@ -137,22 +186,54 @@ fn fig_bolden_a(
     };
 
     // run layout: centered between the margins
-    let gap = 260.0;
+    let gap = 230.0;
     let run_w = o_reg.width * S + gap + o_bold.width * S;
     let x_reg = MARGIN + (W - 2.0 * MARGIN - run_w) / 2.0;
     let x_bold = x_reg + o_reg.width * S + gap;
 
-    // vertical metrics: solid baseline + x-height, dashed overshoots
+    // Each half uses the real 8-unit source grid. Keeping the grids local
+    // preserves their relationship to the two independent glyph origins.
+    let panel_grid = |sheet: &mut Sheet, left: f64, right: f64, origin: f64| {
+        let step = 8.0 * S;
+        sheet
+            .ctx
+            .no_fill()
+            .stroke(role::grid::faint())
+            .stroke_width(line::FINE);
+        let mut x = origin;
+        while x > left {
+            x -= step;
+        }
+        while x <= right {
+            sheet.ctx.line(x, 0.0, x, H);
+            x += step;
+        }
+        let mut y = BASELINE;
+        while y > 0.0 {
+            y -= step;
+        }
+        while y <= H {
+            sheet.ctx.line(left, y, right, y);
+            y += step;
+        }
+    };
+    let divider = (x_reg + o_reg.width * S + x_bold) / 2.0;
+    panel_grid(&mut sheet, 0.0, divider - 70.0, x_reg);
+    panel_grid(&mut sheet, divider + 70.0, W, x_bold);
+
+    // Shared font metrics use the same dark pen as every other construction.
     {
         let ctx = &mut sheet.ctx;
-        ctx.no_fill().stroke(blue()).stroke_width(line::HERO);
-        ctx.line_dash(&[10.0, 10.0]);
+        ctx.no_fill()
+            .stroke(role::figure::pen())
+            .stroke_width(line::HERO);
+        ctx.line_dash(&[14.0, 14.0]);
         for uy in [-16.0, 592.0] {
-            ctx.line(MARGIN, BASELINE + uy * S, W - MARGIN, BASELINE + uy * S);
+            ctx.line(0.0, BASELINE + uy * S, W, BASELINE + uy * S);
         }
         ctx.line_dash(&[]);
         for uy in [0.0, 576.0] {
-            ctx.line(MARGIN, BASELINE + uy * S, W - MARGIN, BASELINE + uy * S);
+            ctx.line(0.0, BASELINE + uy * S, W, BASELINE + uy * S);
         }
     }
 
@@ -173,10 +254,10 @@ fn fig_bolden_a(
         let x0 = x_reg + o_reg.width * S + 70.0;
         let x1 = x_bold - 70.0;
         let ctx = &mut sheet.ctx;
-        ctx.no_fill().stroke(role::figure::pen()).stroke_width(10.0);
+        ctx.no_fill().stroke(role::figure::pen()).stroke_width(14.0);
         ctx.line(x0, y, x1, y);
-        ctx.line(x1 - 32.0, y + 22.0, x1, y);
-        ctx.line(x1 - 32.0, y - 22.0, x1, y);
+        ctx.line(x1 - 38.0, y + 28.0, x1, y);
+        ctx.line(x1 - 38.0, y - 28.0, x1, y);
     }
     sheet.save(renderer, out);
 }

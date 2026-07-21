@@ -155,6 +155,11 @@ pub mod color {
     pub fn gray_900() -> Color {
         Color::rgb(0x1a, 0x1a, 0x1a)
     }
+    pub fn gray_890() -> Color {
+        // Deliberately matches the reviewed OG pen while remaining in the
+        // independently editable inline-figure palette.
+        Color::rgb(0x23, 0x23, 0x23)
+    }
     pub fn gray_875() -> Color {
         Color::rgb(0x1e, 0x1e, 0x1e)
     }
@@ -332,6 +337,38 @@ pub mod role {
         }
         pub fn green() -> Color {
             color::green()
+        }
+    }
+
+    /// The two-level optical-correction figure has its own semantic mapping.
+    /// It shares primitive swatches with other inline figures but can be art
+    /// directed without changing every illustration in the post.
+    pub mod optical {
+        use super::super::{color, Color};
+
+        pub fn pen() -> Color {
+            color::gray_890()
+        }
+        pub fn grid_2() -> Color {
+            color::gray_400()
+        }
+        pub fn grid_8() -> Color {
+            color::gray_550()
+        }
+        pub fn curve() -> Color {
+            color::gray_890()
+        }
+        pub fn form_fill() -> Color {
+            color::yellow()
+        }
+        pub fn handles() -> Color {
+            color::gray_925()
+        }
+        pub fn structure_point() -> Color {
+            color::green()
+        }
+        pub fn correction_point() -> Color {
+            color::red()
         }
     }
 

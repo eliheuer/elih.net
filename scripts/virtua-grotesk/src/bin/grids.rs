@@ -56,7 +56,7 @@ fn grid_64() -> Color {
     role::grid::major()
 }
 fn border() -> Color {
-    color::gray_600()
+    role::figure::pen()
 }
 fn curve() -> Color {
     role::figure::pen()
@@ -90,6 +90,7 @@ fn main() {
         mono: mono.clone(),
     };
     sheet.ctx.background(role::canvas::background());
+    sheet.ctx.line_cap("round");
 
     let panel_left = |i: usize| MARGIN + i as f64 * (SLOT + GAP) + INSET_X;
     let panel_w = (UX1 - UX0) * S;
@@ -112,15 +113,19 @@ fn main() {
         };
         if i == 0 {
             // flat: one lattice, one color
-            draw_lattice(8.0, grid_flat(), line::THIN, &mut sheet.ctx);
+            draw_lattice(8.0, grid_flat(), line::MEDIUM, &mut sheet.ctx);
         } else {
             // nested: three levels at three intensities
             draw_lattice(2.0, grid_2(), line::HAIRLINE, &mut sheet.ctx);
             draw_lattice(8.0, grid_8(), line::THIN, &mut sheet.ctx);
             draw_lattice(64.0, grid_64(), line::REGULAR, &mut sheet.ctx);
         }
-        // baseline, house blue
-        sheet.ctx.no_fill().stroke(blue()).stroke_width(line::HERO);
+        // The baseline belongs to the same one-pen construction system.
+        sheet
+            .ctx
+            .no_fill()
+            .stroke(role::figure::pen())
+            .stroke_width(8.0);
         sheet.ctx.line(cx(pl, UX0), cy(0.0), cx(pl, UX1), cy(0.0));
     }
 
@@ -131,12 +136,8 @@ fn main() {
         // The glyph is deliberately identical in both panels; only the grid
         // changes. One shared fill prevents color from implying a second
         // variable and keeps crop spill visually continuous.
-        let fill = role::figure::orange();
-        sheet
-            .ctx
-            .fill(fill)
-            .stroke(curve())
-            .stroke_width(line::HERO);
+        let fill = role::figure::yellow();
+        sheet.ctx.fill(fill).stroke(curve()).stroke_width(10.0);
         sheet.ctx.draw_path(place * outline.path.clone());
     }
 
@@ -156,11 +157,7 @@ fn main() {
     // ── panel borders ──
     for i in 0..2 {
         let pl = panel_left(i);
-        sheet
-            .ctx
-            .no_fill()
-            .stroke(border())
-            .stroke_width(line::HERO);
+        sheet.ctx.no_fill().stroke(border()).stroke_width(10.0);
         sheet
             .ctx
             .rect(pl, PANEL_BOTTOM, panel_w, PANEL_TOP - PANEL_BOTTOM);
@@ -181,7 +178,7 @@ fn main() {
                 .ctx
                 .no_fill()
                 .stroke(role::figure::pen())
-                .stroke_width(line::HERO);
+                .stroke_width(10.0);
             sheet.ctx.line(cx(pl, *x1), cy(*y1), cx(pl, *x2), cy(*y2));
         }
         // markers, knocked out with the background color
@@ -190,26 +187,28 @@ fn main() {
                 continue;
             }
             let correction = !on8(*x) || !on8(*y);
-            let fill = if i == 1 && correction {
-                role::figure::correction_point_fill()
-            } else {
+            let fill = if i == 0 {
                 role::figure::point_fill()
+            } else if correction {
+                role::figure::red()
+            } else {
+                role::figure::green()
             };
             sheet
                 .ctx
                 .fill(fill)
                 .stroke(role::figure::pen())
-                .stroke_width(line::HERO);
+                .stroke_width(9.0);
             let (px, py) = (cx(pl, *x), cy(*y));
             match role {
                 PtRole::Smooth => {
-                    sheet.ctx.oval(px - 13.0, py - 13.0, 26.0, 26.0);
+                    sheet.ctx.oval(px - 18.0, py - 18.0, 36.0, 36.0);
                 }
                 PtRole::Corner => {
-                    sheet.ctx.rect(px - 13.0, py - 13.0, 26.0, 26.0);
+                    sheet.ctx.rect(px - 18.0, py - 18.0, 36.0, 36.0);
                 }
                 PtRole::Off => {
-                    sheet.ctx.oval(px - 13.0, py - 13.0, 26.0, 26.0);
+                    sheet.ctx.oval(px - 18.0, py - 18.0, 36.0, 36.0);
                 }
             }
         }

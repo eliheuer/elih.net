@@ -6,8 +6,9 @@ to-post kit in social-exports/ (gitignored; regenerate any time):
 
     social-exports/
       01-share-card.png        numbered in post order = a thread outline
-      02-fig-system-ohno.png   pngquant-compressed (platforms recompress
-      ...                      anyway; flat-color sheets palette-quantize
+      02-fig-system-no.png     pngquant-compressed (platforms recompress
+      03-fig-system-ho.png     anyway; flat-color sheets palette-quantize
+      ...
       alt-texts.md             beautifully) with each figure's alt text
                                from the MDX, for X / Mastodon / LinkedIn
                                alt fields

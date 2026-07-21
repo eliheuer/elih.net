@@ -6,6 +6,7 @@
 //! glyphs, their source points, and the stem/counter dimensions that change.
 //! Run with `cargo run --release --bin interpn`.
 
+use designbot::prelude::Color;
 use designbot_render::Renderer;
 use kurbo::{BezPath, PathEl, Point};
 use virtua_grotesk_figures::*;
@@ -70,6 +71,7 @@ fn main() {
     let mut renderer = Renderer::new(W as u32, H as u32);
     let mono = load_family(&mut renderer, mono_path.to_str().unwrap());
     let mut sheet = new_sheet(&renderer, &mono);
+    sheet.ctx.line_cap("round");
 
     let regular = load_outline(&reg_dir, "n");
     let bold = load_outline(&bold_dir, "n");
@@ -79,12 +81,13 @@ fn main() {
     let fills = [
         role::figure::red(),
         role::figure::orange(),
-        role::figure::green(),
+        role::figure::yellow(),
     ];
 
     const S: f64 = 1.26;
     const BASELINE: f64 = 286.0;
-    const GAP: f64 = 32.0;
+    // A 32-unit sort gap keeps every glyph origin on the continuous grid.
+    const GAP: f64 = 32.0 * S;
     let total = outlines.iter().map(|o| o.width * S).sum::<f64>() + 2.0 * GAP;
     let mut x = MARGIN + (W - 2.0 * MARGIN - total) / 2.0;
 
@@ -93,9 +96,81 @@ fn main() {
         x0: 0.0,
         baseline: BASELINE,
     };
-    metric_lines(&mut sheet, &frame, &[0.0, 576.0], &[-16.0, 592.0]);
 
-    for ((outline, stem), fill) in outlines.iter().zip(stems).zip(fills) {
+    // One real 8-unit source grid runs continuously behind all three sorts.
+    // Snap the first origin to the grid so every visible point can be checked
+    // directly against the same field.
+    let grid_step = 8.0 * S;
+    sheet
+        .ctx
+        .no_fill()
+        .stroke(role::grid::faint())
+        .stroke_width(line::FINE);
+    let mut gx = x.rem_euclid(grid_step);
+    while gx <= W {
+        sheet.ctx.line(gx, 0.0, gx, H);
+        gx += grid_step;
+    }
+    let mut gy = BASELINE.rem_euclid(grid_step);
+    while gy <= H {
+        sheet.ctx.line(0.0, gy, W, gy);
+        gy += grid_step;
+    }
+
+    // The four font metrics use the same near-black pen as the outlines.
+    {
+        let ctx = &mut sheet.ctx;
+        ctx.no_fill()
+            .stroke(role::figure::pen())
+            .stroke_width(line::HERO);
+        ctx.line_dash(&[14.0, 14.0]);
+        for uy in [-16.0, 592.0] {
+            ctx.line(0.0, frame.y(uy), W, frame.y(uy));
+        }
+        ctx.line_dash(&[]);
+        for uy in [0.0, 576.0] {
+            ctx.line(0.0, frame.y(uy), W, frame.y(uy));
+        }
+    }
+
+    let sums = ["64+32", "128+16", "128+64"];
+    let counters = [272.0, 232.0, 192.0];
+    let counter_sums = ["256+16", "128+64+32+8", "128+64"];
+
+    let measure =
+        |sheet: &mut Sheet, x0: f64, x1: f64, y: f64, value: &str, sum: &str, background: Color| {
+            sheet
+                .ctx
+                .no_fill()
+                .stroke(role::figure::pen())
+                .stroke_width(8.0);
+            sheet.ctx.line(x0, y, x1, y);
+            sheet.ctx.line(x0, y - 18.0, x0, y + 18.0);
+            sheet.ctx.line(x1, y - 18.0, x1, y + 18.0);
+            let cx = (x0 + x1) / 2.0;
+            sheet.label_padded_weighted_on(
+                value,
+                cx,
+                y + 42.0,
+                42.0,
+                role::figure::pen(),
+                0,
+                background,
+                560.0,
+            );
+            sheet.label_padded_weighted_on(
+                sum,
+                cx,
+                y - 30.0,
+                34.0,
+                role::figure::pen(),
+                0,
+                background,
+                500.0,
+            );
+        };
+
+    for (index, ((outline, stem), fill)) in outlines.iter().zip(stems).zip(fills).enumerate() {
         draw_figure_glyph(&mut sheet, outline, S, x, BASELINE, fill);
 
         let ink_left = outline
@@ -108,19 +183,23 @@ fn main() {
             .iter()
             .map(|(px, _, _)| *px)
             .fold(f64::NEG_INFINITY, f64::max);
-        sheet.dim_h(
+        measure(
+            &mut sheet,
             x + ink_left * S,
             x + (ink_left + stem) * S,
             BASELINE + 230.0 * S,
             &format!("{}", stem as i64),
-            role::figure::pen(),
+            sums[index],
+            fill,
         );
-        sheet.dim_h(
+        measure(
+            &mut sheet,
             x + (ink_left + stem) * S,
             x + (ink_right - stem) * S,
             BASELINE + 330.0 * S,
-            &format!("{}", (ink_right - ink_left - 2.0 * stem) as i64),
-            role::figure::pen(),
+            &format!("{}", counters[index] as i64),
+            counter_sums[index],
+            role::figure::background(),
         );
 
         x += outline.width * S + GAP;

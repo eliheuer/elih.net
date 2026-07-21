@@ -16,21 +16,23 @@ fn bit_row(sheet: &mut Sheet, x0: f64, y0: f64, cell: f64, gap: f64, bits: &[u8]
                 role::figure::background()
             })
             .stroke(role::figure::pen())
-            .stroke_width(line::HERO);
+            .stroke_width(8.0);
         sheet.ctx.rect(x, y0, cell, cell);
-        sheet.label(
+        sheet.label_weighted(
             if *bit == 1 { "1" } else { "0" },
             x + cell / 2.0,
             y0 + cell * 0.28,
             cell * 0.58,
             role::figure::pen(),
             0,
+            560.0,
         );
     }
 }
 
 fn fig_fractions(renderer: &Renderer, mono: &str, out: &std::path::Path) {
     let mut sheet = new_sheet(renderer, mono);
+    sheet.ctx.line_cap("round");
 
     let mut num = 12u32;
     let mut repeating = Vec::new();
@@ -47,63 +49,69 @@ fn fig_fractions(renderer: &Renderer, mono: &str, out: &std::path::Path) {
     }
     let exact = [0, 0, 0, 1, 1];
 
-    let exact_cell = 240.0;
-    let exact_gap = 28.0;
+    let exact_cell = 270.0;
+    let exact_gap = 24.0;
     let exact_width = exact.len() as f64 * exact_cell + (exact.len() - 1) as f64 * exact_gap;
     let exact_left = (W - exact_width) / 2.0 + 100.0;
-    sheet.label("1024", MARGIN, 1020.0, 76.0, role::figure::pen(), -1);
-    sheet.label(
+    sheet.label_weighted("1024", MARGIN, 1002.0, 96.0, role::figure::pen(), -1, 560.0);
+    sheet.label_weighted(
         "0.",
         exact_left - 92.0,
-        886.0,
-        104.0,
+        846.0,
+        116.0,
         role::figure::pen(),
         1,
+        560.0,
     );
     bit_row(
         &mut sheet,
         exact_left,
-        770.0,
+        700.0,
         exact_cell,
         exact_gap,
         &exact,
         role::figure::green(),
     );
 
-    let repeat_cell = 152.0;
-    let repeat_gap = 14.0;
+    let repeat_cell = 160.0;
+    let repeat_gap = 10.0;
     let repeat_width =
         repeating.len() as f64 * repeat_cell + (repeating.len() - 1) as f64 * repeat_gap;
     let repeat_left = (W - repeat_width) / 2.0 + 100.0;
-    sheet.label("1000", MARGIN, 402.0, 76.0, role::figure::pen(), -1);
-    sheet.label(
+    sheet.label_weighted("1000", MARGIN, 444.0, 96.0, role::figure::pen(), -1, 560.0);
+    sheet.label_weighted(
         "0.",
         repeat_left - 92.0,
-        304.0,
-        104.0,
+        282.0,
+        116.0,
         role::figure::pen(),
         1,
+        560.0,
     );
     bit_row(
         &mut sheet,
         repeat_left,
-        244.0,
+        176.0,
         repeat_cell,
         repeat_gap,
         &repeating,
         role::figure::red(),
     );
-    sheet.label("…", W - MARGIN, 286.0, 104.0, role::figure::red(), 1);
+    sheet.label_weighted("…", W - MARGIN, 232.0, 116.0, role::figure::red(), 1, 560.0);
 
     sheet.save(renderer, out);
 }
 
 fn fig_midpoint(renderer: &Renderer, mono: &str, out: &std::path::Path) {
     let mut sheet = new_sheet(renderer, mono);
+    sheet.ctx.line_cap("round");
 
-    const S: f64 = 2.60;
-    const PX: f64 = 594.0;
-    const PY: f64 = 100.0;
+    const S: f64 = 2.80;
+    const PX: f64 = 430.0;
+    // Center the complete construction, not only the visible curve. The
+    // negative source-space offset balances the control polygon at the top
+    // against the curve endpoints at the bottom.
+    const PY: f64 = -146.0;
     let cx = |ux: f64| PX + ux * S;
     let cy = |uy: f64| PY + uy * S;
 
@@ -114,14 +122,14 @@ fn fig_midpoint(renderer: &Renderer, mono: &str, out: &std::path::Path) {
         .no_fill()
         .stroke(role::grid::standard())
         .stroke_width(line::THIN);
-    let mut x = MARGIN;
-    while x <= W - MARGIN {
-        sheet.ctx.line(x, MARGIN, x, H - MARGIN);
+    let mut x = 0.0;
+    while x <= W {
+        sheet.ctx.line(x, 0.0, x, H);
         x += 64.0 * S;
     }
-    let mut y = MARGIN;
-    while y <= H - MARGIN {
-        sheet.ctx.line(MARGIN, y, W - MARGIN, y);
+    let mut y = 0.0;
+    while y <= H {
+        sheet.ctx.line(0.0, y, W, y);
         y += 64.0 * S;
     }
 
@@ -140,7 +148,7 @@ fn fig_midpoint(renderer: &Renderer, mono: &str, out: &std::path::Path) {
     let split = mid(mm0, mm1);
 
     let line_between = |sheet: &mut Sheet, a: (f64, f64), b: (f64, f64), color: Color| {
-        sheet.ctx.no_fill().stroke(color).stroke_width(line::HERO);
+        sheet.ctx.no_fill().stroke(color).stroke_width(12.0);
         sheet.ctx.line(cx(a.0), cy(a.1), cx(b.0), cy(b.1));
     };
     for pair in p.windows(2) {
@@ -161,7 +169,7 @@ fn fig_midpoint(renderer: &Renderer, mono: &str, out: &std::path::Path) {
         .ctx
         .no_fill()
         .stroke(role::figure::pen())
-        .stroke_width(10.0);
+        .stroke_width(18.0);
     sheet.ctx.draw_path(curve);
 
     let marker = |sheet: &mut Sheet, p: (f64, f64), fill: Color, square: bool| {
@@ -169,11 +177,11 @@ fn fig_midpoint(renderer: &Renderer, mono: &str, out: &std::path::Path) {
             .ctx
             .fill(fill)
             .stroke(role::figure::pen())
-            .stroke_width(line::HERO);
+            .stroke_width(10.0);
         if square {
-            sheet.ctx.rect(cx(p.0) - 13.0, cy(p.1) - 13.0, 26.0, 26.0);
+            sheet.ctx.rect(cx(p.0) - 18.0, cy(p.1) - 18.0, 36.0, 36.0);
         } else {
-            sheet.ctx.oval(cx(p.0) - 13.0, cy(p.1) - 13.0, 26.0, 26.0);
+            sheet.ctx.oval(cx(p.0) - 18.0, cy(p.1) - 18.0, 36.0, 36.0);
         }
     };
     for point in p {
@@ -192,6 +200,7 @@ fn fig_midpoint(renderer: &Renderer, mono: &str, out: &std::path::Path) {
 
 fn fig_ladder(renderer: &Renderer, mono: &str, out: &std::path::Path) {
     let mut sheet = new_sheet(renderer, mono);
+    sheet.ctx.line_cap("round");
 
     let xs = [320.0, 946.0, 1574.0, 2200.0];
     let chains: [(&[u32], Color); 4] = [
@@ -209,34 +218,34 @@ fn fig_ladder(renderer: &Renderer, mono: &str, out: &std::path::Path) {
     const TOP: f64 = 1180.0;
 
     for ((values, color), x) in chains.iter().zip(xs) {
+        let last_y = TOP - (values.len() - 1) as f64 * DY;
+        sheet
+            .ctx
+            .no_fill()
+            .stroke(role::figure::pen())
+            .stroke_width(10.0);
+        sheet.ctx.line(x, TOP, x, last_y);
         for (i, value) in values.iter().enumerate() {
             let y = TOP - i as f64 * DY;
             sheet
                 .ctx
                 .fill(*color)
                 .stroke(role::figure::pen())
-                .stroke_width(line::HERO);
+                .stroke_width(8.0);
             sheet.ctx.rect(x - BW / 2.0, y - BH / 2.0, BW, BH);
-            sheet.label(
+            sheet.label_weighted(
                 &value.to_string(),
                 x,
-                y - 13.0,
-                64.0,
+                y - 18.0,
+                60.0,
                 role::figure::pen(),
                 0,
+                560.0,
             );
-            if i + 1 < values.len() {
-                sheet
-                    .ctx
-                    .no_fill()
-                    .stroke(role::figure::pen())
-                    .stroke_width(line::HERO);
-                sheet.ctx.line(x, y - BH / 2.0, x, y - DY + BH / 2.0);
-            }
         }
         if values.last().copied() != Some(1) {
-            let y = TOP - values.len() as f64 * DY;
-            sheet.label("×", x, y - 4.0, 96.0, role::figure::pen(), 0);
+            let y = last_y - 92.0;
+            sheet.label_weighted("×", x, y - 18.0, 86.0, role::figure::pen(), 0, 560.0);
         }
     }
 
@@ -245,6 +254,7 @@ fn fig_ladder(renderer: &Renderer, mono: &str, out: &std::path::Path) {
 
 fn fig_bits(renderer: &Renderer, mono: &str, out: &std::path::Path) {
     let mut sheet = new_sheet(renderer, mono);
+    sheet.ctx.line_cap("round");
 
     let rows = [1024u32, 768, 576, 96, 116];
     let colors = [
@@ -254,20 +264,21 @@ fn fig_bits(renderer: &Renderer, mono: &str, out: &std::path::Path) {
         role::figure::green(),
         role::figure::red(),
     ];
-    const CELL: f64 = 144.0;
+    const CELL: f64 = 156.0;
     const GAP: f64 = 8.0;
-    const X0: f64 = 650.0;
+    const X0: f64 = 620.0;
     const BITS: usize = 11;
 
     for ((value, color), row) in rows.into_iter().zip(colors).zip(0..) {
-        let y = 1070.0 - row as f64 * 220.0;
-        sheet.label(
+        let y = 1084.0 - row as f64 * 224.0;
+        sheet.label_weighted(
             &value.to_string(),
-            570.0,
-            y + 28.0,
-            76.0,
+            530.0,
+            y + 34.0,
+            84.0,
             role::figure::pen(),
             1,
+            560.0,
         );
         for b in 0..BITS {
             let bit_index = BITS - 1 - b;
@@ -290,7 +301,7 @@ fn fig_bits(renderer: &Renderer, mono: &str, out: &std::path::Path) {
             .ctx
             .no_fill()
             .stroke(role::figure::pen())
-            .stroke_width(line::HERO);
+            .stroke_width(8.0);
         sheet.ctx.line(x_start, by, x_end, by);
         sheet.ctx.line(x_start, by, x_start, by + 14.0);
         sheet.ctx.line(x_end, by, x_end, by + 14.0);

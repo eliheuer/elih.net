@@ -74,6 +74,33 @@ When these Rust sources seed social-media renderers in the upstream
 That handoff keeps the upstream compositions visually related to the blog
 figures while allowing their formats and art direction to evolve separately.
 
+## Graphic composition guardrails
+
+The inline figures and the OG image form one family. Keep these rules visible
+in the source so a person can art-direct a difficult detail without reverse
+engineering a layout engine:
+
+- Render at `2520 × 1320` with a nominal `64 px` outer margin. Important forms
+  should usually fill the frame; judge every render again at roughly one-third
+  size, which is close to its width in the article and on many social cards.
+- Give each image one dominant visual argument. Remove titles, legends,
+  attribution, panel chrome, and explanatory prose when the article already
+  supplies that context.
+- Use the mid-gray field, one near-black drawing pen, opaque palette fills, and
+  the shared point fills from `role::figure`. Avoid accidental extra colors in
+  one-off helpers.
+- Keep factual geometry factual. Glyph outlines, points, handles, metrics, and
+  measurements come from the current Virtua Grotesk designspace; simplify the
+  composition around them, not the source data itself.
+- Use equal-size on-curve and off-curve markers. Distinguish the correction
+  tier by fill value rather than by making those points smaller.
+- Prefer explicit, local layout constants in each `src/bin/*.rs` composition.
+  These figures are meant to be adjusted by hand; abstraction is useful only
+  when it makes the visual relationship easier to understand and edit.
+- Keep captions and alt text in the MDX synchronized when a composition's
+  visible content changes. During parallel copy editing, hand that text update
+  to the editor instead of modifying the MDX from the image-design pass.
+
 ## Verify and rebuild
 
 From `scripts/virtua-grotesk`:

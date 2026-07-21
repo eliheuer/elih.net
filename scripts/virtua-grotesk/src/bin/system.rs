@@ -23,10 +23,8 @@ use virtua_grotesk_figures::*;
 // Keep these equal to the reviewed OG image. The inline system figures are a
 // continuation of that drawing, not a second annotation system.
 const SYSTEM_STROKE: f64 = line::HERO;
-const SYSTEM_GRID_MINOR_STROKE: f64 = line::FINE;
-const SYSTEM_GRID_MAJOR_STROKE: f64 = line::THIN;
+const SYSTEM_GRID_STROKE: f64 = line::FINE;
 const SYSTEM_GRID_UNIT: f64 = 8.0;
-const SYSTEM_GRID_MAJOR_UNIT: f64 = 64.0;
 const SYSTEM_POINT_SIZE: f64 = 20.0;
 const SYSTEM_MEASUREMENT_TEXT_SIZE: f64 = 32.0;
 const SYSTEM_MEASUREMENT_TEXT_WEIGHT: f32 = 600.0;
@@ -34,6 +32,8 @@ const SYSTEM_MEASUREMENT_CAP: f64 = 12.0;
 const SYSTEM_MEASUREMENT_LINE_GAP: f64 = 28.0;
 const SYSTEM_POINT_END_INSET: f64 = 30.0;
 const SYSTEM_EDGE_END_INSET: f64 = 20.0;
+const SYSTEM_COUNTER_LINE_GAP: f64 = 72.0;
+const SYSTEM_COUNTER_LABEL_SHIFT: f64 = 160.0;
 
 #[derive(Clone, Copy)]
 struct SystemMeasurement {
@@ -41,8 +41,10 @@ struct SystemMeasurement {
     p0: (f64, f64),
     p1: (f64, f64),
     value: i64,
-    offset: f64,
     label_shift: (f64, f64),
+    sum_break_after: usize,
+    knockout: bool,
+    line_gap: Option<(f64, f64)>,
     end_inset: f64,
 }
 
@@ -57,8 +59,10 @@ const fn point_measurement(
         p0,
         p1,
         value,
-        offset: 0.0,
         label_shift: (0.0, 0.0),
+        sum_break_after: 0,
+        knockout: false,
+        line_gap: None,
         end_inset: SYSTEM_POINT_END_INSET,
     }
 }
@@ -74,14 +78,33 @@ const fn edge_measurement(
         p0,
         p1,
         value,
-        offset: 0.0,
         label_shift: (0.0, 0.0),
+        sum_break_after: 0,
+        knockout: false,
+        line_gap: None,
         end_inset: SYSTEM_EDGE_END_INSET,
     }
 }
 
-const fn offset_measurement(mut measurement: SystemMeasurement, offset: f64) -> SystemMeasurement {
-    measurement.offset = offset;
+const fn break_measurement_sum(
+    mut measurement: SystemMeasurement,
+    after: usize,
+) -> SystemMeasurement {
+    measurement.sum_break_after = after;
+    measurement
+}
+
+const fn counter_measurement(mut measurement: SystemMeasurement) -> SystemMeasurement {
+    measurement.knockout = true;
+    measurement
+}
+
+const fn gap_measurement_line(
+    mut measurement: SystemMeasurement,
+    center: f64,
+    half_height: f64,
+) -> SystemMeasurement {
+    measurement.line_gap = Some((center, half_height));
     measurement
 }
 
@@ -107,8 +130,8 @@ fn system_construction_node(sheet: &mut Sheet, x: f64, y: f64) {
     );
 }
 
-/// The real 8-unit source grid. Vertical coordinates restart at each sort
-/// boundary, as they do in a font editor. Every eighth line marks 64 units.
+/// The real, uniform 8-unit source grid. Vertical coordinates restart at each
+/// sort boundary, as they do in a font editor.
 fn system_background_grid(
     sheet: &mut Sheet,
     frame: &Frame,
@@ -124,20 +147,11 @@ fn system_background_grid(
 
     let mut v = bottom;
     while v <= top {
-        let major = v.rem_euclid(SYSTEM_GRID_MAJOR_UNIT) == 0.0;
         sheet
             .ctx
             .no_fill()
-            .stroke(if major {
-                role::grid::standard()
-            } else {
-                role::grid::faint()
-            })
-            .stroke_width(if major {
-                SYSTEM_GRID_MAJOR_STROKE
-            } else {
-                SYSTEM_GRID_MINOR_STROKE
-            });
+            .stroke(role::grid::faint())
+            .stroke_width(SYSTEM_GRID_STROKE);
         sheet.ctx.line(x0, frame.y(v), x1, frame.y(v));
         v += SYSTEM_GRID_UNIT;
     }
@@ -145,20 +159,11 @@ fn system_background_grid(
     for (outline, origin) in glyphs {
         let mut u = 0.0;
         while u <= outline.width {
-            let major = u.rem_euclid(SYSTEM_GRID_MAJOR_UNIT) == 0.0;
             sheet
                 .ctx
                 .no_fill()
-                .stroke(if major {
-                    role::grid::standard()
-                } else {
-                    role::grid::faint()
-                })
-                .stroke_width(if major {
-                    SYSTEM_GRID_MAJOR_STROKE
-                } else {
-                    SYSTEM_GRID_MINOR_STROKE
-                });
+                .stroke(role::grid::faint())
+                .stroke_width(SYSTEM_GRID_STROKE);
             let x = frame.x(origin + u);
             sheet.ctx.line(x, frame.y(bottom), x, frame.y(top));
             u += SYSTEM_GRID_UNIT;
@@ -216,6 +221,38 @@ fn system_metric_system(
     }
 }
 
+fn system_measurement_label(
+    sheet: &mut Sheet,
+    measurement: SystemMeasurement,
+    text: &str,
+    x: f64,
+    y: f64,
+    align: i8,
+) {
+    if measurement.knockout {
+        sheet.label_padded_weighted_on(
+            text,
+            x,
+            y,
+            SYSTEM_MEASUREMENT_TEXT_SIZE,
+            role::figure::pen(),
+            align,
+            role::figure::background(),
+            SYSTEM_MEASUREMENT_TEXT_WEIGHT,
+        );
+    } else {
+        sheet.label_weighted(
+            text,
+            x,
+            y,
+            SYSTEM_MEASUREMENT_TEXT_SIZE,
+            role::figure::pen(),
+            align,
+            SYSTEM_MEASUREMENT_TEXT_WEIGHT,
+        );
+    }
+}
+
 /// An OG-style capped size label. These are intentionally independent from
 /// the removed advance-width band so the enlarged figures can retain the
 /// useful stroke and counter dimensions without giving space back to metrics.
@@ -239,12 +276,12 @@ fn system_glyph_measurement(
     let direction = (dx / length, dy / length);
     let normal = (-direction.1, direction.0);
     let q0 = (
-        p0.0 + normal.0 * measurement.offset + direction.0 * measurement.end_inset,
-        p0.1 + normal.1 * measurement.offset + direction.1 * measurement.end_inset,
+        p0.0 + direction.0 * measurement.end_inset,
+        p0.1 + direction.1 * measurement.end_inset,
     );
     let q1 = (
-        p1.0 + normal.0 * measurement.offset - direction.0 * measurement.end_inset,
-        p1.1 + normal.1 * measurement.offset - direction.1 * measurement.end_inset,
+        p1.0 - direction.0 * measurement.end_inset,
+        p1.1 - direction.1 * measurement.end_inset,
     );
     let color = role::figure::pen();
 
@@ -253,7 +290,17 @@ fn system_glyph_measurement(
         .no_fill()
         .stroke(color)
         .stroke_width(SYSTEM_STROKE);
-    sheet.ctx.line(q0.0, q0.1, q1.0, q1.1);
+    if let Some((gap_center, gap_half_height)) = measurement.line_gap {
+        let gap_center = frame.y(gap_center);
+        sheet
+            .ctx
+            .line(q0.0, q0.1, q0.0, gap_center - gap_half_height);
+        sheet
+            .ctx
+            .line(q1.0, gap_center + gap_half_height, q1.0, q1.1);
+    } else {
+        sheet.ctx.line(q0.0, q0.1, q1.0, q1.1);
+    }
     for q in [q0, q1] {
         sheet.ctx.line(
             q.0 - normal.0 * SYSTEM_MEASUREMENT_CAP,
@@ -266,54 +313,54 @@ fn system_glyph_measurement(
     let midpoint = ((q0.0 + q1.0) / 2.0, (q0.1 + q1.1) / 2.0);
     let decomposition = p2sum(measurement.value);
     let parts: Vec<&str> = decomposition.split('+').collect();
-    let sum_lines = if parts.len() > 2 {
-        vec![parts[..2].join("+"), format!("+{}", parts[2..].join("+"))]
+    let sum_lines = if measurement.sum_break_after > 0 && measurement.sum_break_after < parts.len()
+    {
+        vec![
+            parts[..measurement.sum_break_after].join("+"),
+            format!("+{}", parts[measurement.sum_break_after..].join("+")),
+        ]
     } else {
         vec![decomposition]
     };
 
     if dx.abs() >= dy.abs() {
-        sheet.label_weighted(
+        system_measurement_label(
+            sheet,
+            measurement,
             &measurement.value.to_string(),
             midpoint.0 + measurement.label_shift.0,
             midpoint.1 + 20.0 + measurement.label_shift.1,
-            SYSTEM_MEASUREMENT_TEXT_SIZE,
-            color,
             0,
-            SYSTEM_MEASUREMENT_TEXT_WEIGHT,
         );
         for (index, line) in sum_lines.iter().enumerate() {
-            sheet.label_weighted(
+            system_measurement_label(
+                sheet,
+                measurement,
                 line,
                 midpoint.0 + measurement.label_shift.0,
                 midpoint.1 - 48.0 + measurement.label_shift.1
                     - index as f64 * SYSTEM_MEASUREMENT_LINE_GAP,
-                SYSTEM_MEASUREMENT_TEXT_SIZE,
-                color,
                 0,
-                SYSTEM_MEASUREMENT_TEXT_WEIGHT,
             );
         }
     } else {
-        sheet.label_weighted(
+        system_measurement_label(
+            sheet,
+            measurement,
             &measurement.value.to_string(),
             midpoint.0 - 16.0 + measurement.label_shift.0,
             midpoint.1 - 12.0 + measurement.label_shift.1,
-            SYSTEM_MEASUREMENT_TEXT_SIZE,
-            color,
             1,
-            SYSTEM_MEASUREMENT_TEXT_WEIGHT,
         );
         for (index, line) in sum_lines.iter().enumerate() {
-            sheet.label_weighted(
+            system_measurement_label(
+                sheet,
+                measurement,
                 line,
                 midpoint.0 + 16.0 + measurement.label_shift.0,
                 midpoint.1 - 12.0 + measurement.label_shift.1
                     - index as f64 * SYSTEM_MEASUREMENT_LINE_GAP,
-                SYSTEM_MEASUREMENT_TEXT_SIZE,
-                color,
                 -1,
-                SYSTEM_MEASUREMENT_TEXT_WEIGHT,
             );
         }
     }
@@ -369,18 +416,19 @@ fn fig_no(renderer: &Renderer, mono: &str, reg: &std::path::Path, out: &std::pat
     // counter. Values and endpoints are taken directly from the current UFO.
     const MEASUREMENTS: [SystemMeasurement; 6] = [
         edge_measurement(0, (64.0, 288.0), (160.0, 288.0), 96),
-        edge_measurement(0, (160.0, 288.0), (432.0, 288.0), 272),
+        counter_measurement(edge_measurement(0, (160.0, 288.0), (432.0, 288.0), 272)),
         point_measurement(1, (32.0, 288.0), (132.0, 288.0), 100),
         point_measurement(1, (304.0, 504.0), (304.0, 592.0), 88),
-        point_measurement(1, (132.0, 288.0), (484.0, 288.0), 352),
         shift_measurement_label(
-            offset_measurement(
-                point_measurement(1, (304.0, 72.0), (304.0, 504.0), 432),
-                -192.0,
+            gap_measurement_line(
+                counter_measurement(point_measurement(1, (304.0, 72.0), (304.0, 504.0), 432)),
+                288.0,
+                SYSTEM_COUNTER_LINE_GAP,
             ),
             0.0,
-            96.0,
+            SYSTEM_COUNTER_LABEL_SHIFT,
         ),
+        counter_measurement(point_measurement(1, (132.0, 288.0), (484.0, 288.0), 352)),
     ];
     let origins = [x_n, x_o];
     for measurement in MEASUREMENTS {
@@ -430,19 +478,20 @@ fn fig_ho(renderer: &Renderer, mono: &str, reg: &std::path::Path, out: &std::pat
     // sizes. Values and endpoints are taken directly from the current UFO.
     const MEASUREMENTS: [SystemMeasurement; 7] = [
         point_measurement(0, (80.0, 600.0), (184.0, 600.0), 104),
-        edge_measurement(0, (184.0, 600.0), (584.0, 600.0), 400),
+        counter_measurement(edge_measurement(0, (184.0, 600.0), (584.0, 600.0), 400)),
         edge_measurement(0, (384.0, 360.0), (384.0, 456.0), 96),
-        point_measurement(1, (48.0, 384.0), (156.0, 384.0), 108),
+        break_measurement_sum(point_measurement(1, (48.0, 384.0), (156.0, 384.0), 108), 2),
         point_measurement(1, (424.0, 684.0), (424.0, 784.0), 100),
-        point_measurement(1, (156.0, 384.0), (692.0, 384.0), 536),
         shift_measurement_label(
-            offset_measurement(
-                point_measurement(1, (424.0, 84.0), (424.0, 684.0), 600),
-                -256.0,
+            gap_measurement_line(
+                counter_measurement(point_measurement(1, (424.0, 84.0), (424.0, 684.0), 600)),
+                384.0,
+                SYSTEM_COUNTER_LINE_GAP,
             ),
             0.0,
-            96.0,
+            SYSTEM_COUNTER_LABEL_SHIFT,
         ),
+        counter_measurement(point_measurement(1, (156.0, 384.0), (692.0, 384.0), 536)),
     ];
     let origins = [x_h, x_o];
     for measurement in MEASUREMENTS {

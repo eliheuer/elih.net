@@ -1,7 +1,7 @@
 ---
 title: 'Virtua Grotesk: Grid Systems as Datasets'
 description: 'Virtua Grotesk, a typeface drawn on a hierarchical semantic grid system, and the small neural network learning to draw it.'
-date: 2026-07-07
+date: 2026-07-20
 tags: ['fonts', 'design', 'ai', 'machine-learning', 'rust']
 image: './share-card.png'
 authors: ['elih']
@@ -69,6 +69,15 @@ is many drawings that work as one system, and holding them together
 is most of the work. Font datasets need the same discipline. A
 collection assembled without it is not training data capable of
 delivering useful models in 2026.
+
+Modernist design was born a little more than a century ago out of
+similar frustrations in a similar time of technological change. I
+think the way forward is not a return to the dogma and rigidity of
+modernist design that was rightly rejected (the culture of design that
+replaced modernism is equally dogmatic and rigid, just in different
+ways), but a rediscovery, with fresh eyes and new technology, of some
+of the loftier goals of early modernism that were unachievable with
+the technology of the previous century.
 
 ### 02. Replica and the Coarse Grid
 
@@ -215,23 +224,20 @@ and for font UPMs in general.
 
 ### 05. Glyphs as Sentences
 
-A glyph is already a kind of sentence: an ordered list of drawing
-commands. A transformer predicts sequences. So I give the model each
-glyph as the sequence it already is and train it to predict the next
-token.
+A glyph is already a sentence: an ordered list of drawing commands.
+Transformers predict sequences, so I hand the model each glyph as the
+sequence it already is and train it to predict the next token.
 
-The source files use the [UFO](https://unifiedfontobject.org/) format: a
-folder of XML files, one per glyph, with each outline stored as points on
-the grid. A transformer cannot read an XML tree. It reads a flat list of
-tokens. A small codec therefore rewrites each outline as a single line of
-text containing only the drawing commands and coordinates, in order.
+The sources are [UFO](https://unifiedfontobject.org/): one XML file per
+glyph, each outline stored as points on the grid. A transformer reads a
+flat list of tokens, not an XML tree, so a small codec rewrites each
+outline as a single line of commands and coordinates, in order.
 
-A transformer reads and writes a fixed set of tokens: its
-*vocabulary*. Virtua-12M's is small. A few conditioning tokens specify
-the glyph's name, Unicode codepoint, and weight. Four drawing verbs draw it:
-`MOVE`, `LINE`, `CURVE`, `CLOSE`. And one token exists for each legal
-position on the grid, so a coordinate is a single token. Here is the
-numeral **2** in the Regular weight, exactly as the codec emits it:
+Virtua-12M's *vocabulary* is small. A few conditioning tokens set the
+glyph's name, Unicode codepoint, and weight; four verbs draw it (`MOVE`,
+`LINE`, `CURVE`, `CLOSE`); and one token stands for each legal grid
+position, so a coordinate is a single token. Here is the numeral **2**
+in Regular, exactly as the codec emits it:
 
 ```
 BOS N_two U_0032 W400 ADV 592
@@ -258,71 +264,64 @@ CLOSE
 EOS
 ```
 
-Read it top to bottom. `BOS` opens the sequence and `EOS` ends it.
-`N_two` names the glyph, `U_0032` is its Unicode codepoint (the digit
-two), `W400` sets the weight (Regular), and `ADV 592` is its advance
-width, the distance before the next character. The rest is the outline:
-`MOVE` starts a contour at a point, `LINE` draws a straight segment to the next,
-`CURVE` draws a cubic Bézier through two control points to an endpoint, and
-`CLOSE` shuts the loop. Every bare number is a grid coordinate.
+Read it top to bottom. `BOS` and `EOS` bracket the sequence. `N_two`
+names the glyph, `U_0032` is its codepoint, `W400` the weight, `ADV 592`
+the advance width. The rest is the outline: `MOVE` starts a contour,
+`LINE` draws a segment, `CURVE` a cubic Bézier through two controls to an
+endpoint, `CLOSE` shuts the loop. Every bare number is a grid coordinate.
 
-Many carefully drawn fonts are fairly regular. Virtua Grotesk is stricter: a
-stem is 96 every time, never 95 or 97. Structural values recur, so
-their tokens are common. Corrections sit off the 8-grid, so their
-tokens are rare. To the model, a correction is a rare,
-high-information token.
+Many careful fonts are fairly regular; Virtua Grotesk is stricter: a
+stem is 96 every time, never 95 or 97. Structural values recur, so their
+tokens are common; corrections sit off the 8-grid, so to the model a
+correction is a rare, high-information token.
 
-The codec runs both ways. For training, it turns every glyph into a
-sequence. For generation, you provide the opening tokens, let the model
-finish the sequence, and run the codec backward into a real, editable UFO
-outline. The round trip is lossless. Snapping loses precision only when a
-point falls between legal positions. A grid-native font has no such
-points: every coordinate already equals a token. The exactness comes from
-committing to the grid, not from its coarseness. A 1-unit grid would
-round-trip just as cleanly.
+The codec runs both ways: glyph to sequence for training, and, given the
+opening tokens, the model finishes the sequence and the codec runs
+backward into a real, editable UFO. The round trip is lossless; snapping
+only loses precision when a point falls between legal positions, and a
+grid-native font has none: every coordinate already equals a token. The
+exactness comes from committing to the grid, not from its coarseness; a
+1-unit grid would round-trip just as cleanly.
 
-There is no rasterization, no image encoder, no diffusion. The font
-source itself, stripped to the drawing, is the training data, about
-90 tokens a glyph. Quantize found fonts after the fact and you lose
-the designer's intent by an unknowable amount; draw on the grid and
-the tokens *are* the intent.
+No rasterization, no image encoder, no diffusion: the source stripped to
+the drawing is the training data, about 90 tokens a glyph. Quantize a
+found font after the fact and you lose the designer's intent by an
+unknowable amount; draw on the grid and the tokens *are* the intent.
 
 None of the machinery is new.
-[SVG-VAE](https://arxiv.org/abs/1904.02632) learned glyphs as command
-sequences from a corpus of tens of thousands of fonts in 2019;
+[SVG-VAE](https://arxiv.org/abs/1904.02632) (2019),
 [DeepSVG](https://arxiv.org/abs/2007.11301),
 [DeepVecFont](https://arxiv.org/abs/2110.06688),
 [IconShop](https://arxiv.org/abs/2304.14400), and
-[StarVector](https://arxiv.org/abs/2312.11556) all tokenize vector
-outlines and learn them with a transformer, several quantizing to a
-small integer grid exactly as I do. What none of them can do is start
-from data that was grid-native: they train on found fonts snapped to a
-grid in preprocessing, a lossy scrape of a thousand disagreeing hands,
-and spend much of their capacity absorbing that heterogeneity. This
-project inverts the ratio. Design one corpus until it is nearly
-homogeneous, then ask how small the model can get.
+[StarVector](https://arxiv.org/abs/2312.11556) all tokenize outlines and
+learn them with a transformer, several quantizing to a small integer grid
+as I do. What none can do is start from grid-native data: they snap found
+fonts to a grid in preprocessing, a lossy scrape of a thousand
+disagreeing hands, and spend much of their capacity absorbing that
+heterogeneity. This project inverts the ratio: design one corpus until it
+is nearly homogeneous, then ask how small the model can get.
 
-[Simon Cozens](https://simoncozens.github.io/state-of-ai-font-generation/), surveying
-the field, is blunt: "vectorization of glyph images has been historically very
-bad," and his own model trained on the Google Fonts dataset "completely failed."
-Both failures are data problems, upstream of any model. Grid-native
-sources remove the vectorization step entirely. And vectorization
-itself turned out to be tractable with the right target:
-[img2bez](/blog/img2bez), the tracer I built for this pipeline,
-vectorizes rasters straight onto the 2-unit grid, and it now runs
-throughout the pipeline and the harness that Virtua Grotesk uses.
+[Simon Cozens](https://simoncozens.github.io/state-of-ai-font-generation/),
+surveying the field, is blunt: "vectorization of glyph images has been
+historically very bad," and his own Google Fonts model "completely
+failed." The model failure is a data problem, upstream of any model. The
+bad vectorization I fixed and wrote about in
+[another blog post about my img2bez tool](/blog/img2bez), which places
+points on a glyph's structure, not just its silhouette, and puts outlines
+straight onto the 2-unit grid. It runs throughout the pipeline and harness
+that Virtua Grotesk uses.
 
 ### 06. A Small Model Learns to Draw
 
 The model is deliberately small: a 12M-parameter decoder-only transformer
-trained from scratch on one machine, without cloud services or a GPU
-cluster. The work is early. It runs in two setups: an [MLX](https://github.com/ml-explore/mlx)
-build on an M4 Mac and a PyTorch build on a Linux PC with a gaming GPU.
-An overnight run takes about 30,000 steps. The corpus began with Virtua
-Grotesk's two masters: 427 glyphs, structurally identical between Regular
-and Bold. Training now has two stages. The model pretrains on glyphs
-traced from OFL fonts in the Google Fonts collection, then fine-tunes on
-the Virtua Grotesk sources. Section 07 measures what pretraining added.
+trained from scratch on one machine, with no cloud and no GPU cluster. It runs
+two ways, an [MLX](https://github.com/ml-explore/mlx) build on an M4 Mac
+and a PyTorch build on a Linux PC with a gaming GPU; an overnight run is
+about 30,000 steps. The corpus began with Virtua Grotesk's two masters:
+427 glyphs, structurally identical between Regular and Bold. For v0.1,
+training has two stages: pretrain on glyphs traced from OFL fonts in
+Google Fonts, then fine-tune on the Virtua Grotesk sources. Section 07
+measures what pretraining added.
 
 The model card:
 
@@ -338,58 +337,52 @@ The model card:
 | compute | one Apple M4 Pro laptop (MLX); both training runs in 3h20m |
 | checkpoint | 48 MB fp32 safetensors |
 
-Decoder-only is the GPT architecture. Each token becomes a vector, and a
-stack of transformer blocks refines those vectors through *attention*.
-Each position looks back at earlier tokens and uses whatever helps predict
-the next one. A final layer turns the last vector into a probability over
-the vocabulary. Training nudges that probability toward the true next
-token, glyph after glyph, until the model learns the grammar of outlines.
+Decoder-only is the GPT architecture: each token becomes a vector, a
+stack of blocks refines those vectors through *attention* (each position
+looking back at earlier tokens for whatever helps predict the next), and a
+final layer turns the last vector into a probability over the vocabulary.
+Training nudges it toward the true next token, glyph after glyph, until
+the model learns the grammar of outlines.
 
-The lineage is Karpathy's from-scratch projects: [char-rnn](https://karpathy.github.io/2015/05/21/rnn-effectiveness/)
-generating C with balanced braces,
-[makemore](https://github.com/karpathy/makemore) spelling names character by
-character, [microgpt](https://karpathy.github.io/2026/02/12/microgpt/) training
-a tiny GPT over a 27-token vocabulary. This project does the same for glyph outlines, generating a letter's drawing
-commands one token at a time. A single training stage takes about 45
-minutes on an M4 Pro or a gaming GPU.
+The lineage is Karpathy's from-scratch projects:
+[char-rnn](https://karpathy.github.io/2015/05/21/rnn-effectiveness/) on C,
+[makemore](https://github.com/karpathy/makemore) on names,
+[microgpt](https://karpathy.github.io/2026/02/12/microgpt/) on a 27-token
+vocabulary. This does the same for glyph outlines, one drawing command at
+a time; a stage takes about 45 minutes on an M4 Pro or a gaming GPU.
 
-Training follows his
-[Recipe for Training Neural Networks](https://karpathy.github.io/2019/04/25/recipe/)
-more closely than I planned. The first overnight run memorized its
-few thousand sequences instead of learning anything general, and the
-fixes were the recipe's standard ones: augmentation, dropout, and a
-held-out validation set. The recipe's other
-commandment, a dumb baseline to beat, is in place too: predict every Bold
-offset as the mean delta of the training pairs, no model at all.
+Training follows his [Recipe for Training Neural
+Networks](https://karpathy.github.io/2019/04/25/recipe/) more closely than
+I planned: the first overnight run memorized its few thousand sequences,
+and the fixes were the standard ones: augmentation, dropout, a held-out
+validation set. The recipe's other commandment, a dumb baseline to beat,
+is in place too: predict every Bold offset as the mean delta of the
+training pairs, no model at all.
 
-The model runs inside
-[Runebender](https://runebender.org), a free and open source font
-editor I work on. Below, I
-sketch an e with a brush, trace the sketch to a draft outline, and have
-Virtua-12M-v0.1 redraw it in the font's conventions, with the
-green-graded glyphs already in the sources as reference:
+The model runs inside [Runebender](https://runebender.org), a free and
+open source font editor I work on. Below, I sketch an e with a brush,
+trace it to a draft outline, and have Virtua-12M-v0.1 redraw it in the
+font's conventions, using the green-graded glyphs in the sources as
+reference:
 
 <video src="/videos/e-draw.mp4" poster="/videos/e-draw-poster.jpg" controls playsinline preload="metadata" aria-label="Screen recording of the Runebender editor: a lowercase e is sketched with a brush, traced to a draft outline on the grid, and redrawn by Virtua-12M in the font's conventions using the Draft with Virtua tool."></video>
 
 ### 07. Weight Transfer as Local Prediction
 
-Weight transfer has immediate production value. Every glyph drawn once
-must be drawn again heavier, with the same structure. Given the Regular,
-the model draws the Bold. The goal is a workflow
-where a designer draws the core control glyphs by hand (H, O, n, o,
-e, a, R) and bootstraps a full variable font from them: the model
-drafts the remaining glyphs and the second master, and the designer
-corrects on the 2-unit grid.
+Weight transfer has immediate production value: every glyph drawn once
+must be drawn again heavier, same structure. Given the Regular, the model
+draws the Bold. The goal is a workflow where a designer draws the core
+control glyphs by hand (H, O, n, o, e, a, R) and the model bootstraps the
+rest (the remaining glyphs and the second master), with the designer
+correcting on the 2-unit grid.
 
-One objection first: font tools already interpolate, and when both
-masters exist interpolation is exact and free. The model is for the
-case interpolation cannot touch: the second master does not exist
-yet. The classical tools for that case are the offset-curve filter,
-which thickens mechanically and clogs the joins, and extrapolation or
-RMX-style scaling, which approximate a new weight from masters you
-already have. The model learns the weight from a corpus instead.
-Every result below is scored on the missing-master case, Bolds the
-model never saw.
+Font tools already interpolate, exactly and for free, when both masters
+exist. The model is for the case they can't touch: the second master
+doesn't exist yet. The classical fallbacks, the offset-curve filter
+(thickens mechanically, clogs the joins) and extrapolation or RMX-style
+scaling, approximate a new weight from masters you already have; the
+model learns it from a corpus instead. Every result below is scored on
+this missing-master case, Bolds the model never saw.
 
 The encoding makes the task local. The two masters are written into one
 sequence, point by point: a Regular point, then its Bold value, then the
@@ -397,24 +390,17 @@ next Regular point. The model predicts each Bold value from the adjacent
 Regular point as a small offset. The Regular points stay fixed. The model
 fills in only the Bold values, so the glyph's structure cannot break.
 
-The current model, Virtua-12M-v0.1, beats the baseline. The evidence is
-a controlled comparison of two training runs. The first trained
-only on the graded corpus: it tied the baseline. The second
-pretrained on 29,000 pairs traced from Google Fonts, then fine-tuned
-on the same graded corpus: it beats the baseline on all ten held-out
-glyphs, on every metric. Cleaning the data kept the tie; other
-designers' letterforms broke it.
+Virtua-12M-v0.1 beats the baseline, and a controlled comparison shows
+why. Trained only on the graded corpus, it tied the baseline. Pretrained
+on 29,000 Google Fonts pairs and then fine-tuned on the same corpus, it
+beats the baseline on all ten held-out glyphs, every metric. Cleaning the
+data kept the tie; other designers' letterforms broke it.
 
-The test setup: ten glyphs were set aside before training, and their
-Bolds were never shown to either run. Every number in the table
-is the average of five samples, written as mean ± spread, and errors
-are in font units. MAE, the mean absolute error, averages how far
-each coordinate lands from the human-drawn value. Chamfer distance
-measures the same gap along the drawn outline, so it scores the shape
-rather than the point placement. IoU, intersection over union, is the
-share of ink the two filled glyphs have in common. FID, the usual
-generative-image metric, needs far more than ten samples, so it is
-omitted.
+Ten glyphs were set aside before training; their Bolds were shown to
+neither run. Each number is the mean ± spread of five samples, in font
+units. MAE is average coordinate error; Chamfer scores the shape along the
+outline rather than point placement; IoU is shared ink. (FID needs far
+more than ten samples, so it's omitted.)
 
 | held-out Bold prediction | MAE ↓ | Chamfer ↓ | IoU ↑ |
 | --- | --- | --- | --- |
@@ -425,90 +411,82 @@ omitted.
 The training curves, parsed from the run log: the pretrained arm
 starts the fine-tune below the control's best and stays below it.
 
-How much hand-graded data does the fine-tune need? The same fine-tune
-with the corpus cut down: twelve pairs score 28.0 ± 1.9 MAE,
-twenty-five 25.5 ± 0.9, fifty 24.0 ± 1.6, every seed of every run
-better than the baseline's 31.3. The curve is not yet saturated, and
-even twelve graded pairs on pretrained weights beat fifty from
-scratch. Grading more of the Bold master is the cheapest next
-improvement.
+How much graded data does the fine-tune need? Cutting the corpus down:
+twelve pairs score 28.0 MAE, twenty-five 25.5, fifty 24.0, every seed
+beating the baseline's 31.3. The curve isn't saturated, and even twelve
+pairs on pretrained weights beat fifty from scratch. Grading more of the
+Bold master is the cheapest next win.
 
 The review sheet shows six held-out glyphs: human Regular in, model
 Bold out, human Bold beneath for reference.
 
-![Held-out review sheet drawn with designbot: for the glyphs K, E, M, n, b and c, three rows show the human-drawn Regular input in green, the Bold drawn by Virtua-12M-v0.1 in red, and the human-drawn Bold reference in gray.](./fig-model-review.png)
+![Held-out glyph boldening test for Virtua-12M-v0.1. For K, E, M, n, b, and c, the red top row shows the manually drawn Regular input, the orange middle row shows the model's Bold output, and the green bottom row shows the manually drawn Bold reference.](./fig-model-review.png)
 
 One transfer up close, the held-out `n`: the hand-drawn Regular, and
 beside it the Bold the model drew from it.
 
-![The letter n twice on the design grid, drawn with designbot in the Runebender point language: the hand-drawn Regular in green, and beside it the Bold in red, drawn by Virtua-12M-v0.1 from the Regular input.](./fig-model-bolden-n.png)
+![The lowercase n twice on its real 8-unit design grid, drawn with designbot in the Runebender point language. The red hand-drawn Regular sits on the left. An arrow points to the green Bold drawn by Virtua-12M-v0.1 on the right.](./fig-model-bolden-n.png)
 
-This is a small test: ten glyphs, one font, and one training run per
-condition. The numbers will change as the work grows. The output is a
-draft, not a finished Bold. A person still corrects it on the 2-unit grid. The
-open question is whether the approach holds at a much larger scale,
-and that is what the next runs are for. Section 08 reports what the
-same model does on fonts it was not tuned for, including a result
-that did not work.
+This is a small test (ten glyphs, one font, one run per condition), and
+the numbers will change as the work grows. The output is a draft; a person
+still corrects it on the 2-unit grid. Whether the approach holds at much
+larger scale is what the next runs are for. Section 08 reports what the
+same model does on fonts it wasn't tuned for, including a result that
+didn't work.
 
 ### 08. The Designspace Is a Data Factory
 
-Two masters provide more data than they seem to. Every interpolation
-between them is a real instance of the family. Multiple Master fonts
-have worked this way since 1991. The factory picks a weight between
-Regular and Bold, interpolates, snaps to the grid, and labels the glyph with
-its exact weight.
+Two masters hold more data than they seem to: every interpolation between
+them is a real instance of the family, as Multiple Master fonts have
+exploited since 1991. The factory picks a weight, interpolates, snaps to
+the grid, and labels the glyph with its exact weight.
 
-An interpolation can land between grid points. Is it worse data than a
-master? No. The outline sheet below shows why. Here is the real
-`n` at Regular, at the 1/2 interpolation, and at Bold, points colored
-by grid level: green on the 8-unit structure grid, red off 8 on the
-2-unit correction grid. The middle glyph is not a master, but it is a
-clean glyph with every point on the grid. The stem steps 96, 144,
-192.
+Is an interpolation worse data than a master? No. The sheet below shows
+the real `n` at Regular, the 1/2 interpolation, and Bold, points colored
+by grid level (green on the 8-unit structure grid, red on the 2-unit
+correction grid). The middle glyph isn't a master, but every point is on
+the grid; the stem steps 96, 144, 192.
 
-![Three large lowercase n outlines on one continuous 8-unit grid: the n at Regular in red, at the 1/2 interpolation in orange, and at Bold in yellow, translucent fills overlapping, every on-curve and off-curve point marked. Stem dimensions read 96 (64+32), 144 (128+16), 192 (128+64); counter dimensions 272 (256+16), 232 (128+64+32+8), 192 (128+64); purple handle lengths of 64 and 128. Uncrowded points carry bare coordinate labels beside them, like 80,0 at the feet and 328,592 to 432,592 at the apexes, the same apex y with x interpolating. Every interpolated point lands on the grid, so the intermediate weight is a clean, grid-native glyph.](./fig-interp-outlines.png)
+![Three large lowercase n outlines on one continuous 8-unit grid. Regular is red, the one-half interpolation is orange, and Bold is yellow. Every source point and handle is visible. Stem dimensions read 96, 144, and 192 with their power-of-two sums. Counter dimensions read 272, 232, and 192.](./fig-interp-outlines.png)
 
-The reason is arithmetic. The masters sit on the grid, and their
-stems differ by 96, a number that keeps splitting evenly as the
-weight is halved, so every interpolated stem lands back on the grid:
-96, 144, 192. The glyph between the masters is as clean as the masters
-themselves. A decimal design does not close this way, as the figure
-below shows. That closure is a property of the power-of-two grid, and
-section 09 proves why the em itself must be the power of two, not just
-the grid.
+The reason is arithmetic: the stems differ by 96, which keeps splitting
+evenly as the weight halves, so every interpolated stem lands back on the
+grid. The glyph between the masters is as clean as the masters. A decimal
+design doesn't close this way (below), and section 09 proves why the em
+itself, not just the grid, must be the power of two.
 
-![Two aligned number lines drawn with designbot, showing the n stem interpolated from Regular to Bold at binary-fraction weights. The top line is the 1024 em on a 2-unit grid, stem 96 to 192, with the weights 1/8, 1/4, 3/8, 1/2, 5/8, 3/4, 7/8 all landing exactly on grid ticks at 108, 120, 132, 144, 156, 168, 180 in green. The bottom line is the 1000 em on a 10-unit grid, stem 90 to 180, with the same weights falling off the grid: 1/2 lands at 135 between ticks, 1/4 lands at 112.5, not even an integer, both marked in red. Dashed guides connect the same weight on both lines.](./fig-interp.png)
+![Two aligned number lines drawn with designbot. On a 1024 em, the one-quarter, one-half, and three-quarter interpolations land on exact green grid points at 120, 144, and 168. On a 1000 em, the same one-quarter and one-half weights land at red off-grid values 112.5 and 135. Orange dotted guides align the shared weights.](./fig-interp.png)
 
-Interpolation cannot invent a new optical correction. It blends the
-two masters' corrections in a straight line, and optics are not linear
-in weight, so it reproduces structure exactly and only approximates
-the corrections. The model learns optical judgment from the two real
-masters and the graded corpus, not from the augmentation. One more
-augmentation adds scale: any rotation of a closed contour's start
-point draws the same shape, which multiplies the batches enough to
-stop the model memorizing.
+Interpolation can't invent a new optical correction: it blends the
+masters' corrections linearly, and optics aren't linear in weight, so it
+reproduces structure exactly and only approximates the corrections. The
+model learns optical judgment from the two real masters and the graded
+corpus, not the augmentation. One more augmentation adds scale: rotating a
+closed contour's start point draws the same shape, multiplying the batches
+enough to stop memorizing.
 
-Interpolation gives volume, not variety. Every batch is still one
-design. Variety takes more families, which is what
-[img2bez](/blog/img2bez) provides: a Rust autotracer that traces any
-raster, a rendered font, a scan, an AI-drawn glyph, onto the 2-unit
-grid, with [img2ufo](https://github.com/eliheuer/img2ufo) assembling
-the results into a UFO source. This is how the model's pretraining
-data was made: OFL families traced onto the grid, so it sees many
-hands before it meets Virtua Grotesk.
+Interpolation gives volume, not variety: every batch is one design.
+Variety takes more families, which [img2bez](/blog/img2bez) provides: a
+Rust autotracer that puts any raster (a rendered font, a scan, an AI-drawn
+glyph) onto the 2-unit grid, with
+[img2ufo](https://github.com/eliheuer/img2ufo) assembling a UFO. This is
+how v0.1's pretraining data was made: OFL families traced onto the grid,
+many hands before it meets Virtua Grotesk.
 
-That pretraining data has its own held-out test, with one positive and
-one negative result. One percent of the OFL pairs, 290 of 29,000, are
-held out. On them, the pretrained model beats the baseline, so the
-skill is general: it draws Bolds for glyphs it never saw. (The
-held-out unit is the glyph, not the font, so these are new glyphs from
-styles it has seen; a font-level split is next.) The fine-tune then
-costs that generality. After specializing on Virtua Grotesk, the model
-collapses on OFL, from beating the baseline on 74 percent of pairs to
-9. This is catastrophic forgetting, the price of fine-tuning a small
-model without mixing the old data back in; that mix is queued for
-v0.9. Virtua-12M-v0.1 is a Virtua Grotesk specialist, not a general tool:
+That pretraining data has its own held-out test: one positive result,
+one negative. On 290 held-out OFL pairs (1 percent), the pretrained model
+beats the baseline, so the skill is general: it draws Bolds for glyphs it
+never saw. (The held-out unit is the glyph, not the font, so these are new
+glyphs from styles it *has* seen; a font-level split is next.) The
+fine-tune then costs that generality: after specializing on Virtua
+Grotesk the model collapses on OFL, from beating the baseline on 74
+percent of pairs to 9. This is catastrophic forgetting, the price of
+fine-tuning a small model on a narrow corpus. The v0.1 instinct was to mix
+the old data back in; the conclusion has since sharpened the other way.
+Heterogeneous font collections aren't training data for this at all
+(Section 02), so the direction now is to retire the borrowed fonts
+entirely and let the Virtua Grotesk family, built out across weights, be
+the whole dataset. Virtua-12M-v0.1 is a specialist, not a general tool:
 
 | held-out OFL pairs, n = 290 | MAE ↓ | Chamfer ↓ | IoU ↑ | beats baseline |
 | --- | --- | --- | --- | --- |
@@ -517,29 +495,28 @@ v0.9. Virtua-12M-v0.1 is a Virtua Grotesk specialist, not a general tool:
 | after Virtua Grotesk fine-tune | 33.5 | 28.9 | 0.50 | 9% |
 
 Karpathy's [Software 2.0](https://karpathy.medium.com/software-2-0-a64152b37c35)
-names the idea: if the weights are the program and training the
-compiler, the dataset is the source code. Grid systems as datasets is
-that taken seriously. The data gets the tools software gets: a style
-guide (`DESIGN.md`), a linter (the grid is checkable), review (mark
-colors in the UFOs), and version control (git).
+names the idea: if the weights are the program and training the compiler,
+the dataset is the source code. Grid systems as datasets takes that
+seriously, and the data gets software's tools: a style guide (`DESIGN.md`), a
+linter (the grid is checkable), review (mark colors in the UFOs), and
+version control.
 
-The pieces form one system. [img2bez](/blog/img2bez) traces references
-onto the grid. The model completes outlines, draws Bolds, and soon
-repairs them. [designbot](https://github.com/eliheuer/designbot)
-renders the proofs and figures. [Runebender](https://runebender.org)
-is the review surface. A harness runs the report, fix, render loop
-against `DESIGN.md`, with mark colors as the human's control. The goal
-is to finish Virtua Grotesk and ship it to Google Fonts.
+The pieces form one system: [img2bez](/blog/img2bez) traces references
+onto the grid, the model completes outlines and draws Bolds,
+[designbot](https://github.com/eliheuer/designbot) renders the proofs,
+[Runebender](https://runebender.org) is the review surface, and a harness
+runs the report-fix-render loop against `DESIGN.md` with mark colors as
+the human's control. The goal is to finish Virtua Grotesk and ship it to
+Google Fonts.
 
 This is a first step. The aim is fonts that are models, not tables of
 outlines, freed from the per-glyph boxes digital type inherited from
-metal type. An outline font is a compression scheme for the Latin
-letter, one fixed shape reused everywhere, and it strains on other
-scripts. Arabic in its manuscript forms is one continuous,
-context-dependent stroke; the current workaround is thousands of
-glyphs and rules faking what a hand does in one motion. A generative
-font draws each glyph in context and handles that natively. The first
-ones will be built on a grid like this.
+metal. An outline font is a compression scheme for the Latin letter, one
+fixed shape reused everywhere, and it strains on other scripts: Arabic in
+its manuscript forms is one continuous, context-dependent stroke, and the
+current workaround fakes with thousands of glyphs and rules what a hand
+does in one motion. A generative font draws each glyph in context. The
+first ones will be built on a grid like this.
 
 <h3 id="09-the-mathematics-of-2n">09. The Mathematics of 2ⁿ</h3>
 
@@ -563,71 +540,61 @@ even remains a secret because nobody ever believes you anyways”</p>
 <p>—roon ([@tszzl](https://x.com/tszzl)), 2026.</p>
 </div>
 
-When I shared this draft, the most common pushback was: why
-powers of two? Concede the narrow point first. Any grid shrinks the
-coordinate vocabulary; a decimal grid would tokenize just as cleanly.
-The transformer does not care: I can find no evidence that a network
-prefers binary bins to decimal ones, and when the field quantizes
-coordinates it reaches for
-[256 bins](https://arxiv.org/abs/2002.10880) out of habit, not
-conviction. If the model were the whole pipeline, the skeptics would
-be right.
+The most common pushback on this draft was: why powers of two? Concede
+the narrow point first: any grid shrinks the vocabulary, and a decimal
+grid would tokenize just as cleanly. The transformer doesn't care: I find
+no evidence a network prefers binary bins to decimal, and when the field
+quantizes it reaches for [256 bins](https://arxiv.org/abs/2002.10880) out
+of habit. If the model were the whole pipeline, the skeptics would be
+right.
 
-It is not. The rest of the pipeline imposes five constraints. The
-design must normalize exactly. The grid must be closed under its own
-drawing operations. The hierarchy must be a chain, so its levels can
-carry meaning. The ladder should be as deep as the em allows. And the
-grid must meet the machine at every boundary, rendering included.
-Each constraint describes software the design has to live inside.
-This section takes them in order, then tests the rivals against
-them.
+It isn't. The rest of the pipeline imposes five constraints: normalize
+exactly; be closed under the drawing operations; keep the hierarchy a
+chain so its levels carry meaning; make the ladder as deep as the em
+allows; and meet the machine at every boundary, rendering included. Each
+is software the design has to live inside. This section takes them in
+order, then tests the rivals.
 
-**Normalize exactly.** A binary computer stores a fraction exactly
-only when its denominator is a power of two: the dyadic rationals,
-the machine's native numbers. Everything else is an approximation.
-Divide Virtua Grotesk's 96-unit stem by its 1024-unit em: 0.09375, exact.
-Divide the same stem by the traditional 1000-unit em: 0.096 has no
-finite binary form, so the machine holds 0.09600000000000000200.
-Every coordinate in a font is normalized, interpolated, and scaled
-thousands of times before anyone sees a letter, and each operation is
-either exact or it quietly rounds.
+**Normalize exactly.** A binary computer stores a fraction exactly only
+when its denominator is a power of two: the dyadic rationals, the
+machine's native numbers. Divide Virtua Grotesk's 96-unit stem by its 1024
+em and you get 0.09375, exact; divide by the traditional 1000 em and 0.096
+has no finite binary form, so the machine holds 0.09600000000000000200.
+Every coordinate is normalized, interpolated, and scaled thousands of
+times before anyone sees a letter, and each step either is exact or
+quietly rounds.
 
-The denominator is the em, not the drawing grid. Keeping a 1000-unit
-em and drawing on an 8-unit grid does not help: 8/1000 is 1/125,
-which has no finite binary form either. The em itself must be the
-power of two, because the em is the denominator of every normalized
-coordinate.
+The denominator is the em, not the drawing grid: a 1000 em with an 8-unit
+grid doesn't help, since 8/1000 = 1/125 has no finite binary form either.
+The em itself must be the power of two, because it's the denominator of
+every normalized coordinate.
 
 ![Two rows of binary digits drawn with designbot. The top row shows 96/1024 as 0.00011 in binary, terminating after five bits, marked exact. The bottom row shows 96/1000 as a stream of binary digits running off the edge, marked as repeating forever with period one hundred bits.](./fig-fractions.png)
 
-Rounding is the mild failure. The sharp one is that some of the
-design's own proportions have no integer coordinate. A vertical metric
-is a ratio of the em. Virtua Grotesk's cap height is 3/4 of the em and
-its x-height is 9/16, which on 1024 are 768 and 576. On a 1000 em the
-cap height still lands at 750, but 9/16 of 1000 is 562.5, and no font
-stores half a unit. The proportion the designer chose cannot be
-written down. A binary proportion is a whole coordinate only on a
-binary em, and this holds in the source, before any arithmetic runs.
+Rounding is the mild failure. The sharp one: some of the design's own
+proportions have no integer coordinate. Cap height is 3/4 of the em,
+x-height 9/16: on 1024, 768 and 576. On a 1000 em the cap height still
+lands at 750, but 9/16 of 1000 is 562.5, and no font stores half a unit;
+the proportion the designer chose can't be written down. A binary
+proportion is a whole coordinate only on a binary em, in the source,
+before any arithmetic runs.
 
-This is the founding decision of digital typography. Knuth hit it in
-TeX, [watching 0.4 print back as 0.39999](https://research.swtch.com/fp-knuth),
-and rebuilt the system on scaled points of 2⁻¹⁶ of a printer's point:
-"the wavelength of visible light is approximately 100 sp." In
-METAFONT every expressible number is a multiple of 2⁻¹⁶, so a
-designer who types .1 [gets 6554/65536](https://ctan.org/pkg/mfbook),
-the nearest binary fraction. The modern formats agree. TrueType
-rasterizers compute in 26.6 fixed point, variable fonts store axis
+This is the founding decision of digital typography. Knuth hit it in TeX,
+[watching 0.4 print back as 0.39999](https://research.swtch.com/fp-knuth),
+and rebuilt on scaled points of 2⁻¹⁶ of a printer's point. In METAFONT
+every number is a multiple of 2⁻¹⁶, so typing .1
+[gets 6554/65536](https://ctan.org/pkg/mfbook). The modern formats agree:
+TrueType rasterizes in 26.6 fixed point, variable fonts store axis
 positions in
 [units of 2⁻¹⁴](https://learn.microsoft.com/en-us/typography/opentype/spec/otvarcommonformats),
-and the OpenType specification
+and OpenType
 [recommends a power-of-two em](https://learn.microsoft.com/en-us/typography/opentype/spec/ttch01)
-because scaling then reduces to a bit shift. A design on the dyadic
-grid is the only design this stack writes down exactly.
+because scaling is then a bit shift. A design on the dyadic grid is the
+only one this stack writes down exactly.
 
-Deployment is already dyadic. A variable font cannot express the
-weight a third of the way between masters: request t = 1/3 and the
-format snaps it to 5461/16384 before interpolating. Dyadic training
-weights are the only weights the shipping format can express.
+Deployment is already dyadic: a variable font can't express t = 1/3
+between masters: the format snaps it to 5461/16384 first. Dyadic training
+weights are the only ones the shipping format can express.
 
 The same arithmetic appears on the ML side. Karpathy, tuning
 [nanoGPT](https://github.com/karpathy/nanoGPT), found a 25 percent
@@ -642,175 +609,156 @@ multiple of 64, and signed off,
 | scale to a pixel size | bit shift | division |
 | divide the em in thirds | approximate | approximate |
 
-The last row is the honest one. Binary buys no thirds, and neither does
-decimal; the divisions that resist the base are exactly the ones the eye
-corrects anyway. The operations that must be exact in font production are
-halving, doubling, scaling, and interpolating, and those are the four
-things base two does perfectly.
+The last row is the honest one: binary buys no thirds, and neither does
+decimal; the divisions that resist the base are exactly the ones the
+eye corrects anyway. The operations that must be exact (halving,
+doubling, scaling, interpolating) are the four base two does perfectly.
 
-**Close under the operations.** This is the keystone. The numbers you
-can reach from the integers by taking midpoints are exactly the
-dyadic rationals, nothing more and nothing less. And the midpoint is
-the pipeline's own operation. Interpolating halfway between two
-masters is a midpoint. Splitting a bézier, the de Casteljau
-subdivision every rasterizer performs, is midpoints of midpoints. The
-dyadic grid is not a lattice the operations tolerate; it is the
-lattice the operations generate. Start from any grid, run the
-pipeline's arithmetic, and the points that appear are dyadic.
+**Close under the operations.** The keystone. The numbers reachable from
+the integers by taking midpoints are exactly the dyadic rationals, and
+the midpoint is the pipeline's own operation. Interpolating halfway
+between masters is a midpoint; splitting a bézier (de Casteljau
+subdivision, which every rasterizer performs) is midpoints of midpoints.
+The dyadic grid isn't a lattice the operations tolerate; it's the lattice
+they generate. Start from any grid, run the arithmetic, and the points
+that appear are dyadic.
 
-![A cubic bézier arch drawn with designbot over the power-of-two grid, split at t equals one half by the de Casteljau construction: gray control points on the 64-grid, first-round midpoints in green on the 32-grid, second-round midpoints in purple on the 16-grid, and the red split point landing on the 16-grid, with each round labeled by the rung it descends to.](./fig-midpoint.png)
+![A cubic Bézier arch drawn with designbot over a full-bleed 64-unit grid and split at one half by the de Casteljau construction. The original control polygon is red, first-round midpoint lines are orange, second-round midpoint lines are yellow, and the final split point is green.](./fig-midpoint.png)
 
-The figure runs one subdivision on a Virtua Grotesk-style arch. The control
-points sit on the 64-grid; the first round of midpoints lands on the
-32, the second on the 16, and the split point stays on the 16. A
-midpoint of two multiples of 2ᵏ is a multiple of 2ᵏ⁻¹, so each round
-descends at most one rung, and a ladder ten rungs deep absorbs the
-whole operation. Run the same split on a decimal
-grid and the numbers leave the system at the second halving: 10 halves
+The figure subdivides an arch: control points on the 64-grid, first
+midpoints on the 32, second on the 16, split point on the 16. A midpoint
+of two multiples of 2ᵏ is a multiple of 2ᵏ⁻¹, so each round descends at
+most one rung, and a ten-rung ladder absorbs the whole operation. On a
+decimal grid the numbers leave the system at the second halving: 10 halves
 once, to 5, and dies.
 
-Exactness and closure are half the answer. The other half is where
-this system parts ways with Replica. Replica's grid is one flat
-layer, every legal point equally legal. A flat grid can say only one
-thing about a point, and it forces a choice: keep every point on the
-lattice and there is no room for optical correction, or let points
-off it and nothing separates a correction from a slip.
+Exactness and closure are half the answer; the other half is where this
+parts ways with Replica. Replica's grid is one flat layer, every legal
+point equally legal, so it can say only one thing about a point, and
+forces a choice: keep every point on the lattice and there's no room for
+optical correction, or allow points off it and nothing separates a
+correction from a slip.
 
-A power-of-two em removes the choice, because it halves cleanly all
-the way down. The grids that tile a 1024 em run 1024, 512, 256, down
-to 2: ten nested levels, each a strict subset of the one above.
-Virtua Grotesk assigns them meanings: 64 for vertical metrics, 8 for
-structure, 2 for corrections. An optical correction is never
-off-grid; it is on the fine grid and off the coarse one, section 03's
-rule restated as data design. The ladder is a property of the base:
-the powers of two that divide 1000 stop at 8, the ones that divide
-Replica's 700 stop at 4. A binary em ladders from the unit to the
-em.
+A power-of-two em removes the choice, because it halves cleanly all the
+way down. The grids tiling a 1024 em run 1024, 512, 256… to 2: ten nested
+levels, each a strict subset of the one above. Virtua Grotesk assigns
+meanings: 64 for vertical metrics, 8 for structure, 2 for corrections. An
+optical correction is never off-grid; it's on the fine grid and off the
+coarse one, section 03's rule as data design. The ladder is a property of
+the base: powers of two dividing 1000 stop at 8, those dividing Replica's
+700 stop at 4; a binary em ladders from the unit to the em.
 
-![Four vertical ladders drawn with designbot, one per candidate em. The 1024 column halves cleanly ten times down to 1. The 1000 column halves to 500, 250, 125 and dies at an odd number. The 729 column divides by three six times but is marked as inexact in binary floating point. The 700 column dies at 175.](./fig-ladder.png)
+![Four vertical stacks of colored rectangles drawn with designbot, one per candidate em. The green 1024 stack halves ten times down to 1. The red 1000 stack stops at 125. The orange 729 stack divides by three down to 1. The yellow 700 stack stops at 175.](./fig-ladder.png)
 
-**Keep the hierarchy a chain, and make it deep.** Divisor-rich ems
-like 720 and 2520, the numbers Babylon built astronomy on, offer
-exact thirds and fifths. But their divisors form a lattice, not a
-ladder: a point on the 9-grid and the 8-grid at once has no
-well-defined level, and the labeling dies of ambiguity. Levels that
-carry meaning need a chain, each grid strictly inside the next, which
-forces the em to be a power of a single prime. Among primes, depth
-favors the smallest: dividing by 3 gives a 729 em six levels;
-dividing by 2 gives a 1024 em ten.
+**Keep the hierarchy a chain, and deep.** Divisor-rich ems like 720 and
+2520 (Babylon's astronomy numbers) offer exact thirds and fifths, but
+their divisors form a lattice, not a ladder: a point on both the 9-grid
+and the 8-grid has no well-defined level, and the labeling dies of
+ambiguity. Meaningful levels need a chain, each grid strictly inside the
+next, which forces the em to be a power of one prime. Depth favors the
+smallest: dividing by 3 gives 729 six levels, dividing by 2 gives 1024
+ten.
 
-The last property is the most literal. Write a coordinate in binary
-and its grid level is the number of zeros at the end. 768 ends in
-eight zeros, so it sits on the 256-grid; 576 ends in six, the
-64-grid; 96 ends in five, the 32-grid; 116 ends in two, the 4-grid,
-off the structure grid's 8, which marks it as a correction.
-Mathematicians call this the 2-adic valuation. Hardware calls it
-count-trailing-zeros, one machine instruction. The hierarchy is not
-drawn on top of the coordinates; it *is* their binary representation,
-read off the low bits. The labeling function this training scheme
-depends on ships inside the numbers themselves.
+The last property is the most literal: write a coordinate in binary and
+its grid level is its count of trailing zeros. 768 ends in eight zeros
+(256-grid); 576 in six (64-grid); 96 in five (32-grid); 116 in two
+(4-grid, off the structure grid's 8, a correction). Mathematicians call
+this the 2-adic valuation; hardware calls it count-trailing-zeros, one
+instruction. The hierarchy isn't drawn on top of the coordinates; it *is*
+their binary form, read off the low bits. The labeling function this
+scheme depends on ships inside the numbers.
 
 ![Five rows of eleven-bit binary numbers drawn with designbot: the em 1024, cap height 768, x-height 576, the 96-unit stem, and the corrected 116, each with its run of trailing zeros bracketed and its grid level read off as the count, the 116 row in red.](./fig-bits.png)
 
-![Two panels drawn with designbot, each showing the same zoomed crop of the lowercase a's bowl from the Regular master. On the left, a flat single-level grid: every point renders in identical gray, and the three points at x=116 are tagged off grid, correction or mistake? On the right, the nested 64/8/2 grid: structural points are green rings marked on 8, and the same three points are red, on the 2-grid but off the 8, labeled optical correction.](./fig-grid-labels.png)
+![Two panels drawn with designbot, each showing the same yellow crop of the lowercase a from the Regular master. The left panel uses one flat grid and renders every point gray. The right panel uses nested 64, 8, and 2-unit grids, with structural points green and the three optical-correction points red.](./fig-grid-labels.png)
 
 Now the rivals, each against the constraints.
 
-**Decimal, em 1000.** Fails normalization (0.096, held forever wrong)
-and fails closure (10 halves once, to 5, and dies). Its one real
-advantage, friendliness to human mental arithmetic, describes the
-wrong partner: in this pipeline the human judges curves and the
-machine does the arithmetic.
+**Decimal, em 1000.** Fails normalization (0.096, held forever wrong) and
+closure (10 halves once, to 5, and dies). Its one advantage, human mental
+arithmetic, describes the wrong partner: here the human judges curves and
+the machine does the arithmetic.
 
-**Balanced ternary, em 729 = 3⁶.** The strongest rival, and Knuth's
-favorite. Six clean levels, a chain, a symmetric arithmetic. On
-ternary hardware it would win. On the hardware that exists, 1/3 has
-no finite binary form, so every normalized coordinate is approximate
-and every constraint downstream of the first collapses.
+**Balanced ternary, em 729 = 3⁶.** The strongest rival, Knuth's favorite:
+six clean levels, a chain, symmetric arithmetic. On ternary hardware it
+would win. On the hardware that exists, 1/3 has no finite binary form, so
+every normalized coordinate is approximate and every constraint after the
+first collapses.
 
-**The divisor-rich and the golden.** Babylon's numbers, 720 and 2520,
-buy exact thirds at the price of a lattice hierarchy and a
-denominator binary arithmetic cannot hold; the thirds they sell are
-the divisions the eye corrects anyway. The modernists' candidate
-fails harder: Le Corbusier scaled the Modulor to the golden section,
-and φ is irrational, so nothing normalizes exactly. Corbusier matched
-his grid to the measure of man. This grid matches the measure of the
-machine.
+**The divisor-rich and the golden.** Babylon's 720 and 2520 buy exact
+thirds at the price of a lattice hierarchy and a denominator binary
+arithmetic can't hold, and the thirds they sell are the divisions the eye
+corrects anyway. The golden section fails harder: φ is irrational, so
+nothing normalizes exactly. Corbusier matched his grid to the measure of
+man; this grid matches the measure of the machine.
 
-**The learned codebook.** Skip hand-designed grids and let a VQ-VAE
-learn the quantization. But a learned codebook cannot be drawn on by
-a person, linted by a rule, or held stable across retrainings, and it
-quantizes after the fact. The field has been retreating from learned
-codebooks toward small fixed uniform grids
-([finite scalar quantization](https://arxiv.org/abs/2309.15505))
-because the fixed grid trains more stably.
+**The learned codebook.** Let a VQ-VAE learn the quantization. But a
+learned codebook can't be drawn on by a person, linted by a rule, or held
+stable across retrainings, and it quantizes after the fact. The field has
+been retreating from learned codebooks toward small fixed grids
+([finite scalar quantization](https://arxiv.org/abs/2309.15505)) because
+they train more stably.
 
-**No grid at all.** Continuous coordinates with a regression head.
-But there is no continuous on a computer: a 64-bit float is a dyadic
-rational, m·2ᵉ, nothing else. Continuous coordinates means the dyadic
-grid at 2⁻⁵², adopted implicitly, with no levels, no linting, and no
-meaning in the low bits. You cannot escape the lattice, only choose
-whether to design it.
+**No grid at all.** Continuous coordinates with a regression head. But
+there's no continuous on a computer: a 64-bit float is a dyadic rational,
+m·2ᵉ. Continuous means the dyadic grid at 2⁻⁵², adopted implicitly: no
+levels, no linting, no meaning in the low bits. You can't escape the
+lattice, only choose whether to design it.
 
 The result: given binary arithmetic end to end, exact normalization,
-closure under subdivision, and a hierarchy whose levels carry
-meaning, the grid system is forced. It is the dyadic ladder of a
-power-of-two em, unique up to one free choice, the exponent. The
-exponent is fixed by the eye: four decades of practice say roughly a
-thousand units per em is enough for optical judgment, and 1024 is the
-power of two that lands there. (2048 with a 4-unit grid is the same
-system scaled by two.)
+closure under subdivision, and a hierarchy whose levels carry meaning, the
+grid system is forced: the dyadic ladder of a power-of-two em, unique up
+to one free choice, the exponent. The eye fixes it: four decades of
+practice say roughly a thousand units per em is enough, and 1024 is the
+power of two that lands there. (2048 with a 4-unit grid is the same system
+scaled by two.)
 
 For the machine-learning pipeline, exactness and nesting pay out four
 ways:
 
 **The synthetic data is noise-free.** Section 08's factory is
-interpolation, `a + t · (b − a)`. With masters on the 2-unit grid and
-weights that are binary fractions, every intermediate value is dyadic
-and every machine computes the identical result. Run the factory on a
-decimal em at arbitrary weights and float error enters every
-coordinate before the snap, differently on different hardware: the
-model learns the design plus the noise. There is even a right
-sampling order: the base-2
+interpolation, `a + t · (b − a)`. With masters on the 2-grid and
+binary-fraction weights, every intermediate value is dyadic and every
+machine computes the identical result; on a decimal em, float error enters
+every coordinate before the snap, differently per machine, and the model
+learns the design plus the noise. There's even a right sampling order:
+the base-2
 [van der Corput sequence](https://en.wikipedia.org/wiki/Van_der_Corput_sequence),
-1/2, 1/4, 3/4, 1/8, 5/8, 3/8, 7/8, dyadic at every step and evenly
-spread at every prefix.
+1/2, 1/4, 3/4, 1/8…, dyadic and evenly spread at every prefix.
 
-**The outputs are checkable, and the taste comes labeled.** On this
-grid a wrong coordinate is a lintable defect: an odd number, a stem
-outside the favored set. And because machine drafts stay on the
-8-unit grid, every 2-unit deviation in a glyph I approve is a
-recorded human optical correction. The grid is the annotator.
+**The outputs are checkable, and the taste comes labeled.** A wrong
+coordinate is a lintable defect: an odd number, a stem outside the favored
+set. And because machine drafts stay on the 8-unit grid, every 2-unit
+deviation in a glyph I approve is a recorded human optical correction. The
+grid is the annotator.
 
-**The differences are a small vocabulary.** Stems, chamfers, and the
-Regular-to-Bold deltas of section 07 come from a few dozen values:
-machine values with three or more trailing zeros, or recorded ±2 and
-±4 hand offsets from one. The lexicon recurs: the Bold stem is the
-Regular stem doubled, the Bold curve is the Bold stem plus the same
-4. Weight transfer collapses to choosing among familiar offsets.
+**The differences are a small vocabulary.** Stems, chamfers, and section
+07's Regular-to-Bold deltas come from a few dozen values: machine values
+with three or more trailing zeros, or recorded ±2/±4 hand offsets. The
+lexicon recurs: the Bold stem is the Regular stem doubled, the Bold curve
+the Bold stem plus the same 4. Weight transfer collapses to choosing among
+familiar offsets.
 
 **Every modality shares the lattice.** Render a 1024-em glyph at 1024
-pixels and one font unit is one pixel; the specimen at the top of
-this post is drawn that way. The image models that feed img2bez
-downsample by eight, so their latent space is a 128 × 128 lattice in
-which each cell covers an 8 × 8 block of font units: the structure
-grid reappears inside the diffusion model.
+pixels and one font unit is one pixel (the specimen atop this post is
+drawn that way). The image models feeding img2bez downsample by eight, so
+their latent space is a 128 × 128 lattice where each cell covers an 8 × 8
+block of font units: the structure grid reappears inside the diffusion
+model.
 
-Knuth walked this ground forty years ago. METAFONT had to put ideal
-curves onto coarse pixel grids, and his chapter about it,
-["Discreteness and Discretion,"](https://ctan.org/pkg/mfbook) answers
-the analog objection: "the human eye is composed of discrete
-receptors, and visible light has a finite wavelength." Then he states
-this project's design brief, in 1986: "our goal should not be to make
-hand-tuning obsolete; it should rather be to make hand-tuning
-tolerable. Let us try to create meta-designs so that we would never
-want to change more than a few pixels per character, say half a
-dozen, regardless of the resolution." A machine draft correct on the
-coarse grid, a human budget of a few touches on the fine one: that is
-the 8-grid and the 2-grid, except that here every touch is recorded,
-labeled, and learned from. The constraints earn the machine its
-8-grid; nothing in the arithmetic earns it the 2-grid. The low bits
-belong to the eye.
+Knuth walked this ground forty years ago. METAFONT had to put ideal curves
+onto coarse pixel grids, and his chapter
+["Discreteness and Discretion"](https://ctan.org/pkg/mfbook) answers the
+analog objection: "the human eye is composed of discrete receptors, and
+visible light has a finite wavelength." Then, in 1986, the design brief:
+"our goal should not be to make hand-tuning obsolete; it should rather be
+to make hand-tuning tolerable. Let us try to create meta-designs so that
+we would never want to change more than a few pixels per character, say
+half a dozen, regardless of the resolution." A machine draft correct on
+the coarse grid, a human budget of a few touches on the fine one: that's
+the 8-grid and the 2-grid, except here every touch is recorded, labeled,
+and learned from. The constraints earn the machine its 8-grid; nothing
+earns it the 2-grid. The low bits belong to the eye.
 
 The claim at its true size: great fonts shipped on decimal ems for
 forty years, and when humans run the pipeline the base hardly
