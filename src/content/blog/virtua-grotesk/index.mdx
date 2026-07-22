@@ -490,19 +490,27 @@ constraints. Three come from the machine:
 
 1. **Normalize exactly.** Dividing a coordinate by the em must give a
    number the machine holds exactly, and the design's proportions (cap
-   height, x-height) must land on whole coordinates.
+   height, x-height) must land on whole coordinates. A binary computer
+   holds a fraction exactly only when its denominator is a power of
+   two; everything else rounds.
 2. **Close under the operations.** Halving, subdividing, and
    interpolating at the weights the format can store must land back on
-   the grid.
+   the grid. Exactness lasts only until an operation produces a point
+   off the grid, and the pipeline interpolates and subdivides
+   constantly.
 3. **Compute the same everywhere.** The same font at the same weight
-   must produce identical coordinates on every machine.
+   must produce identical coordinates on every machine. Rounding is
+   where implementations diverge; exact values leave nothing to round
+   differently.
 
 One comes from the labeling scheme:
 
-4. **Read the label from the coordinate.** A point's grid level must be
-   computable from the number alone, which forces the grids into a
-   chain, each nested strictly inside the next, and favors a deep chain
-   over a shallow one.
+4. **Read the label from the coordinate.** A coordinate must say which
+   grid its point belongs to: structure or correction. That is
+   unambiguous only when the grids nest, each inside the next, and each
+   level is a role the scheme can assign. Any single base nests; the
+   difference is depth. Halving splits a 1024 em into ten levels; tens
+   split a 1000 em into three.
 
 The first three are not mine. They come from the machine's arithmetic,
 the file formats, and the rasterizer, and a design either fits the
@@ -510,8 +518,7 @@ machine's numbers or rounds against them at every step. The fourth is
 mine: no format requires nested grids, but the labeling scheme does.
 This section takes the four in order, then tests the rival bases.
 
-**1. Normalize exactly.** A binary computer stores a fraction exactly only
-when its denominator is a power of two. Divide Virtua Grotesk's 96-unit
+**1. Normalize exactly.** Divide Virtua Grotesk's 96-unit
 stem by its 1024 em and you get 0.09375, exact; divide by the traditional
 1000 em and 0.096 has no finite binary form, so the machine holds
 0.09600000000000000200. The em is the denominator, not the drawing grid: a
@@ -528,6 +535,24 @@ compiled font stores coordinates as
 so the proportion can't be written down; a designer on a 1000 em writes
 562 and the ratio is approximate before any arithmetic starts. A binary
 proportion is a whole coordinate only on a binary em.
+
+The sharp failure is vertical. No table relates a stem or an advance
+width to the em: horizontal values are distances, and a 96-unit stem
+inside a 1000 em is legal arithmetic. Vertical metrics are fractions of
+the em. The em is the body: `font-size: 16px` means "scale the em to 16
+pixels," ascender, descender, and line gap are stored as portions of
+it, and a browser
+[computes the line box](https://glyphsapp.com/learn/vertical-metrics)
+from those portions. Cap height and x-height are em-fractions by
+design. A proportional system lives on the vertical axis, and it needs
+an em that divides. 1000 halves three times, 500, 250, 125, and stops
+on an odd number: sixteenths of a 1000 em do not exist. The 24 units
+between 1000 and 1024 are the difference between 2³ · 5³ and 2¹⁰.
+
+(The formats do not force this. The old rule that ascender minus
+descender must equal the em was dropped from the OpenType spec, and the
+tables accept any values. The pressure comes from the design's own
+proportions and from the arithmetic at render time, below.)
 
 None of this is new. Knuth built TeX and METAFONT on binary fractions
 after [watching 0.4 print back as 0.39999](https://research.swtch.com/fp-knuth),
@@ -572,9 +597,9 @@ identical results. OpenType
 [makes the same demand](https://learn.microsoft.com/en-us/typography/opentype/spec/otvaroverview)
 of variable fonts, prescribing the fixed-point arithmetic of axis
 normalization step by step "to ensure consistent behavior for a given
-font across implementations." Exact values meet the constraint for
-free: where nothing rounds, nothing can round differently. Approximate
-values meet it only by decree, one prescribed rounding at a time.
+font across implementations." Approximate values meet the constraint
+only by decree, one prescribed rounding at a time; exact values meet it
+for free.
 
 The machine's three constraints are half the answer; the other half is
 where this parts ways with Replica. Replica's grid is one flat layer,
@@ -596,18 +621,16 @@ this way, from the unit all the way up to the em.
 **4. Read the label from the coordinate.** Divisor-rich ems like 720 and
 2520 (Babylon's astronomy numbers) offer exact thirds and fifths, but
 their divisors form a lattice, not a ladder: a point on both the 9-grid
-and the 8-grid has no well-defined level, and the labeling dies of
-ambiguity. Meaningful levels need a chain, each grid strictly inside the
-next, which forces the em to be a power of one prime. Depth favors the
-smallest: dividing by 3 gives 729 six levels, dividing by 2 gives 1024
-ten.
+and the 8-grid has no well-defined level. A chain forces the em to be a
+power of one prime, and depth favors the smallest prime: 729, the best
+base-3 em, stops at six levels.
 
 The label is literal: write a coordinate in binary and
 its grid level is its count of trailing zeros. 768 ends in eight zeros
 (256-grid); 576 in six (64-grid); 96 in five (32-grid); 116 in two
 (4-grid, off the structure grid's 8, a correction). Mathematicians call
-this the 2-adic valuation; hardware calls it count-trailing-zeros, one
-instruction. The hierarchy isn't drawn on top of the coordinates; it *is*
+this the 2-adic valuation, written ν₂; hardware calls it
+count-trailing-zeros, one instruction. The hierarchy isn't drawn on top of the coordinates; it *is*
 their binary form, read off the low bits. The labeling function this
 scheme depends on ships inside the numbers.
 
@@ -615,17 +638,74 @@ scheme depends on ships inside the numbers.
 
 ![Two panels drawn with designbot, each showing the same yellow crop of the lowercase a from the Regular master. The left panel uses one flat grid and renders every point gray. The right panel uses nested 64, 8, and 2-unit grids, with structural points green and the three optical-correction points red.](./fig-grid-labels.png)
 
-One more alignment is particular to this pipeline rather than imposed
-by the formats. At an arbitrary text size no em lines up with the
-pixels; a rasterizer scales every outline into
-[1/64-pixel fixed point](https://freetype.org/freetype2/docs/glyphs/glyphs-6.html)
-and renders 13-pixel type the same way whatever the em. But at the
-sizes this pipeline chooses, the grids coincide. Render a 1024-em glyph
-at 1024 pixels and one font unit is one pixel (the specimen atop this
-post is drawn that way). The image models feeding img2bez downsample by
-eight, so the 8-unit structure grid reappears as their 128 × 128 latent
-lattice. The design grid, the pixel grid, and the model's grid are one
-lattice.
+**The label predicts rendering.** A rasterizer maps a coordinate to
+pixels by multiplying it by the pixel size and dividing by the em,
+computed on a grid of
+[1/64 of a pixel](https://freetype.org/freetype2/docs/glyphs/glyphs-2.html).
+On a 1024 em the device value of a coordinate *c* at pixel size *p*, in
+sixty-fourths, is
+
+$$
+\frac{64 \, c \, p}{1024} = \frac{c \, p}{16}
+\;\in\; \mathbb{Z}
+\quad \text{whenever} \quad
+\nu_2(c) + \nu_2(p) \geq 4,
+$$
+
+an integer, no rounding, whenever the trailing zeros of the coordinate
+and of the pixel size sum to four or more. Read that through the levels. The
+64-grid, the vertical metrics, has six trailing zeros or more: exact at
+every integer pixel size, so baselines, cap height, and x-height never
+round. The 8-grid, the structure, has three: exact at every even size.
+The 2-grid corrections are the first to dissolve into antialiasing, as
+they should be: 2/1024 of an em is under a pixel at text sizes, and the
+eye's touches vanish before the structure does. At 16 pixels, the web's
+default size, every coordinate is exact, one font unit to one
+sixty-fourth of a pixel, the rasterizer's own unit. On a 1000 em the
+same device value is
+
+$$
+\frac{64 \, c \, p}{1000} = \frac{8 \, c \, p}{125},
+$$
+
+an integer only when 125 divides the product, which at text sizes is
+never: the 562 x-height at 16 pixels is 8.992 pixels, rounded by
+whichever renderer draws it, in whichever direction it prefers.
+
+That rounding is the visible kind, because the modern rendering stack
+snaps only the vertical direction. FreeType's light hinting and Adobe's
+engine
+[grid-fit the baseline, x-height, and cap height](https://freetype.org/freetype2/docs/hinting/text-rendering-general.html)
+and leave vertical stems to subpixel antialiasing; ClearType does much
+the same, and PostScript's blue zones are these alignment heights and
+nothing else. The asymmetry is structural: a horizontal rounding error
+is private to one glyph and dissolves into spacing, a vertical one is
+shared by every glyph on the line and every line on the page. Hinting
+is a patch for vertical rounding. Metrics that scale exactly need no
+patch.
+
+So the hierarchy's role assignments are not bookkeeping. Putting the
+vertical metrics on the 64-grid puts the values the whole page shares
+on the level that never rounds; structure holds to every even size; the
+corrections are spent last, where antialiasing absorbs them. The level
+of a coordinate is how far down the scaling ladder it survives, and a
+1000 em has no ladder to survive on.
+
+{/* TODO: designbot figure: scaling-robustness matrix. Rows: grid
+levels 64 / 8 / 2 (metrics, structure, correction); columns: pixel
+sizes 12, 14, 16, 18, 24, 32; each cell marked exact or rounded. A
+1024-em panel beside a 1000-em panel that is rounded everywhere. */}
+
+{/* TODO: designbot figure: the same x-height line at 16 px on both
+ems, on an enlarged pixel grid: 576/1024 landing on the 9-pixel row,
+562/1000 landing at 8.992 px across a row boundary. */}
+
+One more alignment is particular to this pipeline. Render a 1024-em
+glyph at 1024 pixels and one font unit is one pixel (the specimen atop
+this post is drawn that way). The image models feeding img2bez
+downsample by eight, so the 8-unit structure grid reappears as their
+128 × 128 latent lattice. The design grid, the pixel grid, and the
+model's grid are one lattice.
 
 Now the rivals, each against the constraints.
 
