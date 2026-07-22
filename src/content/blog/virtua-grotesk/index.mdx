@@ -315,14 +315,12 @@ historically very bad," and his own Google Fonts model "completely
 failed." The failure is a data, design, and aesthetic problem,
 upstream of any model. I fixed the bad vectorization with
 [img2bez](/blog/img2bez), a tracer that places points on a glyph's
-structure, not just its silhouette, and puts outlines straight onto the
-2-unit grid. The output is a clean, grid-native source rather than a
+structure, not just its silhouette, and sorts the outline onto the
+dyadic self-labeling grid: structure on the 8-grid, optical corrections
+on the 2-grid. The output is a clean, grid-native source rather than a
 silhouette to fix up by hand, which is what makes anything it traces
 usable as training data. It runs throughout the pipeline and harness
 that Virtua Grotesk uses, including [Runebender](https://runebender.org).
-I am extending it to trace straight into the full dyadic self-labeling grid, so
-an AI-generated image lands already sorted into structure and optical
-correction.
 
 ### 06. A Small Model Learns to Draw
 
@@ -424,17 +422,16 @@ masters do. Coordinates such as 90 and 180 do not close this way (below).
 
 ![Two centered number lines drawn with DesignBot. From endpoints 96 and 192, the one-quarter, one-half, and three-quarter interpolations land on outlined green grid points at 120, 144, and 168. From endpoints 90 and 180, the same one-quarter and one-half weights land at outlined red off-grid values 112.5 and 135. Dark dashed guides align the shared weights.](./fig-interp.png)
 
-Interpolation reproduces the structure exactly but only approximates the
-optical corrections: it can do no more than average the two masters'
-corrections, and the correction the eye wants at a middle weight is rarely
-that average. So the model learns its corrections from the two
-hand-corrected masters and the graded corpus, not from the interpolated
-glyphs.
+Interpolation reproduces the structure exactly but only averages the
+optical corrections, rarely the right ones at a middle weight. A real
+correction is a point a person nudged off the 8-grid by hand, and those
+exist only in the two masters and the graded corpus, so that is where the
+model learns optical judgment.
 
 Interpolation gives volume, not variety: every batch is one design.
 Variety takes more families, which [img2bez](/blog/img2bez) provides: a
 Rust autotracer that puts any raster (a rendered font, a scan, an AI-drawn
-glyph) onto the 2-unit grid, with
+glyph) onto the dyadic grid, with
 [img2ufo](https://github.com/eliheuer/img2ufo) assembling a UFO. This is
 how v0.1's pretraining data was made: OFL families traced onto the grid,
 many hands before it meets Virtua Grotesk.
