@@ -1,30 +1,76 @@
-//! fig-interp.png : interpolation between two grid masters stays on the
-//! grid on a power-of-two em, and leaves it on a decimal em.
+//! fig-interp.png: equal interpolation weights across two endpoint choices.
 //!
-//! Both number lines put the Regular stem (96 / 90) at the left and the
-//! Bold stem (192 / 180) at the right, so a given interpolation weight
-//! sits at the SAME x on both. On 1024 every dyadic weight lands on a
-//! grid tick; on 1000 the halves land between ticks and the quarters
-//! stop being integers at all.
+//! Both rows place the Regular stem at the left endpoint and the Bold stem at
+//! the right endpoint. Equal weights therefore share an x coordinate. The
+//! 96-to-192 row lands on integer grid values. The 90-to-180 row does not.
+//! This compares coordinate arithmetic, not units per em.
 //!
 //!     cargo run --release --bin interp
 
+use designbot::prelude::Color;
 use designbot_render::Renderer;
-#[allow(unused_imports)]
 use virtua_grotesk_figures::*;
 
-// weight (0..1) -> x, shared by both lines so equal weights align
-fn xt(t: f64, x_l: f64, x_r: f64) -> f64 {
-    x_l + t * (x_r - x_l)
+const STROKE: f64 = line::HERO;
+const NODE_RADIUS: f64 = 24.0;
+const AXIS_LEFT: f64 = MARGIN + 100.0;
+const AXIS_RIGHT: f64 = W - MARGIN - 100.0;
+const UPPER_Y: f64 = 850.0;
+const LOWER_Y: f64 = 350.0;
+
+fn weight_x(weight: f64) -> f64 {
+    AXIS_LEFT + weight * (AXIS_RIGHT - AXIS_LEFT)
 }
 
-fn axis_node(sheet: &mut Sheet, x: f64, y: f64, r: f64) {
+fn node(sheet: &mut Sheet, x: f64, y: f64, fill: Color) {
     sheet
         .ctx
-        .fill(role::figure::point_fill())
+        .fill(fill)
         .stroke(role::figure::pen())
-        .stroke_width(10.0);
-    sheet.ctx.oval(x - r, y - r, r * 2.0, r * 2.0);
+        .stroke_width(STROKE);
+    sheet.ctx.oval(
+        x - NODE_RADIUS,
+        y - NODE_RADIUS,
+        NODE_RADIUS * 2.0,
+        NODE_RADIUS * 2.0,
+    );
+}
+
+fn axis(sheet: &mut Sheet, y: f64, start: i64, end: i64, step: i64, major: i64) {
+    sheet
+        .ctx
+        .no_fill()
+        .stroke(role::figure::pen())
+        .stroke_width(STROKE);
+    sheet.ctx.line(AXIS_LEFT, y, AXIS_RIGHT, y);
+
+    let mut value = start;
+    while value <= end {
+        let weight = (value - start) as f64 / (end - start) as f64;
+        let x = weight_x(weight);
+        let half_height = if value % major == 0 { 38.0 } else { 22.0 };
+        sheet.ctx.line(x, y - half_height, x, y + half_height);
+        value += step;
+    }
+}
+
+fn neutral_label(sheet: &mut Sheet, text: &str, x: f64, y: f64, size: f64, align: i8) {
+    sheet.label_weighted(text, x, y, size, role::figure::pen(), align, 560.0);
+}
+
+fn draw_value(sheet: &mut Sheet, y: f64, weight: f64, value: &str, fill: Color) {
+    let x = weight_x(weight);
+    node(sheet, x, y, fill);
+    neutral_label(sheet, value, x, y + 78.0, 54.0, 0);
+    if weight > 0.0 && weight < 1.0 {
+        let weight_label = match weight {
+            0.25 => "1/4",
+            0.5 => "1/2",
+            0.75 => "3/4",
+            _ => unreachable!("only reviewed interpolation weights are drawn"),
+        };
+        neutral_label(sheet, weight_label, x, y - 88.0, 50.0, 0);
+    }
 }
 
 fn main() {
@@ -34,160 +80,35 @@ fn main() {
     let mut sheet = new_sheet(&renderer, &mono);
     sheet.ctx.line_cap("round");
 
-    // Leave a real optical gutter for the large em labels at each end.
-    let x_l = MARGIN + 290.0;
-    let x_r = W - MARGIN - 190.0;
-    let tick_h = 44.0;
-    let minor = color::gray_800();
-    let major = color::gray_475();
-
-    // ---- line 1: em 1024, stem 96 -> 192, grid every 2 (major every 8) ----
-    let y1 = 930.0;
-    let (r1, b1) = (96.0, 192.0);
+    // The guides establish that equal interpolation weights share x. They use
+    // the same pen as every other line in the image.
     sheet
         .ctx
         .no_fill()
         .stroke(role::figure::pen())
-        .stroke_width(14.0);
-    sheet.ctx.line(x_l - 54.0, y1, x_r + 54.0, y1);
-    let mut v = r1;
-    while v <= b1 + 0.01 {
-        let x = xt((v - r1) / (b1 - r1), x_l, x_r);
-        let is8 = (v as i64) % 8 == 0;
-        sheet
-            .ctx
-            .no_fill()
-            .stroke(if is8 { major } else { minor })
-            .stroke_width(if is8 { 10.0 } else { line::HERO });
-        let h = if is8 { tick_h } else { tick_h * 0.55 };
-        sheet.ctx.line(x, y1 - h, x, y1 + h);
-        v += 2.0;
+        .stroke_width(STROKE)
+        .line_dash(&[14.0, 18.0]);
+    for weight in [0.25, 0.5] {
+        let x = weight_x(weight);
+        sheet.ctx.line(x, LOWER_Y + 132.0, x, UPPER_Y - 132.0);
     }
-    sheet.label_weighted(
-        "1024",
-        MARGIN,
-        y1 - 30.0,
-        96.0,
-        role::figure::pen(),
-        -1,
-        560.0,
-    );
-    // endpoints
-    sheet.label_padded_weighted_on(
-        "96",
-        x_l,
-        y1 - 92.0,
-        72.0,
-        green(),
-        0,
-        role::figure::background(),
-        560.0,
-    );
-    sheet.label_padded_weighted_on(
-        "192",
-        x_r,
-        y1 - 92.0,
-        72.0,
-        green(),
-        0,
-        role::figure::background(),
-        560.0,
-    );
-    axis_node(&mut sheet, x_l, y1, 26.0);
-    axis_node(&mut sheet, x_r, y1, 26.0);
-    // Three large featured interpolations make the exact landings legible at
-    // social-card size; the smaller ticks still show the complete 2-unit grid.
-    let pts1 = [("1/2", 0.5, 144), ("1/4", 0.25, 120), ("3/4", 0.75, 168)];
-    for (w, t, val) in pts1 {
-        let x = xt(t, x_l, x_r);
-        sheet.ctx.fill(green()).no_stroke();
-        sheet.ctx.oval(x - 27.0, y1 - 27.0, 54.0, 54.0);
-        sheet.label_weighted(w, x, y1 - 98.0, 66.0, role::figure::pen(), 0, 540.0);
-        sheet.label_weighted(&val.to_string(), x, y1 + 94.0, 66.0, green(), 0, 560.0);
-    }
+    sheet.ctx.line_dash(&[]);
 
-    // ---- line 2: em 1000, stem 90 -> 180, grid every 10 ----
-    let y2 = 350.0;
-    let (r2, b2) = (90.0, 180.0);
-    sheet
-        .ctx
-        .no_fill()
-        .stroke(role::figure::pen())
-        .stroke_width(14.0);
-    sheet.ctx.line(x_l - 54.0, y2, x_r + 54.0, y2);
-    let mut v = r2;
-    while v <= b2 + 0.01 {
-        let x = xt((v - r2) / (b2 - r2), x_l, x_r);
-        sheet.ctx.no_fill().stroke(major).stroke_width(10.0);
-        sheet.ctx.line(x, y2 - tick_h, x, y2 + tick_h);
-        v += 10.0;
-    }
-    sheet.label_weighted(
-        "1000",
-        MARGIN,
-        y2 - 30.0,
-        96.0,
-        role::figure::pen(),
-        -1,
-        560.0,
-    );
-    sheet.label_padded_weighted_on(
-        "90",
-        x_l,
-        y2 - 92.0,
-        72.0,
-        red(),
-        0,
-        role::figure::background(),
-        560.0,
-    );
-    sheet.label_padded_weighted_on(
-        "180",
-        x_r,
-        y2 - 92.0,
-        72.0,
-        red(),
-        0,
-        role::figure::background(),
-        560.0,
-    );
-    axis_node(&mut sheet, x_l, y2, 26.0);
-    axis_node(&mut sheet, x_r, y2, 26.0);
-    // same weights, now off the grid
-    let x_half = xt(0.5, x_l, x_r);
-    sheet.ctx.fill(red()).no_stroke();
-    sheet.ctx.oval(x_half - 27.0, y2 - 27.0, 54.0, 54.0);
-    sheet.label_weighted(
-        "1/2",
-        x_half,
-        y2 - 98.0,
-        66.0,
-        role::figure::pen(),
-        0,
-        540.0,
-    );
-    sheet.label_weighted("135", x_half, y2 + 94.0, 66.0, red(), 0, 560.0);
+    axis(&mut sheet, UPPER_Y, 96, 192, 2, 8);
+    axis(&mut sheet, LOWER_Y, 90, 180, 5, 10);
 
-    let x_q = xt(0.25, x_l, x_r);
-    sheet.ctx.fill(red()).no_stroke();
-    sheet.ctx.oval(x_q - 27.0, y2 - 27.0, 54.0, 54.0);
-    sheet.label_weighted("1/4", x_q, y2 - 98.0, 66.0, role::figure::pen(), 0, 540.0);
-    sheet.label_weighted("112.5", x_q, y2 + 94.0, 66.0, red(), 0, 560.0);
+    // Neutral endpoint nodes belong to the axes. Colored, outlined nodes show
+    // the semantic result without assigning color to the number labels.
+    draw_value(&mut sheet, UPPER_Y, 0.0, "96", role::figure::point_fill());
+    draw_value(&mut sheet, UPPER_Y, 0.25, "120", role::figure::green());
+    draw_value(&mut sheet, UPPER_Y, 0.5, "144", role::figure::green());
+    draw_value(&mut sheet, UPPER_Y, 0.75, "168", role::figure::green());
+    draw_value(&mut sheet, UPPER_Y, 1.0, "192", role::figure::point_fill());
 
-    // alignment guides: the SAME weight, landing on a tick vs between ticks
-    for t in [0.5f64, 0.25] {
-        let x = xt(t, x_l, x_r);
-        let mut yy = y2 + 40.0;
-        sheet
-            .ctx
-            .no_fill()
-            .stroke(role::figure::orange())
-            .stroke_width(line::HERO);
-        while yy < y1 - 40.0 {
-            sheet.ctx.line(x, yy, x, (yy + 14.0).min(y1 - 40.0));
-            yy += 26.0;
-        }
-    }
+    draw_value(&mut sheet, LOWER_Y, 0.0, "90", role::figure::point_fill());
+    draw_value(&mut sheet, LOWER_Y, 0.25, "112.5", role::figure::red());
+    draw_value(&mut sheet, LOWER_Y, 0.5, "135", role::figure::red());
+    draw_value(&mut sheet, LOWER_Y, 1.0, "180", role::figure::point_fill());
 
     let outputs = OutputPaths::from_args();
     sheet.save(&renderer, &outputs.blog("fig-interp.png"));

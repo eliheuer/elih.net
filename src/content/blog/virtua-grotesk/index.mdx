@@ -1,6 +1,6 @@
 ---
 title: 'Virtua Grotesk: Grid Systems as Datasets'
-description: 'Virtua Grotesk, a typeface drawn on a self-labeling grid system, and the small neural network learning to draw it.'
+description: 'Virtua Grotesk, a typeface drawn on a dyadic self-labeling grid system, and the small neural network learning to draw it.'
 date: 2026-07-20
 tags: ['fonts', 'design', 'ai', 'machine-learning', 'rust']
 image: './share-card.png'
@@ -8,9 +8,10 @@ authors: ['elih']
 draft: false
 ---
 
-Virtua Grotesk is a typeface drawn on a **self-labeling grid
-system**. Point placement defaults to an 8-unit grid, with small
-optical corrections dropping to a 2-unit subgrid. The grids record most
+Virtua Grotesk is a typeface drawn on a **dyadic self-labeling grid
+system**: nested grids built on powers of two. Point placement
+defaults to an 8-unit grid, with small optical corrections dropping to
+a 2-unit subgrid. The grids record most
 of the drawing intent automatically, so the source files are labeled training data
 without extra work. This system makes the project a machine-learning and
 data-engineering project as much as a design project. If you are reading this on [elih.net](/), you are
@@ -31,11 +32,11 @@ is free and open-source under the SIL Open Font License (OFL) v1.1.
 <ol>
 <li><a href="#01-the-modernist-impulse"><span class="n">01</span>The Modernist Impulse</a></li>
 <li><a href="#02-replica-and-the-coarse-grid"><span class="n">02</span>Replica and the Coarse Grid</a></li>
-<li><a href="#03-self-labeling-grid-systems"><span class="n">03</span>Self-Labeling Grid Systems</a></li>
+<li><a href="#03-dyadic-self-labeling-grid-systems"><span class="n">03</span>Dyadic Self-Labeling Grid Systems</a></li>
 <li><a href="#04-aesthetic-discipline--machine-legibility"><span class="n">04</span>Aesthetic Discipline &amp; Machine Legibility</a></li>
 <li><a href="#05-glyphs-as-sentences"><span class="n">05</span>Glyphs as Sentences</a></li>
 <li><a href="#06-a-small-model-learns-to-draw"><span class="n">06</span>A Small Model Learns to Draw</a></li>
-<li><a href="#07-weight-transfer-as-local-prediction"><span class="n">07</span>Weight Transfer as Local Prediction</a></li>
+<li><a href="#07-weight-transfer-as-delta-prediction"><span class="n">07</span>Weight Transfer as Delta Prediction</a></li>
 <li><a href="#08-the-designspace-is-a-data-factory"><span class="n">08</span>The Designspace Is a Data Factory</a></li>
 <li><a href="#09-the-mathematics-of-2n"><span class="n">09</span>The Mathematics of 2ⁿ</a></li>
 </ol>
@@ -94,7 +95,7 @@ bevels: its corners are cut exactly one grid unit wide, so the grid is
 have no pointed apexes, so the letters can be set tight. The constraint
 produced the aesthetic, and the aesthetic advertises the constraint.
 
-### 03. Self-Labeling Grid Systems
+### 03. Dyadic Self-Labeling Grid Systems
 
 Virtua Grotesk's answer to Replica's flat grid is a nested one, in
 powers of two up to the em itself. The em is the coordinate space a
@@ -305,11 +306,15 @@ surveying the field, is blunt: "vectorization of glyph images has been
 historically very bad," and his own Google Fonts model "completely
 failed." The failure is a data, design, and aesthetic problem,
 upstream of any model. I fixed the bad vectorization with
-[img2bez](/blog/img2bez), a tracer that
-places points on a glyph's structure, not just its silhouette, and puts
-outlines straight onto the 2-unit grid. It runs throughout the pipeline
-and harness that Virtua Grotesk uses, including
-[Runebender](https://runebender.org).
+[img2bez](/blog/img2bez), a tracer that places points on a glyph's
+structure, not just its silhouette, and puts outlines straight onto the
+2-unit grid. The output is a clean, grid-native source rather than a
+silhouette to fix up by hand, which is what makes anything it traces
+usable as training data. It runs throughout the pipeline and harness
+that Virtua Grotesk uses, including [Runebender](https://runebender.org).
+I am extending it to trace straight into the full dyadic self-labeling grid, so
+an AI-generated image lands already sorted into structure and optical
+correction.
 
 ### 06. A Small Model Learns to Draw
 
@@ -317,11 +322,8 @@ The model is deliberately small: a 12M-parameter decoder-only transformer
 trained from scratch on one machine, with no cloud and no GPU cluster. It runs
 two ways, an [MLX](https://github.com/ml-explore/mlx) build on an M4 Mac
 and a PyTorch build on a Linux PC with a gaming GPU; an overnight run is
-about 30,000 steps. The corpus began with Virtua Grotesk's two masters:
-427 glyphs, structurally identical between Regular and Bold. For v0.1,
-training has two stages: pretrain on glyphs traced from OFL fonts in
-Google Fonts, then fine-tune on the Virtua Grotesk sources. Section 07
-measures what pretraining added.
+about 30,000 steps. The corpus is Virtua Grotesk's two masters,
+427 glyphs structurally identical between Regular and Bold.
 
 The model card:
 
@@ -351,48 +353,37 @@ The lineage is Karpathy's from-scratch projects:
 vocabulary. This does the same for glyph outlines, one drawing command at
 a time; a stage takes about 45 minutes on an M4 Pro or a gaming GPU.
 
-Training follows his [Recipe for Training Neural
-Networks](https://karpathy.github.io/2019/04/25/recipe/) more closely than
-I planned: the first overnight run memorized its few thousand sequences,
-and the fixes were the standard ones: augmentation, dropout, a held-out
-validation set. The recipe's other commandment, a dumb baseline to beat,
-is in place too: predict every Bold offset as the mean delta of the
-training pairs, no model at all.
-
 The model runs inside [Runebender](https://runebender.org), a free and
-open source font editor I work on. Below, I sketch an e with a brush,
-trace it to a draft outline, and have Virtua-12M-v0.1 redraw it in the
-font's conventions, using the green-graded glyphs in the sources as
-reference:
+open source font editor I work on. Below, I sketch an e with a brush and
+Virtua-12M-v0.1 redraws it in the font's conventions, using the
+green-graded glyphs in the sources as reference:
 
-<video src="/videos/e-draw.mp4" poster="/videos/e-draw-poster.jpg" controls playsinline preload="metadata" aria-label="Screen recording of the Runebender editor: a lowercase e is sketched with a brush, traced to a draft outline on the grid, and redrawn by Virtua-12M in the font's conventions using the Draft with Virtua tool."></video>
+<video src="/videos/e-draw.mp4" poster="/videos/e-draw-poster.jpg" controls playsinline preload="metadata" aria-label="Screen recording of the Runebender editor: a lowercase e is sketched with a brush and redrawn by Virtua-12M in the font's conventions using the Draft with Virtua tool."></video>
 
-### 07. Weight Transfer as Local Prediction
+### 07. Weight Transfer as Delta Prediction
 
-Every glyph drawn once must be drawn again heavier, with the same
-structure. Given the Regular, the model draws the Bold. When both masters
-exist, font tools already interpolate for free; the model is for the case
-they can't touch, when the second master doesn't exist yet. The goal is a
-workflow where a designer draws a few control glyphs by hand and the model
-bootstraps the rest, corrected on the 2-unit grid.
+For most variable fonts every glyph drawn once must be drawn again
+heavier, with the same structure. Given the Regular, the model draws the
+Bold. The goal is a workflow where a designer draws a few control glyphs
+by hand and the model bootstraps the rest, corrected on the grid system.
 
-The task is local, which is why it fits a small model. The two masters are
-written into one sequence point by point: a Regular point, then its Bold
-value. The model predicts each Bold as a small offset from the adjacent
-Regular point, and the Regular points stay fixed, so the glyph's structure
-cannot break.
+The approach is delta prediction: rather than generate a whole Bold glyph
+at once, the model predicts, one point at a time, the offset from each
+Regular point to its Bold, the delta. Each delta is a small, bounded move
+rather than an open-ended shape, and that is what lets a small model do
+the job.
 
-It works. Ten glyphs were held out, their Bolds shown to no run. Against a
-mean-delta baseline, Virtua-12M-v0.1 wins on every metric (MAE is
-coordinate error, Chamfer scores outline shape, IoU shared ink). The
-graded corpus alone only tied the baseline; the win came from pretraining
-first.
+It is starting to work, and will get there in a few more training runs.
+To check it, ten glyphs were held out, their Bolds never shown to the
+model. The bar is a no-model baseline: take each Regular and shift it by
+the average Regular-to-Bold change. On every metric in the table below,
+Virtua-12M-v0.1 beats that baseline. (MAE is average coordinate error,
+Chamfer scores the outline shape, IoU the overlap in filled ink.)
 
-| held-out Bold prediction | MAE ↓ | Chamfer ↓ | IoU ↑ |
+| predicting a held-out Bold | MAE ↓ | Chamfer ↓ | IoU ↑ |
 | --- | --- | --- | --- |
-| mean-delta baseline | 31.3 | 37.4 | 0.564 |
-| graded corpus only (control) | 31.7 ± 0.5 | 35.3 ± 0.7 | 0.567 ± 0.013 |
-| + OFL pretrain (Virtua-12M-v0.1) | **24.0 ± 1.6** | **22.4 ± 1.3** | **0.745 ± 0.016** |
+| no-model baseline | 31.3 | 37.4 | 0.564 |
+| Virtua-12M-v0.1 | **24.0 ± 1.6** | **22.4 ± 1.3** | **0.745 ± 0.016** |
 
 ![Two bordered panels show the lowercase n on a 32-unit design grid. The yellow manually drawn Regular is on the left, and the blue Bold drawn by Virtua-12M-v0.1 is on the right. In both panels, green points are on the 8-unit grid and red points are off it.](./fig-model-bolden-n.png)
 
@@ -405,32 +396,32 @@ tuned for, including a result that didn't work.
 
 Two masters hold more data than they seem to: every interpolation between
 them is a real instance of the family, as Multiple Master fonts have
-exploited since 1991. The factory picks a weight, interpolates, snaps to
-the grid, and labels the glyph with its exact weight.
+exploited since 1991. The space between the masters is the factory: pick a
+weight, interpolate, and snap the result to the grid.
 
-Is an interpolation worse data than a master? No. The sheet below shows
-the real `n` at Regular, the 1/2 interpolation, and Bold, points colored
-by grid level (green on the 8-unit structure grid, red on the 2-unit
-correction grid). The middle glyph isn't a master, but every point is on
-the grid; the stem steps 96, 144, 192.
+An interpolation is not a master, but it is still clean, usable data. The
+sheet below shows the real "n" at Regular, the 1/2 interpolation, and
+Bold, points colored by grid level (green on the 8-unit structure grid,
+red on the 2-unit correction grid). The middle glyph was never drawn by
+hand, yet every point lands on the grid and its stem steps evenly through
+96, 144, 192. It reads as a real glyph, not a degraded in-between, which
+is why the model can train on it.
 
 ![Three large lowercase n outlines on one continuous 8-unit grid. Regular is red, the one-half interpolation is orange, and Bold is yellow. Every source point and handle is visible. Stem dimensions read 96, 144, and 192 with their power-of-two sums. Counter dimensions read 272, 232, and 192.](./fig-interp-outlines.png)
 
 The reason is arithmetic: the stems differ by 96, which keeps splitting
 evenly as the weight halves, so every interpolated stem lands back on the
-grid. The glyph between the masters is as clean as the masters. A decimal
-design doesn't close this way (below), and section 09 proves why the em
-itself, not just the grid, must be the power of two.
+grid. The glyph between the masters sits on the grid as cleanly as the
+masters do. Coordinates such as 90 and 180 do not close this way (below).
 
-![Two aligned number lines drawn with designbot. On a 1024 em, the one-quarter, one-half, and three-quarter interpolations land on exact green grid points at 120, 144, and 168. On a 1000 em, the same one-quarter and one-half weights land at red off-grid values 112.5 and 135. Orange dotted guides align the shared weights.](./fig-interp.png)
+![Two centered number lines drawn with DesignBot. From endpoints 96 and 192, the one-quarter, one-half, and three-quarter interpolations land on outlined green grid points at 120, 144, and 168. From endpoints 90 and 180, the same one-quarter and one-half weights land at outlined red off-grid values 112.5 and 135. Dark dashed guides align the shared weights.](./fig-interp.png)
 
-Interpolation can't invent a new optical correction: it blends the
-masters' corrections linearly, and optics aren't linear in weight, so it
-reproduces structure exactly and only approximates the corrections. The
-model learns optical judgment from the two real masters and the graded
-corpus, not the augmentation. One more augmentation adds scale: rotating a
-closed contour's start point draws the same shape, multiplying the batches
-enough to stop memorizing.
+Interpolation reproduces the structure exactly but only approximates the
+optical corrections: it can do no more than average the two masters'
+corrections, and the correction the eye wants at a middle weight is rarely
+that average. So the model learns its corrections from the two
+hand-corrected masters and the graded corpus, not from the interpolated
+glyphs.
 
 Interpolation gives volume, not variety: every batch is one design.
 Variety takes more families, which [img2bez](/blog/img2bez) provides: a

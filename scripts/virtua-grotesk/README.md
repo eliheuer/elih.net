@@ -9,7 +9,7 @@ explicitly committed.
 
 ## Where to edit
 
-The system has six deliberately separate layers:
+The system has seven deliberately separate layers:
 
 1. `src/inputs.rs` — pinned external fonts, UFOs, model runs, SVGs, and logs.
    Change an input here deliberately; generators never select the newest run.
@@ -19,13 +19,17 @@ The system has six deliberately separate layers:
    - `type_size`: the primitive type-size scale.
    - `role`: mappings from those primitives to jobs such as canvas background,
      grid levels, dimension text, Bézier handles, and curves.
-3. `src/lib.rs` — shared rendering mechanics. UFO loading, drawing helpers,
+3. `src/technical.rs` — the approved technical-drawing language established
+   by `fig-system-no.png` and `fig-system-ho.png`. It owns the real source
+   grid, metric furniture, glyph pen, point language, measurement caps, and
+   measurement typography.
+4. `src/lib.rs` — shared rendering mechanics. UFO loading, drawing helpers,
    dimensions, markers, labels, and collision-aware placement live here.
-4. `src/bin/*.rs` — one binary per figure group. These files contain content,
+5. `src/bin/*.rs` — one binary per figure group. These files contain content,
    geometry, and layout decisions; they should not contain raw RGB values.
-5. `src/content/blog/virtua-grotesk/*.png` — the live site-preview outputs.
+6. `src/content/blog/virtua-grotesk/*.png` — the live site-preview outputs.
    These may stay modified throughout a design pass without being committed.
-6. `build/preview/` — optional isolated scratch renders. This directory is
+7. `build/preview/` — optional isolated scratch renders. This directory is
    ignored by Git.
 
 To change a hue everywhere, edit its base swatch in `style::color`. To change
@@ -36,6 +40,48 @@ mapping are separate from the neutral swatches they currently use.
 The broad shared line and type roles retain their historical names (`PEN`,
 `PEN_LIGHT`, `FRAME_TEXT`, and so on) as compatibility mappings. Their actual
 values come from the primitive scales in `style.rs`.
+
+## Technical drawing preset
+
+Use `TechnicalStyle::section_three()` when a figure should look like the `no`
+and `HO` drawings. Do not copy their constants or rebuild their primitives in
+a figure binary. The binary should specify only the outlines, source-space
+placement, fill colors, metrics, and deliberately placed measurements.
+
+```rust
+let technical = TechnicalStyle::section_three();
+let frame = technical.frame(run, bottom, top);
+
+technical.background_grid(&mut sheet, &frame, &glyphs, bottom, top);
+technical.metric_system(
+    &mut sheet,
+    &frame,
+    run,
+    &sort_bounds,
+    &[0.0, 576.0],
+    &[-16.0, 592.0],
+    top,
+    bottom,
+);
+technical.glyph(&mut sheet, &outline, &frame, origin, fill);
+technical.measurement(
+    &mut sheet,
+    &frame,
+    origin,
+    TechnicalMeasurement::points(0, (32.0, 288.0), (132.0, 288.0), 100),
+);
+```
+
+Named modifiers document genuine semantic differences. For example,
+`with_grid_level_points()` uses green and red to distinguish points on and off
+the 8-unit grid while preserving every other section 03 convention. A
+continuous multi-glyph composition can use `continuous_background_grid()` and
+`metric_rules()` without creating a second visual system.
+
+When art direction changes a shared primitive, edit `TechnicalStyle` and
+rebuild its reference figures first. When art direction changes only one
+composition, keep the source coordinates and layout adjustment in that
+figure's binary.
 
 ## Color and export guardrails
 

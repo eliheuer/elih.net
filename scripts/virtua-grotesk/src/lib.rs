@@ -1,9 +1,11 @@
 //! Shared drawing mechanics for every Virtua Grotesk post figure.
 //!
 //! Visual decisions live in `style.rs`: base color swatches, line and type
-//! scales, and semantic role mappings. This file owns reusable mechanics:
-//! UFO loading, frames, labels, dimensions, point markers, and collision-aware
-//! annotation placement. Binaries under `src/bin/` own content and layout.
+//! scales, and semantic role mappings. The reviewed section 03 technical
+//! drawing language lives in `technical.rs`. This file owns lower-level
+//! mechanics: UFO loading, frames, labels, dimensions, point markers, and
+//! collision-aware annotation placement. Binaries under `src/bin/` own
+//! content and layout.
 //!
 //! POINT LANGUAGE (the key innovation, drawn not told):
 //!   - circle = smooth on-curve, square = corner, small circle = off-curve
@@ -17,7 +19,9 @@ use std::path::{Path, PathBuf};
 
 pub mod inputs;
 pub mod style;
+pub mod technical;
 pub use style::*;
+pub use technical::*;
 
 /// Handle lengths worth calling out: the values the system actually
 /// reuses (all with high 2-adic valuation or stem-adjacent).

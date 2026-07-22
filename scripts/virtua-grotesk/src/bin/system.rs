@@ -18,368 +18,17 @@ use designbot::prelude::Color;
 use designbot_render::Renderer;
 use virtua_grotesk_figures::*;
 
-// --- shared system-figure drawing language ----------------------------------------
-
-// Keep these equal to the reviewed OG image. The inline system figures are a
-// continuation of that drawing, not a second annotation system.
-const SYSTEM_STROKE: f64 = line::HERO;
-const SYSTEM_GRID_STROKE: f64 = line::FINE;
-const SYSTEM_GRID_UNIT: f64 = 8.0;
-const SYSTEM_POINT_SIZE: f64 = 20.0;
-const SYSTEM_MEASUREMENT_TEXT_SIZE: f64 = 32.0;
-const SYSTEM_MEASUREMENT_TEXT_WEIGHT: f32 = 600.0;
-const SYSTEM_MEASUREMENT_CAP: f64 = 12.0;
-const SYSTEM_MEASUREMENT_LINE_GAP: f64 = 28.0;
-const SYSTEM_POINT_END_INSET: f64 = 30.0;
-const SYSTEM_EDGE_END_INSET: f64 = 20.0;
-const SYSTEM_COUNTER_LINE_GAP: f64 = 72.0;
-const SYSTEM_COUNTER_LABEL_SHIFT: f64 = 160.0;
-
-#[derive(Clone, Copy)]
-struct SystemMeasurement {
-    glyph: usize,
-    p0: (f64, f64),
-    p1: (f64, f64),
-    value: i64,
-    label_shift: (f64, f64),
-    sum_break_after: usize,
-    knockout: bool,
-    line_gap: Option<(f64, f64)>,
-    end_inset: f64,
-}
-
-const fn point_measurement(
-    glyph: usize,
-    p0: (f64, f64),
-    p1: (f64, f64),
-    value: i64,
-) -> SystemMeasurement {
-    SystemMeasurement {
-        glyph,
-        p0,
-        p1,
-        value,
-        label_shift: (0.0, 0.0),
-        sum_break_after: 0,
-        knockout: false,
-        line_gap: None,
-        end_inset: SYSTEM_POINT_END_INSET,
-    }
-}
-
-const fn edge_measurement(
-    glyph: usize,
-    p0: (f64, f64),
-    p1: (f64, f64),
-    value: i64,
-) -> SystemMeasurement {
-    SystemMeasurement {
-        glyph,
-        p0,
-        p1,
-        value,
-        label_shift: (0.0, 0.0),
-        sum_break_after: 0,
-        knockout: false,
-        line_gap: None,
-        end_inset: SYSTEM_EDGE_END_INSET,
-    }
-}
-
-const fn break_measurement_sum(
-    mut measurement: SystemMeasurement,
-    after: usize,
-) -> SystemMeasurement {
-    measurement.sum_break_after = after;
-    measurement
-}
-
-const fn counter_measurement(mut measurement: SystemMeasurement) -> SystemMeasurement {
-    measurement.knockout = true;
-    measurement
-}
-
-const fn gap_measurement_line(
-    mut measurement: SystemMeasurement,
-    center: f64,
-    half_height: f64,
-) -> SystemMeasurement {
-    measurement.line_gap = Some((center, half_height));
-    measurement
-}
-
-const fn shift_measurement_label(
-    mut measurement: SystemMeasurement,
-    dx: f64,
-    dy: f64,
-) -> SystemMeasurement {
-    measurement.label_shift = (dx, dy);
-    measurement
-}
-
-fn system_construction_node(sheet: &mut Sheet, x: f64, y: f64) {
-    marker_with_fill_sized(
-        sheet,
-        x,
-        y,
-        PtRole::Smooth,
-        role::figure::pen(),
-        role::figure::point_fill(),
-        SYSTEM_POINT_SIZE,
-        SYSTEM_STROKE,
-    );
-}
-
-/// The real, uniform 8-unit source grid. Vertical coordinates restart at each
-/// sort boundary, as they do in a font editor.
-fn system_background_grid(
-    sheet: &mut Sheet,
-    frame: &Frame,
-    glyphs: &[(&Outline, f64)],
-    bottom: f64,
-    top: f64,
-) {
-    let x0 = frame.x(0.0);
-    let x1 = frame.x(glyphs
-        .last()
-        .map(|(outline, origin)| origin + outline.width)
-        .unwrap_or(0.0));
-
-    let mut v = bottom;
-    while v <= top {
-        sheet
-            .ctx
-            .no_fill()
-            .stroke(role::grid::faint())
-            .stroke_width(SYSTEM_GRID_STROKE);
-        sheet.ctx.line(x0, frame.y(v), x1, frame.y(v));
-        v += SYSTEM_GRID_UNIT;
-    }
-
-    for (outline, origin) in glyphs {
-        let mut u = 0.0;
-        while u <= outline.width {
-            sheet
-                .ctx
-                .no_fill()
-                .stroke(role::grid::faint())
-                .stroke_width(SYSTEM_GRID_STROKE);
-            let x = frame.x(origin + u);
-            sheet.ctx.line(x, frame.y(bottom), x, frame.y(top));
-            u += SYSTEM_GRID_UNIT;
-        }
-    }
-}
-
-/// Metric rules, advance boundaries, and intersection nodes use the same
-/// geometry and pen as the OG image. The frame ends at the true overshoots.
-fn system_metric_system(
-    sheet: &mut Sheet,
-    frame: &Frame,
-    run: f64,
-    bounds: &[f64],
-    solid: &[f64],
-    dashed: &[f64],
-    top: f64,
-    bottom: f64,
-) {
-    let x0 = frame.x(0.0);
-    let x1 = frame.x(run);
-    let color = role::figure::pen();
-
-    sheet
-        .ctx
-        .no_fill()
-        .stroke(color)
-        .stroke_width(SYSTEM_STROKE);
-    sheet.ctx.line_dash(&[10.0, 10.0]);
-    for &uy in dashed {
-        sheet.ctx.line(x0, frame.y(uy), x1, frame.y(uy));
-    }
-    sheet.ctx.line_dash(&[]);
-    for &uy in solid {
-        sheet.ctx.line(x0, frame.y(uy), x1, frame.y(uy));
-    }
-
-    let xs: Vec<f64> = bounds.iter().map(|bound| frame.x(*bound)).collect();
-    cell_dividers_colored(
-        sheet,
-        &xs,
-        frame.y(top),
-        frame.y(bottom),
-        color,
-        role::figure::point_fill(),
-        SYSTEM_STROKE,
-    );
-
-    let mut ys: Vec<f64> = dashed.iter().map(|uy| frame.y(*uy)).collect();
-    ys.extend(solid.iter().map(|uy| frame.y(*uy)));
-    for x in xs {
-        for &y in &ys {
-            system_construction_node(sheet, x, y);
-        }
-    }
-}
-
-fn system_measurement_label(
-    sheet: &mut Sheet,
-    measurement: SystemMeasurement,
-    text: &str,
-    x: f64,
-    y: f64,
-    align: i8,
-) {
-    if measurement.knockout {
-        sheet.label_padded_weighted_on(
-            text,
-            x,
-            y,
-            SYSTEM_MEASUREMENT_TEXT_SIZE,
-            role::figure::pen(),
-            align,
-            role::figure::background(),
-            SYSTEM_MEASUREMENT_TEXT_WEIGHT,
-        );
-    } else {
-        sheet.label_weighted(
-            text,
-            x,
-            y,
-            SYSTEM_MEASUREMENT_TEXT_SIZE,
-            role::figure::pen(),
-            align,
-            SYSTEM_MEASUREMENT_TEXT_WEIGHT,
-        );
-    }
-}
-
-/// An OG-style capped size label. These are intentionally independent from
-/// the removed advance-width band so the enlarged figures can retain the
-/// useful stroke and counter dimensions without giving space back to metrics.
-fn system_glyph_measurement(
-    sheet: &mut Sheet,
-    frame: &Frame,
-    origin: f64,
-    measurement: SystemMeasurement,
-) {
-    let p0 = (
-        frame.x(origin + measurement.p0.0),
-        frame.y(measurement.p0.1),
-    );
-    let p1 = (
-        frame.x(origin + measurement.p1.0),
-        frame.y(measurement.p1.1),
-    );
-    let dx = p1.0 - p0.0;
-    let dy = p1.1 - p0.1;
-    let length = (dx * dx + dy * dy).sqrt();
-    let direction = (dx / length, dy / length);
-    let normal = (-direction.1, direction.0);
-    let q0 = (
-        p0.0 + direction.0 * measurement.end_inset,
-        p0.1 + direction.1 * measurement.end_inset,
-    );
-    let q1 = (
-        p1.0 - direction.0 * measurement.end_inset,
-        p1.1 - direction.1 * measurement.end_inset,
-    );
-    let color = role::figure::pen();
-
-    sheet
-        .ctx
-        .no_fill()
-        .stroke(color)
-        .stroke_width(SYSTEM_STROKE);
-    if let Some((gap_center, gap_half_height)) = measurement.line_gap {
-        let gap_center = frame.y(gap_center);
-        sheet
-            .ctx
-            .line(q0.0, q0.1, q0.0, gap_center - gap_half_height);
-        sheet
-            .ctx
-            .line(q1.0, gap_center + gap_half_height, q1.0, q1.1);
-    } else {
-        sheet.ctx.line(q0.0, q0.1, q1.0, q1.1);
-    }
-    for q in [q0, q1] {
-        sheet.ctx.line(
-            q.0 - normal.0 * SYSTEM_MEASUREMENT_CAP,
-            q.1 - normal.1 * SYSTEM_MEASUREMENT_CAP,
-            q.0 + normal.0 * SYSTEM_MEASUREMENT_CAP,
-            q.1 + normal.1 * SYSTEM_MEASUREMENT_CAP,
-        );
-    }
-
-    let midpoint = ((q0.0 + q1.0) / 2.0, (q0.1 + q1.1) / 2.0);
-    let decomposition = p2sum(measurement.value);
-    let parts: Vec<&str> = decomposition.split('+').collect();
-    let sum_lines = if measurement.sum_break_after > 0 && measurement.sum_break_after < parts.len()
-    {
-        vec![
-            parts[..measurement.sum_break_after].join("+"),
-            format!("+{}", parts[measurement.sum_break_after..].join("+")),
-        ]
-    } else {
-        vec![decomposition]
-    };
-
-    if dx.abs() >= dy.abs() {
-        system_measurement_label(
-            sheet,
-            measurement,
-            &measurement.value.to_string(),
-            midpoint.0 + measurement.label_shift.0,
-            midpoint.1 + 20.0 + measurement.label_shift.1,
-            0,
-        );
-        for (index, line) in sum_lines.iter().enumerate() {
-            system_measurement_label(
-                sheet,
-                measurement,
-                line,
-                midpoint.0 + measurement.label_shift.0,
-                midpoint.1 - 48.0 + measurement.label_shift.1
-                    - index as f64 * SYSTEM_MEASUREMENT_LINE_GAP,
-                0,
-            );
-        }
-    } else {
-        system_measurement_label(
-            sheet,
-            measurement,
-            &measurement.value.to_string(),
-            midpoint.0 - 16.0 + measurement.label_shift.0,
-            midpoint.1 - 12.0 + measurement.label_shift.1,
-            1,
-        );
-        for (index, line) in sum_lines.iter().enumerate() {
-            system_measurement_label(
-                sheet,
-                measurement,
-                line,
-                midpoint.0 + 16.0 + measurement.label_shift.0,
-                midpoint.1 - 12.0 + measurement.label_shift.1
-                    - index as f64 * SYSTEM_MEASUREMENT_LINE_GAP,
-                -1,
-            );
-        }
-    }
-}
-
-fn system_frame(run: f64, bottom: f64, top: f64) -> Frame {
-    let s = ((W - 2.0 * MARGIN) / run).min((H - 2.0 * MARGIN) / (top - bottom));
-    Frame {
-        s,
-        x0: (W - run * s) / 2.0,
-        baseline: MARGIN - bottom * s,
-    }
-}
+// The shared drawing language lives in `technical.rs`. This binary now owns
+// only the four compositions and their source-space measurements.
+const COUNTER_LINE_GAP: f64 = 72.0;
+const COUNTER_LABEL_SHIFT: f64 = 160.0;
 
 // --- fig-system-no -----------------------------------------------------------------
 
 fn fig_no(renderer: &Renderer, mono: &str, reg: &std::path::Path, out: &std::path::Path) {
     let mut sheet = new_sheet(renderer, mono);
     sheet.ctx.line_cap("round");
+    let technical = TechnicalStyle::section_three();
 
     let n = load_outline(reg, "n");
     let o = load_outline(reg, "o");
@@ -387,14 +36,14 @@ fn fig_no(renderer: &Renderer, mono: &str, reg: &std::path::Path, out: &std::pat
     const BOTTOM: f64 = -16.0;
     const TOP: f64 = 592.0;
     let run_units = n.width + o.width;
-    let f = system_frame(run_units, BOTTOM, TOP);
+    let f = technical.frame(run_units, BOTTOM, TOP);
 
     let x_n = 0.0;
     let x_o = n.width;
     let glyphs = [(&n, x_n), (&o, x_o)];
     let bounds = [x_n, x_o, run_units];
-    system_background_grid(&mut sheet, &f, &glyphs, BOTTOM, TOP);
-    system_metric_system(
+    technical.background_grid(&mut sheet, &f, &glyphs, BOTTOM, TOP);
+    technical.metric_system(
         &mut sheet,
         &f,
         run_units,
@@ -409,30 +58,25 @@ fn fig_no(renderer: &Renderer, mono: &str, reg: &std::path::Path, out: &std::pat
         (&n, x_n, role::figure::yellow()),
         (&o, x_o, role::figure::green()),
     ] {
-        draw_figure_glyph(&mut sheet, outline, f.s, f.x(ox), f.baseline, fill);
+        technical.glyph(&mut sheet, outline, &f, ox, fill);
     }
 
     // Representative stroke sizes plus the open n counter and closed o
     // counter. Values and endpoints are taken directly from the current UFO.
-    const MEASUREMENTS: [SystemMeasurement; 6] = [
-        edge_measurement(0, (64.0, 288.0), (160.0, 288.0), 96),
-        counter_measurement(edge_measurement(0, (160.0, 288.0), (432.0, 288.0), 272)),
-        point_measurement(1, (32.0, 288.0), (132.0, 288.0), 100),
-        point_measurement(1, (304.0, 504.0), (304.0, 592.0), 88),
-        shift_measurement_label(
-            gap_measurement_line(
-                counter_measurement(point_measurement(1, (304.0, 72.0), (304.0, 504.0), 432)),
-                288.0,
-                SYSTEM_COUNTER_LINE_GAP,
-            ),
-            0.0,
-            SYSTEM_COUNTER_LABEL_SHIFT,
-        ),
-        counter_measurement(point_measurement(1, (132.0, 288.0), (484.0, 288.0), 352)),
+    const MEASUREMENTS: [TechnicalMeasurement; 6] = [
+        TechnicalMeasurement::edges(0, (64.0, 288.0), (160.0, 288.0), 96),
+        TechnicalMeasurement::edges(0, (160.0, 288.0), (432.0, 288.0), 272).counter(),
+        TechnicalMeasurement::points(1, (32.0, 288.0), (132.0, 288.0), 100),
+        TechnicalMeasurement::points(1, (304.0, 504.0), (304.0, 592.0), 88),
+        TechnicalMeasurement::points(1, (304.0, 72.0), (304.0, 504.0), 432)
+            .counter()
+            .gap_line(288.0, COUNTER_LINE_GAP)
+            .shift_label(0.0, COUNTER_LABEL_SHIFT),
+        TechnicalMeasurement::points(1, (132.0, 288.0), (484.0, 288.0), 352).counter(),
     ];
     let origins = [x_n, x_o];
     for measurement in MEASUREMENTS {
-        system_glyph_measurement(&mut sheet, &f, origins[measurement.glyph], measurement);
+        technical.measurement(&mut sheet, &f, origins[measurement.glyph], measurement);
     }
     sheet.save(renderer, out);
 }
@@ -442,6 +86,7 @@ fn fig_no(renderer: &Renderer, mono: &str, reg: &std::path::Path, out: &std::pat
 fn fig_ho(renderer: &Renderer, mono: &str, reg: &std::path::Path, out: &std::path::Path) {
     let mut sheet = new_sheet(renderer, mono);
     sheet.ctx.line_cap("round");
+    let technical = TechnicalStyle::section_three();
 
     let h = load_outline(reg, "H");
     let o = load_outline(reg, "O");
@@ -449,14 +94,14 @@ fn fig_ho(renderer: &Renderer, mono: &str, reg: &std::path::Path, out: &std::pat
     const BOTTOM: f64 = -16.0;
     const TOP: f64 = 784.0;
     let run_units = h.width + o.width;
-    let f = system_frame(run_units, BOTTOM, TOP);
+    let f = technical.frame(run_units, BOTTOM, TOP);
 
     let x_h = 0.0;
     let x_o = h.width;
     let glyphs = [(&h, x_h), (&o, x_o)];
     let bounds = [x_h, x_o, run_units];
-    system_background_grid(&mut sheet, &f, &glyphs, BOTTOM, TOP);
-    system_metric_system(
+    technical.background_grid(&mut sheet, &f, &glyphs, BOTTOM, TOP);
+    technical.metric_system(
         &mut sheet,
         &f,
         run_units,
@@ -471,31 +116,26 @@ fn fig_ho(renderer: &Renderer, mono: &str, reg: &std::path::Path, out: &std::pat
         (&h, x_h, role::figure::orange()),
         (&o, x_o, role::figure::red()),
     ] {
-        draw_figure_glyph(&mut sheet, outline, f.s, f.x(ox), f.baseline, fill);
+        technical.glyph(&mut sheet, outline, &f, ox, fill);
     }
 
     // The H opening and O counter join the representative stem and crossbar
     // sizes. Values and endpoints are taken directly from the current UFO.
-    const MEASUREMENTS: [SystemMeasurement; 7] = [
-        point_measurement(0, (80.0, 600.0), (184.0, 600.0), 104),
-        counter_measurement(edge_measurement(0, (184.0, 600.0), (584.0, 600.0), 400)),
-        edge_measurement(0, (384.0, 360.0), (384.0, 456.0), 96),
-        break_measurement_sum(point_measurement(1, (48.0, 384.0), (156.0, 384.0), 108), 2),
-        point_measurement(1, (424.0, 684.0), (424.0, 784.0), 100),
-        shift_measurement_label(
-            gap_measurement_line(
-                counter_measurement(point_measurement(1, (424.0, 84.0), (424.0, 684.0), 600)),
-                384.0,
-                SYSTEM_COUNTER_LINE_GAP,
-            ),
-            0.0,
-            SYSTEM_COUNTER_LABEL_SHIFT,
-        ),
-        counter_measurement(point_measurement(1, (156.0, 384.0), (692.0, 384.0), 536)),
+    const MEASUREMENTS: [TechnicalMeasurement; 7] = [
+        TechnicalMeasurement::points(0, (80.0, 600.0), (184.0, 600.0), 104),
+        TechnicalMeasurement::edges(0, (184.0, 600.0), (584.0, 600.0), 400).counter(),
+        TechnicalMeasurement::edges(0, (384.0, 360.0), (384.0, 456.0), 96),
+        TechnicalMeasurement::points(1, (48.0, 384.0), (156.0, 384.0), 108).break_sum_after(2),
+        TechnicalMeasurement::points(1, (424.0, 684.0), (424.0, 784.0), 100),
+        TechnicalMeasurement::points(1, (424.0, 84.0), (424.0, 684.0), 600)
+            .counter()
+            .gap_line(384.0, COUNTER_LINE_GAP)
+            .shift_label(0.0, COUNTER_LABEL_SHIFT),
+        TechnicalMeasurement::points(1, (156.0, 384.0), (692.0, 384.0), 536).counter(),
     ];
     let origins = [x_h, x_o];
     for measurement in MEASUREMENTS {
-        system_glyph_measurement(&mut sheet, &f, origins[measurement.glyph], measurement);
+        technical.measurement(&mut sheet, &f, origins[measurement.glyph], measurement);
     }
     sheet.save(renderer, out);
 }
