@@ -6,27 +6,22 @@ use designbot_render::Renderer;
 use virtua_grotesk_figures::*;
 
 fn bit_row(sheet: &mut Sheet, x0: f64, y0: f64, cell: f64, gap: f64, bits: &[u8], color: Color) {
+    let vb = ValueBox {
+        w: cell,
+        h: cell,
+        stroke: line::BOX,
+        text_size: cell * 0.58,
+        text_dy: cell * 0.28,
+        weight: 560.0,
+    };
     for (i, bit) in bits.iter().enumerate() {
         let x = x0 + i as f64 * (cell + gap);
-        sheet
-            .ctx
-            .fill(if *bit == 1 {
-                color
-            } else {
-                role::figure::background()
-            })
-            .stroke(role::figure::pen())
-            .stroke_width(8.0);
-        sheet.ctx.rect(x, y0, cell, cell);
-        sheet.label_weighted(
-            if *bit == 1 { "1" } else { "0" },
-            x + cell / 2.0,
-            y0 + cell * 0.28,
-            cell * 0.58,
-            role::figure::pen(),
-            0,
-            560.0,
-        );
+        let fill = if *bit == 1 {
+            color
+        } else {
+            role::figure::background()
+        };
+        vb.draw(sheet, x, y0, fill, if *bit == 1 { "1" } else { "0" });
     }
 }
 
@@ -116,22 +111,12 @@ fn fig_midpoint(renderer: &Renderer, mono: &str, out: &std::path::Path) {
         .stroke_width(STROKE);
     sheet.ctx.draw_path(curve);
 
+    let dot = Marker {
+        size: POINT_SIZE,
+        stroke: STROKE,
+    };
     let marker = |sheet: &mut Sheet, p: (f64, f64), fill: Color, square: bool| {
-        sheet
-            .ctx
-            .fill(fill)
-            .stroke(role::figure::pen())
-            .stroke_width(STROKE);
-        let radius = POINT_SIZE / 2.0;
-        if square {
-            sheet
-                .ctx
-                .rect(cx(p.0) - radius, cy(p.1) - radius, POINT_SIZE, POINT_SIZE);
-        } else {
-            sheet
-                .ctx
-                .oval(cx(p.0) - radius, cy(p.1) - radius, POINT_SIZE, POINT_SIZE);
-        }
+        dot.draw(sheet, cx(p.0), cy(p.1), fill, square);
     };
     for point in p {
         marker(&mut sheet, point, role::figure::red(), true);
@@ -188,30 +173,30 @@ fn fig_ladder(renderer: &Renderer, mono: &str, out: &std::path::Path) {
     const BH: f64 = 88.0;
     const TOP: f64 = 1180.0;
 
+    let rung = ValueBox {
+        w: BW,
+        h: BH,
+        stroke: line::BOX,
+        text_size: 60.0,
+        text_dy: BH / 2.0 - 18.0,
+        weight: 560.0,
+    };
     for ((values, color), x) in chains.iter().zip(xs) {
         let last_y = TOP - (values.len() - 1) as f64 * DY;
         sheet
             .ctx
             .no_fill()
             .stroke(role::figure::pen())
-            .stroke_width(10.0);
+            .stroke_width(line::EXTRA_HEAVY);
         sheet.ctx.line(x, TOP, x, last_y);
         for (i, value) in values.iter().enumerate() {
             let y = TOP - i as f64 * DY;
-            sheet
-                .ctx
-                .fill(*color)
-                .stroke(role::figure::pen())
-                .stroke_width(8.0);
-            sheet.ctx.rect(x - BW / 2.0, y - BH / 2.0, BW, BH);
-            sheet.label_weighted(
+            rung.draw(
+                &mut sheet,
+                x - BW / 2.0,
+                y - BH / 2.0,
+                *color,
                 &value.to_string(),
-                x,
-                y - 18.0,
-                60.0,
-                role::figure::pen(),
-                0,
-                560.0,
             );
         }
         if values.last().copied() != Some(1) {
@@ -272,11 +257,148 @@ fn fig_bits(renderer: &Renderer, mono: &str, out: &std::path::Path) {
             .ctx
             .no_fill()
             .stroke(role::figure::pen())
-            .stroke_width(8.0);
+            .stroke_width(line::BOX);
         sheet.ctx.line(x_start, by, x_end, by);
         sheet.ctx.line(x_start, by, x_start, by + 14.0);
         sheet.ctx.line(x_end, by, x_end, by + 14.0);
     }
+
+    sheet.save(renderer, out);
+}
+
+fn fig_scaling(renderer: &Renderer, mono: &str, out: &std::path::Path) {
+    let mut sheet = new_sheet(renderer, mono);
+    sheet.ctx.line_cap("round");
+
+    // Device value of coordinate c at pixel size p on an em: 64·c·p/em
+    // sixty-fourths. A cell is green when that value is an integer on the
+    // rasterizer's 1/64 px grid, red when it must round. Rows use real
+    // design values: the x-height (576 / 562), the 88 counter measurement,
+    // and the corrected 116. The 1000-em panel is red everywhere.
+    let sizes = [12u64, 13, 14, 15, 16, 17, 18];
+    let rows: [(u64, u64); 3] = [(576, 562), (88, 88), (116, 116)];
+    const CELL: f64 = 128.0;
+    const PITCH: f64 = 140.0;
+    const PANEL_W: f64 = 6.0 * PITCH + CELL;
+    let panels: [(u64, f64, usize); 2] = [(1024, 280.0, 0), (1000, 1488.0, 1)];
+    const ROW0_Y: f64 = 640.0;
+    const ROW_DY: f64 = 140.0;
+    let cell_box = ValueBox {
+        w: CELL,
+        h: CELL,
+        stroke: line::BOX,
+        text_size: 68.0,
+        text_dy: 30.0,
+        weight: 560.0,
+    };
+
+    for (em, x0, which) in panels {
+        sheet.label_weighted(
+            &em.to_string(),
+            x0 + PANEL_W / 2.0,
+            928.0,
+            84.0,
+            role::figure::pen(),
+            0,
+            560.0,
+        );
+        for (i, p) in sizes.iter().enumerate() {
+            sheet.label_weighted(
+                &p.to_string(),
+                x0 + i as f64 * PITCH + CELL / 2.0,
+                808.0,
+                60.0,
+                role::figure::pen(),
+                0,
+                560.0,
+            );
+        }
+        for (r, row) in rows.iter().enumerate() {
+            let c = if which == 0 { row.0 } else { row.1 };
+            let y = ROW0_Y - r as f64 * ROW_DY;
+            sheet.label_weighted(
+                &c.to_string(),
+                x0 - 40.0,
+                y + 34.0,
+                72.0,
+                role::figure::pen(),
+                1,
+                560.0,
+            );
+            for (i, p) in sizes.iter().enumerate() {
+                let exact = (64 * c * p) % em == 0;
+                let x = x0 + i as f64 * PITCH;
+                let fill = if exact {
+                    role::figure::green()
+                } else {
+                    role::figure::red()
+                };
+                cell_box.draw(&mut sheet, x, y, fill, if exact { "" } else { "×" });
+            }
+        }
+    }
+
+    sheet.save(renderer, out);
+}
+
+fn fig_ruler(renderer: &Renderer, mono: &str, out: &std::path::Path) {
+    let mut sheet = new_sheet(renderer, mono);
+    sheet.ctx.line_cap("round");
+
+    // The rasterizer's vertical ruler around nine pixels, one tick per 1/64
+    // px. At 16 px the 1024-em x-height 576 lands exactly on the integer
+    // pixel tick (9.000); the 1000-em x-height 562 lands between ticks at
+    // 8.992 px = 575.488/64 and must round.
+    const RULER_Y: f64 = 660.0;
+    const X0: f64 = 260.0;
+    const TICK_DX: f64 = 2000.0 / 6.0;
+    const T_LO: i64 = 573;
+    const T_HI: i64 = 579;
+    let tick_x = |t: f64| X0 + (t - T_LO as f64) * TICK_DX;
+
+    sheet
+        .ctx
+        .no_fill()
+        .stroke(role::figure::pen())
+        .stroke_width(line::EXTRA_HEAVY);
+    sheet.ctx.line(200.0, RULER_Y, 2320.0, RULER_Y);
+    for t in T_LO..=T_HI {
+        let half = if t % 64 == 0 { 170.0 } else { 90.0 };
+        sheet
+            .ctx
+            .no_fill()
+            .stroke(role::figure::pen())
+            .stroke_width(line::BOX);
+        let x = tick_x(t as f64);
+        sheet.ctx.line(x, RULER_Y - half, x, RULER_Y + half);
+    }
+
+    let dot = Marker {
+        size: 56.0,
+        stroke: line::BOX,
+    };
+    let x_exact = tick_x(576.0);
+    let x_round = tick_x(575.488);
+    dot.draw(&mut sheet, x_exact, RULER_Y, role::figure::green(), false);
+    dot.draw(&mut sheet, x_round, RULER_Y, role::figure::red(), false);
+    sheet.label_weighted(
+        "9.000",
+        x_exact,
+        940.0,
+        72.0,
+        role::figure::pen(),
+        0,
+        560.0,
+    );
+    sheet.label_weighted(
+        "8.992",
+        x_round,
+        400.0,
+        72.0,
+        role::figure::pen(),
+        0,
+        560.0,
+    );
 
     sheet.save(renderer, out);
 }
@@ -289,4 +411,6 @@ fn main() {
     fig_midpoint(&renderer, &mono, &outputs.blog("fig-midpoint.png"));
     fig_ladder(&renderer, &mono, &outputs.blog("fig-ladder.png"));
     fig_bits(&renderer, &mono, &outputs.blog("fig-bits.png"));
+    fig_scaling(&renderer, &mono, &outputs.blog("fig-scaling.png"));
+    fig_ruler(&renderer, &mono, &outputs.blog("fig-ruler.png"));
 }

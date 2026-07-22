@@ -691,14 +691,9 @@ corrections are spent last, where antialiasing absorbs them. The level
 of a coordinate is how far down the scaling ladder it survives, and a
 1000 em has no ladder to survive on.
 
-{/* TODO: designbot figure: scaling-robustness matrix. Rows: grid
-levels 64 / 8 / 2 (metrics, structure, correction); columns: pixel
-sizes 12, 14, 16, 18, 24, 32; each cell marked exact or rounded. A
-1024-em panel beside a 1000-em panel that is rounded everywhere. */}
+![Two grids of colored cells drawn with designbot, one for a 1024 em and one for a 1000 em. Rows are the coordinates 576, 88, and 116, with 562 in place of 576 on the 1000 em; columns are pixel sizes 12 through 18. In the 1024 panel the 576 row is green at every size, the 88 row is green at even sizes, and the 116 row is green at 12 and 16. Every cell of the 1000 panel is a red ×.](./fig-scaling.png)
 
-{/* TODO: designbot figure: the same x-height line at 16 px on both
-ems, on an enlarged pixel grid: 576/1024 landing on the 9-pixel row,
-562/1000 landing at 8.992 px across a row boundary. */}
+![A horizontal ruler drawn with designbot with ticks every 1/64 of a pixel and a taller tick at the nine-pixel boundary. A green point sits exactly on the tall tick, labeled 9.000: the 1024-em x-height at 16 pixels. A red point sits between ticks, labeled 8.992: the 1000-em x-height.](./fig-ruler.png)
 
 One more alignment is particular to this pipeline. Render a 1024-em
 glyph at 1024 pixels and one font unit is one pixel (the specimen atop

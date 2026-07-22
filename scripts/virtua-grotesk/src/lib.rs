@@ -558,6 +558,69 @@ impl Sheet<'_> {
     }
 }
 
+// --- abstract-figure primitives -----------------------------------------------------
+
+/// The stroked, filled rectangle with a centered mono numeral that the
+/// abstract figures share (ladder rungs, bit cells, exactness cells). The
+/// figure states its proportions once and keeps layout local; this owns only
+/// the drawing. `text_dy` is the numeral baseline's offset above the box
+/// bottom, tuned optically per box proportion.
+pub struct ValueBox {
+    pub w: f64,
+    pub h: f64,
+    pub stroke: f64,
+    pub text_size: f64,
+    pub text_dy: f64,
+    pub weight: f32,
+}
+
+impl ValueBox {
+    /// Draw at the box's lower-left corner. An empty `txt` draws no numeral.
+    pub fn draw(&self, sheet: &mut Sheet, x: f64, y: f64, fill: Color, txt: &str) {
+        sheet
+            .ctx
+            .fill(fill)
+            .stroke(role::figure::pen())
+            .stroke_width(self.stroke);
+        sheet.ctx.rect(x, y, self.w, self.h);
+        if !txt.is_empty() {
+            sheet.label_weighted(
+                txt,
+                x + self.w / 2.0,
+                y + self.text_dy,
+                self.text_size,
+                role::figure::pen(),
+                0,
+                self.weight,
+            );
+        }
+    }
+}
+
+/// A single position marker in the figure language: pen-stroked circle (or
+/// square, for on-curve corner semantics), opaque fill, centered on the
+/// position.
+pub struct Marker {
+    pub size: f64,
+    pub stroke: f64,
+}
+
+impl Marker {
+    pub fn draw(&self, sheet: &mut Sheet, x: f64, y: f64, fill: Color, square: bool) {
+        sheet
+            .ctx
+            .fill(fill)
+            .stroke(role::figure::pen())
+            .stroke_width(self.stroke);
+        let r = self.size / 2.0;
+        if square {
+            sheet.ctx.rect(x - r, y - r, self.size, self.size);
+        } else {
+            sheet.ctx.oval(x - r, y - r, self.size, self.size);
+        }
+    }
+}
+
 // --- coordinate frame + furniture --------------------------------------------------------
 
 pub struct Frame {

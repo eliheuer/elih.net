@@ -374,6 +374,14 @@ fn fig_semantic(renderer: &Renderer, mono: &str, reg: &std::path::Path, out: &st
     let rx = DIVIDER_X + 90.0;
     let cell = 86.0;
     let gap = 10.0;
+    let bit_box = ValueBox {
+        w: cell,
+        h: cell,
+        stroke: line::HERO,
+        text_size: 44.0,
+        text_dy: 22.0,
+        weight: 400.0,
+    };
     let draw_bits = |sheet: &mut Sheet, value: u32, y: f64, fill: Color| {
         sheet.label(
             &value.to_string(),
@@ -386,24 +394,12 @@ fn fig_semantic(renderer: &Renderer, mono: &str, reg: &std::path::Path, out: &st
         for bit in 0..7 {
             let x = rx + 150.0 + bit as f64 * (cell + gap);
             let one = (value >> (6 - bit)) & 1 == 1;
-            sheet
-                .ctx
-                .fill(if one {
-                    fill
-                } else {
-                    role::figure::background()
-                })
-                .stroke(role::figure::pen())
-                .stroke_width(line::HERO);
-            sheet.ctx.rect(x, y, cell, cell);
-            sheet.label(
-                if one { "1" } else { "0" },
-                x + cell / 2.0,
-                y + 22.0,
-                44.0,
-                role::figure::pen(),
-                0,
-            );
+            let cell_fill = if one {
+                fill
+            } else {
+                role::figure::background()
+            };
+            bit_box.draw(sheet, x, y, cell_fill, if one { "1" } else { "0" });
         }
     };
     draw_bits(&mut sheet, 96, 1000.0, role::figure::orange());

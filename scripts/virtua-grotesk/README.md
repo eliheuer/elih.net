@@ -25,6 +25,12 @@ The system has seven deliberately separate layers:
    measurement typography.
 4. `src/lib.rs` — shared rendering mechanics. UFO loading, drawing helpers,
    dimensions, markers, labels, and collision-aware placement live here.
+   The abstract figures share two primitives: `ValueBox` (the stroked,
+   filled rectangle with a centered mono numeral used by ladder rungs, bit
+   cells, and exactness cells; box strokes are `line::BOX`) and `Marker`
+   (a single pen-stroked position dot). A figure states each primitive's
+   proportions once, locally, and calls `draw`; the primitives own only
+   the drawing, never the layout.
 5. `src/bin/*.rs` — one binary per figure group. These files contain content,
    geometry, and layout decisions; they should not contain raw RGB values.
 6. `src/content/blog/virtua-grotesk/*.png` — the live site-preview outputs.

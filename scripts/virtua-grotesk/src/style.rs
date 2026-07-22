@@ -114,6 +114,9 @@ pub mod line {
     pub const REGULAR: f64 = 4.0;
     pub const HEAVY: f64 = 5.0;
     pub const HERO: f64 = 6.0;
+    /// Stroke of the abstract-figure box language (ladder rungs, bit cells,
+    /// exactness cells) and its tick marks.
+    pub const BOX: f64 = 8.0;
     pub const EXTRA_HEAVY: f64 = 10.0;
 }
 
