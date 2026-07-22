@@ -341,68 +341,6 @@ fn fig_scaling(renderer: &Renderer, mono: &str, out: &std::path::Path) {
     sheet.save(renderer, out);
 }
 
-fn fig_ruler(renderer: &Renderer, mono: &str, out: &std::path::Path) {
-    let mut sheet = new_sheet(renderer, mono);
-    sheet.ctx.line_cap("round");
-
-    // The rasterizer's vertical ruler around nine pixels, one tick per 1/64
-    // px. At 16 px the 1024-em x-height 576 lands exactly on the integer
-    // pixel tick (9.000); the 1000-em x-height 562 lands between ticks at
-    // 8.992 px = 575.488/64 and must round.
-    const RULER_Y: f64 = 660.0;
-    const X0: f64 = 260.0;
-    const TICK_DX: f64 = 2000.0 / 6.0;
-    const T_LO: i64 = 573;
-    const T_HI: i64 = 579;
-    let tick_x = |t: f64| X0 + (t - T_LO as f64) * TICK_DX;
-
-    sheet
-        .ctx
-        .no_fill()
-        .stroke(role::figure::pen())
-        .stroke_width(line::EXTRA_HEAVY);
-    sheet.ctx.line(200.0, RULER_Y, 2320.0, RULER_Y);
-    for t in T_LO..=T_HI {
-        let half = if t % 64 == 0 { 170.0 } else { 90.0 };
-        sheet
-            .ctx
-            .no_fill()
-            .stroke(role::figure::pen())
-            .stroke_width(line::BOX);
-        let x = tick_x(t as f64);
-        sheet.ctx.line(x, RULER_Y - half, x, RULER_Y + half);
-    }
-
-    let dot = Marker {
-        size: 56.0,
-        stroke: line::BOX,
-    };
-    let x_exact = tick_x(576.0);
-    let x_round = tick_x(575.488);
-    dot.draw(&mut sheet, x_exact, RULER_Y, role::figure::green(), false);
-    dot.draw(&mut sheet, x_round, RULER_Y, role::figure::red(), false);
-    sheet.label_weighted(
-        "9.000",
-        x_exact,
-        940.0,
-        72.0,
-        role::figure::pen(),
-        0,
-        560.0,
-    );
-    sheet.label_weighted(
-        "8.992",
-        x_round,
-        400.0,
-        72.0,
-        role::figure::pen(),
-        0,
-        560.0,
-    );
-
-    sheet.save(renderer, out);
-}
-
 fn main() {
     let mono_path = inputs::geist_mono();
     let mut renderer = Renderer::new(W as u32, H as u32);
@@ -412,5 +350,4 @@ fn main() {
     fig_ladder(&renderer, &mono, &outputs.blog("fig-ladder.png"));
     fig_bits(&renderer, &mono, &outputs.blog("fig-bits.png"));
     fig_scaling(&renderer, &mono, &outputs.blog("fig-scaling.png"));
-    fig_ruler(&renderer, &mono, &outputs.blog("fig-ruler.png"));
 }
