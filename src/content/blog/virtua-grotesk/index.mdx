@@ -126,6 +126,14 @@ too light for a stem and 128 too heavy, so stems are 96 = 64 + 32;
 where 96 is too light, 112 = 64 + 32 + 16. The sums are a second
 semantic hierarchy, parallel to the nested grid.
 
+I read this straight off the outline while drawing. Below,
+[Runebender](https://runebender.org) labels every measurement with its
+power-of-two sum and colors it by popcount: green for pure powers like
+64 = 2⁶ and 256 = 2⁸, orange for short sums like 96 = 64 + 32, red for
+values that need many powers.
+
+<video src="/videos/popcount.mp4" poster="/videos/popcount-poster.jpg" controls playsinline preload="metadata" aria-label="Screen recording of the Runebender font editor showing a glyph on a grid. Every measurement is labeled with its power-of-two decomposition and colored by popcount: green for pure powers such as 64 = 2⁶, 128 = 2⁷, and 256 = 2⁸; orange for short sums like 96 = 64 + 32 and 80 = 64 + 16; red for high-popcount values such as 23 = 16 + 4 + 2 + 1. A MEASURE panel on the left toggles colorize outline, handle lengths, segment lengths, stems and counters, and side bearings."></video>
+
 The full specification lives in the repo as
 [`DESIGN.md`](https://github.com/eliheuer/virtua-grotesk/blob/main/DESIGN.md),
 and it is enforced programmatically. From the repo root, `make
