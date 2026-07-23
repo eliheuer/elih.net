@@ -476,14 +476,14 @@ even remains a secret because nobody ever believes you anyways”</p>
 <p>—roon ([@tszzl](https://x.com/tszzl)), 2026.</p>
 </div>
 
-When I shared an early version of this draft, a lot of the pushback was
-on the powers-of-two focus. I will concede the narrow point first: any
-grid shrinks the vocabulary, and a decimal grid would tokenize just as
-cleanly. The transformer doesn't care: I find no evidence a network
-prefers a binary grid to a decimal one, and when the field quantizes it
-reaches for [256 positions](https://arxiv.org/abs/2002.10880) out of
-habit. If the model were the whole pipeline, the skeptics would be
-right.
+Readers of a early draft of this post pushed back on the powers-of-two focus.
+The narrow objection is correct: any grid shrinks the vocabulary, and
+a decimal grid tokenizes as cleanly as a binary one. I find no
+evidence that a neural network prefers one base to the other, but when the
+field quantizes coordinates it usually picks
+[256 positions](https://arxiv.org/abs/2002.10880). If the model were
+the whole pipeline, the objection would make sense. We are basically picking
+the default conventions of the ML feild for those of the font industry.
 
 The model is not the whole pipeline. The rest of it imposes four
 constraints. Three come from the machine:
@@ -518,14 +518,13 @@ machine's numbers or rounds against them at every step. The fourth is
 mine: no format requires nested grids, but the labeling scheme does.
 This section takes the four in order, then tests the rival bases.
 
-**1. Normalize exactly.** Divide Virtua Grotesk's 96-unit
-stem by its 1024 em and you get 0.09375, exact; divide by the traditional
-1000 em and 0.096 has no finite binary form, so the machine holds
+**1. Normalize exactly.** Virtua Grotesk's 96-unit stem divided by its
+1024 em is 0.09375, exact. Divided by the traditional 1000 em it is
+0.096, which has no finite binary form, so the machine holds
 0.09600000000000000200. The em is the denominator, not the drawing grid: a
 1000 em with an 8-unit grid still fails, since 8/1000 = 1/125 doesn't
 terminate in binary either. Every coordinate is scaled thousands of times
-before anyone sees a letter, and each step is either exact or quietly
-wrong.
+before anyone sees a letter, and each step is either exact or rounds.
 
 Rounding is the mild failure. The sharp one: some proportions have no
 integer coordinate at all. Cap height is 3/4 of the em and x-height 9/16,
@@ -549,10 +548,11 @@ an em that divides. 1000 halves three times, 500, 250, 125, and stops
 on an odd number: sixteenths of a 1000 em do not exist. The 24 units
 between 1000 and 1024 are the difference between 2³ · 5³ and 2¹⁰.
 
-(The formats do not force this. The old rule that ascender minus
-descender must equal the em was dropped from the OpenType spec, and the
-tables accept any values. The pressure comes from the design's own
-proportions and from the arithmetic at render time, below.)
+![Four vertical stacks of colored rectangles drawn with designbot, one per candidate em. The green 1024 stack halves ten times down to 1. The red 1000 stack stops at 125. The orange 729 stack divides by three down to 1. The yellow 700 stack stops at 175.](./fig-ladder.png)
+
+No spec rule enforces this; the OpenType metrics tables accept any
+values. The constraint comes from the design's proportions, not from a
+format check.
 
 None of this is new. Knuth built TeX and METAFONT on binary fractions
 after [watching 0.4 print back as 0.39999](https://research.swtch.com/fp-knuth),
@@ -567,29 +567,30 @@ because scaling is then a bit shift.
 | scale to a pixel size | bit shift | division |
 | divide the em in thirds | approximate | approximate |
 
-The last row is the honest one: binary buys no thirds, but neither does
-decimal, and thirds are the divisions the eye corrects anyway. The
+The last row favors neither base: thirds are approximate on both, and
+thirds are among the divisions optical correction adjusts anyway. The
 operations that must be exact, halving, doubling, scaling, interpolating,
 are the four base two does perfectly.
 
-**2. Close under the operations.** The keystone. The numbers reachable from
+**2. Close under the operations.** The numbers reachable from
 the integers by taking midpoints are exactly the dyadic rationals, and
 the midpoint is the pipeline's own operation. Interpolating halfway
 between masters is a midpoint; splitting a bézier (de Casteljau
 subdivision, which every rasterizer performs) is midpoints of midpoints.
-The weights are not free either: OpenType stores a normalized axis
-position as an F2Dot14, a fraction over 2¹⁴, so every instance a
+The format also fixes the weights: OpenType stores a normalized axis
+position as an
+[F2Dot14](https://learn.microsoft.com/en-us/typography/opentype/spec/otff#data-types),
+a fraction over 2¹⁴, so every instance a
 variable font can express sits at a binary weight. The format cannot
-write 1/3. The dyadic grid isn't a lattice the operations tolerate;
-it's the lattice they generate. Start from any grid, run the arithmetic, and the points
+write 1/3. Start from any grid, run this arithmetic, and the points
 that appear are dyadic.
 
 ![A centered cubic Bézier arch drawn with designbot over a full-bleed 8-unit grid. The original control polygon is red, first-round midpoint lines are orange, second-round midpoint lines are yellow, and the central split point is green. Blue points mark quarter subdivisions. Purple points mark eighth subdivisions.](./fig-midpoint.png)
 
 The figure runs one subdivision. A midpoint of two multiples of 2ᵏ is a
 multiple of 2ᵏ⁻¹, so each round drops one rung and a ten-rung ladder
-absorbs the whole operation. A decimal grid dies at the second halving:
-10 to 5 to 2.5.
+absorbs the whole operation. A decimal grid fails at the second halving:
+10, 5, 2.5.
 
 **3. Compute the same everywhere.** Knuth's epigraph is this constraint:
 TeX does its arithmetic carefully so that different computers produce
@@ -598,15 +599,15 @@ identical results. OpenType
 of variable fonts, prescribing the fixed-point arithmetic of axis
 normalization step by step "to ensure consistent behavior for a given
 font across implementations." Approximate values meet the constraint
-only by decree, one prescribed rounding at a time; exact values meet it
-for free.
+only when every implementation follows the same prescribed roundings;
+exact values meet it for free.
 
-The machine's three constraints are half the answer; the other half is
-where this parts ways with Replica. Replica's grid is one flat layer,
-every legal point equally legal, so it can say only one thing about a point, and
-forces a choice: keep every point on the lattice and there's no room for
-optical correction, or allow points off it and nothing separates a
-correction from a slip.
+The machine's three constraints stop at exactness. The fourth is where
+this system differs from Replica. Replica's grid is one flat layer,
+every legal point equally legal, so the grid records nothing about a
+point, and it forces a choice: keep every point on the lattice, leaving
+no room for optical correction, or allow points off it, leaving nothing
+to separate a correction from a mistake.
 
 A power-of-two em removes the choice, because it halves cleanly all the
 way down. The grids tiling a 1024 em run 1024, 512, 256… to 2: ten nested
@@ -615,8 +616,6 @@ meanings: 64 for vertical metrics, 8 for structure, 2 for corrections. An
 optical correction is never off-grid; it's on the fine grid and off the
 coarse one, section 03's rule as data design. Only a power of two ladders
 this way, from the unit all the way up to the em.
-
-![Four vertical stacks of colored rectangles drawn with designbot, one per candidate em. The green 1024 stack halves ten times down to 1. The red 1000 stack stops at 125. The orange 729 stack divides by three down to 1. The yellow 700 stack stops at 175.](./fig-ladder.png)
 
 **4. Read the label from the coordinate.** Divisor-rich ems like 720 and
 2520 (Babylon's astronomy numbers) offer exact thirds and fifths, but
@@ -629,10 +628,10 @@ The label is literal: write a coordinate in binary and
 its grid level is its count of trailing zeros. 768 ends in eight zeros
 (256-grid); 576 in six (64-grid); 96 in five (32-grid); 116 in two
 (4-grid, off the structure grid's 8, a correction). Mathematicians call
-this the 2-adic valuation, written ν₂; hardware calls it
-count-trailing-zeros, one instruction. The hierarchy isn't drawn on top of the coordinates; it *is*
-their binary form, read off the low bits. The labeling function this
-scheme depends on ships inside the numbers.
+this the 2-adic valuation, written $\nu_2$; hardware calls it
+count-trailing-zeros, one instruction. The hierarchy is not stored
+beside the coordinates; it is their binary form, read off the low
+bits.
 
 ![Five rows of eleven-bit binary numbers drawn with designbot: the em 1024, cap height 768, x-height 576, the 96-unit stem, and the corrected 116, each with its run of trailing zeros bracketed and its grid level read off as the count, the 116 row in red.](./fig-bits.png)
 
@@ -657,9 +656,9 @@ and of the pixel size sum to four or more. Read that through the levels. The
 64-grid, the vertical metrics, has six trailing zeros or more: exact at
 every integer pixel size, so baselines, cap height, and x-height never
 round. The 8-grid, the structure, has three: exact at every even size.
-The 2-grid corrections are the first to dissolve into antialiasing, as
-they should be: 2/1024 of an em is under a pixel at text sizes, and the
-eye's touches vanish before the structure does. At 16 pixels, the web's
+The 2-grid corrections dissolve into antialiasing first: 2/1024 of an
+em is under a pixel at text sizes, so the corrections vanish before the
+structure does. At 16 pixels, the web's
 default size, every coordinate is exact, one font unit to one
 sixty-fourth of a pixel, the rasterizer's own unit. On a 1000 em the
 same device value is
@@ -670,7 +669,7 @@ $$
 
 an integer only when 125 divides the product, which at text sizes is
 never: the 562 x-height at 16 pixels is 8.992 pixels, rounded by
-whichever renderer draws it, in whichever direction it prefers.
+whichever renderer draws it, in a direction the format does not fix.
 
 That rounding is the visible kind, because the modern rendering stack
 snaps only the vertical direction. FreeType's light hinting and Adobe's
@@ -684,12 +683,11 @@ shared by every glyph on the line and every line on the page. Hinting
 is a patch for vertical rounding. Metrics that scale exactly need no
 patch.
 
-So the hierarchy's role assignments are not bookkeeping. Putting the
-vertical metrics on the 64-grid puts the values the whole page shares
-on the level that never rounds; structure holds to every even size; the
-corrections are spent last, where antialiasing absorbs them. The level
-of a coordinate is how far down the scaling ladder it survives, and a
-1000 em has no ladder to survive on.
+The role assignments follow from this arithmetic. The vertical metrics
+sit on the 64-grid, so the values the whole page shares never round;
+structure holds to every even size; corrections go first, into
+antialiasing. A coordinate's level is how far down the scaling ladder
+it survives, and a 1000 em has no ladder.
 
 ![Two grids of colored cells drawn with designbot, one for a 1024 em and one for a 1000 em. Rows are the coordinates 576, 88, and 116, with 562 in place of 576 on the 1000 em; columns are pixel sizes 12 through 18. In the 1024 panel the 576 row is green at every size, the 88 row is green at even sizes, and the 116 row is green at 12 and 16. Every cell of the 1000 panel is a red ×.](./fig-scaling.png)
 
@@ -703,9 +701,9 @@ model's grid are one lattice.
 Now the rivals, each against the constraints.
 
 **Decimal, em 1000.** Fails normalization (0.096, held forever wrong) and
-closure (10 halves once, to 5, and dies). Its one advantage, human mental
-arithmetic, describes the wrong partner: here the human judges curves and
-the machine does the arithmetic.
+closure (10 halves once, to 5, and stops). Its one advantage is human
+mental arithmetic, and the human in this pipeline judges curves; the
+machine does the arithmetic.
 
 **Balanced ternary, em 729 = 3⁶.** The strongest rival, Knuth's favorite:
 six clean levels, a chain, symmetric arithmetic. On ternary hardware it
@@ -716,8 +714,8 @@ first collapses.
 **The divisor-rich and the golden.** Babylon's 720 and 2520 buy exact
 thirds at the price of a lattice hierarchy and a denominator binary
 arithmetic can't hold. The golden section fails harder: φ is irrational, so
-nothing normalizes exactly. Corbusier matched his grid to the measure of
-man; this grid matches the measure of the machine.
+nothing normalizes exactly. Corbusier's Modulor built its grid on φ and
+the human body; this grid is built on the machine's arithmetic.
 
 **The learned codebook.** Let a VQ-VAE learn the quantization. But a
 learned codebook can't be drawn on by a person, linted by a rule, or held
@@ -727,17 +725,17 @@ been retreating from learned codebooks toward small fixed grids
 they train more stably.
 
 **No grid at all.** Continuous coordinates with a regression head. But
-there's no continuous on a computer: a 64-bit float is a dyadic rational,
-m·2ᵉ. Continuous means the dyadic grid at 2⁻⁵², adopted implicitly: no
-levels, no linting, no meaning in the low bits. You can't escape the
-lattice, only choose whether to design it.
+a 64-bit float is a dyadic rational, m·2ᵉ, so continuous coordinates
+are the dyadic grid at 2⁻⁵², adopted implicitly: no levels, no linting,
+no meaning in the low bits. Dropping the grid does not remove the
+lattice; it replaces a designed one with an accidental one.
 
 The result: given exact normalization, closure under the pipeline's
 operations, machine-identical arithmetic, and levels readable from the
 coordinates, the grid system is forced: the dyadic ladder of a
-power-of-two em, unique up to one free choice, the exponent. The eye fixes it: four decades of
-practice say roughly a thousand units per em is enough, and 1024 is the
-power of two that lands there. (2048 with a 4-unit grid is the same system
+power-of-two em, unique up to one free choice, the exponent. Practice
+fixes the exponent: four decades of digital type say roughly a thousand
+units per em is enough, and 1024 is the power of two that lands there. (2048 with a 4-unit grid is the same system
 scaled by two.)
 
 For the machine-learning pipeline, exactness and nesting pay out three
@@ -750,11 +748,10 @@ machine computes the identical result; on a decimal em, float error enters
 every coordinate before the snap, differently per machine, and the model
 learns the design plus the noise.
 
-**The outputs are checkable, and the taste comes labeled.** A wrong
+**The outputs are checkable, and the corrections come labeled.** A wrong
 coordinate is a lintable defect: an odd number, a stem outside the favored
 set. And because machine drafts stay on the 8-unit grid, every 2-unit
-deviation in a glyph I approve is a recorded human optical correction. The
-grid is the annotator.
+deviation in a glyph I approve is a recorded human optical correction.
 
 **The differences are a small vocabulary.** Stems, chamfers, and section
 07's Regular-to-Bold deltas come from a few dozen values: machine values
@@ -763,8 +760,8 @@ lexicon recurs: the Bold stem is the Regular stem doubled, the Bold curve
 the Bold stem plus the same 4. Weight transfer collapses to choosing among
 familiar offsets.
 
-Knuth walked this ground forty years ago. METAFONT had to put ideal curves
-onto coarse pixel grids, and his 1986
+Knuth worked this problem forty years ago. METAFONT had to put ideal
+curves onto coarse pixel grids, and his 1986
 [METAFONTbook](https://ctan.org/pkg/mfbook) set the design brief:
 "our goal should not be to make hand-tuning obsolete; it should rather be
 to make hand-tuning tolerable. Let us try to create meta-designs so that
@@ -772,23 +769,22 @@ we would never want to change more than a few pixels per character, say
 half a dozen, regardless of the resolution." A machine draft correct on
 the coarse grid, a human budget of a few touches on the fine one: that's
 the 8-grid and the 2-grid, except here every touch is recorded, labeled,
-and learned from. The constraints earn the machine its 8-grid; nothing
-earns it the 2-grid. The low bits belong to the eye.
+and learned from. The constraints assign the machine the 8-grid; nothing
+assigns it the 2-grid. The 2-grid remains the designer's.
 
-The claim at its true size: great fonts shipped on decimal ems for
-forty years, and when humans run the pipeline the base hardly
-matters. Knuth thought base two nothing special aesthetically; his
-*Art of Computer Programming* calls balanced ternary "perhaps the
-prettiest number system of all." But he built TeX and METAFONT on the
-base the machines speak, because they had to produce the identical
-page on every machine. Once the pipeline is computational end to end,
-base two is the choice where the design's arithmetic and the
-machine's arithmetic are the same arithmetic.
+The claim is narrow. Great fonts shipped on decimal ems for forty
+years, and when humans run the pipeline the base hardly matters.
+Knuth thought base two nothing special aesthetically; his *Art of
+Computer Programming* calls balanced ternary "perhaps the prettiest
+number system of all." But he built TeX and METAFONT on the base the
+hardware uses, because they had to produce the identical page on
+every machine. Once the pipeline is computational end to end, base
+two makes the design's arithmetic and the machine's arithmetic the
+same.
 
 When the engineering is settled, the tiebreaker is aesthetics. A
-preference for aesthetic beauty is at the core of a lot of the
-technology choices I make; it is why the source files for the project
-are UFO and not Glyphs. Forget the
-technical trade-offs: UFO is the more beautiful name, and being
-cross-platform, cross-application, and human-readable seals it. Powers
-of two deserves the job on beauty alone.
+preference for beauty is at the core of many technology choices in
+this project; it is why the source files are UFO and not Glyphs. UFO
+is the more beautiful name, and cross-platform, cross-application,
+human-readable files settle the rest. Powers of two would deserve the
+job on beauty alone.
