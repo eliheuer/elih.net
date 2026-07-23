@@ -76,9 +76,9 @@ similar frustrations in a similar time of technological change. I
 think the way forward is not a return to the dogma and rigidity of
 modernist design that was rightly rejected (the culture of design that
 replaced modernism is equally dogmatic and rigid, just in different
-ways), but a rediscovery, with fresh eyes and new technology, of some
-of the loftier goals of early modernism that were unachievable with
-the technology of the previous century.
+ways). It is a rediscovery, with fresh eyes and new technology, of the
+loftier goals of early modernism that were unachievable with the
+technology of the previous century.
 
 ### 02. Replica and the Coarse Grid
 
@@ -148,8 +148,8 @@ the 8-unit grid: of Regular's 84 kerning pairs, all but two sit on
 it, and the two that drop to the 2-unit grid are, exactly as with
 point placement, coordinate-derived optical judgments, free training data.
 The coarse default is also what gives the spacing its rhythm, a small
-set of recurring intervals instead of 100s of bespoke ones,
-snapped tighter only where the eye insists.
+set of recurring intervals instead of hundreds of bespoke ones,
+snapped tighter only where optical judgment requires it.
 
 ![The capital H and O from Virtua Grotesk Regular enlarged over the uniform 8-unit source grid, with every on-curve and off-curve point marked and capped labels measuring representative strokes and counters.](./fig-system-ho.png)
 
@@ -214,7 +214,7 @@ what it should. That is the point. This is not only about frequencies:
 where the human sources leave the structure grid, the model tends to
 leave it at the same points.
 
-One honest caveat about where the win comes from. The model reads
+One caveat about where the win comes from. The model reads
 each coordinate as a single token and never sees digits, so at the
 token level base two is invisible to it. What it learns from is
 coarseness, regularity, and the nested tiers: a small set of legal
@@ -224,11 +224,8 @@ against a regular background. That trick would work in base ten too.
 A 1000 em would even carry these same power-of-two values: put the
 stem at 96 and 192 on a 1000 em and it interpolates just as cleanly,
 because the arithmetic is on the stem width, not the em. Base two
-pays off further down the pipeline, wherever a coordinate is divided
-by the em. 96/1024 is 0.09375, exact in binary; 96/1000 repeats
-forever. That division happens constantly, whenever a coordinate is
-normalized to a fraction of the em or scaled to a pixel size, so on a
-1000 em the rounding is everywhere.
+pays off wherever a coordinate is divided by the em, which is the
+subject of section 09.
 
 ### 05. Glyphs as Sentences
 
@@ -395,8 +392,7 @@ Chamfer scores the outline shape, IoU the overlap in filled ink.)
 
 The output is a draft, not a finished Bold; a person still corrects it on
 the 2-unit grid. This is a small test, and the numbers will change as the
-work grows. Section 08 reports what the same model does on fonts it wasn't
-tuned for, including a result that didn't work.
+work grows.
 
 ### 08. The Designspace Is a Data Factory
 
@@ -444,7 +440,7 @@ method for converting shapes to outlines and nothing else, not confined to
 the neo-grotesk style, even to the point where it can be used for logos,
 icons, and other font-adjacent kinds of vector graphics.
 
-This is all just the first step in a decade long transformation of digital typography.
+This is the first step in a decade-long transformation of digital typography.
 The aim is fonts that are models, not tables of
 outlines, freed from the per-glyph boxes digital type inherited from
 metal. An outline font is a compression scheme for the Latin letter, one
@@ -749,7 +745,8 @@ every coordinate before the snap, differently per machine, and the model
 learns the design plus the noise.
 
 **The outputs are checkable, and the corrections come labeled.** A wrong
-coordinate is a lintable defect: an odd number, a stem outside the favored
+coordinate is a lintable defect, section 04's check: an odd number, a
+stem outside the favored
 set. And because machine drafts stay on the 8-unit grid, every 2-unit
 deviation in a glyph I approve is a recorded human optical correction.
 
