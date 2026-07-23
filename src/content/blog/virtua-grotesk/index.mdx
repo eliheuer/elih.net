@@ -403,7 +403,7 @@ work grows.
 
 Two masters hold more data than they seem to: every interpolation between
 them is a real instance of the family, as Multiple Master fonts have
-exploited since 1991. The space between the masters is the factory: pick a
+done since 1991. The space between the masters is the synthetic data factory: pick a
 weight, interpolate, and snap the result to the grid.
 
 An interpolation is not a master, but it is still clean, usable data. The
@@ -422,12 +422,6 @@ grid. The glyph between the masters sits on the grid as cleanly as the
 masters do. Coordinates such as 90 and 180 do not close this way (below).
 
 ![Two centered number lines drawn with DesignBot. From endpoints 96 and 192, the one-quarter, one-half, and three-quarter interpolations land on outlined green grid points at 120, 144, and 168. From endpoints 90 and 180, the same one-quarter and one-half weights land at outlined red off-grid values 112.5 and 135. Dark dashed guides align the shared weights.](./fig-interp.png)
-
-Interpolation reproduces the structure exactly but only averages the
-optical corrections, rarely the right ones at a middle weight. A real
-correction is a point a person nudged off the 8-grid by hand, and those
-exist only in the two masters and the graded corpus, so that is where the
-model learns optical judgment.
 
 Interpolation gives volume, not variety: every batch is one design.
 Variety takes more families, which [img2bez](/blog/img2bez) provides: a
