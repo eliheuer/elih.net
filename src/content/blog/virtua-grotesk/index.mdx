@@ -439,15 +439,15 @@ method for converting shapes to outlines and nothing else, not confined to
 the neo-grotesk style, even to the point where it can be used for logos,
 icons, and other font-adjacent kinds of vector graphics.
 
-This is the first step in a decade-long transformation of digital typography.
+This is the first step in what I see as a decade-long transformation of digital typography.
 The aim is fonts that are models, not tables of
 outlines, freed from the per-glyph boxes digital type inherited from
 metal. An outline font is a compression scheme for the Latin letter, one
 fixed shape reused everywhere, and it strains on other scripts: Arabic in
 its manuscript forms is one continuous, context-dependent stroke, and the
 current workaround uses thousands of glyphs and substitution rules to fake
-what a hand does in one motion. A generative font draws each glyph in
-context. The first ones will be built on grid systems like this.
+what a hand does in one motion. A post-OpenType generative font model draws each glyph in
+context. I think the first ones will be built on grid systems like this, and I hope to play a part in building that technology.
 
 <h3 id="09-the-mathematics-of-2n">09. The Mathematics of 2ⁿ</h3>
 
@@ -471,16 +471,19 @@ even remains a secret because nobody ever believes you anyways”</p>
 <p>—roon ([@tszzl](https://x.com/tszzl)), 2026.</p>
 </div>
 
-Readers of a early draft of this post pushed back on the powers-of-two focus.
-The narrow objection is correct: any grid shrinks the vocabulary, and
-a decimal grid tokenizes as cleanly as a binary one. I find no
-evidence that a neural network prefers one base to the other, but when the
+Readers of an early draft of this post pushed back on the powers-of-two
+focus. The narrow objection is correct: any grid shrinks the vocabulary,
+and a decimal grid tokenizes as cleanly as a binary one. I find no
+evidence that a neural network prefers one base to the other. When the
 field quantizes coordinates it usually picks
-[256 positions](https://arxiv.org/abs/2002.10880). If the model were
-the whole pipeline, the objection would make sense. We are basically picking
-the default conventions of the ML feild for those of the font industry.
+[256 positions](https://arxiv.org/abs/2002.10880). That number is a
+power of two, but not because the network benefits: 256 values fill
+exactly one byte. It is a programming convention, not a measured
+preference. If the model were the whole
+pipeline, the objection would make sense: this project is basically
+trading the font industry's default conventions for the ML field's.
 
-The model is not the whole pipeline. The rest of it imposes four
+But the model is not the whole pipeline. The rest of it imposes four
 constraints. Three come from the machine:
 
 1. **Normalize exactly.** Dividing a coordinate by the em must give a
@@ -541,7 +544,7 @@ from those portions. Cap height and x-height are em-fractions by
 design. A proportional system lives on the vertical axis, and it needs
 an em that divides. 1000 halves three times, 500, 250, 125, and stops
 on an odd number: sixteenths of a 1000 em do not exist. The 24 units
-between 1000 and 1024 are the difference between 2³ · 5³ and 2¹⁰.
+between 1000 and 1024 are the difference between 2³ * 5³ and 2¹⁰.
 
 ![Four vertical stacks of colored rectangles drawn with designbot, one per candidate em. The green 1024 stack halves ten times down to 1. The red 1000 stack stops at 125. The orange 729 stack divides by three down to 1. The yellow 700 stack stops at 175.](./fig-ladder.png)
 
@@ -549,11 +552,13 @@ No spec rule enforces this; the OpenType metrics tables accept any
 values. The constraint comes from the design's proportions, not from a
 format check.
 
-None of this is new. Knuth built TeX and METAFONT on binary fractions
-after [watching 0.4 print back as 0.39999](https://research.swtch.com/fp-knuth),
-and the formats still agree: TrueType computes in fixed point, and OpenType
-[recommends a power-of-two em](https://learn.microsoft.com/en-us/typography/opentype/spec/ttch01)
-because scaling is then a bit shift.
+None of this is new. Knuth built TeX and METAFONT on binary fractions,
+and even then TeX's printing routine once
+[gave 0.4 back as 0.39999](https://research.swtch.com/fp-knuth) until
+he fixed it. The formats agree: TrueType computes in fixed point, and
+the OpenType spec says outline scaling
+["will be fastest"](https://learn.microsoft.com/en-us/typography/opentype/spec/ttch01)
+on a power-of-two em, the division reduced to a bit shift.
 
 | operation | em 1024 | em 1000 |
 | --- | --- | --- |
@@ -613,7 +618,7 @@ coarse one, section 03's rule as data design. Only a power of two ladders
 this way, from the unit all the way up to the em.
 
 **4. Read the label from the coordinate.** Divisor-rich ems like 720 and
-2520 (Babylon's astronomy numbers) offer exact thirds and fifths, but
+2520 (multiples of 60, the Babylonian base) offer exact thirds and fifths, but
 their divisors form a lattice, not a ladder: a point on both the 9-grid
 and the 8-grid has no well-defined level. A chain forces the em to be a
 power of one prime, and depth favors the smallest prime: 729, the best
@@ -706,9 +711,9 @@ would win. On the hardware that exists, 1/3 has no finite binary form, so
 every normalized coordinate is approximate and every constraint after the
 first collapses.
 
-**The divisor-rich and the golden.** Babylon's 720 and 2520 buy exact
-thirds at the price of a lattice hierarchy and a denominator binary
-arithmetic can't hold. The golden section fails harder: φ is irrational, so
+**The divisor-rich and the golden.** The sexagesimal 720 and 2520 buy
+exact thirds at the price of a lattice hierarchy and a denominator
+binary arithmetic can't hold. The golden section fails harder: φ is irrational, so
 nothing normalizes exactly. Corbusier's Modulor built its grid on φ and
 the human body; this grid is built on the machine's arithmetic.
 
