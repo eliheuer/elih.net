@@ -116,7 +116,8 @@ That count is the value's Hamming weight, or popcount, the number of
 1s when it is written in binary. Virtua Grotesk uses it to rank handle
 lengths and structural spans. One is a pure power: 64, 128, 256. Two
 is an elegant sum: 96 = 64 + 32, or 272 = 256 + 16. Three is
-acceptable: 104 = 64 + 32 + 8. Four or more is flagged for review.
+acceptable: 104 = 64 + 32 + 8. Four or more is flagged for review as a
+likely correction.
 
 ![The lowercase n and o from Virtua Grotesk Regular enlarged over the uniform 8-unit source grid, with every on-curve and off-curve point marked and capped labels measuring representative strokes and counters.](./fig-system-no.png)
 
@@ -124,7 +125,9 @@ A low popcount means a structural value. A high one means the
 letterform needed something the round numbers could not give. 64 is
 too light for a stem and 128 too heavy, so stems are 96 = 64 + 32;
 where 96 is too light, 112 = 64 + 32 + 16. The sums are a second
-semantic hierarchy, parallel to the nested grid.
+semantic hierarchy, parallel to the nested grid. A high popcount is
+not necessarily bad: it is self-labeling information, marking the
+value for the model as some kind of optical correction.
 
 I read this straight off the outline while drawing. Below,
 [Runebender](https://runebender.org) labels every measurement with its
