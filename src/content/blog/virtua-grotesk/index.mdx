@@ -673,7 +673,24 @@ line on the page while a horizontal one dissolves into spacing. Hinting
 is a patch for vertical rounding; metrics that scale exactly need no
 patch.
 
-![Two grids of colored cells drawn with designbot, one for a 1024 em and one for a 1000 em. Rows are the coordinates 576, 88, and 116, with 562 in place of 576 on the 1000 em; columns are pixel sizes 12 through 18. In the 1024 panel the 576 row is green at every size, the 88 row is green at even sizes, and the 116 row is green at 12 and 16. Every cell of the 1000 panel is a red ×.](./fig-scaling.png)
+The figure below runs this arithmetic for five values from the design
+at every text size from 12 to 18 pixels. Each row is a coordinate: the
+x-height 576; 116, the correction pulled off the 8-grid in the
+lowercase a's counter; the 96 stem; the o's 88 top stroke; and 64, the
+step of the grid the vertical metrics sit on. A green cell means the
+coordinate scales to an exact position on the rasterizer's 1/64-pixel
+grid at that size. A red × means it must round. The pattern is the
+trailing-zeros rule: 576 and 64 (six zeros) and 96 (five) never round,
+88 (three) holds at the even sizes, and 116 (two) survives only at 12
+and 16, the sizes divisible by four. On the 1000 em (right), every
+value rounds at every size. The x-height row reads 562 instead of 576
+because the comparison keeps the design's proportions: the x-height is
+9/16 of the em, and 9/16 of 1000 is 562.5, so the designer writes 562.
+The choice hardly matters. Keeping 576 on a 1000 em rounds at every
+one of these sizes too, because the denominator 1000 puts a factor of
+125 under every coordinate.
+
+![Two grids of colored cells drawn with designbot, one for a 1024 em and one for a 1000 em. Rows are the coordinates 576, 116, 96, 88, and 64, with 562 in place of 576 on the 1000 em; columns are pixel sizes 12 through 18. In the 1024 panel the 576, 96, and 64 rows are green at every size, the 88 row at even sizes, and the 116 row at 12 and 16. Every cell of the 1000 panel is a red ×.](./fig-scaling.png)
 
 One more alignment is particular to this pipeline. Render a 1024-em
 glyph at 1024 pixels and one font unit is one pixel (the specimen atop
@@ -692,14 +709,18 @@ favorite, and on ternary hardware it would win. On the hardware that
 exists, 1/3 has no finite binary form, and every constraint after the
 first collapses.
 
-**The rest.** The divisor-rich sexagesimal ems, 720 and 2520, buy exact
-thirds but pay in a lattice instead of a ladder and a denominator binary
-arithmetic can't hold; φ is irrational, so nothing normalizes at all; a
-learned VQ-VAE codebook can't be drawn on, linted, or held stable across
-retrainings, and the field is
-[retreating from it](https://arxiv.org/abs/2309.15505) to small fixed
-grids anyway; and dropping the grid altogether only trades the designed
-dyadic lattice for the accidental one a 64-bit float already is.
+**The rest.** Ems like 720 and 2520, multiples of 60, divide cleanly by
+three and five, but their grids overlap instead of nesting, so a point
+can sit on two grids at once and its level is ambiguous, and a binary
+computer cannot hold 1/720 exactly anyway. The golden section is built
+on φ, which is irrational: no ratio of whole numbers equals it, so
+golden proportions can only ever be approximated. Letting a neural
+network learn its own quantization (a VQ-VAE) gives a codebook no
+person can draw on, no rule can check, and no retraining leaves
+unchanged; the field is
+[moving back](https://arxiv.org/abs/2309.15505) to small fixed grids
+anyway. And dropping the grid entirely changes nothing: a 64-bit float
+is itself a power-of-two grid, just one nobody designed.
 
 Given the four constraints, the grid system is forced: the dyadic
 ladder of a power-of-two em, unique up to the exponent. Practice fixes

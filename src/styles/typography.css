@@ -42,6 +42,9 @@
       color: var(--foreground);
       font-weight: 600;
       line-height: 1.25;
+      /* Display sizes track tighter than text: without this, headings
+         inherit the body's +0.02em reading tracking. */
+      letter-spacing: -0.025em;
       margin-top: calc(var(--prose-space) * 4);
       margin-bottom: calc(var(--prose-space) * 2);
       scroll-margin-top: 2rem;
