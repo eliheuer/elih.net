@@ -558,6 +558,50 @@ impl Sheet<'_> {
     }
 }
 
+// --- outline measurement -------------------------------------------------------------
+
+/// X positions where the horizontal line at `y` crosses the outline, sorted
+/// left to right. Duplicate hits at segment joins are merged. Figures use
+/// these so measurement endpoints and values follow the current sources
+/// instead of hardcoding coordinates that go stale when a glyph is redrawn.
+pub fn h_crossings(path: &BezPath, y: f64) -> Vec<f64> {
+    use kurbo::{Line, Point, Shape};
+    let bbox = path.bounding_box();
+    let line = Line::new(Point::new(bbox.x0 - 16.0, y), Point::new(bbox.x1 + 16.0, y));
+    let mut xs: Vec<f64> = path
+        .segments()
+        .flat_map(|seg| {
+            seg.intersect_line(line)
+                .into_iter()
+                .map(|hit| line.p0.x + hit.line_t * (line.p1.x - line.p0.x))
+                .collect::<Vec<_>>()
+        })
+        .collect();
+    xs.sort_by(|a, b| a.partial_cmp(b).unwrap());
+    xs.dedup_by(|a, b| (*a - *b).abs() < 0.5);
+    xs
+}
+
+/// Y positions where the vertical line at `x` crosses the outline, sorted
+/// bottom to top. See [`h_crossings`].
+pub fn v_crossings(path: &BezPath, x: f64) -> Vec<f64> {
+    use kurbo::{Line, Point, Shape};
+    let bbox = path.bounding_box();
+    let line = Line::new(Point::new(x, bbox.y0 - 16.0), Point::new(x, bbox.y1 + 16.0));
+    let mut ys: Vec<f64> = path
+        .segments()
+        .flat_map(|seg| {
+            seg.intersect_line(line)
+                .into_iter()
+                .map(|hit| line.p0.y + hit.line_t * (line.p1.y - line.p0.y))
+                .collect::<Vec<_>>()
+        })
+        .collect();
+    ys.sort_by(|a, b| a.partial_cmp(b).unwrap());
+    ys.dedup_by(|a, b| (*a - *b).abs() < 0.5);
+    ys
+}
+
 // --- abstract-figure primitives -----------------------------------------------------
 
 /// The stroked, filled rectangle with a centered mono numeral that the

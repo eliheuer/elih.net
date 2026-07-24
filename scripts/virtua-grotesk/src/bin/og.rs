@@ -21,19 +21,50 @@ const GLYPHS: &[&str] = &["G", "r", "i", "d"];
 const TITLE: &str = "Virtua Grotesk: Grid Systems as Datasets";
 
 #[derive(Clone, Copy)]
+enum Axis {
+    H,
+    V,
+}
+
+/// A measurement declared against the outline, not against coordinates.
+/// `at` is the fixed line (a y for H, an x for V, in font units) and `span`
+/// picks two indices from the sorted crossing list of that line with the
+/// glyph outline. Endpoints and the printed value are resolved at render
+/// time, so redrawn glyphs re-measure themselves.
+#[derive(Clone, Copy)]
 struct GlyphMeasurement {
     glyph: usize,
-    x0: f64,
-    y0: f64,
-    x1: f64,
-    y1: f64,
-    value: i64,
+    axis: Axis,
+    at: f64,
+    span: (usize, usize),
     offset: f64,
     end_inset: f64,
     label_dx: f64,
     label_dy: f64,
     sum_dx: f64,
     sum_dy: f64,
+}
+
+/// The resolved geometry glyph_measurement() draws.
+struct ResolvedMeasurement {
+    x0: f64,
+    y0: f64,
+    x1: f64,
+    y1: f64,
+    value: i64,
+}
+
+fn resolve_measurement(outline: &Outline, m: &GlyphMeasurement) -> Option<ResolvedMeasurement> {
+    let crossings = match m.axis {
+        Axis::H => h_crossings(&outline.path, m.at),
+        Axis::V => v_crossings(&outline.path, m.at),
+    };
+    let (a, b) = (crossings.get(m.span.0)?, crossings.get(m.span.1)?);
+    let value = (b - a).round() as i64;
+    Some(match m.axis {
+        Axis::H => ResolvedMeasurement { x0: *a, y0: m.at, x1: *b, y1: m.at, value },
+        Axis::V => ResolvedMeasurement { x0: m.at, y0: *a, x1: m.at, y1: *b, value },
+    })
 }
 
 const POINT_MEASUREMENT_END_INSET: f64 = 30.0;
@@ -45,14 +76,13 @@ const VERTICAL_LABEL_BASELINE_OFFSET: f64 = -12.0;
 
 // EDIT HERE: individually placed glyph measurements in source-font units.
 // Each entry can move independently without changing any glyph geometry.
-const GLYPH_MEASUREMENTS: [GlyphMeasurement; 7] = [
+const GLYPH_MEASUREMENTS: [GlyphMeasurement; 8] = [
+    // G left stroke at the bowl's widest.
     GlyphMeasurement {
         glyph: 0,
-        x0: 48.0,
-        y0: 384.0,
-        x1: 156.0,
-        y1: 384.0,
-        value: 108,
+        axis: Axis::H,
+        at: 384.0,
+        span: (0, 1),
         offset: 0.0,
         end_inset: POINT_MEASUREMENT_END_INSET,
         label_dx: 0.0,
@@ -60,13 +90,12 @@ const GLYPH_MEASUREMENTS: [GlyphMeasurement; 7] = [
         sum_dx: 0.0,
         sum_dy: 0.0,
     },
+    // G bar thickness, measured vertically inside the bar.
     GlyphMeasurement {
         glyph: 0,
-        x0: 560.0,
-        y0: 320.0,
-        x1: 560.0,
-        y1: 416.0,
-        value: 96,
+        axis: Axis::V,
+        at: 560.0,
+        span: (2, 3),
         offset: 0.0,
         end_inset: EDGE_MEASUREMENT_END_INSET,
         label_dx: 0.0,
@@ -74,13 +103,12 @@ const GLYPH_MEASUREMENTS: [GlyphMeasurement; 7] = [
         sum_dx: 0.0,
         sum_dy: 0.0,
     },
+    // G lower-right stem.
     GlyphMeasurement {
         glyph: 0,
-        x0: 664.0,
-        y0: 80.0,
-        x1: 760.0,
-        y1: 80.0,
-        value: 96,
+        axis: Axis::H,
+        at: 80.0,
+        span: (2, 3),
         offset: 0.0,
         end_inset: EDGE_MEASUREMENT_END_INSET,
         label_dx: 0.0,
@@ -88,13 +116,12 @@ const GLYPH_MEASUREMENTS: [GlyphMeasurement; 7] = [
         sum_dx: 0.0,
         sum_dy: 0.0,
     },
+    // r stem.
     GlyphMeasurement {
         glyph: 1,
-        x0: 64.0,
-        y0: 224.0,
-        x1: 160.0,
-        y1: 224.0,
-        value: 96,
+        axis: Axis::H,
+        at: 224.0,
+        span: (0, 1),
         offset: 0.0,
         end_inset: EDGE_MEASUREMENT_END_INSET,
         label_dx: 0.0,
@@ -102,13 +129,12 @@ const GLYPH_MEASUREMENTS: [GlyphMeasurement; 7] = [
         sum_dx: 0.0,
         sum_dy: 0.0,
     },
+    // i stem.
     GlyphMeasurement {
         glyph: 2,
-        x0: 64.0,
-        y0: 288.0,
-        x1: 160.0,
-        y1: 288.0,
-        value: 96,
+        axis: Axis::H,
+        at: 288.0,
+        span: (0, 1),
         offset: 0.0,
         end_inset: EDGE_MEASUREMENT_END_INSET,
         label_dx: 0.0,
@@ -116,13 +142,12 @@ const GLYPH_MEASUREMENTS: [GlyphMeasurement; 7] = [
         sum_dx: 0.0,
         sum_dy: 0.0,
     },
+    // d bowl stroke at mid x-height.
     GlyphMeasurement {
         glyph: 3,
-        x0: 32.0,
-        y0: 288.0,
-        x1: 132.0,
-        y1: 288.0,
-        value: 100,
+        axis: Axis::H,
+        at: 288.0,
+        span: (0, 1),
         offset: 0.0,
         end_inset: POINT_MEASUREMENT_END_INSET,
         label_dx: 0.0,
@@ -130,13 +155,25 @@ const GLYPH_MEASUREMENTS: [GlyphMeasurement; 7] = [
         sum_dx: 0.0,
         sum_dy: 0.0,
     },
+    // d counter width at mid x-height.
     GlyphMeasurement {
         glyph: 3,
-        x0: 480.0,
-        y0: 680.0,
-        x1: 576.0,
-        y1: 680.0,
-        value: 96,
+        axis: Axis::H,
+        at: 288.0,
+        span: (1, 2),
+        offset: 0.0,
+        end_inset: EDGE_MEASUREMENT_END_INSET,
+        label_dx: 0.0,
+        label_dy: 0.0,
+        sum_dx: 0.0,
+        sum_dy: 0.0,
+    },
+    // d stem in the ascender, above the bowl.
+    GlyphMeasurement {
+        glyph: 3,
+        axis: Axis::H,
+        at: 680.0,
+        span: (0, 1),
         offset: 0.0,
         end_inset: EDGE_MEASUREMENT_END_INSET,
         label_dx: 0.0,
@@ -209,9 +246,15 @@ fn measurement_span(
     );
 }
 
-fn glyph_measurement(sheet: &mut Sheet, f: &Frame, origin: f64, m: GlyphMeasurement) {
-    let p0 = (f.x(origin + m.x0), f.y(m.y0));
-    let p1 = (f.x(origin + m.x1), f.y(m.y1));
+fn glyph_measurement(
+    sheet: &mut Sheet,
+    f: &Frame,
+    origin: f64,
+    m: GlyphMeasurement,
+    r: ResolvedMeasurement,
+) {
+    let p0 = (f.x(origin + r.x0), f.y(r.y0));
+    let p1 = (f.x(origin + r.x1), f.y(r.y1));
     let dx = p1.0 - p0.0;
     let dy = p1.1 - p0.1;
     let length = (dx * dx + dy * dy).sqrt();
@@ -238,7 +281,7 @@ fn glyph_measurement(sheet: &mut Sheet, f: &Frame, origin: f64, m: GlyphMeasurem
         );
     }
     let midpoint = ((q0.0 + q1.0) / 2.0, (q0.1 + q1.1) / 2.0);
-    let decomposition = p2sum(m.value);
+    let decomposition = p2sum(r.value);
     let parts: Vec<&str> = decomposition.split('+').collect();
     let sum_lines = if parts.len() > 2 {
         vec![parts[..2].join("+"), format!("+{}", parts[2..].join("+"))]
@@ -267,7 +310,7 @@ fn glyph_measurement(sheet: &mut Sheet, f: &Frame, origin: f64, m: GlyphMeasurem
         )
     };
     sheet.label_weighted(
-        &m.value.to_string(),
+        &r.value.to_string(),
         value_x,
         value_y,
         MEASUREMENT_TEXT_SIZE,
@@ -519,7 +562,19 @@ fn main() {
     }
 
     for measurement in GLYPH_MEASUREMENTS {
-        glyph_measurement(&mut sheet, &f, bounds[measurement.glyph], measurement);
+        match resolve_measurement(&outlines[measurement.glyph], &measurement) {
+            Some(resolved) => glyph_measurement(
+                &mut sheet,
+                &f,
+                bounds[measurement.glyph],
+                measurement,
+                resolved,
+            ),
+            None => eprintln!(
+                "warning: measurement on glyph {} at {} has no crossing span {:?}; skipped",
+                GLYPHS[measurement.glyph], measurement.at, measurement.span
+            ),
+        }
     }
 
     // Locally placed capped dimensions. The four row offsets above are
