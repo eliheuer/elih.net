@@ -481,6 +481,57 @@ pub struct TechnicalMeasurement {
     ends: MeasurementEnds,
 }
 
+/// Resolve a horizontal measurement from the outline's crossings at `y`,
+/// between crossing indices `span`. Endpoints and the printed value follow
+/// the current sources; a missing span panics with context so a redrawn
+/// glyph fails loudly instead of rendering a stale dimension.
+pub fn measure_h_points(
+    o: &crate::Outline,
+    glyph: usize,
+    y: f64,
+    span: (usize, usize),
+) -> TechnicalMeasurement {
+    let (a, b, v) = crate::h_span(o, y, span)
+        .unwrap_or_else(|| panic!("glyph {glyph}: no h crossings {span:?} at y={y}"));
+    TechnicalMeasurement::points(glyph, (a, y), (b, y), v)
+}
+
+/// See [`measure_h_points`]; edge-style caps.
+pub fn measure_h_edges(
+    o: &crate::Outline,
+    glyph: usize,
+    y: f64,
+    span: (usize, usize),
+) -> TechnicalMeasurement {
+    let (a, b, v) = crate::h_span(o, y, span)
+        .unwrap_or_else(|| panic!("glyph {glyph}: no h crossings {span:?} at y={y}"));
+    TechnicalMeasurement::edges(glyph, (a, y), (b, y), v)
+}
+
+/// Vertical counterpart of [`measure_h_points`], along the line at `x`.
+pub fn measure_v_points(
+    o: &crate::Outline,
+    glyph: usize,
+    x: f64,
+    span: (usize, usize),
+) -> TechnicalMeasurement {
+    let (a, b, v) = crate::v_span(o, x, span)
+        .unwrap_or_else(|| panic!("glyph {glyph}: no v crossings {span:?} at x={x}"));
+    TechnicalMeasurement::points(glyph, (x, a), (x, b), v)
+}
+
+/// See [`measure_v_points`]; edge-style caps.
+pub fn measure_v_edges(
+    o: &crate::Outline,
+    glyph: usize,
+    x: f64,
+    span: (usize, usize),
+) -> TechnicalMeasurement {
+    let (a, b, v) = crate::v_span(o, x, span)
+        .unwrap_or_else(|| panic!("glyph {glyph}: no v crossings {span:?} at x={x}"));
+    TechnicalMeasurement::edges(glyph, (x, a), (x, b), v)
+}
+
 impl TechnicalMeasurement {
     pub const fn points(glyph: usize, p0: (f64, f64), p1: (f64, f64), value: i64) -> Self {
         Self::new(glyph, p0, p1, value, MeasurementEnds::Points)

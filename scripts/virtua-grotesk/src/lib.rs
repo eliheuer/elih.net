@@ -602,6 +602,30 @@ pub fn v_crossings(path: &BezPath, x: f64) -> Vec<f64> {
     ys
 }
 
+/// Endpoints and rounded length of the span between two crossings of the
+/// horizontal line at `y`. None when the crossings don't exist, so a
+/// redrawn glyph fails loudly instead of rendering a stale dimension.
+pub fn h_span(o: &Outline, y: f64, span: (usize, usize)) -> Option<(f64, f64, i64)> {
+    let xs = h_crossings(&o.path, y);
+    let (a, b) = (*xs.get(span.0)?, *xs.get(span.1)?);
+    Some((a, b, (b - a).round() as i64))
+}
+
+/// Vertical counterpart of [`h_span`], along the line at `x`.
+pub fn v_span(o: &Outline, x: f64, span: (usize, usize)) -> Option<(f64, f64, i64)> {
+    let ys = v_crossings(&o.path, x);
+    let (a, b) = (*ys.get(span.0)?, *ys.get(span.1)?);
+    Some((a, b, (b - a).round() as i64))
+}
+
+/// Horizontal center of the outline's ink, for measuring bowls at their
+/// vertical extrema (where crossing values land on the grid).
+pub fn ink_mid_x(o: &Outline) -> f64 {
+    use kurbo::Shape;
+    let bbox = o.path.bounding_box();
+    (bbox.x0 + bbox.x1) / 2.0
+}
+
 // --- abstract-figure primitives -----------------------------------------------------
 
 /// The stroked, filled rectangle with a centered mono numeral that the

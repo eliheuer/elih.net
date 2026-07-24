@@ -74,8 +74,7 @@ delivering useful models in 2026.
 Modernist design was born a little more than a century ago out of
 similar frustrations in a similar time of technological change. I
 think the way forward is not a return to the dogma and rigidity of
-modernist design that was rightly rejected (the culture of design that
-replaced modernism is equally dogmatic and rigid, just in different
+modernist design that was somewhat rightly rejected (I like the aesthetics of modernist design and the culture of design that replaced modernism is equally dogmatic and rigid, just in different
 ways). It is a rediscovery, with fresh eyes and new technology, of the
 loftier goals of early modernism that were unachievable with the
 technology of the previous century.
@@ -97,25 +96,25 @@ produced the aesthetic, and the aesthetic advertises the constraint.
 
 ### 03. Dyadic Self-Labeling Grid Systems
 
-Virtua Grotesk's answer to Replica's flat grid is a nested one, in
+Virtua Grotesk replaces Replica's flat grid with a nested one, in
 powers of two up to the em itself. The em is the coordinate space a
 glyph is drawn in, and its size is given in units per em (UPM).
 Virtua Grotesk's is 1024, 2^10, rather than the industry's usual
 1000. That is less exotic than it sounds. A power-of-two em is the
 TrueType convention, 2048 is standard and
-[Inter](https://rsms.me/inter/) uses it. Virtua Grotesk extends the
-same logic down through every dimension.
+[Inter](https://rsms.me/inter/) uses it.
 
+Virtua Grotesk extends the powers-of-two logic down through every dimension.
 Every measurement is a sum of powers of two, each power used once. 64
 takes one. 96 takes two, 64 + 32. 112 takes three, 64 + 32 + 16.
-Fewer is better. Where two values take the same number, the one whose
+Fewer is the default. Where two values take the same number, the one whose
 powers run consecutively wins: in 96 = 64 + 32 each power is half the
-one before it, while 80 = 64 + 16 skips a step.
+one before it, while 80 = 64 + 16 skips a step, so 96 wins.
 
 That count is the value's Hamming weight, or popcount, the number of
 1s when it is written in binary. Virtua Grotesk uses it to rank handle
 lengths and structural spans. One is a pure power: 64, 128, 256. Two
-is an elegant sum: 96 = 64 + 32, or 272 = 256 + 16. Three is
+is an elegant sum: 96 = 64 + 32, or 384 = 256 + 128. Three is
 acceptable: 104 = 64 + 32 + 8. Four or more is flagged for review as a
 likely correction.
 
@@ -414,7 +413,7 @@ hand, yet every point lands on the grid and its stem steps evenly through
 96, 144, 192. It reads as a real glyph, not a degraded in-between, which
 is why the model can train on it.
 
-![Three large lowercase n outlines on one continuous 8-unit grid. Regular is red, the one-half interpolation is orange, and Bold is yellow. Every source point and handle is visible. Stem dimensions read 96, 144, and 192 with their power-of-two sums. Counter dimensions read 272, 232, and 192.](./fig-interp-outlines.png)
+![Three large lowercase n outlines on one continuous 8-unit grid. Regular is red, the one-half interpolation is orange, and Bold is yellow. Every source point and handle is visible. Stem dimensions read 96, 144, and 192 with their power-of-two sums. Counter dimensions read 256, 224, and 192.](./fig-interp-outlines.png)
 
 The reason is arithmetic: the stems differ by 96, which keeps splitting
 evenly as the weight halves, so every interpolated stem lands back on the
@@ -676,12 +675,12 @@ patch.
 The figure below runs this arithmetic for five values from the design
 at every text size from 12 to 18 pixels. Each row is a coordinate: the
 x-height 576; 116, the correction pulled off the 8-grid in the
-lowercase a's counter; the 96 stem; the o's 88 top stroke; and 64, the
+lowercase a's counter; the 96 stem; the o's left edge at 40; and 64, the
 step of the grid the vertical metrics sit on. A green cell means the
 coordinate scales to an exact position on the rasterizer's 1/64-pixel
 grid at that size. A red × means it must round. The pattern is the
 trailing-zeros rule: 576 and 64 (six zeros) and 96 (five) never round,
-88 (three) holds at the even sizes, and 116 (two) survives only at 12
+40 (three) holds at the even sizes, and 116 (two) survives only at 12
 and 16, the sizes divisible by four. On the 1000 em (right), every
 value rounds at every size. The x-height row reads 562 instead of 576
 because the comparison keeps the design's proportions: the x-height is
@@ -690,7 +689,7 @@ The choice hardly matters. Keeping 576 on a 1000 em rounds at every
 one of these sizes too, because the denominator 1000 puts a factor of
 125 under every coordinate.
 
-![Two grids of colored cells drawn with designbot, one for a 1024 em and one for a 1000 em. Rows are the coordinates 576, 116, 96, 88, and 64, with 562 in place of 576 on the 1000 em; columns are pixel sizes 12 through 18. In the 1024 panel the 576, 96, and 64 rows are green at every size, the 88 row at even sizes, and the 116 row at 12 and 16. Every cell of the 1000 panel is a red ×.](./fig-scaling.png)
+![Two grids of colored cells drawn with designbot, one for a 1024 em and one for a 1000 em. Rows are the coordinates 576, 116, 96, 40, and 64, with 562 in place of 576 on the 1000 em; columns are pixel sizes 12 through 18. In the 1024 panel the 576, 96, and 64 rows are green at every size, the 40 row at even sizes, and the 116 row at 12 and 16. Every cell of the 1000 panel is a red ×.](./fig-scaling.png)
 
 One more alignment is particular to this pipeline. Render a 1024-em
 glyph at 1024 pixels and one font unit is one pixel (the specimen atop

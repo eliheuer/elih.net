@@ -287,10 +287,10 @@ fn fig_scaling(renderer: &Renderer, mono: &str, out: &std::path::Path) {
     // sixty-fourths. A cell is green when that value is an integer on the
     // rasterizer's 1/64 px grid, red when it must round. Rows use real
     // design values: the x-height (576 / 562), the 64- and 96-unit
-    // structural measures, the 88 counter measurement, and the corrected
-    // 116. The 1000-em panel is red everywhere.
+    // structural measures, the o's 40 left edge, and the corrected 116.
+    // The 1000-em panel is red everywhere.
     let sizes = [12u64, 13, 14, 15, 16, 17, 18];
-    let rows: [(u64, u64); 5] = [(576, 562), (116, 116), (96, 96), (88, 88), (64, 64)];
+    let rows: [(u64, u64); 5] = [(576, 562), (116, 116), (96, 96), (40, 40), (64, 64)];
     const CELL: f64 = 128.0;
     const PITCH: f64 = 140.0;
     const GRID_W: f64 = 6.0 * PITCH + CELL;

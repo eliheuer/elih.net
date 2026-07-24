@@ -62,20 +62,22 @@ fn fig_no(renderer: &Renderer, mono: &str, reg: &std::path::Path, out: &std::pat
     }
 
     // Representative stroke sizes plus the open n counter and closed o
-    // counter. Values and endpoints are taken directly from the current UFO.
-    const MEASUREMENTS: [TechnicalMeasurement; 6] = [
-        TechnicalMeasurement::edges(0, (64.0, 288.0), (160.0, 288.0), 96),
-        TechnicalMeasurement::edges(0, (160.0, 288.0), (432.0, 288.0), 272).counter(),
-        TechnicalMeasurement::points(1, (32.0, 288.0), (132.0, 288.0), 100),
-        TechnicalMeasurement::points(1, (304.0, 504.0), (304.0, 592.0), 88),
-        TechnicalMeasurement::points(1, (304.0, 72.0), (304.0, 504.0), 432)
+    // counter. Endpoints and values are resolved from the outlines at
+    // render time, so redrawn glyphs re-measure themselves.
+    let o_mid = ink_mid_x(&o);
+    let measurements = [
+        measure_h_edges(&n, 0, 288.0, (0, 1)),
+        measure_h_edges(&n, 0, 288.0, (1, 2)).counter(),
+        measure_h_points(&o, 1, 288.0, (0, 1)),
+        measure_v_points(&o, 1, o_mid, (2, 3)),
+        measure_v_points(&o, 1, o_mid, (1, 2))
             .counter()
             .gap_line(288.0, COUNTER_LINE_GAP)
             .shift_label(0.0, COUNTER_LABEL_SHIFT),
-        TechnicalMeasurement::points(1, (132.0, 288.0), (484.0, 288.0), 352).counter(),
+        measure_h_points(&o, 1, 288.0, (1, 2)).counter(),
     ];
     let origins = [x_n, x_o];
-    for measurement in MEASUREMENTS {
+    for measurement in measurements {
         technical.measurement(&mut sheet, &f, origins[measurement.glyph], measurement);
     }
     sheet.save(renderer, out);
@@ -120,21 +122,23 @@ fn fig_ho(renderer: &Renderer, mono: &str, reg: &std::path::Path, out: &std::pat
     }
 
     // The H opening and O counter join the representative stem and crossbar
-    // sizes. Values and endpoints are taken directly from the current UFO.
-    const MEASUREMENTS: [TechnicalMeasurement; 7] = [
-        TechnicalMeasurement::points(0, (80.0, 600.0), (184.0, 600.0), 104),
-        TechnicalMeasurement::edges(0, (184.0, 600.0), (584.0, 600.0), 400).counter(),
-        TechnicalMeasurement::edges(0, (384.0, 360.0), (384.0, 456.0), 96),
-        TechnicalMeasurement::points(1, (48.0, 384.0), (156.0, 384.0), 108).break_sum_after(2),
-        TechnicalMeasurement::points(1, (424.0, 684.0), (424.0, 784.0), 100),
-        TechnicalMeasurement::points(1, (424.0, 84.0), (424.0, 684.0), 600)
+    // sizes. Endpoints and values are resolved from the outlines at render
+    // time, so redrawn glyphs re-measure themselves.
+    let o_mid = ink_mid_x(&o);
+    let measurements = [
+        measure_h_points(&h, 0, 600.0, (0, 1)),
+        measure_h_edges(&h, 0, 600.0, (1, 2)).counter(),
+        measure_v_edges(&h, 0, 384.0, (0, 1)),
+        measure_h_points(&o, 1, 384.0, (0, 1)).break_sum_after(2),
+        measure_v_points(&o, 1, o_mid, (2, 3)),
+        measure_v_points(&o, 1, o_mid, (1, 2))
             .counter()
             .gap_line(384.0, COUNTER_LINE_GAP)
             .shift_label(0.0, COUNTER_LABEL_SHIFT),
-        TechnicalMeasurement::points(1, (156.0, 384.0), (692.0, 384.0), 536).counter(),
+        measure_h_points(&o, 1, 384.0, (1, 2)).counter(),
     ];
     let origins = [x_h, x_o];
-    for measurement in MEASUREMENTS {
+    for measurement in measurements {
         technical.measurement(&mut sheet, &f, origins[measurement.glyph], measurement);
     }
     sheet.save(renderer, out);
@@ -182,51 +186,38 @@ fn fig_weights(
         draw_figure_glyph(&mut sheet, outline, S, x, f.baseline, fill);
     }
 
-    // stems and curves, both weights, all measured
-    sheet.dim_h(
-        x_rn + 64.0 * S,
-        x_rn + 160.0 * S,
-        f.y(256.0),
-        "96",
-        role::figure::pen(),
-    );
-    sheet.dim_h(
-        x_ro + 32.0 * S,
-        x_ro + 132.0 * S,
-        f.y(288.0),
-        "100",
-        role::figure::pen(),
-    );
-    sheet.dim_v(
-        x_ro + 304.0 * S,
-        f.y(500.0),
-        f.y(592.0),
-        "92",
-        role::figure::pen(),
-        true,
-    );
-    sheet.dim_h(
-        x_bn + 64.0 * S,
-        x_bn + 256.0 * S,
-        f.y(256.0),
-        "192",
-        role::figure::pen(),
-    );
-    sheet.dim_h(
-        x_bo + 32.0 * S,
-        x_bo + 228.0 * S,
-        f.y(288.0),
-        "196",
-        role::figure::pen(),
-    );
-    sheet.dim_v(
-        x_bo + 344.0 * S,
-        f.y(452.0),
-        f.y(592.0),
-        "140",
-        role::figure::pen(),
-        true,
-    );
+    // Stems and curves, both weights, resolved from the outlines at render
+    // time so redrawn glyphs re-measure themselves.
+    let mut dim_h_span = |o: &Outline, x_origin: f64, y: f64, span: (usize, usize)| {
+        let (a, b, v) = h_span(o, y, span).expect("weights h span");
+        sheet.dim_h(
+            x_origin + a * S,
+            x_origin + b * S,
+            f.y(y),
+            &v.to_string(),
+            role::figure::pen(),
+        );
+    };
+    dim_h_span(&rn, x_rn, 256.0, (0, 1));
+    dim_h_span(&ro, x_ro, 288.0, (0, 1));
+    dim_h_span(&bn, x_bn, 256.0, (0, 1));
+    dim_h_span(&bo, x_bo, 288.0, (0, 1));
+    drop(dim_h_span);
+    let mut dim_v_span = |o: &Outline, x_origin: f64, span: (usize, usize)| {
+        let mid = ink_mid_x(o);
+        let (a, b, v) = v_span(o, mid, span).expect("weights v span");
+        sheet.dim_v(
+            x_origin + mid * S,
+            f.y(a),
+            f.y(b),
+            &v.to_string(),
+            role::figure::pen(),
+            true,
+        );
+    };
+    dim_v_span(&ro, x_ro, (2, 3));
+    dim_v_span(&bo, x_bo, (2, 3));
+    drop(dim_v_span);
     sheet.save(renderer, out);
 }
 
@@ -349,18 +340,22 @@ fn fig_semantic(renderer: &Renderer, mono: &str, reg: &std::path::Path, out: &st
         BASELINE,
         role::figure::green(),
     );
+    // Both dims and the binary rows below resolve from the outlines, so a
+    // redrawn stem or curve re-measures itself.
+    let (n_a, n_b, n_stem) = h_span(&n, 250.0, (0, 1)).expect("n stem @250");
+    let (o_a, o_b, o_stroke) = h_span(&o, 288.0, (0, 1)).expect("o stroke @288");
     sheet.dim_h(
-        x0 + 64.0 * S,
-        x0 + 160.0 * S,
+        x0 + n_a * S,
+        x0 + n_b * S,
         BASELINE + 250.0 * S,
-        "96",
+        &n_stem.to_string(),
         role::figure::pen(),
     );
     sheet.dim_h(
-        x0 + (n.width + 32.0) * S,
-        x0 + (n.width + 132.0) * S,
-        BASELINE + 310.0 * S,
-        "100",
+        x0 + (n.width + o_a) * S,
+        x0 + (n.width + o_b) * S,
+        BASELINE + 288.0 * S,
+        &o_stroke.to_string(),
         role::figure::pen(),
     );
 
@@ -402,8 +397,8 @@ fn fig_semantic(renderer: &Renderer, mono: &str, reg: &std::path::Path, out: &st
             bit_box.draw(sheet, x, y, cell_fill, if one { "1" } else { "0" });
         }
     };
-    draw_bits(&mut sheet, 96, 1000.0, role::figure::orange());
-    draw_bits(&mut sheet, 100, 790.0, role::figure::yellow());
+    draw_bits(&mut sheet, n_stem as u32, 1000.0, role::figure::orange());
+    draw_bits(&mut sheet, o_stroke as u32, 790.0, role::figure::yellow());
 
     let bar_w = 690.0;
     let draw_bar = |sheet: &mut Sheet, pct: f64, y: f64, fill: Color| {

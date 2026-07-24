@@ -68,37 +68,20 @@ struct NDimensions {
     inner_right: f64,
 }
 
-/// Read the stem and counter edges from the outline being drawn. The two
-/// smooth on-curve points at y=344 define the straight counter walls in every
-/// compatible n source. Fail loudly if that topology changes instead of
-/// displaying a stale hardcoded label.
+/// Read the stem and counter edges from the outline being drawn, as
+/// crossings of the measurement line with the outline. Fails loudly if the
+/// topology changes instead of displaying a stale hardcoded label.
 fn n_dimensions(outline: &Outline) -> NDimensions {
-    let ink_left = outline
-        .points
-        .iter()
-        .map(|(x, _, _)| *x)
-        .fold(f64::INFINITY, f64::min);
-    let mut counter_edges: Vec<f64> = outline
-        .points
-        .iter()
-        .filter_map(|(x, y, role)| {
-            if (*y - 344.0).abs() < f64::EPSILON && !matches!(role, PtRole::Off) {
-                Some(*x)
-            } else {
-                None
-            }
-        })
-        .collect();
-    counter_edges.sort_by(f64::total_cmp);
-    assert_eq!(
-        counter_edges.len(),
-        2,
-        "n counter measurement expects two on-curve edges at y=344"
+    let xs = h_crossings(&outline.path, 344.0);
+    assert!(
+        xs.len() >= 3,
+        "n measurement expects at least 3 crossings at y=344, got {}",
+        xs.len()
     );
     NDimensions {
-        ink_left,
-        inner_left: counter_edges[0],
-        inner_right: counter_edges[1],
+        ink_left: xs[0],
+        inner_left: xs[1],
+        inner_right: xs[2],
     }
 }
 
