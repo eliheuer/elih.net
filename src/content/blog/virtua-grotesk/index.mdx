@@ -105,18 +105,16 @@ TrueType convention, 2048 is standard and
 [Inter](https://rsms.me/inter/) uses it.
 
 Virtua Grotesk extends the powers-of-two logic down through every dimension.
-Every measurement is a sum of powers of two, each power used once. 64
-takes one. 96 takes two, 64 + 32. 112 takes three, 64 + 32 + 16.
-Fewer is the default. Where two values take the same number, the one whose
+Every measurement is a sum of powers of two, each power used once. The
+count of powers is the value's Hamming weight, or popcount, the number
+of 1s when it is written in binary, and Virtua Grotesk uses it to rank
+handle lengths and structural spans. One is a pure power: 64, 128,
+256. Two is an elegant sum: 96 = 64 + 32, or 384 = 256 + 128. Three is
+acceptable: 104 = 64 + 32 + 8. Four or more is a signal: some
+correction off the default grid happened here. Where two values take the same count, the one whose
 powers run consecutively wins: in 96 = 64 + 32 each power is half the
-one before it, while 80 = 64 + 16 skips a step, so 96 wins all else being equal.
-
-That count is the value's Hamming weight, or popcount, the number of
-1s when it is written in binary. Virtua Grotesk uses it to rank handle
-lengths and structural spans. One is a pure power: 64, 128, 256. Two
-is an elegant sum: 96 = 64 + 32, or 384 = 256 + 128. Three is
-acceptable: 104 = 64 + 32 + 8. Four or more is flagged for review as a
-likely correction.
+one before it, while 80 = 64 + 16 skips a step, so 96 wins all else
+being equal.
 
 ![The lowercase n and o from Virtua Grotesk Regular enlarged over the uniform 8-unit source grid, with every on-curve and off-curve point marked and capped labels measuring representative strokes and counters.](./fig-system-no.png)
 
@@ -124,9 +122,10 @@ A low popcount means a structural value. A high one means the
 letterform needed something the round numbers could not give. 64 is
 too light for a stem and 128 too heavy, so stems are 96 = 64 + 32;
 where 96 is too light, 112 = 64 + 32 + 16. The sums are a second
-semantic hierarchy, parallel to the nested grid. A high popcount is
-not necessarily bad: it is self-labeling information, marking the
-value for the model as some kind of optical correction.
+semantic hierarchy, parallel to the nested grid. Nothing is wrong with
+a high popcount; it is self-labeling information, marking the value
+for the model as an optical correction or a tricky spot in the
+drawing logic.
 
 I read this straight off the outline while drawing. Below,
 [Runebender](https://runebender.org) labels every measurement with its
