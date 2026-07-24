@@ -29,18 +29,16 @@ use kurbo::Affine;
 #[allow(unused_imports)]
 use virtua_grotesk_figures::*;
 
-const GAP: f64 = 96.0;
-const SLOT: f64 = (W - 2.0 * MARGIN - GAP) / 2.0; // 1116
-
 // The crop, in font units, and its scale on the canvas.
 const UX0: f64 = 64.0;
 const UX1: f64 = 464.0;
 const UY0: f64 = -16.0;
 const UY1: f64 = 304.0;
-const S: f64 = 2.87; // canvas px per font unit -> 1148 x 918.4 panel
-const PANEL_BOTTOM: f64 = 168.0;
-const PANEL_TOP: f64 = PANEL_BOTTOM + (UY1 - UY0) * S;
-const INSET_X: f64 = (SLOT - (UX1 - UX0) * S) / 2.0;
+const S: f64 = 2.875; // canvas px per font unit -> 1150 x 920 panel
+const PANEL_W: f64 = (UX1 - UX0) * S;
+const PANEL_H: f64 = (UY1 - UY0) * S;
+const PANEL_GAP: f64 = (W - 2.0 * PANEL_W) / 3.0;
+const PANEL_BOTTOM: f64 = (H - PANEL_H) / 2.0;
 
 // Theme tokens, shared with og.rs / figs.rs.
 fn grid_flat() -> Color {
@@ -61,16 +59,55 @@ fn border() -> Color {
 fn curve() -> Color {
     role::figure::pen()
 }
-/// Panel-local transform: font units -> canvas.
-fn cx(panel_left: f64, ux: f64) -> f64 {
-    panel_left + (ux - UX0) * S
+/// Panel-local transform: font units -> rasterized panel.
+fn cx(ux: f64) -> f64 {
+    (ux - UX0) * S
 }
 fn cy(uy: f64) -> f64 {
-    PANEL_BOTTOM + (uy - UY0) * S
+    (uy - UY0) * S
 }
 
 fn on8(v: f64) -> bool {
     v.rem_euclid(8.0) == 0.0
+}
+
+fn draw_panel(outline: &Outline, nested: bool) -> Canvas {
+    let mut ctx = Canvas::new(PANEL_W, PANEL_H);
+    ctx.background(role::canvas::background());
+    ctx.line_cap("round");
+
+    let draw_lattice = |step: f64, color: Color, width: f64, ctx: &mut Canvas| {
+        ctx.no_fill().stroke(color).stroke_width(width);
+        let mut ux = UX0;
+        while ux <= UX1 {
+            ctx.line(cx(ux), cy(UY0), cx(ux), cy(UY1));
+            ux += step;
+        }
+        let mut uy = (UY0 / step).ceil() * step;
+        while uy <= UY1 {
+            ctx.line(cx(UX0), cy(uy), cx(UX1), cy(uy));
+            uy += step;
+        }
+    };
+    if nested {
+        draw_lattice(2.0, grid_2(), line::HAIRLINE, &mut ctx);
+        draw_lattice(8.0, grid_8(), line::THIN, &mut ctx);
+        draw_lattice(64.0, grid_64(), line::REGULAR, &mut ctx);
+    } else {
+        draw_lattice(8.0, grid_flat(), line::MEDIUM, &mut ctx);
+    }
+
+    // The baseline belongs to the same one-pen construction system.
+    ctx.no_fill().stroke(role::figure::pen()).stroke_width(8.0);
+    ctx.line(cx(UX0), cy(0.0), cx(UX1), cy(0.0));
+
+    let place = Affine::new([S, 0.0, 0.0, S, -UX0 * S, -UY0 * S]);
+    ctx.fill(role::figure::yellow())
+        .stroke(curve())
+        .stroke_width(10.0);
+    ctx.draw_path(place * outline.path.clone());
+
+    ctx
 }
 
 fn main() {
@@ -92,84 +129,38 @@ fn main() {
     sheet.ctx.background(role::canvas::background());
     sheet.ctx.line_cap("round");
 
-    let panel_left = |i: usize| MARGIN + i as f64 * (SLOT + GAP) + INSET_X;
-    let panel_w = (UX1 - UX0) * S;
+    let panel_left = |i: usize| PANEL_GAP + i as f64 * (PANEL_W + PANEL_GAP);
+    let panel_renderer = Renderer::new(PANEL_W as u32, PANEL_H as u32);
 
-    // ── grids, per panel ──
+    // Rasterize each panel independently. This is a real crop: glyph geometry
+    // outside one panel cannot spill into its neighbor.
     for i in 0..2 {
-        let pl = panel_left(i);
-        let draw_lattice = |step: f64, color: Color, width: f64, ctx: &mut Canvas| {
-            ctx.no_fill().stroke(color).stroke_width(width);
-            let mut ux = UX0;
-            while ux <= UX1 {
-                ctx.line(cx(pl, ux), cy(UY0), cx(pl, ux), cy(UY1));
-                ux += step;
-            }
-            let mut uy = (UY0 / step).ceil() * step;
-            while uy <= UY1 {
-                ctx.line(cx(pl, UX0), cy(uy), cx(pl, UX1), cy(uy));
-                uy += step;
-            }
-        };
-        if i == 0 {
-            // flat: one lattice, one color
-            draw_lattice(8.0, grid_flat(), line::MEDIUM, &mut sheet.ctx);
-        } else {
-            // nested: three levels at three intensities
-            draw_lattice(2.0, grid_2(), line::HAIRLINE, &mut sheet.ctx);
-            draw_lattice(8.0, grid_8(), line::THIN, &mut sheet.ctx);
-            draw_lattice(64.0, grid_64(), line::REGULAR, &mut sheet.ctx);
-        }
-        // The baseline belongs to the same one-pen construction system.
-        sheet
-            .ctx
-            .no_fill()
-            .stroke(role::figure::pen())
-            .stroke_width(8.0);
-        sheet.ctx.line(cx(pl, UX0), cy(0.0), cx(pl, UX1), cy(0.0));
-    }
-
-    // ── the outline, identical in both panels ──
-    for i in 0..2 {
-        let pl = panel_left(i);
-        let place = Affine::new([S, 0.0, 0.0, S, pl - UX0 * S, PANEL_BOTTOM - UY0 * S]);
-        // The glyph is deliberately identical in both panels; only the grid
-        // changes. One shared fill prevents color from implying a second
-        // variable and keeps crop spill visually continuous.
-        let fill = role::figure::yellow();
-        sheet.ctx.fill(fill).stroke(curve()).stroke_width(10.0);
-        sheet.ctx.draw_path(place * outline.path.clone());
-    }
-
-    // ── mask the crop spill (no clip API; bg is solid) ──
-    {
-        let ctx = &mut sheet.ctx;
-        ctx.fill(role::canvas::background()).no_stroke();
-        ctx.rect(0.0, 0.0, W, PANEL_BOTTOM); // below
-        ctx.rect(0.0, PANEL_TOP, W, H - PANEL_TOP); // above
-        ctx.rect(0.0, 0.0, panel_left(0), H); // left of panel 01
-        let gap_x0 = panel_left(0) + panel_w;
-        ctx.rect(gap_x0, 0.0, panel_left(1) - gap_x0, H); // between panels
-        let right_x0 = panel_left(1) + panel_w;
-        ctx.rect(right_x0, 0.0, W - right_x0, H); // right of panel 02
+        let panel = draw_panel(&outline, i == 1);
+        let rgba = panel_renderer.render_frames(&panel).remove(0).0;
+        sheet.ctx.image_rgba(
+            rgba,
+            PANEL_W as u32,
+            PANEL_H as u32,
+            panel_left(i),
+            PANEL_BOTTOM,
+            1.0,
+        );
     }
 
     // ── panel borders ──
     for i in 0..2 {
         let pl = panel_left(i);
         sheet.ctx.no_fill().stroke(border()).stroke_width(10.0);
-        sheet
-            .ctx
-            .rect(pl, PANEL_BOTTOM, panel_w, PANEL_TOP - PANEL_BOTTOM);
+        sheet.ctx.rect(pl, PANEL_BOTTOM, PANEL_W, PANEL_H);
     }
 
-    // ── handles + point markers, colored by panel scheme ──
+    // Handles and markers sit above the crop. This keeps edge points whole
+    // while the filled glyph remains isolated inside its own panel.
     let in_window = |x: f64, y: f64| {
         (UX0 - 4.0..=UX1 + 4.0).contains(&x) && (UY0 - 4.0..=UY1 + 4.0).contains(&y)
     };
     for i in 0..2 {
         let pl = panel_left(i);
-        // handle lines
         for ((x1, y1), (x2, y2)) in &outline.handles {
             if !(in_window(*x1, *y1) && in_window(*x2, *y2)) {
                 continue;
@@ -179,10 +170,14 @@ fn main() {
                 .no_fill()
                 .stroke(role::figure::pen())
                 .stroke_width(10.0);
-            sheet.ctx.line(cx(pl, *x1), cy(*y1), cx(pl, *x2), cy(*y2));
+            sheet.ctx.line(
+                pl + cx(*x1),
+                PANEL_BOTTOM + cy(*y1),
+                pl + cx(*x2),
+                PANEL_BOTTOM + cy(*y2),
+            );
         }
-        // markers, knocked out with the background color
-        for (x, y, role) in &outline.points {
+        for (x, y, point_role) in &outline.points {
             if !in_window(*x, *y) {
                 continue;
             }
@@ -199,16 +194,13 @@ fn main() {
                 .fill(fill)
                 .stroke(role::figure::pen())
                 .stroke_width(9.0);
-            let (px, py) = (cx(pl, *x), cy(*y));
-            match role {
-                PtRole::Smooth => {
+            let (px, py) = (pl + cx(*x), PANEL_BOTTOM + cy(*y));
+            match point_role {
+                PtRole::Smooth | PtRole::Off => {
                     sheet.ctx.oval(px - 18.0, py - 18.0, 36.0, 36.0);
                 }
                 PtRole::Corner => {
                     sheet.ctx.rect(px - 18.0, py - 18.0, 36.0, 36.0);
-                }
-                PtRole::Off => {
-                    sheet.ctx.oval(px - 18.0, py - 18.0, 36.0, 36.0);
                 }
             }
         }
