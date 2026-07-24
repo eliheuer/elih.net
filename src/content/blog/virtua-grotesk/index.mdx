@@ -708,7 +708,7 @@ units per em is enough, and 1024 is the power of two that lands there.
 (2048 with a 4-unit grid is the same system scaled by two.)
 
 For the model, this pays out twice. The synthetic data is noise-free:
-section 08's factory is `a + t · (b − a)`, and with masters on the
+section 08's factory is a + t * (b − a), and with masters on the
 2-grid and binary-fraction weights every machine computes the
 identical corpus; on a decimal em, float error enters every
 coordinate, differently per machine, and the model learns the design
@@ -722,21 +722,7 @@ curves onto coarse pixel grids. His 1986
 should not be to make hand-tuning obsolete; it should rather be to
 make hand-tuning tolerable. Let us try to create meta-designs so that
 we would never want to change more than a few pixels per character,
-say half a dozen, regardless of the resolution." That is the 8-grid
-and the 2-grid: a machine draft correct on the coarse grid, a human
-budget of a few touches on the fine one, except here every touch is
-recorded and learned from. The 2-grid remains the designer's.
+say half a dozen, regardless of the resolution."
 
-The claim is narrow. Great fonts shipped on decimal ems for forty
-years, and when humans run the pipeline the base hardly matters.
-Knuth thought base two nothing special aesthetically (his *Art of
-Computer Programming* calls balanced ternary "perhaps the prettiest
-number system of all"), yet built TeX and METAFONT on the base the
-hardware uses, to get the identical page on every machine. Once the
-pipeline is computational end to end, base two makes the design's
-arithmetic and the machine's the same.
-
-When the engineering is settled, the tiebreaker is aesthetics. A
-preference for beauty is at the core of many technology choices in
-this project; it is why the source files are UFO and not Glyphs.
+When the engineering is settled, the tiebreaker is aesthetics.
 Powers of two would deserve the job on beauty alone.
