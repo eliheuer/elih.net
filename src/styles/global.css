@@ -185,7 +185,7 @@ html.use-geist-font {
        well inside the safe ratio. */
     font-size: clamp(1.125rem, 0.9375rem + 0.75vw, 1.5rem);
     line-height: 1.5;
-    letter-spacing: 0.02em;
+    letter-spacing: normal;
     text-rendering: optimizeLegibility;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
