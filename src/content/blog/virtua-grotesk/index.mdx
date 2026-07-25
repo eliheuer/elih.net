@@ -534,16 +534,14 @@ drops one rung, and a ten-rung ladder absorbs the whole operation. A
 decimal grid fails at the second halving: 10, 5, 2.5.
 
 Both constraints force the same grid: the dyadic ladder, 1024, 512,
-256… down to 2, ten nested levels. The self-labeling scheme needs that
-depth. A 1000 em nests too, 1000, 100, 10, but three levels are too
-few for the scheme; ten levels give every role its own rung: 64 for
-vertical metrics, 8 for structure, 2 for corrections.
+256… down to 2, ten nested levels.
 
-The label is a coordinate's count of trailing zeros in binary. 768
-ends in eight zeros; 576 in six; 116 in two, off the structure grid's
-8, a correction. Mathematicians write the count $\nu_2$; hardware
-reads it in one instruction, count-trailing-zeros. The hierarchy is
-not stored beside the coordinates; it is their binary form.
+Write a coordinate in binary and its label is already there. 576 is
+1001000000; the six zeros at the end mean it divides by 64. 116 is
+1110100; the two zeros mean it divides by 4 but not 8. The label costs nothing to store because it
+is part of the number. The first figure below brackets these trailing
+zeros for the design's key values. The second shows the labels on the
+lowercase a, structural points green, corrections red.
 
 ![Five rows of eleven-bit binary numbers drawn with designbot: the em 1024, cap height 768, x-height 576, the 96-unit stem, and the corrected 116, each with its run of trailing zeros bracketed and its grid level read off as the count, the 116 row in red.](./fig-bits.png)
 
@@ -564,7 +562,7 @@ $$
 $$
 
 an integer whenever the trailing zeros of the coordinate and the pixel
-size sum to four or more. So the 64-grid vertical metrics (the values
+size ($\nu_2$ in the equation) sum to four or more. So the 64-grid vertical metrics (the values
 a whole page shares) never round; the 8-grid structure is exact at
 every even size; the 2-grid corrections dissolve into antialiasing
 first. At 16 pixels, the web's default, every coordinate is exact. On
