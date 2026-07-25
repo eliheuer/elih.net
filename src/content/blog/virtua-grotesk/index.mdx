@@ -482,139 +482,78 @@ pipeline, the objection would make sense: this project is basically
 trading the font industry's default conventions for the ML field's.
 
 But the model is not the whole pipeline, and the rest of it imposes
-four constraints. Three are not mine: they come from the machine's
-arithmetic, the file formats, and the rasterizer, and a design either
-fits the machine's numbers or rounds against them at every step. The
-fourth is mine: no format requires nested grids, but the labeling
-scheme does. This section takes the four in order, then tests the rival
-bases.
+two constraints:
 
-**1. Normalize exactly.** Virtua Grotesk's 96-unit stem divided by its
-1024 em is 0.09375, exact. Divided by the traditional 1000 em it is
-0.096, which has no finite binary form, so the machine holds
-0.09600000000000000200. The em is the denominator, not the drawing grid: a
-1000 em with an 8-unit grid still fails, since 8/1000 = 1/125 doesn't
-terminate in binary either. Every coordinate is scaled thousands of times
-before anyone sees a letter, and each step is either exact or rounds.
+1. **Normalize exactly.** Dividing a coordinate by the em must give a
+   number the machine holds exactly, and the design's proportions (cap
+   height, x-height) must land on whole coordinates. A fraction is
+   exact only when its denominator is a power of two; everything else
+   rounds.
+2. **Close under the operations.** Halving, subdividing, and
+   interpolating at the weights the format can store must land back on
+   the grid. Exactness lasts only until an operation produces a point
+   off the grid, and the pipeline interpolates and subdivides
+   constantly.
 
-Rounding is the mild failure. The sharp one: some proportions have no
-integer coordinate at all. Cap height is 3/4 of the em and x-height 9/16,
-which on 1024 are 768 and 576. On a 1000 em, 9/16 comes to 562.5, and a
-compiled font stores coordinates as
-[16-bit integers](https://learn.microsoft.com/en-us/typography/opentype/spec/glyf),
-so the proportion can't be written down; a designer on a 1000 em writes
-562 and the ratio is approximate before any arithmetic starts. A binary
-proportion is a whole coordinate only on a binary em.
+**1. Normalize exactly.** Virtua Grotesk's 96-unit stem over its 1024
+em is 0.09375, exact. Over 1000 it is 0.096, which has no finite
+binary form, so the machine holds 0.09600000000000000200.
 
-The sharp failure is vertical. No table relates a stem or an advance
-width to the em: horizontal values are distances, and a 96-unit stem
-inside a 1000 em is legal arithmetic. Vertical metrics are fractions of
-the em. The em is the body: `font-size: 16px` means "scale the em to 16
-pixels," ascender, descender, and line gap are stored as portions of
-it, and a browser
-[computes the line box](https://glyphsapp.com/learn/vertical-metrics)
-from those portions. Cap height and x-height are em-fractions by
-design. A proportional system lives on the vertical axis, and it needs
-an em that divides. 1000 halves three times, 500, 250, 125, and stops
-on an odd number: sixteenths of a 1000 em do not exist. The 24 units
-between 1000 and 1024 are the difference between 2³ * 5³ and 2¹⁰.
+The clearest failure is the vertical metrics. Cap height and x-height
+are defined as fractions of the em. On 1024 they come out whole: 3/4
+of the em is 768, and 9/16 is 576. On 1000, 9/16 is 562.5, and font
+coordinates must be
+[whole numbers](https://learn.microsoft.com/en-us/typography/opentype/spec/glyf),
+so that x-height cannot exist; the designer settles for 562. The
+difference is that 1024 halves all the way down, ten times, while 1000
+stops after three: 500, 250, 125. The 24 extra units are what buy the
+clean halving.
 
 ![Four vertical stacks of colored rectangles drawn with designbot, one per candidate em. The green 1024 stack halves ten times down to 1. The red 1000 stack stops at 125. The orange 729 stack divides by three down to 1. The yellow 700 stack stops at 175.](./fig-ladder.png)
 
-No spec rule enforces this; the OpenType metrics tables accept any
-values. The constraint comes from the design's proportions, not from a
-format check.
-
 None of this is new. Knuth built TeX and METAFONT on binary fractions,
-and even then TeX's printing routine once
-[gave 0.4 back as 0.39999](https://research.swtch.com/fp-knuth) until
-he fixed it. The formats agree: TrueType computes in fixed point, and
-the OpenType spec says outline scaling
-["will be fastest"](https://learn.microsoft.com/en-us/typography/opentype/spec/ttch01)
-on a power-of-two em, the division reduced to a bit shift.
+and the OpenType spec notes that outline scaling ["will be
+fastest"](https://learn.microsoft.com/en-us/typography/opentype/spec/ttch01)
+on a power-of-two em. Base two buys no thirds, but neither does ten.
 
-| operation | em 1024 | em 1000 |
-| --- | --- | --- |
-| normalize a 96-unit stem | 0.09375, exact | 0.096, repeats |
-| interpolate at t = 1/2, 1/4, 3/8… | exact | float error |
-| scale to a pixel size | bit shift | division |
-| divide the em in thirds | approximate | approximate |
-
-The last row favors neither base: thirds are approximate on both, and
-thirds are among the divisions optical correction adjusts anyway. The
-operations that must be exact, halving, doubling, scaling, interpolating,
-are the four base two does perfectly.
-
-**2. Close under the operations.** The numbers reachable from
-the integers by taking midpoints are exactly the dyadic rationals, and
-the midpoint is the pipeline's own operation. Interpolating halfway
-between masters is a midpoint; splitting a bézier (de Casteljau
-subdivision, which every rasterizer performs) is midpoints of midpoints.
-The format also fixes the weights: OpenType stores a normalized axis
-position as an
-[F2Dot14](https://learn.microsoft.com/en-us/typography/opentype/spec/otff#data-types),
-a fraction over 2¹⁴, so every instance a
-variable font can express sits at a binary weight. The format cannot
-write 1/3. Start from any grid, run this arithmetic, and the points
-that appear are dyadic.
+**2. Close under the operations.** The numbers reachable from the
+integers by taking midpoints are exactly the dyadic rationals, and the
+midpoint is the pipeline's own operation: interpolating halfway
+between masters is a midpoint, and bézier subdivision, which every
+rasterizer performs, is midpoints of midpoints. And a variable font stores an
+in-between weight as a
+[count of 16,384ths](https://learn.microsoft.com/en-us/typography/opentype/spec/otff#data-types):
+16,384 is 2¹⁴, so every weight the format can store is a binary
+fraction. A weight exactly one-third of the way between masters falls
+between two marks; the format cannot write it.
 
 ![A centered cubic Bézier arch drawn with designbot over a full-field 4-unit grid. The original control polygon is red, first-round midpoint lines are orange, second-round midpoint lines are yellow, and the central split point is green. Every control and midpoint lands on a visible grid intersection.](./fig-midpoint.png)
 
-The figure runs one subdivision. A midpoint of two multiples of 2ᵏ is a
-multiple of 2ᵏ⁻¹, so each round drops one rung and a ten-rung ladder
-absorbs the whole operation. A decimal grid fails at the second halving:
-10, 5, 2.5.
+A midpoint of two multiples of 2ᵏ is a multiple of 2ᵏ⁻¹: each round
+drops one rung, and a ten-rung ladder absorbs the whole operation. A
+decimal grid fails at the second halving: 10, 5, 2.5.
 
-**3. Compute the same everywhere.** Knuth's epigraph is this constraint:
-TeX does its arithmetic carefully so that different computers produce
-identical results. OpenType
-[makes the same demand](https://learn.microsoft.com/en-us/typography/opentype/spec/otvaroverview)
-of variable fonts, prescribing the fixed-point arithmetic of axis
-normalization step by step "to ensure consistent behavior for a given
-font across implementations." Approximate values meet the constraint
-only when every implementation follows the same prescribed roundings;
-exact values meet it for free.
+Both constraints force the same grid: the dyadic ladder, 1024, 512,
+256… down to 2, ten nested levels. The self-labeling scheme needs that
+depth. A 1000 em nests too, 1000, 100, 10, but three levels are too
+few for the scheme; ten levels give every role its own rung: 64 for
+vertical metrics, 8 for structure, 2 for corrections.
 
-The machine's three constraints stop at exactness. The fourth is where
-this system differs from Replica. Replica's grid is one flat layer,
-every legal point equally legal, so the grid records nothing about a
-point, and it forces a choice: keep every point on the lattice, leaving
-no room for optical correction, or allow points off it, leaving nothing
-to separate a correction from a mistake.
-
-A power-of-two em removes the choice, because it halves cleanly all the
-way down. The grids tiling a 1024 em run 1024, 512, 256… to 2: ten nested
-levels, each a strict subset of the one above. Virtua Grotesk assigns
-meanings: 64 for vertical metrics, 8 for structure, 2 for corrections. An
-optical correction is never off-grid; it's on the fine grid and off the
-coarse one, section 03's rule as data design. Only a power of two ladders
-this way, from the unit all the way up to the em.
-
-**4. Read the label from the coordinate.** Divisor-rich ems like 720 and
-2520 (multiples of 60, the Babylonian base) offer exact thirds and fifths, but
-their divisors form a lattice, not a ladder: a point on both the 9-grid
-and the 8-grid has no well-defined level. A chain forces the em to be a
-power of one prime, and depth favors the smallest prime: 729, the best
-base-3 em, stops at six levels.
-
-The label is literal: write a coordinate in binary and
-its grid level is its count of trailing zeros. 768 ends in eight zeros
-(256-grid); 576 in six (64-grid); 96 in five (32-grid); 116 in two
-(4-grid, off the structure grid's 8, a correction). Mathematicians call
-this the 2-adic valuation, written $\nu_2$; hardware calls it
-count-trailing-zeros, one instruction. The hierarchy is not stored
-beside the coordinates; it is their binary form, read off the low
-bits.
+The label is a coordinate's count of trailing zeros in binary. 768
+ends in eight zeros; 576 in six; 116 in two, off the structure grid's
+8, a correction. Mathematicians write the count $\nu_2$; hardware
+reads it in one instruction, count-trailing-zeros. The hierarchy is
+not stored beside the coordinates; it is their binary form.
 
 ![Five rows of eleven-bit binary numbers drawn with designbot: the em 1024, cap height 768, x-height 576, the 96-unit stem, and the corrected 116, each with its run of trailing zeros bracketed and its grid level read off as the count, the 116 row in red.](./fig-bits.png)
 
 ![Two panels drawn with designbot, each showing the same yellow crop of the lowercase a from the Regular master. The left panel uses one flat grid and renders every point gray. The right panel uses nested 64, 8, and 2-unit grids, with structural points green and the three optical-correction points red.](./fig-grid-labels.png)
 
 **The label predicts rendering.** A rasterizer maps a coordinate to
-pixels by multiplying it by the pixel size and dividing by the em, on a
-grid of
-[1/64 of a pixel](https://freetype.org/freetype2/docs/glyphs/glyphs-2.html).
-On a 1024 em the device value of a coordinate *c* at pixel size *p*, in
+pixels by multiplying it by the pixel size and dividing by the em, on
+a grid of [1/64 of a
+pixel](https://freetype.org/freetype2/docs/glyphs/glyphs-2.html). On a
+1024 em the device value of a coordinate *c* at pixel size *p*, in
 sixty-fourths, is
 
 $$
@@ -625,43 +564,35 @@ $$
 $$
 
 an integer whenever the trailing zeros of the coordinate and the pixel
-size sum to four or more. So the vertical metrics on the 64-grid
-(baselines, cap height, x-height, the values a whole page shares) are
-exact at every pixel size and never round; the 8-grid structure is
-exact at every even size; the 2-grid corrections dissolve into
-antialiasing first. At 16 pixels, the web's default, every coordinate is
-exact. On a 1000 em the same value is
+size sum to four or more. So the 64-grid vertical metrics (the values
+a whole page shares) never round; the 8-grid structure is exact at
+every even size; the 2-grid corrections dissolve into antialiasing
+first. At 16 pixels, the web's default, every coordinate is exact. On
+a 1000 em the same value is
 
 $$
 \frac{64 \, c \, p}{1000} = \frac{8 \, c \, p}{125},
 $$
 
-an integer only when 125 divides the product, which at text sizes is
-never: the 562 x-height at 16 pixels is 8.992 pixels, rounded by
-whichever renderer draws it. That rounding is the visible kind, because
-the stack snaps only the vertical: FreeType and Adobe
-[grid-fit the baseline, x-height, and cap height](https://freetype.org/freetype2/docs/hinting/text-rendering-general.html)
-and leave stems to antialiasing, and a vertical error is shared by every
-line on the page while a horizontal one dissolves into spacing. Hinting
-is a patch for vertical rounding; metrics that scale exactly need no
-patch.
+an integer only when 125 divides the product: never at text sizes. The
+562 x-height at 16 pixels is 8.992 pixels, rounded by whichever
+renderer draws it. That rounding is the visible kind. FreeType and
+Adobe [grid-fit the baseline, x-height, and cap
+height](https://freetype.org/freetype2/docs/hinting/text-rendering-general.html)
+and leave stems to antialiasing, because a vertical error is shared by
+every line on the page while a horizontal one dissolves into spacing.
+Hinting is a patch for vertical rounding; metrics that scale exactly
+need no patch.
 
-The figure below runs this arithmetic for five values from the design
-at every text size from 12 to 18 pixels. Each row is a coordinate: the
-x-height 576; 116, the correction pulled off the 8-grid in the
-lowercase a's counter; the 96 stem; the o's left edge at 40; and 64, the
-step of the grid the vertical metrics sit on. A green cell means the
-coordinate scales to an exact position on the rasterizer's 1/64-pixel
-grid at that size. A red × means it must round. The pattern is the
-trailing-zeros rule: 576 and 64 (six zeros) and 96 (five) never round,
-40 (three) holds at the even sizes, and 116 (two) survives only at 12
-and 16, the sizes divisible by four. On the 1000 em (right), every
-value rounds at every size. The x-height row reads 562 instead of 576
-because the comparison keeps the design's proportions: the x-height is
-9/16 of the em, and 9/16 of 1000 is 562.5, so the designer writes 562.
-The choice hardly matters. Keeping 576 on a 1000 em rounds at every
-one of these sizes too, because the denominator 1000 puts a factor of
-125 under every coordinate.
+The figure below runs this arithmetic for five design values at every
+text size from 12 to 18 pixels: the x-height 576, the a's 116
+correction, the 96 stem, the o's left edge at 40, and 64, the metric
+grid's step. Green means the coordinate scales to an exact 1/64-pixel
+position at that size; a red × must round. 576, 96, and 64 never
+round; 40 holds at the even sizes; 116 survives only at 12 and 16. On
+the 1000 em every value rounds at every size. (562 stands in for the
+x-height, 9/16 of 1000; keeping 576 would round too, because 1000
+puts a factor of 125 under every coordinate.)
 
 ![Two grids of colored cells drawn with designbot, one for a 1024 em and one for a 1000 em. Rows are the coordinates 576, 116, 96, 40, and 64, with 562 in place of 576 on the 1000 em; columns are pixel sizes 12 through 18. In the 1024 panel the 576, 96, and 64 rows are green at every size, the 40 row at even sizes, and the 116 row at 12 and 16. Every cell of the 1000 panel is a red ×.](./fig-scaling.png)
 
@@ -695,7 +626,7 @@ unchanged; the field is
 anyway. And dropping the grid entirely changes nothing: a 64-bit float
 is itself a power-of-two grid, just one nobody designed.
 
-Given the four constraints, the grid system is forced: the dyadic
+Given the two constraints, the grid system is forced: the dyadic
 ladder of a power-of-two em, unique up to the exponent. Practice fixes
 the exponent: four decades of digital type say roughly a thousand
 units per em is enough, and 1024 is the power of two that lands there.
