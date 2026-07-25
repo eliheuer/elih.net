@@ -52,7 +52,7 @@ strict rules made type stiff. They missed the optical corrections the
 eye needs.
 
 Neural networks might change that. A neural network is not a
-procedural program, it interpolates and tolerates nuance where a rule
+procedural program; it interpolates and tolerates nuance where a rule
 is brittle. It also
 answers a modernist ideal that the rigid version betrayed: technology
 people can live in harmony with, not technology that extinguishes human dignity.
@@ -74,8 +74,9 @@ delivering useful models in 2026.
 Modernist design was born a little more than a century ago out of
 similar frustrations in a similar time of technological change. I
 think the way forward is not a return to the dogma and rigidity of
-modernist design that was somewhat rightly rejected (I like the aesthetics of modernist design and the culture of design that replaced modernism is equally dogmatic and rigid, just in different
-ways). It is a rediscovery, with fresh eyes and new technology, of the
+modernist design that was somewhat rightly rejected (I like the aesthetics of modernist design, and the culture of design
+that replaced modernism is equally dogmatic and rigid, just in
+different ways). It is a rediscovery, with fresh eyes and new technology, of the
 loftier goals of early modernism that were unachievable with the
 technology of the previous century.
 
@@ -99,9 +100,9 @@ produced the aesthetic, and the aesthetic advertises the constraint.
 Virtua Grotesk replaces Replica's flat grid with a nested one, in
 powers of two up to the em itself. The em is the coordinate space a
 glyph is drawn in, and its size is given in units per em (UPM).
-Virtua Grotesk's is 1024, 2^10, rather than the industry's usual
+Virtua Grotesk's is 1024, 2¹⁰, rather than the industry's usual
 1000. That is less exotic than it sounds. A power-of-two em is the
-TrueType convention, 2048 is standard and
+TrueType convention: 2048 is standard, and
 [Inter](https://rsms.me/inter/) uses it.
 
 Virtua Grotesk extends the powers-of-two logic down through every dimension.
@@ -129,11 +130,12 @@ drawing logic.
 
 I read this straight off the outline while drawing. Below,
 [Runebender](https://runebender.org) labels every measurement with its
-power-of-two sum and colors it by popcount: green for pure powers like
-64 = 2⁶ and 256 = 2⁸, orange for short sums like 96 = 64 + 32, red for
-values that need many powers.
+power-of-two sum and colors it on a gradient by popcount: green for
+pure powers like 64 = 2⁶ and 256 = 2⁸, yellow for two-power sums like
+96 = 64 + 32, orange for three like 104 = 64 + 32 + 8, red for values
+that need many powers.
 
-<video src="/videos/popcount.mp4" poster="/videos/popcount-poster.jpg" controls playsinline preload="metadata" aria-label="Screen recording of the Runebender font editor showing a glyph on a grid. Every measurement is labeled with its power-of-two decomposition and colored by popcount: green for pure powers such as 64 = 2⁶, 128 = 2⁷, and 256 = 2⁸; orange for short sums like 96 = 64 + 32 and 80 = 64 + 16; red for high-popcount values such as 23 = 16 + 4 + 2 + 1. A MEASURE panel on the left toggles colorize outline, handle lengths, segment lengths, stems and counters, and side bearings."></video>
+<video src="/videos/popcount.mp4" poster="/videos/popcount-poster.jpg" controls playsinline preload="metadata" aria-label="Screen recording of the Runebender font editor showing a glyph on a grid. Every measurement is labeled with its power-of-two decomposition and colored on a gradient by popcount: green for pure powers such as 64 = 2⁶, 128 = 2⁷, and 256 = 2⁸; yellow for two-power sums like 96 = 64 + 32 and 80 = 64 + 16; orange for three-power sums like 104 = 64 + 32 + 8; red for high-popcount values such as 23 = 16 + 4 + 2 + 1. A MEASURE panel on the left toggles colorize outline, handle lengths, segment lengths, stems and counters, and side bearings."></video>
 
 The full specification lives in the repo as
 [`DESIGN.md`](https://github.com/eliheuer/virtua-grotesk/blob/main/DESIGN.md),
@@ -150,17 +152,15 @@ it, and the two that drop to the 2-unit grid are, exactly as with
 point placement, coordinate-derived optical judgments, free training data.
 The coarse default is also what gives the spacing its rhythm, a small
 set of recurring intervals instead of hundreds of bespoke ones,
-snapped tighter only where optical judgment requires it.
+snapped tighter only where optical judgment is needed.
 
 ![The capital H and O from Virtua Grotesk Regular enlarged over the uniform 8-unit source grid, with every on-curve and off-curve point marked and capped labels measuring representative strokes and counters.](./fig-system-ho.png)
 
 Structure lives on the 8-unit grid: stems, sidebearings, chamfers, and
 every value a tool generates by default. Large optical corrections sit
-there too. Only corrections finer than 8 units drop to the 2-unit
-grid, and for now only a person can judge those. A point on 2 but off
-8 can only be a deliberate correction, so the label is in the
-coordinate itself. The machine drafts on 8, a person refines on 2, and
-the difference between the two versions is a labeled training set.
+there too; only corrections finer than 8 units drop to the 2-unit
+grid. The machine drafts on 8, a person refines on 2, and the
+difference between the two versions is a labeled training set that gradually lets the small language model take over.
 
 ![A yellow cubic arch band with separate chamfered feet and a dark gray outline over a full-bleed 8-unit source grid. The grid, outline, handles, and point borders share one line weight. The outer and inner curves show their construction handles. Green points sit on the structure grid. Red points mark corrections between the grid lines.](./fig-optical-correction.png)
 
