@@ -306,10 +306,14 @@ surveying the field, is blunt: "vectorization of glyph images has been
 historically very bad," and his own Google Fonts model "completely
 failed." The failure is a data, design, and aesthetic problem,
 upstream of any model. I think small language models like the one
-described here are the best current answer to these problems. For the
-vectorization part, I built [img2bez](/blog/img2bez), a tracer that
-puts points on a glyph's structure rather than its silhouette; section
-08 shows it at work in the data factory.
+described here are the best current answer to these problems. The
+pipeline today uses [img2bez](/blog/img2bez), a procedural autotracer
+I built that traces a raster into a grid-native outline with the point
+structure a font source needs. The model is a step past it: both
+apply the design system, but the model applies it with a nuance
+procedural rules cannot reach. I expect tools like
+[img2ufo](https://github.com/eliheuer/img2ufo) to be running small
+models in place of img2bez by the end of the year.
 
 ### 06. A Small Model Learns to Draw
 
@@ -317,8 +321,6 @@ The model is deliberately small: a 12M-parameter decoder-only transformer
 trained from scratch on one machine, with no cloud and no GPU cluster. It runs
 two ways, an [MLX](https://github.com/ml-explore/mlx) build on an M4 Mac
 and a PyTorch build on a Linux PC with a gaming GPU.
-The corpus is Virtua Grotesk's two masters,
-463 glyphs structurally identical between Regular and Bold.
 
 The model card:
 
@@ -334,8 +336,8 @@ The model card:
 | compute | one Apple M4 Pro laptop (MLX); the full training session in 3h20m |
 | checkpoint | 50 MB fp32 safetensors |
 
-Decoder-only is the GPT architecture: each token becomes a vector, a
-stack of blocks refines those vectors through *attention* (each position
+Decoder-only is the GPT architecture: each token becomes a vector, the
+card's six layers refine those vectors through *attention* (each position
 looking back at earlier tokens for whatever helps predict the next), and a
 final layer turns the last vector into a probability over the vocabulary.
 Training nudges it toward the true next token, glyph after glyph, until
