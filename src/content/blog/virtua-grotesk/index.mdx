@@ -466,45 +466,26 @@ even remains a secret because nobody ever believes you anyways”</p>
 Readers of an early draft of this post pushed back on the powers-of-two
 focus. The narrow objection is correct: any grid shrinks the vocabulary,
 and a decimal grid tokenizes as cleanly as a binary one. I find no
-evidence that a neural network prefers one base to the other. When the
-field quantizes coordinates it usually picks
-[256 positions](https://arxiv.org/abs/2002.10880). That number is a
-power of two, but not because the network benefits: 256 values fill
-exactly one byte. It is a programming convention, not a measured
-preference. If the model were the whole
+evidence that a neural network prefers one base to the other. The field usually quantizes coordinates to
+[256 positions](https://arxiv.org/abs/2002.10880), and that is because
+256 values fit in one byte, not because networks work better in
+binary.
+
+The strongest case for the industry standard 1000 is not arbitrary.
+It is PostScript's coordinate system, and four decades of font
+software expect it as the default. It is also legible to the designer: on a 1000 em every coordinate
+reads as a percentage of the body, so a cap height of 700 is seventy
+percent, while on 1024 it is 0.684.
+
+If the model were the whole
 pipeline, the objection would make sense: this project is basically
 trading the font industry's default conventions for the ML field's.
-
-**The strongest case for 1000.** The convention this trades away is not
-arbitrary. A thousand units is the coordinate system PostScript
-defined — Adobe's Type 1 format placed the em on a 1000-unit grid, CFF
-inherited it, OpenType/CFF fonts carry it still, the counterpart of the
-power of two the
-[spec asks of TrueType outlines](https://learn.microsoft.com/en-us/typography/opentype/spec/head).
-It is the format's first language, the one four decades of hinting
-dictionaries, RIPs, and PDF engines are debugged against, and the
-field's
-[best-practice guides](https://silnrsi.github.io/FDBP/en-US/Design_Metrics.html)
-reach for it on compatibility grounds — a source already at 1000,
-metrics to import, a team fluent in it.
-
-Its deeper claim is legibility, not to the machine but to the person
-holding the pen. The em is the body: it
-[scales to the type size](https://help.fontlab.com/fontlab-vi/Font-Sizes-and-the-Coordinate-System/),
-so on a 1000 em every coordinate reads as a percentage in the base
-humans count in — a cap height of 700 is seven-tenths of the body, an H
-seven points tall at ten. A power-of-two em severs that: 700 over 1024
-is 0.684, and no one thinks "the cap height is 68.4 percent of the em."
-And a thousandth of the body already sits below what the eye resolves at
-reading size, so the finer grid of a larger em buys nothing you can see.
-For a font whose only readers are a person and a rasterizer, 1000 is not
-a compromise but a correct answer.
 
 But the model is not the whole pipeline, and the rest of it imposes
 four constraints. Three are not mine: they come from the machine's
 arithmetic, the file formats, and the rasterizer, and a design either
 fits the machine's numbers or rounds against them at every step. The
-fourth is mine — no format requires nested grids, but the labeling
+fourth is mine: no format requires nested grids, but the labeling
 scheme does. This section takes the four in order, then tests the rival
 bases.
 
@@ -644,8 +625,8 @@ $$
 $$
 
 an integer whenever the trailing zeros of the coordinate and the pixel
-size sum to four or more. So the vertical metrics on the 64-grid —
-baselines, cap height, x-height, the values a whole page shares — are
+size sum to four or more. So the vertical metrics on the 64-grid
+(baselines, cap height, x-height, the values a whole page shares) are
 exact at every pixel size and never round; the 8-grid structure is
 exact at every even size; the 2-grid corrections dissolve into
 antialiasing first. At 16 pixels, the web's default, every coordinate is
