@@ -1,0 +1,273 @@
+---
+// Standalone page for 3D Bunny Dash — a WASM build of the
+// Bevy game, embedded in the page. In the spirit of the
+// font specimen pages: own <html>, own styles.
+
+const details: [string, string][] = [
+  ['Design', 'Eli Heuer & son (age 5)'],
+  ['Engineering', 'Rust · Bevy 0.18 · WGSL'],
+  ['Released', '2026'],
+  ['Levels', '9 levels · 3 bosses'],
+  ['Sounds', 'All generated from sine-wave math'],
+  ['License', 'GPL-3.0-or-later'],
+]
+---
+
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>3D Bunny Dash</title>
+    <meta
+      name="description"
+      content="3D Bunny Dash — a rhythm-jumping game about a pink bunny, made by a dad and his five-year-old to learn math and programming. Play it in your browser."
+    />
+    <link rel="canonical" href="https://elih.net/games/3d-bunny-dash" />
+    <link rel="icon" href="/favicon.ico" sizes="48x48" />
+    <meta property="og:title" content="3D Bunny Dash" />
+    <meta
+      property="og:description"
+      content="A rhythm-jumping game about a pink bunny, made by a dad and his five-year-old to learn math and programming. Playable in the browser."
+    />
+    <meta property="og:url" content="https://elih.net/games/3d-bunny-dash" />
+  </head>
+
+  <body>
+    <nav id="top">
+      <span class="nav-title">3D Bunny Dash</span>
+      <div class="nav-links">
+        <a href="#play">Play</a>
+        <a href="#information">Information</a>
+        <a class="nav-button" href="https://github.com/eliheuer/3d-bunny-dash"
+          >Source code</a
+        >
+      </div>
+    </nav>
+
+    <!-- The game! -->
+    <section id="play">
+      <div class="game-frame">
+        <canvas id="bunny-canvas"></canvas>
+        <div id="loading">loading the bunny…</div>
+      </div>
+      <p class="controls">
+        Click the game, then press <kbd>any key</kbd> to jump ·
+        <kbd>1</kbd> play · <kbd>2</kbd> settings · <kbd>3</kbd> level editor ·
+        <kbd>esc</kbd> menu
+      </p>
+    </section>
+
+    <!-- Information -->
+    <section id="information">
+      <h2 class="sec-label">Information</h2>
+      <div class="sec-body">
+        <div class="prose">
+          <p>
+            3D Bunny Dash is a rhythm-jumping game about a pink bunny, inspired
+            by Geometry Dash — made by a dad and his five-year-old son as a way
+            to learn math and programming together. Spikes kill you. Cubes are
+            platforms: land on top, never touch the sides. Reach the golden
+            gate for fireworks. Nine levels, three bosses: the Rotten Tomato,
+            the Cursed Thorn, and BAD BAT.
+          </p>
+          <p>
+            The source code doubles as a beginner lesson book: every system is
+            commented in plain language explaining the math that drives it —
+            gravity, sine waves, distance checks, remainders and
+            pseudo-randomness. It includes a built-in level editor in the
+            spirit of Geometry Dash and Mario Maker (saving levels needs the
+            desktop version). Free software under the GPL, on
+            <a href="https://github.com/eliheuer/3d-bunny-dash">GitHub</a>.
+          </p>
+        </div>
+
+        <dl class="details">
+          {
+            details.map(([k, v]) => (
+              <div class="detail-row">
+                <dt>{k}</dt>
+                <dd>{v}</dd>
+              </div>
+            ))
+          }
+        </dl>
+      </div>
+    </section>
+
+    <script is:inline type="module">
+      import init from '/games/3d-bunny-dash/bunny_dash.js'
+      init().then(() => {
+        document.getElementById('loading').style.display = 'none'
+      })
+    </script>
+
+    <style>
+      @font-face {
+        font-family: 'Virtua Grotesk';
+        src: url('/fonts/VirtuaGroteskVF.woff2') format('woff2-variations');
+        font-weight: 400 700;
+        font-display: swap;
+      }
+
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+
+      html {
+        scroll-behavior: smooth;
+      }
+
+      body {
+        background: #1a1a1a;
+        color: #d4d4d4;
+        font-family: 'Virtua Grotesk', system-ui, sans-serif;
+        font-size: 17px;
+        line-height: 1.55;
+      }
+
+      a {
+        color: #d4d4d4;
+      }
+
+      nav {
+        display: flex;
+        align-items: baseline;
+        justify-content: space-between;
+        gap: 1rem;
+        flex-wrap: wrap;
+        padding: 1.25rem 1.5rem;
+        border-bottom: 1px solid #333;
+      }
+
+      .nav-title {
+        font-weight: 700;
+        font-size: 1.15rem;
+      }
+
+      .nav-links {
+        display: flex;
+        gap: 1.25rem;
+        align-items: baseline;
+        flex-wrap: wrap;
+      }
+
+      .nav-links a {
+        text-decoration: none;
+        color: #9a9a9a;
+      }
+
+      .nav-links a:hover {
+        color: #d4d4d4;
+      }
+
+      .nav-links .nav-button {
+        color: #1a1a1a;
+        background: #d4d4d4;
+        padding: 0.3rem 0.8rem;
+        border-radius: 999px;
+        font-weight: 600;
+      }
+
+      #play {
+        padding: 1.5rem;
+      }
+
+      .game-frame {
+        position: relative;
+        width: 100%;
+        aspect-ratio: 16 / 9;
+        max-height: 80vh;
+        background: #000;
+        border: 1px solid #333;
+        overflow: hidden;
+      }
+
+      #bunny-canvas {
+        width: 100%;
+        height: 100%;
+        display: block;
+        outline: none;
+      }
+
+      #loading {
+        position: absolute;
+        inset: 0;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: #9a9a9a;
+        pointer-events: none;
+      }
+
+      .controls {
+        margin-top: 0.75rem;
+        color: #9a9a9a;
+        font-size: 0.95rem;
+      }
+
+      kbd {
+        font-family: inherit;
+        border: 1px solid #444;
+        border-radius: 4px;
+        padding: 0.05rem 0.4rem;
+      }
+
+      section {
+        scroll-margin-top: 1rem;
+      }
+
+      #information {
+        padding: 2rem 1.5rem 4rem;
+        border-top: 1px solid #333;
+      }
+
+      .sec-label {
+        font-size: 0.85rem;
+        text-transform: uppercase;
+        letter-spacing: 0.08em;
+        color: #9a9a9a;
+        margin-bottom: 1.25rem;
+      }
+
+      .sec-body {
+        display: grid;
+        gap: 2.5rem;
+        grid-template-columns: 1fr;
+        max-width: 72rem;
+      }
+
+      @media (min-width: 800px) {
+        .sec-body {
+          grid-template-columns: 2fr 1fr;
+        }
+      }
+
+      .prose p + p {
+        margin-top: 1rem;
+      }
+
+      .prose {
+        max-width: 42rem;
+      }
+
+      .details {
+        align-self: start;
+      }
+
+      .detail-row {
+        display: grid;
+        grid-template-columns: 8rem 1fr;
+        gap: 1rem;
+        padding: 0.45rem 0;
+        border-bottom: 1px solid #2a2a2a;
+      }
+
+      .detail-row dt {
+        color: #9a9a9a;
+      }
+    </style>
+  </body>
+</html>

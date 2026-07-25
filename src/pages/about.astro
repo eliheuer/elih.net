@@ -17,6 +17,8 @@ const software = [
   { name: 'img2ufo', href: '/software/img2ufo' },
 ]
 
+const games = [{ name: '3D Bunny Dash', href: '/games/3d-bunny-dash/' }]
+
 // Past clients, newest first.
 const clients = [
   { name: 'Fuser', href: 'https://fuser.studio' },
@@ -69,6 +71,19 @@ const clients = [
             class="text-muted-foreground hover:text-foreground transition-colors"
           >
             {item.name}
+          </Link>
+        ))
+      }
+    </div>
+    <div class="flex flex-col gap-y-1">
+      <h2 class="border-foreground mb-1.5 border-b pb-1 font-semibold">Games</h2>
+      {
+        games.map((game) => (
+          <Link
+            href={game.href}
+            class="text-muted-foreground hover:text-foreground transition-colors"
+          >
+            {game.name}
           </Link>
         ))
       }
