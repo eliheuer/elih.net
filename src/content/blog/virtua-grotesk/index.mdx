@@ -547,8 +547,9 @@ lowercase a, structural points green, corrections red.
 
 ![Two panels drawn with designbot, each showing the same yellow crop of the lowercase a from the Regular master. The left panel uses one flat grid and renders every point gray. The right panel uses nested 64, 8, and 2-unit grids, with structural points green and the three optical-correction points red.](./fig-grid-labels.png)
 
-**The label predicts rendering.** A rasterizer maps a coordinate to
-pixels by multiplying it by the pixel size and dividing by the em, on
+The grid levels are not just labels for the model: the rasterizer's
+own arithmetic respects the same tiers. A rasterizer maps a coordinate
+to pixels by multiplying it by the pixel size and dividing by the em, on
 a grid of [1/64 of a
 pixel](https://freetype.org/freetype2/docs/glyphs/glyphs-2.html). On a
 1024 em the device value of a coordinate *c* at pixel size *p*, in
@@ -561,45 +562,32 @@ $$
 \nu_2(c) + \nu_2(p) \geq 4,
 $$
 
-an integer whenever the trailing zeros of the coordinate and the pixel
-size ($\nu_2$ in the equation) sum to four or more. So the 64-grid vertical metrics (the values
-a whole page shares) never round; the 8-grid structure is exact at
-every even size; the 2-grid corrections dissolve into antialiasing
+an integer, no rounding, whenever the trailing zeros of the coordinate
+and the pixel size sum to four or more. The vertical metrics on the
+64-grid never round at any pixel size. The 8-grid structure is exact
+at every even size. The 2-grid corrections dissolve into antialiasing
 first. At 16 pixels, the web's default, every coordinate is exact. On
-a 1000 em the same value is
+a 1000 em the same value is an integer only when 125 divides the product.
 
 $$
 \frac{64 \, c \, p}{1000} = \frac{8 \, c \, p}{125},
 $$
 
-an integer only when 125 divides the product: never at text sizes. The
-562 x-height at 16 pixels is 8.992 pixels, rounded by whichever
-renderer draws it. That rounding is the visible kind. FreeType and
-Adobe [grid-fit the baseline, x-height, and cap
-height](https://freetype.org/freetype2/docs/hinting/text-rendering-general.html)
-and leave stems to antialiasing, because a vertical error is shared by
-every line on the page while a horizontal one dissolves into spacing.
-Hinting is a patch for vertical rounding; metrics that scale exactly
-need no patch.
-
-The figure below runs this arithmetic for five design values at every
-text size from 12 to 18 pixels: the x-height 576, the a's 116
-correction, the 96 stem, the o's left edge at 40, and 64, the metric
-grid's step. Green means the coordinate scales to an exact 1/64-pixel
-position at that size; a red × must round. 576, 96, and 64 never
-round; 40 holds at the even sizes; 116 survives only at 12 and 16. On
-the 1000 em every value rounds at every size. (562 stands in for the
-x-height, 9/16 of 1000; keeping 576 would round too, because 1000
-puts a factor of 125 under every coordinate.)
+The figure below runs this arithmetic for five values from the design
+at pixel sizes 12 through 18: the x-height 576, the a's 116
+correction, the 96 stem, the o's left edge at 40, and the 64 metric
+step. Green cells are exact; a red × rounds. On the 1000 em every
+value rounds at every size (562 stands in for the x-height, 9/16 of
+1000).
 
 ![Two grids of colored cells drawn with designbot, one for a 1024 em and one for a 1000 em. Rows are the coordinates 576, 116, 96, 40, and 64, with 562 in place of 576 on the 1000 em; columns are pixel sizes 12 through 18. In the 1024 panel the 576, 96, and 64 rows are green at every size, the 40 row at even sizes, and the 116 row at 12 and 16. Every cell of the 1000 panel is a red ×.](./fig-scaling.png)
 
 One more alignment is particular to this pipeline. Render a 1024-em
-glyph at 1024 pixels and one font unit is one pixel (the specimen atop
-this post is drawn that way). The image models feeding img2bez
-downsample by eight, so the 8-unit structure grid reappears as their
-128 × 128 latent lattice. The design grid, the pixel grid, and the
-model's grid are one lattice.
+glyph at 1024 pixels and one font unit is one pixel; the specimen at
+the top of this post is drawn that way. The image models feeding
+img2bez downsample by eight, so the 8-unit structure grid reappears as
+their 128 × 128 latent lattice. The design grid, the pixel grid, and
+the model's grid are one lattice.
 
 Now the rivals, each against the constraints.
 
