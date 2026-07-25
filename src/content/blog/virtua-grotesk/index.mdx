@@ -600,9 +600,7 @@ exists, 1/3 has no finite binary form, and every constraint after the
 first collapses.
 
 **The rest.** Ems like 720 and 2520, multiples of 60, divide cleanly by
-three and five, but their grids overlap instead of nesting, so a point
-can sit on two grids at once and its level is ambiguous, and a binary
-computer cannot hold 1/720 exactly anyway. The golden section is built
+three and five, but a binary computer cannot hold 1/720 exactly. The golden section is built
 on φ, which is irrational: no ratio of whole numbers equals it, so
 golden proportions can only ever be approximated. Letting a neural
 network learn its own quantization (a VQ-VAE) gives a codebook no
@@ -616,24 +614,15 @@ Given the two constraints, the grid system is forced: the dyadic
 ladder of a power-of-two em, unique up to the exponent. Practice fixes
 the exponent: four decades of digital type say roughly a thousand
 units per em is enough, and 1024 is the power of two that lands there.
-(2048 with a 4-unit grid is the same system scaled by two.)
+(2048 is also a good choice and I plan to experement with it as I continue 
+to train small language models on font sources.)
 
 For the model, this pays out twice. The synthetic data is noise-free:
 section 08's factory is a + t * (b − a), and with masters on the
 2-grid and binary-fraction weights every machine computes the
 identical corpus; on a decimal em, float error enters every
 coordinate, differently per machine, and the model learns the design
-plus the noise. And the corrections come labeled: machine drafts stay
-on the 8-unit grid, so every 2-unit deviation in a glyph I approve is
-a recorded human optical correction.
-
-Knuth worked this problem forty years ago, putting METAFONT's ideal
-curves onto coarse pixel grids. His 1986
-[METAFONTbook](https://ctan.org/pkg/mfbook) set the brief: "our goal
-should not be to make hand-tuning obsolete; it should rather be to
-make hand-tuning tolerable. Let us try to create meta-designs so that
-we would never want to change more than a few pixels per character,
-say half a dozen, regardless of the resolution."
+plus the noise. 
 
 When the engineering is settled, the tiebreaker is aesthetics.
 Powers of two would deserve the job on beauty alone.
