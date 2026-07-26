@@ -31,6 +31,7 @@ cube 18
 spike 26
 cube 33
 cube 34
+cubespike 37
 skyspike 43
 cube 50
 cube 51
@@ -52,7 +53,7 @@ badguy 111
 
 level 3 The Gauntlet
 speed 10
-finish 162
+finish 196
 badguy 18
 spike 27
 spike 28
@@ -69,7 +70,6 @@ cube 82
 spike 92
 spike 93
 skyspike 101
-spike 108
 cube 115
 cube 116
 cube 117
@@ -83,6 +83,7 @@ skyspike 131
 skyspike 132
 badguy 143
 cube 152
+cube 160
 
 level 4 Rotten Tomato
 boss tomato
@@ -167,11 +168,19 @@ level 6 The Tricky Tower
 speed 9
 finish 118
 spike 18
+cube 19
+cube 20
+cube 21
+cube 22
+cube 23
+cube 24
 cube 25
 cube 26
 cube 27
-cube 29
-cube 30
+tall 29
+tall 30
+tall 31
+triple 32
 tall 35
 tall 36
 tall 37
@@ -222,26 +231,48 @@ finish 0
 
 level 9 Bounce Alley
 speed 9
-finish 112
+finish 125
 badguy 18
 cube 26
 cube 27
 cube 28
-badguy 36
-badguy 43
+badguy 29
+badguy 39
+skyspike 44
+skyspike 45
+badguy 49
 cube 50
 cube 51
 cube 52
 cube 53
+badguy 54
+badguy 55
+badguy 56
+cube 57
+cube 58
+cube 59
+cube 60
 badguy 61
-skyspike 68
+tall 62
+badguy 63
+cubespike 64
+badguy 65
 badguy 75
-cube 82
-cube 83
-cube 84
-cube 85
+badguy 82
+badguy 83
 badguy 93
+cube 94
 spike 100
+skyspike 106
+skyspike 107
+skyspike 108
+skyspike 109
+skyspike 110
+skyspike 111
+skyspike 112
+skyspike 113
+skyspike 114
+skyspike 115
 
 level 10 The Long Climb
 speed 10
@@ -301,5 +332,10 @@ spike 111
 
 level 12 Bad Bat
 boss bat
+speed 8
+finish 0
+
+level 13 Evil Bunny
+boss evilbunny
 speed 8
 finish 0
