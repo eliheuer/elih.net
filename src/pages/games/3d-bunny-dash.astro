@@ -96,6 +96,33 @@ const details: [string, string][] = [
       </div>
     </section>
 
+    <script is:inline>
+      // Browsers keep game audio muted ("suspended") until
+      // the player interacts with the page. We wrap the
+      // AudioContext maker so we can remember every context
+      // the game creates, then wake them all on the first
+      // click or key press.
+      window.__gameAudioContexts = []
+      for (const name of ['AudioContext', 'webkitAudioContext']) {
+        const Original = window[name]
+        if (!Original) continue
+        const Wrapped = function (...args) {
+          const ctx = new Original(...args)
+          window.__gameAudioContexts.push(ctx)
+          return ctx
+        }
+        Wrapped.prototype = Original.prototype
+        window[name] = Wrapped
+      }
+      const wakeAudio = () => {
+        for (const ctx of window.__gameAudioContexts) {
+          if (ctx.state === 'suspended') ctx.resume()
+        }
+      }
+      window.addEventListener('keydown', wakeAudio)
+      window.addEventListener('pointerdown', wakeAudio)
+    </script>
+
     <script is:inline type="module">
       import init from '/games/3d-bunny-dash/bunny_dash.js'
       init().then(() => {
