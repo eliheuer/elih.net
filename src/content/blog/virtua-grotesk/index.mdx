@@ -168,67 +168,64 @@ training.
 
 ### 04. Aesthetic Discipline & Machine Legibility
 
-Andrej Karpathy calls a large language model [a zip file of the
-internet](https://www.youtube.com/watch?v=zjkBMFhNj_g): billions of
-parameters that compress terabytes of text into a lossy gestalt. A
-trained model is a compression of its training data.
+Andrej Karpathy describes a large language model as [a zip file of the
+internet](https://www.youtube.com/watch?v=zjkBMFhNj_g). Billions of
+parameters compress terabytes of text into a smaller, lossy
+representation. He
+[argues](https://x.com/karpathy/status/1814038096218083497) that models
+can become "very very small" if they no longer need to memorize the
+internet. He calls this smaller model a [cognitive
+core](https://x.com/karpathy/status/1938626382248149433): a model that
+keeps "the algorithms for thought" and retrieves the rest.
 
-Karpathy has
-[bet](https://x.com/karpathy/status/1814038096218083497) that models
-will get "very very small," and blames their current size on waste:
-"we're asking them to memorize the internet and, remarkably, they
-do." He calls the small alternative a [cognitive
-core](https://x.com/karpathy/status/1938626382248149433), a model
-that keeps "the algorithms for thought" and looks the rest up.
+Virtua-12M-v0.1 has a narrow task. It does not learn the entire Google
+Fonts catalog. It learns the rules and grid of one design system. This
+limited scope supports a model with 12.54 million parameters and a
+48 MB checkpoint.
 
-Virtua-12M-v0.1 is never asked to remember everything in the Google
-Fonts catalog. It is asked to learn one design system: the basic
-rules and the grid used to draw in a specific way. That is why 12.54
-million parameters is enough, and why the checkpoint is 48 MB.
+Type designers already use compact representations. A variable font
+stores a base outline and interpolation deltas, then reconstructs each
+weight on demand. A neural network instead learns an internal
+representation of the design and can generate shapes that were not
+drawn explicitly. The grid helps in two ways:
 
-Font engineers already build compression systems. A variable font is a base
-outline plus a set of interpolation deltas, and reconstructs every weight on
-demand. A neural network learns its own internal space for the design and can
-move through it in directions no one drew. The grid's discipline pays off two
-ways:
+1. **Consistency provides signal.** The same stroke logic, chamfer
+   sizes, and start-point conventions recur across the glyph set. The
+   model can spend its capacity learning one design instead of
+   reconciling different drawing habits.
+2. **Constraints make outputs measurable.** Every coordinate must be
+   even, and the 8-unit grid establishes a structural default. Scripts
+   can check these properties. The checks do not determine overall
+   quality, but they provide objective feedback during evaluation.
 
-1. **Consistency is signal.** Same stroke logic, same chamfer size, same
-start-point conventions across every glyph: the model spends its capacity
-learning the *design system* instead of averaging over hundreds of
-designers' bézier habits.
-2. **Constraints make outputs checkable.** If every legal coordinate is even,
-every structural value is a multiple of 8, and every measurement comes
-from a small closed vocabulary, then a
-generated glyph can be *verified* mechanically. Quality
-stops being an opinion, and an eval loop can grind at it overnight.
+The token encoding does not explicitly label the 8-unit grid. Every
+coordinate token represents a position on the 2-unit grid. All
+positions are available to the model, but the training data does not
+use them equally. If both coordinates were selected at random, a point
+would have a 6 percent chance of landing on the 8-unit grid. Points in
+the human-drawn sources land there 85 percent of the time. The grid is
+therefore implicit in the distribution of coordinates. When drawing
+held-out glyphs whose Bold outlines were excluded from training,
+Virtua-12M-v0.1 places 68 percent of its points on the 8-unit grid.
 
-Nothing in the encoding mentions the 8-unit grid: every coordinate
-token is a 2-grid position, all equally available. Placing points at
-random would land on the 8-grid 6 percent of the time. The
-human-drawn sources land on it 85 percent of the time. Drawing
-held-out glyphs whose Bolds it never saw, Virtua-12M-v0.1 lands on it
-68 percent of the time, most of the way from chance to the human
-hand. When it leaves the structure grid it tends to land on
-correction values rather than at random. Nobody labeled the tiers,
-and no auxiliary loss rewards them. The model
-learned them as plain statistics. The obvious objection is that a
-next-token model reproducing its training statistics is doing exactly
-what it should. That is the point. This is not only about frequencies:
-where the human sources leave the structure grid, the model tends to
-leave it at the same points.
+The model also learns where corrections occur. When a source outline
+leaves the 8-unit grid, the model often leaves it at the corresponding
+point. The training data contains no explicit tier labels, and no
+auxiliary loss rewards them. They emerge from the coordinate
+statistics.
 
-One caveat about where the win comes from. The model reads
-each coordinate as a single token and never sees digits, so at the
-token level base two is invisible to it. What it learns from is
-coarseness, regularity, and the nested tiers: a small set of legal
-values, each recurring and meaning one thing, corrections rare
-against a regular background. That trick would work in base ten too.
+One caveat about where the win comes from. The model reads each
+coordinate as a single token and never sees its binary digits. Base two
+is therefore invisible at the token level. The model learns recurring
+values, nested grid tiers, and rare corrections against a regular
+background. A base-ten grid with the same regularity could provide
+similar statistical structure.
 
-A 1000 em would even carry these same power-of-two values: put the
-stem at 96 and 192 on a 1000 em and it interpolates just as cleanly,
-because the arithmetic is on the stem width, not the em. Base two
-pays off wherever a coordinate is divided by the em, which is the
-subject of section 09.
+The power-of-two em provides a separate benefit. A 1000 UPM font could
+still use 96- and 192-unit stems and interpolate them cleanly because
+the arithmetic operates on the stem width, not the em. A 1024-unit em
+helps when a coordinate is divided by the em, as in rasterization.
+Section 09 covers this arithmetic.
 
 ### 05. Glyphs as Sentences
 
