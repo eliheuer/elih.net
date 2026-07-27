@@ -230,19 +230,20 @@ Section 09 covers this arithmetic.
 ### 05. Glyphs as Sentences
 
 A glyph is already a sentence: an ordered list of drawing commands.
-Transformers predict sequences, so I hand the model each glyph as the
-sequence it already is and train it to predict the next token.
+Transformers predict sequences. I give the model each glyph in that
+form and train it to predict the next token.
 
-The sources are [UFO](https://unifiedfontobject.org/): one XML file per
-glyph, each outline stored as points on the grid. A transformer reads a
-flat list of tokens, not an XML tree, so a small codec rewrites each
-outline as a single line of commands and coordinates, in order.
+Virtua Grotesk uses the [UFO](https://unifiedfontobject.org/) source
+format: one XML file per glyph, with each outline stored as an ordered
+set of points. A transformer reads a flat token sequence rather than an
+XML tree. A small codec converts each outline into a sequence of drawing
+commands and coordinates.
 
-Virtua-12M's *vocabulary* is small. A few conditioning tokens set the
-glyph's name, Unicode codepoint, and weight; four verbs draw it (`MOVE`,
-`LINE`, `CURVE`, `CLOSE`); and one token stands for each legal grid
-position, so a coordinate is a single token. Here is the numeral **2**
-in Regular, exactly as the codec emits it:
+Virtua-12M-v0.1 uses a small vocabulary. Conditioning tokens set the
+glyph name, Unicode codepoint, and weight. Four commands draw the
+outline: `MOVE`, `LINE`, `CURVE`, and `CLOSE`. Each legal grid position
+has its own token, so each coordinate occupies one token. Here is the
+Regular numeral **2**, exactly as the codec emits it:
 
 ```
 BOS N_two U_0032 W400 ADV 592
@@ -269,50 +270,48 @@ CLOSE
 EOS
 ```
 
-Read it top to bottom. `BOS` and `EOS` bracket the sequence. `N_two`
-names the glyph, `U_0032` is its codepoint, `W400` the weight, `ADV 592`
-the advance width. The rest is the outline: `MOVE` starts a contour,
-`LINE` draws a segment, `CURVE` a cubic Bézier through two controls to an
-endpoint, `CLOSE` shuts the loop. Every bare number is a grid coordinate.
+Read the sequence from top to bottom. `BOS` and `EOS` mark its
+boundaries. `N_two` names the glyph, `U_0032` gives its codepoint,
+`W400` gives its weight, and `ADV 592` gives its advance width. The
+remaining tokens describe the outline. `MOVE` begins a contour, `LINE`
+adds a line segment, `CURVE` adds a cubic Bézier segment, and `CLOSE`
+ends the contour. Each numeric value occupies one token.
 
-The codec runs both ways: glyph to sequence for training, and, given the
-opening tokens, the model finishes the sequence and the codec runs
-backward into a real, editable UFO. The round trip is lossless; snapping
-only loses precision when a point falls between legal positions, and a
-grid-native font has none: every coordinate already equals a token. The
-exactness comes from committing to the grid, not from its coarseness; a
-1-unit grid would round-trip just as cleanly.
+The codec is reversible. It converts UFO glyphs into sequences for
+training and converts generated sequences back into editable UFO
+glyphs. The round trip is lossless when every coordinate lies on the
+token grid. Virtua Grotesk already meets that condition, so the codec
+does not need to snap its points. The exactness comes from using the
+same grid in the sources and the codec, not from the grid's coarseness.
+A 1-unit grid would round-trip just as cleanly.
 
-No rasterization, no image encoder, no diffusion: the source stripped to
-the drawing is the training data, about 90 tokens a glyph. Quantize a
-found font after the fact and you lose the designer's intent, but draw on the grid and the coordinates encode the intent.
+The model trains directly on source outlines. It needs no
+rasterization, image encoder, or diffusion process. Each glyph uses
+about 90 tokens. Quantizing an existing font after the fact can discard
+coordinate precision. Designing on the grid makes each coordinate part
+of the source.
 
-None of the machinery is new.
-[SVG-VAE](https://arxiv.org/abs/1904.02632) (2019),
+Representing vector drawings as sequences or code is not new. Prior
+systems include [SVG-VAE](https://arxiv.org/abs/1904.02632),
 [DeepSVG](https://arxiv.org/abs/2007.11301),
 [DeepVecFont](https://arxiv.org/abs/2110.06688),
 [IconShop](https://arxiv.org/abs/2304.14400), and
-[StarVector](https://arxiv.org/abs/2312.11556) all tokenize outlines and
-learn them with a transformer, several quantizing to a small integer grid
-as I do. What none can do is start from grid-native data: they snap found
-fonts to a grid in preprocessing, a lossy scrape of a thousand
-disagreeing hands, and spend much of their capacity absorbing that
-heterogeneity. This project inverts the ratio: design one typeface until its
-sources are nearly homogeneous, then ask how small the model can get.
+[StarVector](https://arxiv.org/abs/2312.11556). Their architectures
+range from sequential generators and hierarchical networks to
+raster-vector models and autoregressive transformers.
 
-[Simon Cozens](https://simoncozens.github.io/state-of-ai-font-generation/),
-surveying the field, is blunt: "vectorization of glyph images has been
-historically very bad," and his own Google Fonts model "completely
-failed." The failure is a data, design, and aesthetic problem,
-upstream of any model. I think small language models like the one
-described here are the best current answer to these problems. The
-pipeline today uses [img2bez](/blog/img2bez), a procedural autotracer
-I built that traces a raster into a grid-native outline with the point
-structure a font source needs. The model is a step past it: both
-apply the design system, but the model applies it with a nuance
-procedural rules cannot reach. I expect tools like
-[img2ufo](https://github.com/eliheuer/img2ufo) to be running small
-models in place of img2bez by the end of the year.
+The difference here is the source data. Virtua Grotesk was designed on
+the same grid used by the tokenizer. Existing datasets often normalize
+or quantize fonts drawn under different conventions. Preprocessing can
+remove information, while mixed sources add variation unrelated to the
+target design. This project starts with one internally consistent
+typeface and asks how small the model can be.
+
+[Simon Cozens](https://simoncozens.github.io/state-of-ai-font-generation/)
+notes that "vectorization of glyph images has been historically very
+bad." His own experiment with Google Fonts "completely failed." My view
+is that these failures begin with data quality and a lack of strict
+data engineering.
 
 ### 06. A Small Model Learns to Draw
 
