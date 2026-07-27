@@ -312,14 +312,15 @@ notes that "vectorization of glyph images has been historically very
 bad." His own experiment with Google Fonts "completely failed." These
 failures suggest that different approaches are needed. In the short
 term, I think the best results will come from high-quality font datasets
-designed from the ground up as training data.
+designed from the ground up as training data, like what i am trying to do with this project.
 
 ### 06. A Small Model Learns to Draw
 
-The model is deliberately small: a 12M-parameter decoder-only transformer
-trained from scratch on one machine, with no cloud and no GPU cluster. It runs
-two ways, an [MLX](https://github.com/ml-explore/mlx) build on an M4 Mac
-and a PyTorch build on a Linux PC with a gaming GPU.
+Virtua-12M-v0.1 is a 12M-parameter decoder-only transformer trained from
+scratch on one machine. It does not require cloud compute or a GPU cluster.
+The model has two implementations: an
+[MLX](https://github.com/ml-explore/mlx) build for an M4 Mac and a PyTorch
+build for a Linux PC with a gaming GPU.
 
 The model card:
 
@@ -335,26 +336,26 @@ The model card:
 | compute | one Apple M4 Pro laptop (MLX); the full training session in 3h20m |
 | checkpoint | 50 MB fp32 safetensors |
 
-Decoder-only is the GPT architecture: each token becomes a vector, the
-card's six layers refine those vectors through *attention* (each position
-looking back at earlier tokens for whatever helps predict the next), and a
-final layer turns the last vector into a probability over the vocabulary.
-Training nudges it toward the true next token, glyph after glyph, until
-the model learns the grammar of outlines.
+Decoder-only transformers use the same architecture as GPT. Each token
+becomes a vector. The model's six layers use *attention* to combine each
+position with relevant earlier tokens. A final layer converts the result
+into probabilities for the next token. During training, the model adjusts
+its weights toward the correct next token across the glyph corpus. The
+resulting model captures the sequence patterns used to encode outlines.
 
-The lineage is Karpathy's from-scratch projects:
+The implementation follows Karpathy's from-scratch projects:
 [char-rnn](https://karpathy.github.io/2015/05/21/rnn-effectiveness/),
 [makemore](https://github.com/karpathy/makemore), and
-[microgpt](https://karpathy.github.io/2026/02/12/microgpt/), each a
-small model trained from scratch on one narrow corpus with a tiny
-vocabulary (microgpt's is 27 tokens, the lowercase alphabet plus a
-newline). This does the same for glyph outlines, one drawing command
-at a time; a training stage takes 45 minutes to two hours on an M4 Pro
-or a gaming GPU.
+[microgpt](https://karpathy.github.io/2026/02/12/microgpt/). Each project
+trains a small model from scratch on one narrow corpus with a limited
+vocabulary. Microgpt uses 27 tokens: the lowercase alphabet and a newline.
+Virtua-12M-v0.1 applies the same approach to glyph outlines by predicting
+one drawing command at a time. Each training stage takes 45 minutes to
+two hours on an M4 Pro or a gaming GPU.
 
 The model runs inside [Runebender](https://runebender.org), a free and
-open source font editor I work on. Below, I sketch an e with a brush and
-Virtua-12M-v0.1 redraws it in the font's conventions, using the
+open source font editor I work on. Below, I sketch a lowercase e with a
+brush. Virtua-12M-v0.1 redraws it in the font's conventions using the
 green-graded glyphs in the sources as reference:
 
 <video src="/videos/e-draw.mp4" poster="/videos/e-draw-poster.jpg" controls playsinline preload="metadata" aria-label="Screen recording of the Runebender editor: a lowercase e is sketched with a brush and redrawn by Virtua-12M in the font's conventions using the Draft with Virtua tool."></video>
