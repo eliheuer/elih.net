@@ -1,0 +1,271 @@
+---
+// Standalone page for Bunny Madness — a WASM build of the
+// Pyxel game, embedded in an iframe. In the spirit of the
+// font specimen pages: own <html>, own styles.
+
+const details: [string, string][] = [
+  ['Design', 'Eli Heuer & son (age 5)'],
+  ['Engineering', 'Python · Pyxel 2.9'],
+  ['AI', 'Claude Fable 5'],
+  ['Released', '2026'],
+  ['World', '16 rooms · 5 bosses · 5 flames'],
+  ['Sounds', 'Pyxel chiptune'],
+  ['License', 'GPL-3.0-or-later'],
+]
+---
+
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Bunny Madness</title>
+    <meta
+      name="description"
+      content="Bunny Madness — a tiny metroidvania about a pink bunny in a rabbit hole, inspired by Animal Well, made by a dad and his five-year-old. Play it in your browser."
+    />
+    <link rel="canonical" href="https://elih.net/games/bunny-madness" />
+    <link rel="icon" href="/favicon.ico" sizes="48x48" />
+    <meta property="og:title" content="Bunny Madness" />
+    <meta
+      property="og:description"
+      content="A tiny metroidvania about a pink bunny in a rabbit hole, inspired by Animal Well, made by a dad and his five-year-old. Playable in the browser."
+    />
+    <meta property="og:url" content="https://elih.net/games/bunny-madness" />
+  </head>
+
+  <body>
+    <nav id="top">
+      <span class="nav-title">Bunny Madness</span>
+      <div class="nav-links">
+        <a href="/">Back to elih.net</a>
+        <a href="#information">Information</a>
+        <a class="nav-button" href="https://github.com/eliheuer/bunny-madness"
+          >Source code</a
+        >
+      </div>
+    </nav>
+
+    <!-- The game! -->
+    <section id="play">
+      <div class="game-frame">
+        <iframe
+          id="bunny-frame"
+          src="/games/bunny-madness/play.html"
+          title="Bunny Madness"
+          allow="autoplay; gamepad"></iframe>
+      </div>
+      <p class="controls">
+        Click the game first · <kbd>arrows</kbd> run and climb ·
+        <kbd>space</kbd> jump · <kbd>x</kbd> use item · <kbd>z</kbd> swap item ·
+        <kbd>m</kbd> map · <kbd>up</kbd> play arcade machines
+      </p>
+    </section>
+
+    <!-- Information -->
+    <section id="information">
+      <h2 class="sec-label">Information</h2>
+      <div class="sec-body">
+        <div class="prose">
+          <p>
+            Bunny Madness is a tiny metroidvania inspired by Animal Well — made
+            by a dad and his five-year-old son as a way to learn programming
+            together. A pink bunny falls down the rabbit hole under a big tree
+            and finds five tools that bend the world: a UV light that reveals
+            invisible bridges, a bouncy ball that bonks far-away buttons, a
+            remote control for locked doors, a laser for cracked rocks, and a
+            bubble wand that blows platforms you can ride. Feed the hungry
+            guard, win the BRICK BONK arcade cabinet, beat four flame
+            guardians, light the altar, defeat the EVIL BUNNY — then carry the
+            pink flame home to light the campfire and start the greatest bunny
+            dance party ever.
+          </p>
+          <p>
+            The whole game is designed to be edited by a five-year-old: every
+            room is a drawing made of typed letters, every sprite is a small
+            grid of color codes, and the tunable numbers live under a comment
+            that says <em>TRY CHANGING THESE NUMBERS!</em> A suite of robot
+            bunnies plays the game headlessly to prove nobody can get stuck
+            and the ending is always reachable. Free software under the GPL,
+            on <a href="https://github.com/eliheuer/bunny-madness">GitHub</a>.
+          </p>
+        </div>
+
+        <dl class="details">
+          {
+            details.map(([k, v]) => (
+              <div class="detail-row">
+                <dt>{k}</dt>
+                <dd>{v}</dd>
+              </div>
+            ))
+          }
+        </dl>
+      </div>
+    </section>
+
+    <style>
+      @font-face {
+        font-family: 'Virtua Grotesk';
+        src: url('/fonts/VirtuaGroteskVF.woff2') format('woff2-variations');
+        font-weight: 400 700;
+        font-display: swap;
+      }
+
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+
+      html {
+        scroll-behavior: smooth;
+      }
+
+      body {
+        background: #1a1a1a;
+        color: #d4d4d4;
+        font-family: 'Virtua Grotesk', system-ui, sans-serif;
+        font-size: 17px;
+        line-height: 1.55;
+      }
+
+      a {
+        color: #d4d4d4;
+      }
+
+      nav {
+        display: flex;
+        align-items: baseline;
+        justify-content: space-between;
+        gap: 1rem;
+        flex-wrap: wrap;
+        padding: 1.25rem 1.5rem;
+        border-bottom: 1px solid #333;
+      }
+
+      .nav-title {
+        font-weight: 700;
+        font-size: 1.15rem;
+      }
+
+      .nav-links {
+        display: flex;
+        gap: 1.25rem;
+        align-items: baseline;
+        flex-wrap: wrap;
+      }
+
+      .nav-links a {
+        text-decoration: none;
+        color: #9a9a9a;
+      }
+
+      .nav-links a:hover {
+        color: #d4d4d4;
+      }
+
+      .nav-links .nav-button {
+        color: #1a1a1a;
+        background: #d4d4d4;
+        padding: 0.3rem 0.8rem;
+        border-radius: 999px;
+        font-weight: 600;
+      }
+
+      .nav-links a.nav-button:hover {
+        color: #1a1a1a;
+        background: #ff77a8; /* pyxel pink, the bunny's color */
+      }
+
+      #play {
+        padding: 1.5rem;
+      }
+
+      .game-frame {
+        position: relative;
+        width: 100%;
+        aspect-ratio: 3 / 2;
+        max-height: 80vh;
+        background: #000;
+        border: 1px solid #333;
+        overflow: hidden;
+      }
+
+      #bunny-frame {
+        width: 100%;
+        height: 100%;
+        display: block;
+        border: 0;
+        outline: none;
+      }
+
+      .controls {
+        margin-top: 0.75rem;
+        color: #9a9a9a;
+        font-size: 0.95rem;
+      }
+
+      kbd {
+        font-family: inherit;
+        border: 1px solid #444;
+        border-radius: 4px;
+        padding: 0.05rem 0.4rem;
+      }
+
+      section {
+        scroll-margin-top: 1rem;
+      }
+
+      #information {
+        padding: 2rem 1.5rem 4rem;
+        border-top: 1px solid #333;
+      }
+
+      .sec-label {
+        font-size: 0.85rem;
+        text-transform: uppercase;
+        letter-spacing: 0.08em;
+        color: #9a9a9a;
+        margin-bottom: 1.25rem;
+      }
+
+      .sec-body {
+        display: grid;
+        gap: 2.5rem;
+        grid-template-columns: 1fr;
+        max-width: 72rem;
+      }
+
+      @media (min-width: 800px) {
+        .sec-body {
+          grid-template-columns: 2fr 1fr;
+        }
+      }
+
+      .prose p + p {
+        margin-top: 1rem;
+      }
+
+      .prose {
+        max-width: 42rem;
+      }
+
+      .details {
+        align-self: start;
+      }
+
+      .detail-row {
+        display: grid;
+        grid-template-columns: 8rem 1fr;
+        gap: 1rem;
+        padding: 0.45rem 0;
+        border-bottom: 1px solid #2a2a2a;
+      }
+
+      .detail-row dt {
+        color: #9a9a9a;
+      }
+    </style>
+  </body>
+</html>
