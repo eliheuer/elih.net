@@ -366,7 +366,7 @@ pub mod role {
     /// It shares primitive swatches with other inline figures but can be art
     /// directed without changing every illustration in the post.
     pub mod optical {
-        use super::super::{color, Color};
+        use super::super::{color, with_alpha, Color};
 
         pub fn pen() -> Color {
             color::gray_890()
@@ -381,7 +381,7 @@ pub mod role {
             color::gray_890()
         }
         pub fn form_fill() -> Color {
-            color::yellow()
+            with_alpha(color::yellow(), 112)
         }
         pub fn handles() -> Color {
             color::gray_925()

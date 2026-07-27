@@ -116,7 +116,7 @@ fn main() {
         sheet.ctx.draw_path(to_canvas * path);
     }
 
-    // Draw handles above the opaque form so the construction remains clear.
+    // Draw handles above the translucent form so the construction remains clear.
     for (on, off) in [
         (l, l_up),
         (t, t_left),

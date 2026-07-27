@@ -95,73 +95,76 @@ produced the aesthetic, and the aesthetic advertises the constraint.
 
 ### 03. Dyadic Self-Labeling Grid Systems
 
-Virtua Grotesk replaces Replica's flat grid with a nested one, in
-powers of two up to the full coordinate space a glyph is drawn in.
-That space is called the em, and its size is given in units per em
-(UPM).
-Virtua Grotesk's is 1024, 2¹⁰, rather than the industry's usual
-1000. That is less exotic than it sounds. A power-of-two em is the
-TrueType convention: 2048 is standard, and
+Virtua Grotesk uses two related hierarchies. The grid hierarchy
+classifies point positions. The measurement hierarchy labels distances
+between points by popcount. Both use powers of two, but they record
+different parts of the drawing.
+
+The coordinate space of a font is called the em, and its size is given
+in units per em (UPM). Virtua Grotesk uses 1024 UPM, or 2¹⁰, rather
+than the industry's usual 1000. This is less exotic than it sounds.
+TrueType commonly uses a power-of-two em: 2048 is standard, and
 [Inter](https://rsms.me/inter/) uses it.
 
-Virtua Grotesk extends the powers-of-two logic down through every dimension.
-Every measurement is a sum of powers of two, each power used once. The
-count of powers is the value's Hamming weight, or popcount, the number
-of 1s when it is written in binary, and Virtua Grotesk uses it to rank
-handle lengths and structural spans. One is a pure power: 64, 128,
-256. Two is an elegant sum: 96 = 64 + 32, or 384 = 256 + 128. Three is
-acceptable: 104 = 64 + 32 + 8. Four or more is a signal: some
-correction off the default grid happened here. Where two values take the same count, the one whose
-powers run consecutively wins: in 96 = 64 + 32 each power is half the
-one before it, while 80 = 64 + 16 skips a step, so 96 wins all else
-being equal.
+The first hierarchy is positional. Every point must land on the
+2-unit grid. The 8-unit grid is the default for structural points. A
+point on the 2-unit grid but off the 8-unit grid records a fine optical
+correction. Large corrections can still land on the 8-unit grid, so
+grid membership records most, but not all, drawing intent.
+
+![A translucent yellow cubic arch band with separate chamfered feet and a dark gray outline over a full-bleed 8-unit source grid. The grid remains visible through the form. The grid, outline, handles, and point borders share one line weight. The outer and inner curves show their construction handles. Green points sit on the structure grid. Red points mark corrections between the grid lines.](./fig-optical-correction.png)
+
+The second hierarchy describes measurements. Every integer has a
+unique binary decomposition: a sum of powers of two, each used once.
+The number of powers is its Hamming weight, or popcount. Virtua
+Grotesk uses popcount to label handle lengths and structural spans. A
+popcount of one is a pure power, such as 64, 128, or 256. Two is a
+short sum, such as 96 = 64 + 32. Three combines another increment, as
+in 104 = 64 + 32 + 8. Four or more uses a longer decomposition. The
+count is descriptive. A higher popcount often marks an optical
+adjustment or another fine detail. The value provides this label
+without additional annotation.
+
+Popcount adds information that grid membership cannot. Both 96 and
+112 are multiples of 8, but their decompositions record different
+design decisions. A 64-unit stem is too light and a 128-unit stem too
+heavy, so the Regular stem is 96 = 64 + 32. Where 96 is too light, the
+font uses 112 = 64 + 32 + 16. The additional term records a finer
+adjustment. Both measurements are valid.
 
 ![The lowercase n and o from Virtua Grotesk Regular enlarged over the uniform 8-unit source grid, with every on-curve and off-curve point marked and capped labels measuring representative strokes and counters.](./fig-system-no.png)
 
-A low popcount means a structural value. A high one means the
-letterform needed something the round numbers could not give. 64 is
-too light for a stem and 128 too heavy, so stems are 96 = 64 + 32;
-where 96 is too light, 112 = 64 + 32 + 16. The sums are a second
-semantic hierarchy, parallel to the nested grid. Nothing is wrong with
-a high popcount; it is self-labeling information, marking the value
-for the model as an optical correction or a tricky spot in the
-drawing logic.
+[Runebender](https://runebender.org) makes this hierarchy visible while
+I draw. It labels each measurement with its power-of-two decomposition
+and colors it by popcount: green for pure powers, yellow for two-power
+sums, orange for three, and red for values that use four or more. The
+colors identify the count. They do not indicate errors.
 
-I read this straight off the outline while drawing. Below,
-[Runebender](https://runebender.org) labels every measurement with its
-power-of-two sum and colors it on a gradient by popcount: green for
-pure powers like 64 = 2⁶ and 256 = 2⁸, yellow for two-power sums like
-96 = 64 + 32, orange for three like 104 = 64 + 32 + 8, red for values
-that need many powers.
+<video src="/videos/popcount.mp4" poster="/videos/popcount-poster.jpg" controls playsinline preload="metadata" aria-label="Screen recording of the Runebender font editor showing a glyph on a grid. Every measurement is labeled with its power-of-two decomposition and colored on a gradient by popcount: green for pure powers such as 64 = 2⁶, 128 = 2⁷, and 256 = 2⁸; yellow for two-power sums like 96 = 64 + 32 and 80 = 64 + 16; orange for three-power sums like 104 = 64 + 32 + 8; red for values with four or more terms, such as 23 = 16 + 4 + 2 + 1. The colors label measurement complexity rather than errors. A MEASURE panel on the left toggles colorize outline, handle lengths, segment lengths, stems and counters, and side bearings."></video>
 
-<video src="/videos/popcount.mp4" poster="/videos/popcount-poster.jpg" controls playsinline preload="metadata" aria-label="Screen recording of the Runebender font editor showing a glyph on a grid. Every measurement is labeled with its power-of-two decomposition and colored on a gradient by popcount: green for pure powers such as 64 = 2⁶, 128 = 2⁷, and 256 = 2⁸; yellow for two-power sums like 96 = 64 + 32 and 80 = 64 + 16; orange for three-power sums like 104 = 64 + 32 + 8; red for high-popcount values such as 23 = 16 + 4 + 2 + 1. A MEASURE panel on the left toggles colorize outline, handle lengths, segment lengths, stems and counters, and side bearings."></video>
-
-The full specification lives in the repo as
-[`DESIGN.md`](https://github.com/eliheuer/virtua-grotesk/blob/main/DESIGN.md),
-and it is enforced programmatically. From the repo root, `make
-grid-qa` runs [a Python
+The coordinate rules and measurement labels live in
+[`DESIGN.md`](https://github.com/eliheuer/virtua-grotesk/blob/main/DESIGN.md)
+and are implemented programmatically. From the repo root, `make grid-qa`
+runs [a Python
 script](https://github.com/eliheuer/virtua-grotesk/blob/main/scripts/grid_qa.py)
-that grades every glyph in both masters for compliance. The report is
-what the AI agent harness acts on: it fixes what the script flags,
-renders the result, and runs the script again.
+that reports coordinate-grid compliance and labels measurements by
+popcount. The AI agent harness uses that report to correct grid
+violations, render the result, and run the script again.
 
-The same rule spaces the font. Sidebearings and kerning default to
-the 8-unit grid: of Regular's 84 kerning pairs, all but two sit on
-it, and the two that drop to the 2-unit grid are, exactly as with
-point placement, coordinate-derived optical judgments, free training data.
-The coarse default is also what gives the spacing its rhythm, a small
-set of recurring intervals instead of hundreds of bespoke ones,
-snapped tighter only where optical judgment is needed.
+The coordinate rules also apply to spacing. Sidebearings and kerning
+default to the 8-unit grid. Of Regular's 84 kerning pairs, all but two
+sit on it. The two exceptions use the 2-unit grid for finer optical
+adjustment. The coarse default also gives the spacing a consistent
+rhythm: a small set of recurring intervals, tightened only where
+needed.
 
 ![The capital H and O from Virtua Grotesk Regular enlarged over the uniform 8-unit source grid, with every on-curve and off-curve point marked and capped labels measuring representative strokes and counters.](./fig-system-ho.png)
 
-Structure lives on the 8-unit grid: stems, sidebearings, chamfers, and
-every value a tool generates by default. Large optical corrections sit
-there too; only corrections finer than 8 units drop to the 2-unit
-grid. The machine drafts on 8, a person refines on 2, and the
-difference between the two versions is a labeled training set that gradually lets the small language model take over.
-
-![A yellow cubic arch band with separate chamfered feet and a dark gray outline over a full-bleed 8-unit source grid. The grid, outline, handles, and point borders share one line weight. The outer and inner curves show their construction handles. Green points sit on the structure grid. Red points mark corrections between the grid lines.](./fig-optical-correction.png)
+Together, the two hierarchies turn drawing conventions into data. Grid
+level exposes fine corrections. Popcount exposes where measurements
+become more specific. The defaults remain easy for tools to generate,
+while human adjustments remain visible for QA and later model
+training.
 
 ### 04. Aesthetic Discipline & Machine Legibility
 
