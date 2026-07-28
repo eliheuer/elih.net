@@ -8,7 +8,8 @@ const details: [string, string][] = [
   ['Engineering', 'Python · Pyxel 2.9'],
   ['AI', 'Claude Fable 5'],
   ['Released', '2026'],
-  ['World', '16 rooms · 5 bosses · 5 flames'],
+  ['World', '16 rooms · 6 bosses · 5 flames'],
+  ['Modes', 'Main quest · second game'],
   ['Sounds', 'Pyxel chiptune'],
   ['License', 'GPL-3.0-or-later'],
 ]
@@ -57,7 +58,8 @@ const details: [string, string][] = [
       </div>
       <p class="controls">
         Click the game first · <kbd>arrows</kbd> run and climb ·
-        <kbd>space</kbd> jump · <kbd>x</kbd> use item · <kbd>z</kbd> swap item ·
+        <kbd>space</kbd> jump · <kbd>x</kbd> use item · <kbd>up</kbd> or
+        <kbd>down</kbd> + <kbd>x</kbd> aim it · <kbd>z</kbd> swap item ·
         <kbd>m</kbd> map · <kbd>up</kbd> play arcade machines
       </p>
     </section>
@@ -78,7 +80,15 @@ const details: [string, string][] = [
             guard, win the BRICK BONK arcade cabinet, beat four flame
             guardians, light the altar, defeat the EVIL BUNNY — then carry the
             pink flame home to light the campfire and start the greatest bunny
-            dance party ever.
+            dance party ever. Touch a telephone to save. There are three save
+            slots, and in the browser they only last as long as the tab stays
+            open.
+          </p>
+          <p>
+            Beating the game a certain way starts a second game. The bunnies
+            hide down the rabbit hole, the world becomes hide and seek, and a
+            new boss waits at the tree once everyone is home. She needs all
+            five tools to beat.
           </p>
           <p>
             The whole game is designed to be edited by a five-year-old: every
@@ -86,7 +96,7 @@ const details: [string, string][] = [
             grid of color codes, and the tunable numbers live under a comment
             that says <em>TRY CHANGING THESE NUMBERS!</em> A suite of robot
             bunnies plays the game headlessly to prove nobody can get stuck
-            and the ending is always reachable. Free software under the GPL,
+            and both endings are always reachable. Free software under the GPL,
             on <a href="https://github.com/eliheuer/bunny-madness">GitHub</a>.
           </p>
         </div>
