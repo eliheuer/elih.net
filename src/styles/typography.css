@@ -73,6 +73,8 @@
     /* The 2x body→heading jump is too steep in a narrow column; ease it on
        phones (the root font-size has already scaled down as well). */
     @media (max-width: 639.98px) {
+      line-height: 1.45;
+
       h1, h2, h3 { font-size: 1.6em; }
       &.tight-headings :is(h2, h3) { font-size: 1.44em; }
     }
@@ -220,6 +222,35 @@
    margins are equal. Unlayered + extra specificity to beat EC's own rule. */
 .prose .expressive-code .copy {
   inset-block-start: calc(var(--ec-brdWd) + var(--ec-uiPadInl) / 2);
+}
+
+/* Post titles scale continuously from narrow phones to the desktop measure. */
+.blog-post-title {
+  font-size: clamp(1.75rem, calc(1.25rem + 3vw), 2.6667rem);
+}
+
+/* Long display equations scroll inside the prose measure instead of widening
+   the entire page. */
+.prose .katex-display {
+  max-width: 100%;
+  overflow-x: auto;
+  overflow-y: hidden;
+  padding-bottom: 0.2rem;
+}
+
+@media (max-width: 639.98px) {
+  .prose ul,
+  .prose ol {
+    margin-left: 1.25rem;
+  }
+
+  .prose blockquote {
+    padding-left: 0.75rem;
+  }
+
+  .prose table {
+    font-size: 0.8em;
+  }
 }
 
 /* Public-draft notice: red text to set it apart. Unlayered so it beats the

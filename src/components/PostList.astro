@@ -17,7 +17,7 @@ const shortDate = (date: Date) =>
   }).format(date)
 ---
 
-<ul class="flex flex-col gap-y-1 leading-snug">
+<ul class="flex flex-col gap-y-3 leading-snug sm:gap-y-1">
   {
     posts.map((post) => (
       <li class="flex flex-col gap-x-4 sm:flex-row sm:items-baseline">
@@ -27,7 +27,7 @@ const shortDate = (date: Date) =>
         >
           {shortDate(post.data.date)}
         </time>
-        <Link href={`/blog/${post.id}`} class="hover:underline font-normal">
+        <Link href={`/blog/${post.id}`} class="font-normal hover:underline">
           {post.data.title}
         </Link>
       </li>

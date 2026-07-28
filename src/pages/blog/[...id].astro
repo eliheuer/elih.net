@@ -23,6 +23,10 @@ const { next, prev } = await getAdjacentPosts(currentPostId)
 // Break the display title after its first colon (main: subtitle) so long
 // titles wrap on the colon instead of mid-phrase. Meta title stays untouched.
 const [titleMain, titleRest] = post.data.title.split(/:\s+(.*)/s)
+const virtuaTitleBreak =
+  currentPostId === 'virtua-grotesk' && titleRest
+    ? titleRest.match(/^(.*\bfor)\s+(.*)$/)
+    : null
 ---
 
 <Layout>
@@ -30,7 +34,28 @@ const [titleMain, titleRest] = post.data.title.split(/:\s+(.*)/s)
 
   <article class="pt-5 pb-8">
     <header class="mb-4">
-      <h1 class={`text-[2.25rem] sm:text-[2.6667rem] ${currentPostId === 'virtua-grotesk' ? 'leading-[0.95]' : 'leading-[1.05]'} tracking-[-0.025em] text-balance font-semibold`}>{titleRest ? (<>{titleMain}:<br />{titleRest}</>) : post.data.title}</h1>
+      <h1
+        class={`blog-post-title ${currentPostId === 'virtua-grotesk' ? 'leading-[0.95]' : 'leading-[1.05]'} tracking-[-0.025em] text-balance font-semibold`}
+      >
+        {
+          titleRest ? (
+            <>
+              {titleMain}:<br />
+              {virtuaTitleBreak ? (
+                <>
+                  {virtuaTitleBreak[1]}
+                  <br />
+                  {virtuaTitleBreak[2]}
+                </>
+              ) : (
+                titleRest
+              )}
+            </>
+          ) : (
+            post.data.title
+          )
+        }
+      </h1>
       <p class="text-muted-foreground -mt-0.5">
         <time datetime={post.data.date.toISOString()}>
           {formatDate(post.data.date)}
@@ -39,14 +64,16 @@ const [titleMain, titleRest] = post.data.title.split(/:\s+(.*)/s)
       </p>
     </header>
 
-    <div class={`prose ${currentPostId === 'virtua-grotesk' ? 'tight-headings' : ''}`}>
+    <div
+      class={`prose ${currentPostId === 'virtua-grotesk' ? 'tight-headings' : ''}`}
+    >
       <Content />
     </div>
   </article>
 
   {
     (prev || next) && (
-      <nav class="border-foreground text-muted-foreground flex justify-between gap-x-6 border-t py-6">
+      <nav class="border-foreground text-muted-foreground flex flex-col gap-y-4 border-t py-6 sm:flex-row sm:justify-between sm:gap-x-6">
         <span>
           {prev && (
             <Link href={`/blog/${prev.id}`} class="hover:text-foreground">
