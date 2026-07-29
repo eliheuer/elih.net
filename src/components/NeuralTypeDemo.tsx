@@ -146,6 +146,9 @@ export default function NeuralTypeDemo({
   const [stats, setStats] = useState({ bytes: 0, params: 0 })
   const [fullscreen, setFullscreen] = useState(false)
   const [narrow, setNarrow] = useState(false)
+  // Cache the shaped line per (text, elong, dir): caret-blink frames
+  // redraw without re-running the model.
+  const lineCache = useRef<{ key: string; line: Line } | null>(null)
 
   // Load engine + font once.
   useEffect(() => {
@@ -191,10 +194,10 @@ export default function NeuralTypeDemo({
     }
   }, [fullscreen])
 
-  // Caret blink; restart (visible) on every selection change.
+  // Caret blink — always on, so the demo reads as an editor before
+  // anyone clicks. Restarts (visible) on every edit.
   useEffect(() => {
     setCaretOn(true)
-    if (!focused) return
     const id = window.setInterval(() => setCaretOn((v) => !v), 530)
     return () => window.clearInterval(id)
   }, [focused, sel.start, sel.end, text])
@@ -242,8 +245,16 @@ export default function NeuralTypeDemo({
     ctx.fillRect(0, 0, W, H)
     if (!font) return
 
-    // One model run per glyph, every draw.
-    const line: Line = JSON.parse(font.shape(text, elong, dir))
+    // One model run per glyph on every text/parameter change; blink
+    // and selection frames reuse the cached layout.
+    const cacheKey = `${text}\u0000${elong}\u0000${dir}`
+    let line: Line
+    if (lineCache.current?.key === cacheKey) {
+      line = lineCache.current.line
+    } else {
+      line = JSON.parse(font.shape(text, elong, dir))
+      lineCache.current = { key: cacheKey, line }
+    }
 
     // Fit the line — right-aligned for RTL, left-aligned for LTR —
     // snapped to whole device pixels for crisp edges.
@@ -322,8 +333,9 @@ export default function NeuralTypeDemo({
       }
     }
 
-    // Caret (collapsed selection only).
-    if (focused && caretOn && a === b) {
+    // Caret (collapsed selection only) — drawn even before focus, so
+    // the canvas visibly invites editing.
+    if (caretOn && a === b) {
       const cx = ox + (caretXs[Math.min(a, caretXs.length - 1)] ?? 0) * cell
       ctx.fillStyle = INK
       ctx.fillRect(Math.round(cx) - 1, oy, 2, line.grid_h * cell)

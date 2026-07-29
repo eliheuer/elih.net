@@ -33,8 +33,9 @@ and watch a font behave like a function.
 <li><a href="#04-the-ntf-file"><span class="n">04</span>The .ntf File</a></li>
 <li><a href="#05-kashida-a-parameter-not-a-glyph"><span class="n">05</span>Kashida: a Parameter, Not a Glyph</a></li>
 <li><a href="#06-the-road-to-naskh-and-nastaliq"><span class="n">06</span>The Road to Naskh and Nastaliq</a></li>
-<li><a href="#07-prior-art"><span class="n">07</span>Prior Art</a></li>
-<li><a href="#08-early-days-and-an-invitation"><span class="n">08</span>Early Days, and an Invitation</a></li>
+<li><a href="#07-editing-evidence-a-font-editor-for-models"><span class="n">07</span>Editing Evidence: a Font Editor for Models</a></li>
+<li><a href="#08-prior-art"><span class="n">08</span>Prior Art</a></li>
+<li><a href="#09-early-days-and-an-invitation"><span class="n">09</span>Early Days, and an Invitation</a></li>
 </ol>
 </nav>
 
@@ -215,7 +216,47 @@ dimensions, and the success criterion is simple to state: a word like
 نستعليق rendered as one descending gesture, its shape a function of the
 whole word — which is what nastaliq *is*.
 
-### 07. Prior Art
+### 07. Editing Evidence: a Font Editor for Models
+
+If the font is a model, what does the font *editor* become? The difference
+from every existing tool fits in one sentence: **an OpenType editor edits
+the artifact; a NeuralType editor edits evidence.** The `.ntf` file is
+trained, not compiled — so what a designer authors, versions, and refines
+are *exemplars*: drawings of letters in context. "Export" is a training
+run.
+
+Today my exemplars are ASCII-art grids in the Rust source (and pixel-editor
+sketches on the way there), which already exposes the shape of the
+workflow. When I disliked where the engine placed the dots of ق, the fix
+was not to move points in an outline — it was to add an explicit dot-anchor
+marker to the letterform data and retrain. The aesthetic decision lives in
+the training data, permanently, for every context the letter will ever
+appear in. That inversion generalizes into what I think the editor looks
+like:
+
+- **No glyph overview grid.** The atomic unit is not "ب medial" floating in
+  a box — it is *ب medial in this word at this elongation*. You type a
+  line, click into a letter, and correct it in place, joined to its real
+  neighbours. The correction is stored with its full context.
+- **Axes are canvases, not masters.** A variable font is drawn at fixed
+  masters, and interpolation is prayed over. Here you scrub elongation — or
+  any future learned axis — to *any* position and draw there; every
+  position is an equally valid training sample.
+- **The editor asks questions.** The model generalizes to contexts nobody
+  drew, so proofing becomes active learning: the editor renders the
+  contexts it is least certain of and asks for acceptance or correction.
+  Design labor goes exactly where the model is weakest.
+- **Train is the new compile.** Seconds, not minutes, with fidelity
+  diagnostics — this font reports 430/430 training contexts reproduced
+  exactly — and visual diffs against the exemplars.
+
+For naskh this converges with how calligraphy actually works: the drawing
+surface becomes **skeleton and pen** — a centerline with width handles,
+stroke-expanded live — and the model learns skeletons, not outlines.
+Building that editor is part of the long-term plan here, alongside the
+format itself.
+
+### 08. Prior Art
 
 The two intellectual ancestors are old and mostly ignored by the current
 font stack. **Metafont** (Knuth, 1979) treated letters as programs — pen
@@ -240,7 +281,7 @@ The repo's `docs/RESEARCH.md` collects the full annotated reading list,
 from Titus Nemeth's history of how machine constraints deformed printed
 Arabic to SIL's admirably candid Awami Nastaliq engineering notes.
 
-### 08. Early Days, and an Invitation
+### 09. Early Days, and an Invitation
 
 What exists today is one working rung: a complete engine (shaping, model
 inference, tracing, layout) in ~1,500 lines of dependency-light Rust, a
