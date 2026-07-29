@@ -90,6 +90,7 @@ function caretPositions(line: Line, text: string): number[] {
 const SAMPLES = [
   'بسم الله الرحمن الرحيم',
   'الخط الكوفي',
+  'قلم',
   'نستعليق',
   'محمد',
   'سلام',
@@ -115,7 +116,8 @@ function ensureFont(fontUrl: string): Promise<NtfFont> {
 type Props = { text?: string; font?: string }
 
 export default function NeuralTypeDemo({
-  text: initialText = SAMPLES[0],
+  // قلم (qalam, "pen") by default: small enough to read the grid details.
+  text: initialText = 'قلم',
   font: fontUrl = '/demos/neuraltype/kufic.ntf',
 }: Props) {
   const canvasRef = useRef<HTMLCanvasElement>(null)
