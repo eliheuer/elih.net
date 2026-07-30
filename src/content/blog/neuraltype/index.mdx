@@ -139,14 +139,21 @@ compiled to WASM for the demo above. The pipeline has four stages:
 The model is trained by **distillation from a procedural teacher**. The
 letterforms are authored as ASCII-art grids in the Rust source, in the
 same form as a square-Kufic chart, composed with i'jam dots and kashida
-elongation. A few lines of the teacher:
+elongation. Each form is written so the letterform is visible in the
+source. Two of beh's four forms:
 
 ```rust
 // Beh body (ب ت ث teeth family): open bowl; tooth when joined.
-(Beh, Isolated) => art!(8, ["#...#", "#...#", "#####"]),
-(Beh, Final)    => art!(8, ["#...#.", "#...#.", "######"]),
-(Beh, Initial)  => art!(8, ["..#", "..#", "###"]),
-(Beh, Medial)   => art!(8, [".#.", ".#.", "###"]),
+(Beh, Isolated) => art!(8, [
+    "#...#",
+    "#...#",
+    "#####",
+]),
+(Beh, Medial) => art!(8, [
+    ".#.",
+    ".#.",
+    "###",
+]),
 ```
 
 ب, ت, ث, and the joined forms of ن and ي share that one skeleton. Dots are
