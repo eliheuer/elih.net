@@ -88,15 +88,13 @@ function caretPositions(line: Line, text: string): number[] {
 }
 
 const SAMPLES = [
-  'بسم الله الرحمن الرحيم',
-  'الخط الكوفي',
-  'قلم',
-  'نستعليق',
-  'محمد',
-  'سلام',
+  'قلم', // qalam, "pen" — the default
+  'بسم الله الرحمن الرحيم', // the basmala
+  'كن فيكون', // kun fayakun, "Be, and it is"
+  'أشهد يا إلهي', // opening of the Bahá'í short obligatory prayer
+  'الذكاء الاصطناعي', // "artificial intelligence"
   'HELLO WORLD',
   'LOREM IPSUM',
-  'FAR LAP',
 ]
 
 let fontReady: Promise<NtfFont> | null = null
@@ -146,6 +144,11 @@ export default function NeuralTypeDemo({
   // Cache the shaped line per (text, elong, dir): caret-blink frames
   // redraw without re-running the model.
   const lineCache = useRef<{ key: string; line: Line } | null>(null)
+
+  // Focus the editor as soon as the model is ready.
+  useEffect(() => {
+    if (ready) focusText()
+  }, [ready, focusText])
 
   // Load engine + font once.
   useEffect(() => {
@@ -214,11 +217,18 @@ export default function NeuralTypeDemo({
     return () => document.removeEventListener('selectionchange', onSelChange)
   }, [syncFromInput])
 
+  // The text cursor owns keyboard focus: grabbed on load (without
+  // scrolling the page) and reclaimed after any control interaction,
+  // so arrow keys always move the caret — never the slider.
+  const focusText = useCallback(() => {
+    hiddenRef.current?.focus({ preventScroll: true })
+  }, [])
+
   const setTextAndFocus = useCallback((t: string) => {
     const el = hiddenRef.current
     if (!el) return
     el.value = t
-    el.focus()
+    el.focus({ preventScroll: true })
     el.setSelectionRange(t.length, t.length)
     setText(t)
     setSel({ start: t.length, end: t.length })
@@ -512,7 +522,10 @@ export default function NeuralTypeDemo({
 
       {/* Expand / return toggle, upper right. */}
       <button
-        onClick={() => setFullscreen((f) => !f)}
+        onClick={() => {
+          setFullscreen((f) => !f)
+          focusText()
+        }}
         title={fullscreen ? 'Return to post (Esc)' : 'Expand to full window'}
         aria-label={fullscreen ? 'Return to post' : 'Expand to full window'}
         style={{
@@ -589,6 +602,7 @@ export default function NeuralTypeDemo({
             step={1}
             value={elong}
             onChange={(e) => setElong(parseFloat(e.target.value))}
+            onPointerUp={focusText}
           />
         </label>
 
@@ -596,7 +610,10 @@ export default function NeuralTypeDemo({
           <input
             type="checkbox"
             checked={showStructure}
-            onChange={(e) => setShowStructure(e.target.checked)}
+            onChange={(e) => {
+              setShowStructure(e.target.checked)
+              focusText()
+            }}
             style={{ accentColor: INK }}
           />
           vector outline
@@ -606,7 +623,10 @@ export default function NeuralTypeDemo({
           <input
             type="checkbox"
             checked={showGrid}
-            onChange={(e) => setShowGrid(e.target.checked)}
+            onChange={(e) => {
+              setShowGrid(e.target.checked)
+              focusText()
+            }}
             style={{ accentColor: INK }}
           />
           show grid &amp; baseline

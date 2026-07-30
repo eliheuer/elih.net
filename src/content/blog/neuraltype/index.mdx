@@ -112,7 +112,7 @@ compiled to WASM for the demo above. The pipeline has four stages:
 1. **Shape.** Unicode text → joining forms, by the standard Arabic joining
    rules (the right-joiners ا د ذ ر ز و never take initial/medial forms).
 2. **Generate.** One forward pass per glyph. Input: a one-hot letter
-   identity, a one-hot joining form, and an elongation scalar — 62 floats.
+   identity, a one-hot joining form, and an elongation scalar — 63 floats.
    Output: a 16×14 occupancy grid. There is no advance-width output — the
    pen simply moves to the leftmost column the model drew; the metrics
    fall out of the drawing. "Letter" includes one ligature id: shaping
