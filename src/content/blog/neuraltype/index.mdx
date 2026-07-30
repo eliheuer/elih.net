@@ -190,12 +190,9 @@ offset  size    content
 ```
 
 The name follows TrueType and OpenType: **NeuralType**. The format is
-script-agnostic. Nothing in it knows about Arabic; the alphabet, the
-conditioning features, and the output head are declared per font. Arabic
-is the first target because it is where per-glyph outlines fail hardest,
-not because the format is for Arabic. The project briefly had an Arabic
-name and I renamed it on day one. A format that aims to replace OpenType
-cannot be named for one script.
+script-agnostic: the alphabet, the conditioning features, and the output
+head are declared per font in the header, so nothing in the format is
+specific to any script or style.
 
 ### 04. Kashida: a Parameter, Not a Glyph
 
