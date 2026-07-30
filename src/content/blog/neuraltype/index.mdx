@@ -69,25 +69,28 @@ this work, but it is still a massive amount of labor, and the result is
 still incapable of reproducing the best naskh and nastaliq manuscripts on
 the web.
 
-That is why most Arabic fonts
-reduce each letter to four forms (isolated, initial, medial, final). The
+Arabic fonts reduce each letter to four forms (isolated, initial, medial, final). The
 four positional categories are real, they come from the script itself,
 but written Arabic also varies each form by its neighbors and by
 elongation, and in OpenType every one of those variants costs another
 glyph and another rule.
 
-A .ntf font computes f directly. The file stores the weights of a small
-neural network, and rendering runs the network once per glyph, per
-keystroke (a "forward pass"), followed by outline extraction. The glyph
+A .ntf font replaces the lookup with a computation. The file stores the
+weights of a small neural network, and rendering runs the network once
+per glyph, per keystroke (a "forward pass"), followed by outline
+extraction. The glyph
 function in the engine, quoted from the Rust source:
 
 ```rust
 impl GlyphSource for NeuralFont {
-    fn glyph(&self, c: char, form: Form, elong: f64) -> Option<GlyphImage> {
-        let c = crate::art::canonical_char(c);
-        let idx = self.alphabet.iter().position(|&a| a == c)?;
-        let y = self.mlp.forward(&encode_input(idx, form, elong));
-        Some(decode_output(&y))
+    /// Generate the glyph for one character in context: a single
+    /// forward pass through the network.
+    fn glyph(&self, ch: char, form: Form, elongation: f64) -> Option<GlyphImage> {
+        let ch = canonical_char(ch);
+        let letter = self.alphabet.iter().position(|&a| a == ch)?;
+        let input = encode_input(letter, form, elongation);
+        let output = self.mlp.forward(&input);
+        Some(decode_output(&output))
     }
 }
 ```
