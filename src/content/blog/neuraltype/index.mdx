@@ -37,9 +37,7 @@ elongation slider changes a model input, not a glyph substitution.
 <li><a href="#02-how-it-works-teacher-student-tracer"><span class="n">02</span>How It Works: Teacher, Student, Tracer</a></li>
 <li><a href="#03-the-ntf-file"><span class="n">03</span>The .ntf File</a></li>
 <li><a href="#04-kashida-a-parameter-not-a-glyph"><span class="n">04</span>Kashida: a Parameter, Not a Glyph</a></li>
-<li><a href="#05-the-road-to-naskh-and-nastaliq"><span class="n">05</span>The Road to Naskh and Nastaliq</a></li>
-<li><a href="#06-editing-evidence-a-font-editor-for-models"><span class="n">06</span>Editing Evidence: a Font Editor for Models</a></li>
-<li><a href="#07-prior-art"><span class="n">07</span>Prior Art</a></li>
+<li><a href="#05-prior-art"><span class="n">05</span>Prior Art</a></li>
 </ol>
 </nav>
 
@@ -217,72 +215,10 @@ the axis is made. A variable-font axis interpolates between masters the
 designer drew for every glyph. A learned axis has no masters: it is one
 input dimension of the model, it costs no extra drawing per glyph, and it
 composes with the other inputs, like the letter's context. When the
-output head moves from grid cells to bézier control points (v1, below),
-the same input becomes continuous.
+output head moves from grid cells to bézier control points, in the
+planned naskh version of the font, the same input becomes continuous.
 
-### 05. The Road to Naskh and Nastaliq
-
-Square Kufic proves the pipeline. The reason the format exists comes next.
-
-**v1 is naskh, and swaps the output head.** Instead of an occupancy grid,
-the model emits a stroke skeleton: anchor points with bézier handles and a
-pen width per point. Outlines come from kurbo's stroke expansion, a
-learned broad-nib pen over a generated centerline. This is Metafont's
-model, letters as pen strokes over parametrized skeletons, with the
-parameter logic learned rather than hand-programmed. The conditioning also
-grows: with neighboring letter identities as inputs, بـ before ح can take
-a different tooth than بـ before ي without anyone enumerating the cases.
-GSUB cannot do this.
-
-**v2 is nastaliq**, the script OpenType handles worst. Letters in a
-nastaliq word step diagonally down a sloped cascade whose geometry depends
-on the whole word. Existing fonts approximate this with thousands of
-glyphs, cursive attachment, and collision-avoidance machinery. For a
-model, the cascade position, accumulated stack height, and line pressure
-are more input dimensions. The success criterion: a word like نستعليق
-rendered as one descending gesture, its shape a function of the whole
-word.
-
-### 06. Editing Evidence: a Font Editor for Models
-
-If the font is a model, the font editor changes in kind: **an OpenType
-editor edits the artifact; a NeuralType editor edits evidence.** The .ntf
-file is trained, not compiled, so what a designer authors, versions, and
-refines are exemplars: drawings of letters in context. Export is a
-training run.
-
-Today my exemplars are ASCII-art grids in the Rust source, drawn first as
-pixel-editor sketches. Even this workflow shows the pattern. When I wanted
-to move the dots of ق, the fix was not to move points in an outline. It
-was to add an explicit dot-anchor marker to the letterform data and
-retrain. The decision now lives in the training data, for every context
-the letter will ever appear in. The same inversion defines the editor:
-
-- **No glyph overview grid.** The atomic unit is not "ب medial" in a box;
-  it is ب medial in this word at this elongation. You type a line, click
-  into a letter, and correct it in place, joined to its real neighbors.
-  The correction is stored with its full context.
-- **Axes are canvases, not masters.** A variable font is drawn at fixed
-  masters and interpolated between them. Here you scrub elongation, or any
-  future learned axis, to any position and draw there. Every position is
-  an equally valid training sample.
-- **The editor asks questions.** The model generalizes to contexts nobody
-  drew, so proofing becomes active learning: the editor renders the
-  contexts it is least certain of and asks for acceptance or correction.
-  Design labor goes where the model is weakest.
-- **Train is the new compile.** Seconds, not minutes, with fidelity
-  diagnostics (this font reports 437/437 training contexts reproduced
-  exactly) and visual diffs against the exemplars.
-
-For naskh the drawing surface becomes **skeleton and pen**: a centerline
-with width handles, stroke-expanded live, with the model learning
-skeletons rather than outlines. This matches how calligraphy works.
-Building that editor is part of the long-term plan, alongside the format;
-the tools I have been building around
-[Runebender](https://runebender.org) and [img2bez](/blog/img2bez) point at
-the same goal.
-
-### 07. Prior Art
+### 05. Prior Art
 
 Two ancestors matter most. **Metafont** (Knuth, 1979) treated letters as
 programs, pen strokes over parametrized skeletons, a whole family from
@@ -296,7 +232,7 @@ generative engine, not a bigger glyph table.
 
 On the ML side there is a recent literature on learned vector glyph
 synthesis (SVG-VAE, DeepSVG, Im2Vec, DeepVecFont, FontRNN) that is a
-toolbox for the v1 output head. The difference in kind: those systems
+toolbox for a future bézier output head. The difference in kind: those systems
 generate fonts, per-glyph, context-free, offline. NeuralType generates
 text setting. The model runs inside the shaping loop, conditioned on
 context, at keystroke time. The closest prior work in spirit is not the
