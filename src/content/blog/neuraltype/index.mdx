@@ -10,9 +10,9 @@ draft: false
 
 import NeuralTypeDemo from '../../../components/NeuralTypeDemoIsland.astro'
 
-<p class="draft-notice">This post is a work-in-progress draft, and its text is currently 100% AI-generated (written with Claude). It is public only to gather technical feedback on the idea.</p>
+<p class="draft-notice">This post is a work-in-progress draft, and its text is currently 90% AI-generated (written with Claude). It is public only to gather technical feedback on the idea.</p>
 
-NeuralType (`.ntf`) is an experiment in what comes after OpenType: a font
+NeuralType (.ntf) is an experiment in what comes after OpenType: a font
 format where the font file is **a model, not a table of outlines**. The
 spec, research notes, and Rust engine are on GitHub at
 [github.com/eliheuer/post-opentype](https://github.com/eliheuer/post-opentype),
@@ -114,8 +114,13 @@ compiled to WASM for the demo above. The pipeline has four stages:
 1. **Shape.** Unicode text → joining forms, by the standard Arabic joining
    rules (the right-joiners ا د ذ ر ز و never take initial/medial forms).
 2. **Generate.** One forward pass per glyph. Input: a one-hot letter
-   identity, a one-hot joining form, and an elongation scalar — 61 floats.
-   Output: a 16×14 occupancy grid plus an advance width.
+   identity, a one-hot joining form, and an elongation scalar — 62 floats.
+   Output: a 16×14 occupancy grid. There is no advance-width output — the
+   pen simply moves to the leftmost column the model drew; the metrics
+   fall out of the drawing. "Letter" includes one ligature id: shaping
+   fuses ل + ا into the mandatory لا ligature before the model runs, and
+   the engine's cluster map splits its width across both source
+   characters so the cursor still works inside it.
 3. **Layout.** The pen composites every generated glyph grid into one
    line-wide bitmap. Connected letters abut, so their strokes merge —
    a joined word is one connected region, the way the script demands —
