@@ -24,8 +24,8 @@ const BG = '#0c0c0c'
 const INK = '#2aa35f' // forest green
 const SELECTION = 'rgba(42,163,95,0.30)'
 const OUTLINE = '#e5e5e5' // structure view: contour strokes (90% gray)
-const CORNER = '#e8b84b' // structure view: corner points (gold)
-const CARET = '#e8b84b' // text cursor (gold)
+const CORNER = '#ef4444' // structure view: corner points (red)
+const CARET = '#ef4444' // text cursor (red)
 
 // Extract the corner points of a rectilinear SVG path ("M x y L x y … Z"),
 // for the structure view. There are no curves yet — v0 outlines are traced
