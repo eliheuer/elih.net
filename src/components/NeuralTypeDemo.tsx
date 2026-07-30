@@ -511,6 +511,36 @@ export default function NeuralTypeDemo({
         onInput={syncFromInput}
         onSelect={syncFromInput}
         onKeyUp={syncFromInput}
+        // Clipboard, handled explicitly: browsers are inconsistent
+        // about default copy/cut/paste on a visually hidden input.
+        onCopy={(e) => {
+          const el = hiddenRef.current
+          if (!el) return
+          e.preventDefault()
+          const a = el.selectionStart ?? 0
+          const b = el.selectionEnd ?? 0
+          e.clipboardData.setData('text/plain', el.value.slice(a, b))
+        }}
+        onCut={(e) => {
+          const el = hiddenRef.current
+          if (!el) return
+          e.preventDefault()
+          const a = el.selectionStart ?? 0
+          const b = el.selectionEnd ?? 0
+          e.clipboardData.setData('text/plain', el.value.slice(a, b))
+          el.setRangeText('', a, b, 'start')
+          syncFromInput()
+        }}
+        onPaste={(e) => {
+          const el = hiddenRef.current
+          if (!el) return
+          e.preventDefault()
+          const t = e.clipboardData.getData('text/plain').replace(/\s*\n\s*/g, ' ')
+          const a = el.selectionStart ?? 0
+          const b = el.selectionEnd ?? 0
+          el.setRangeText(t, a, b, 'end')
+          syncFromInput()
+        }}
         onFocus={() => {
           setFocused(true)
           syncFromInput()

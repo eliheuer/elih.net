@@ -63,9 +63,12 @@ was drawn ahead of time and stored in a table, and the layout rules
 output set is finite. If a script needs a form the tables do not contain,
 a person has to draw the glyph and write the rule, so contextual behavior
 costs one glyph and one rule per case, and the number of cases is limited
-by what a type designer can enumerate by hand. That is why Arabic gets
-four contextual classes (isolated, initial, medial, final) where the
-written tradition has a continuum.
+by what a type designer can enumerate by hand. That is why most Arabic fonts
+reduce each letter to four forms (isolated, initial, medial, final). The
+four positional categories are real, they come from the script itself,
+but written Arabic also varies each form by its neighbors and by
+elongation, and in OpenType every one of those variants costs another
+glyph and another rule.
 
 A .ntf font computes f directly. The file stores the weights of a small
 neural network, and rendering runs the network once per glyph, per
@@ -110,9 +113,7 @@ outlines everywhere. The shapes are computed, not retrieved.
 The engine is Rust on the [Linebender](https://linebender.org/) stack,
 compiled to WASM for the demo above. The pipeline has four stages:
 
-1. **Shape.** Unicode text becomes joining forms, by the standard Arabic
-   joining rules. The engine's cluster map splits the لا ligature's width
-   across both source characters, so the cursor works inside it.
+1. **Shape.** Unicode text becomes joining forms.
 2. **Generate.** One forward pass per glyph.
 3. **Layout.** Composite every generated form.
 4. **Trace.** The composited line becomes vector outlines.
