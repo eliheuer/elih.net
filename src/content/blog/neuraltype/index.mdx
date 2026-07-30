@@ -190,13 +190,17 @@ OpenType's answer is U+0640 ARABIC TATWEEL — a spacer glyph you insert
 between letters — plus JSTF tables that almost nothing implements. It is a
 discrete, typographically wrong solution to a continuous problem.
 
-In NeuralType, elongation is just an input dimension. The model was trained
-on five discrete elongation levels per joinable form, and because the
-function is continuous, the slider sweeps through the whole range — every
-connection in the line stretching together, the letterforms staying
-coherent, at any value. No inserted characters, no substitution, no extra
-glyphs. A justification engine would drive this input per-connection to fill
-a measure; a variable-font-style axis, except the axis was *learned*.
+In NeuralType, elongation is just an input dimension. In a grid style the
+kashida is necessarily a whole number of cells — the model is trained at
+five elongation levels per joinable form, and the engine snaps the input to
+them — but the important thing is *where the axis lives*: it is an input to
+the function, not an inserted character, a substitution, or an extra glyph.
+Drag the slider and every connection in the line stretches together, the
+letterforms staying coherent at each step. A justification engine would
+drive this input per-connection to fill a measure; a variable-font-style
+axis, except the axis was *learned*. When the output head moves from grid
+cells to bezier control points (v1, below), the same input becomes
+genuinely continuous.
 
 ### 06. The Road to Naskh and Nastaliq
 

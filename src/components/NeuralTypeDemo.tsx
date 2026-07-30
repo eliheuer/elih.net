@@ -575,14 +575,14 @@ export default function NeuralTypeDemo({
 
         <label style={{ display: 'block' }}>
           <div style={{ marginBottom: 4 }}>
-            kashida elongation <span style={{ color: INK }}>{elong.toFixed(1)}</span>
+            kashida elongation <span style={{ color: INK }}>{elong.toFixed(0)}</span>
           </div>
           <input
             type="range"
             className="ntf-slider"
             min={0}
             max={4}
-            step={0.05}
+            step={1}
             value={elong}
             onChange={(e) => setElong(parseFloat(e.target.value))}
           />
