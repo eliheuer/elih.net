@@ -137,22 +137,13 @@ share this skeleton. Two of beh's four forms:
 ]),
 ```
 
-The initial and final forms follow the same pattern, and the joined forms
-of ن and ي use this skeleton too. In the trained model, dots are
-generated, not input: ب and ت are different letter ids whose shared
-skeleton the network learns in training. The full training set is every
-supported (letter, form, elongation) context, 437 samples. An MLP with two
-hidden layers trains on it with full-batch Adam in a few minutes on CPU
-and reproduces all 437 contexts exactly. The teacher never ships. The
-weights are the font.
+In the trained model, dots are generated, not input. The training set is
+every supported (letter, form, elongation) context, 437 samples; a small
+MLP trains on it in a few minutes on CPU and reproduces all 437 exactly.
+The teacher never ships. The weights are the font.
 
-The same alphabet also carries **Latin capitals**, in a matching grid
-style at full cap height. Elongation works there too: Arabic stretches its
-baseline connections, while each Latin letter declares a stretch column,
-so crossbars and arms extend and stems stay one cell wide. The HELLO WORLD
-sample shows this with the slider. Text direction is detected
-automatically, so Arabic lines run right-to-left and Latin lines run
-left-to-right, including the cursor.
+The alphabet also carries Latin capitals, and elongation works for both
+scripts. Text direction is detected automatically.
 
 ### 03. The .ntf File
 
@@ -166,7 +157,5 @@ offset  size    content
 8+H     ...     raw little-endian f32 weights, layer by layer
 ```
 
-The name follows TrueType and OpenType: **NeuralType**. The format is
-script-agnostic: the alphabet, the conditioning features, and the output
-head are declared per font in the header, so nothing in the format is
-specific to any script or style.
+The format is script-agnostic: the alphabet, the conditioning features,
+and the output head are declared per font in the header.
