@@ -21,10 +21,10 @@ import init, { NtfFont } from '../lib/neuraltype-wasm/neuraltype_wasm.js'
 import wasmUrl from '../lib/neuraltype-wasm/neuraltype_wasm_bg.wasm?url'
 
 const BG = '#0c0c0c'
-const INK = '#e8b84b' // kufic gold
-const SELECTION = 'rgba(232,184,75,0.22)'
+const INK = '#2aa35f' // forest green
+const SELECTION = 'rgba(42,163,95,0.30)'
 const OUTLINE = '#e5e5e5' // structure view: contour strokes (90% gray)
-const CORNER = '#ef4444' // structure view: corner on-curve points (red)
+const CORNER = '#ff7057' // structure view: corner points (light tomato)
 
 // Extract the corner points of a rectilinear SVG path ("M x y L x y … Z"),
 // for the structure view. There are no curves yet — v0 outlines are traced
@@ -88,8 +88,8 @@ function caretPositions(line: Line, text: string): number[] {
 
 const SAMPLES = [
   'قلم', // qalam, "pen" — the default
+  'كن فيكون', // kun fayakun, "Be, and it is" — shares the first row
   'بسم الله الرحمن الرحيم', // the basmala
-  'كن فيكون', // kun fayakun, "Be, and it is"
   'أشهد يا إلهي', // opening of the Bahá'í short obligatory prayer
   'الذكاء الاصطناعي', // "artificial intelligence"
   'HELLO WORLD',
@@ -323,14 +323,9 @@ export default function NeuralTypeDemo({
       // Corner points, drawn in device space so they stay a crisp
       // fixed size at any zoom.
       ctx.fillStyle = CORNER
-      ctx.strokeStyle = OUTLINE
-      ctx.lineWidth = 1.5
       const s = 6
       for (const [px, py] of pathPoints(line.path)) {
-        const x = ox + px * cell - s / 2
-        const y = oy + py * cell - s / 2
-        ctx.fillRect(x, y, s, s)
-        ctx.strokeRect(x, y, s, s)
+        ctx.fillRect(ox + px * cell - s / 2, oy + py * cell - s / 2, s, s)
       }
     }
 
@@ -408,9 +403,7 @@ export default function NeuralTypeDemo({
   }, [])
 
   const groupLabel: React.CSSProperties = {
-    fontSize: 10.5,
-    letterSpacing: '0.08em',
-    textTransform: 'uppercase',
+    fontSize: 11.5,
     color: '#7a7a7a',
     marginBottom: 5,
   }
@@ -454,7 +447,9 @@ export default function NeuralTypeDemo({
           : {
               position: 'relative',
               width: '100%',
-              ...(narrow ? {} : { aspectRatio: '2 / 1' }),
+              // Square: room in the control column for future axes
+              // (weight, slant, …) without a scrollbar.
+              ...(narrow ? {} : { aspectRatio: '3 / 2' }),
               margin: 0,
               borderRadius: 'calc(0.3rem + 1px)',
             }),
@@ -567,7 +562,7 @@ export default function NeuralTypeDemo({
         }}
       >
         <div>
-          <div style={groupLabel}>text samples</div>
+          <div style={groupLabel}>Text Samples</div>
           <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
             {SAMPLES.map((s) => (
               <button
