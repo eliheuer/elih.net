@@ -99,8 +99,6 @@ const SAMPLES = [
   'FAR LAP',
 ]
 
-type Direction = 'auto' | 'rtl' | 'ltr'
-
 let fontReady: Promise<NtfFont> | null = null
 function ensureFont(fontUrl: string): Promise<NtfFont> {
   if (!fontReady) {
@@ -140,7 +138,6 @@ export default function NeuralTypeDemo({
   const [elong, setElong] = useState(0)
   const [showGrid, setShowGrid] = useState(false)
   const [showStructure, setShowStructure] = useState(false)
-  const [dir, setDir] = useState<Direction>('auto')
   const [ready, setReady] = useState(false)
   const [failed, setFailed] = useState(false)
   const [stats, setStats] = useState({ bytes: 0, params: 0 })
@@ -247,12 +244,12 @@ export default function NeuralTypeDemo({
 
     // One model run per glyph on every text/parameter change; blink
     // and selection frames reuse the cached layout.
-    const cacheKey = `${text}\u0000${elong}\u0000${dir}`
+    const cacheKey = `${text}\u0000${elong}`
     let line: Line
     if (lineCache.current?.key === cacheKey) {
       line = lineCache.current.line
     } else {
-      line = JSON.parse(font.shape(text, elong, dir))
+      line = JSON.parse(font.shape(text, elong, 'auto'))
       lineCache.current = { key: cacheKey, line }
     }
 
@@ -340,7 +337,7 @@ export default function NeuralTypeDemo({
       ctx.fillStyle = INK
       ctx.fillRect(Math.round(cx) - 1, oy, 2, line.grid_h * cell)
     }
-  }, [text, elong, showGrid, showStructure, dir, sel, focused, caretOn])
+  }, [text, elong, showGrid, showStructure, sel, focused, caretOn])
 
   useEffect(() => {
     if (ready) draw()
@@ -548,7 +545,7 @@ export default function NeuralTypeDemo({
           flexDirection: 'column',
           gap: 10,
           padding: 12,
-          fontFamily: 'var(--font-sans-virtua)',
+          fontFamily: 'var(--font-mono)',
           fontSize: 12.5,
           boxSizing: 'border-box',
           borderRight: narrow ? 'none' : '1px solid var(--border)',
@@ -571,26 +568,6 @@ export default function NeuralTypeDemo({
                 }}
               >
                 {s}
-              </button>
-            ))}
-          </div>
-        </div>
-
-        <div>
-          <div style={groupLabel}>text direction</div>
-          <div style={{ display: 'flex', gap: 6 }}>
-            {(['auto', 'rtl', 'ltr'] as Direction[]).map((d) => (
-              <button
-                key={d}
-                onClick={() => setDir(d)}
-                style={{
-                  ...chip,
-                  flex: 1,
-                  textTransform: 'uppercase',
-                  ...(d === dir ? { borderColor: INK, color: INK } : {}),
-                }}
-              >
-                {d}
               </button>
             ))}
           </div>
