@@ -138,8 +138,10 @@ share this skeleton. Two of beh's four forms:
 ```
 
 In the trained model, dots are generated, not input. The training set is
-every supported (letter, form, elongation) context, 437 samples; a small
-MLP trains on it in a few minutes on CPU and reproduces all 437 exactly.
+every supported (letter, form, elongation) context, 437 samples. A small
+multilayer perceptron (an MLP, the simplest kind of neural network:
+layers of learned weights, each feeding the next) trains on it in a few
+minutes on CPU and reproduces all 437 exactly.
 The teacher never ships. The weights are the font.
 
 The alphabet also carries Latin capitals, and elongation works for both
