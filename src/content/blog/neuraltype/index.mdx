@@ -209,9 +209,16 @@ them), but the axis lives in the right place: it is an input to the
 function, not an inserted character or a substitution. Drag the slider and
 every connection in the line stretches together, with the letterforms
 staying coherent at each step. A justification engine would drive this
-input per-connection to fill a measure. It is a variable-font axis, except
-the axis was learned. When the output head moves from grid cells to bézier
-control points (v1, below), the same input becomes continuous.
+input per-connection to fill a measure.
+
+Some variable fonts already handle elongation this way, with a custom
+axis, and that puts the control in the right place. The difference is how
+the axis is made. A variable-font axis interpolates between masters the
+designer drew for every glyph. A learned axis has no masters: it is one
+input dimension of the model, it costs no extra drawing per glyph, and it
+composes with the other inputs, like the letter's context. When the
+output head moves from grid cells to bézier control points (v1, below),
+the same input becomes continuous.
 
 ### 05. The Road to Naskh and Nastaliq
 
