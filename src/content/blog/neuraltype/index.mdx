@@ -78,8 +78,7 @@ glyph and another rule.
 A .ntf font replaces the lookup with a computation. The file stores the
 weights of a small neural network, and rendering runs the network once
 per glyph, per keystroke (a "forward pass"), followed by outline
-extraction. The glyph
-function in the engine, quoted from the Rust source:
+extraction. Here is he glyph function in the engine:
 
 ```rust
 impl GlyphSource for NeuralFont {
@@ -96,19 +95,22 @@ impl GlyphSource for NeuralFont {
 ```
 
 The character, its joining form, and the elongation value go in; the
-letterform comes out. The one lookup in the function, position over the
-alphabet, maps the character to an input index. No shape is retrieved,
+letterform comes out. The function does contain one lookup: it finds the
+character's position in the font's alphabet, which tells the network
+which letter to draw. That lookup retrieves a number, not a shape,
 because no shapes are stored.
 
 Computing the function instead of storing its outputs matters because
-computed outputs do not need to be enumerated. Three consequences follow:
+computed outputs do not need to be enumerated. In practice this means:
 
 - **Continuous parameters.** Justification by elongation is a scalar
   input, not a substituted glyph. Any learned axis (weight, slope,
   formality) works the same way: variable fonts without masters.
-- **Open-ended context.** The conditioning vector can grow to include
-  neighboring letters, position in the word, or line-fitting pressure.
-  Contextual forms are not enumerated; they are generated.
+- **Open-ended context.** Today the network sees the letter, its joining
+  form, and the elongation. More context can be added as new inputs: the
+  neighboring letters, the position in the word, the space left on the
+  line. A table needs a glyph for every case; a function just needs the
+  case as an input.
 - **A small, uniform file.** No table graph, no rule bytecode: a JSON
   header and a weight blob. The font in the demo is 215 KB of f32
   weights, before any quantization.
