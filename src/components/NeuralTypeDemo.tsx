@@ -145,11 +145,6 @@ export default function NeuralTypeDemo({
   // redraw without re-running the model.
   const lineCache = useRef<{ key: string; line: Line } | null>(null)
 
-  // Focus the editor as soon as the model is ready.
-  useEffect(() => {
-    if (ready) focusText()
-  }, [ready, focusText])
-
   // Load engine + font once.
   useEffect(() => {
     let alive = true
@@ -223,6 +218,11 @@ export default function NeuralTypeDemo({
   const focusText = useCallback(() => {
     hiddenRef.current?.focus({ preventScroll: true })
   }, [])
+
+  // Focus the editor as soon as the model is ready.
+  useEffect(() => {
+    if (ready) focusText()
+  }, [ready, focusText])
 
   const setTextAndFocus = useCallback((t: string) => {
     const el = hiddenRef.current
