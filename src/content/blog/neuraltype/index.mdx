@@ -84,8 +84,9 @@ impl GlyphSource for NeuralFont {
 ```
 
 The character, its joining form, and the elongation value go in; the
-letterform comes out. Nothing is looked up, because there is nothing to
-look up.
+letterform comes out. The one lookup in the function, position over the
+alphabet, maps the character to an input index. No shape is retrieved,
+because no shapes are stored.
 
 Computing the function instead of storing its outputs matters because
 computed outputs do not need to be enumerated. Three consequences follow:
