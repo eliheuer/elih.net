@@ -114,15 +114,8 @@ compiled to WASM for the demo above. The pipeline has four stages:
    joining rules. The engine's cluster map splits the لا ligature's width
    across both source characters, so the cursor works inside it.
 2. **Generate.** One forward pass per glyph.
-3. **Layout.** The pen composites every generated glyph grid into one
-   line-wide bitmap. Connected letters abut, so their strokes merge and a
-   joined word becomes one connected region, with a one-cell gap after
-   non-connectors and a three-cell word space.
-4. **Trace.** The composited line becomes vector outlines: exposed cell
-   edges, oriented with the filled side on the left, chained into closed
-   loops. A connected word is traced as one continuous contour, and
-   [kurbo](https://github.com/linebender/kurbo) carries the paths. The
-   "vector outline" toggle in the demo shows this.
+3. **Layout.** Composite every generated form.
+4. **Trace.** The composited line becomes vector outlines.
 
 The model is trained by **distillation from a procedural teacher**. The
 letterforms are authored as ASCII-art grids in the Rust source, in the
