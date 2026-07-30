@@ -28,7 +28,10 @@
   --font-sans-helvetica:
     'Helvetica Neue', Helvetica, Arial, -apple-system, BlinkMacSystemFont,
     ui-sans-serif, system-ui, sans-serif;
-  --font-sans: var(--font-sans-active);
+  /* Arabic-range face declared below: Arabic codepoints in body text
+     render in Hasubi Mono (the sans faces have no Arabic); everything
+     else falls through to the active sans. */
+  --font-sans: 'Hasubi Mono Arabic', var(--font-sans-active);
   --font-mono:
     'Hasubi Mono', ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas,
     'Liberation Mono', 'Courier New', monospace;
@@ -74,6 +77,14 @@
   src: url('/fonts/InterVariable.woff2') format('woff2-variations');
   font-weight: 100 900;
   font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Hasubi Mono Arabic';
+  src: url('/fonts/HasubiMono-Regular.woff2') format('woff2');
+  unicode-range: U+0600-06FF, U+0750-077F, U+08A0-08FF, U+FB50-FDFF,
+    U+FE70-FEFF;
   font-display: swap;
 }
 
