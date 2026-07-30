@@ -323,9 +323,14 @@ export default function NeuralTypeDemo({
       // Corner points, drawn in device space so they stay a crisp
       // fixed size at any zoom.
       ctx.fillStyle = CORNER
-      const s = 5
+      ctx.strokeStyle = OUTLINE
+      ctx.lineWidth = 1.5
+      const s = 6
       for (const [px, py] of pathPoints(line.path)) {
-        ctx.fillRect(ox + px * cell - s / 2, oy + py * cell - s / 2, s, s)
+        const x = ox + px * cell - s / 2
+        const y = oy + py * cell - s / 2
+        ctx.fillRect(x, y, s, s)
+        ctx.strokeRect(x, y, s, s)
       }
     }
 
