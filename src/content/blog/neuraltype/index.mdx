@@ -55,11 +55,12 @@ has never fit this system well. The OpenType workaround is thousands of
 glyphs and substitution rules approximating what a hand does in one
 motion.
 
-Any font can be described as a function: a character and its context go
-in, a shape comes out.
+Any font can be described as a function that rendering evaluates once
+per character: the character and its context go in, a shape comes out,
+and a line of text is the function applied across the string.
 
 ```
-glyph = F(character, context, parameters)
+glyph = f(character, context, parameters)
 ```
 
 The difference between the two formats is how that function is computed.
@@ -73,7 +74,7 @@ by what a type designer can enumerate by hand. That is why Arabic gets
 four contextual classes (isolated, initial, medial, final) where the
 written tradition has a continuum.
 
-A .ntf font computes `F` directly. The file stores the weights of a small
+A .ntf font computes f directly. The file stores the weights of a small
 neural network, and rendering runs the network once per glyph, per
 keystroke (a "forward pass"), followed by outline extraction. This is not
 a metaphor. The glyph lookup in the engine is a function call, quoted
@@ -107,7 +108,7 @@ computed outputs do not need to be enumerated. Three consequences follow:
   header and a weight blob. The font in the demo is 215 KB of `f32`
   weights, before any quantization.
 
-"Generative" here does not mean stochastic. `F` is a deterministic
+"Generative" here does not mean stochastic. `f` is a deterministic
 function, and the same text at the same parameters renders identically
 everywhere. The shapes are computed, not retrieved.
 
