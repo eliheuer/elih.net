@@ -115,9 +115,9 @@ computed outputs do not need to be enumerated. In practice this means:
   header and a weight blob. The font in the demo is 215 KB of f32
   weights, before any quantization.
 
-"Generative" here does not mean stochastic. f is a deterministic
-function, and the same text at the same parameters produces identical
-outlines everywhere. The shapes are computed, not retrieved.
+"Generative" here does not mean random. The same text at the same
+settings produces identical outlines every time, on every machine. The
+shapes are computed, not retrieved.
 
 ### 02. How It Works: Teacher, Student, Tracer
 
@@ -129,8 +129,10 @@ compiled to WASM for the demo above. The pipeline has four stages:
 3. **Layout.** Composite every generated form.
 4. **Trace.** The composited line becomes vector outlines.
 
-The model is trained by **distillation from a procedural teacher**:
-letterforms authored as ASCII-art grids in the Rust source. Each grid
+The model learns its letterforms from a teacher program: hand-written
+code that draws each form as an ASCII-art grid in the Rust source. The
+network is trained until it reproduces the teacher's output exactly.
+Each grid
 holds only the letter's skeleton (the *rasm*); dots are added in a
 separate step, which is why the art below has none. ب, ت, and ث all
 share this skeleton. Two of beh's four forms:
@@ -171,5 +173,8 @@ offset  size    content
 8+H     ...     raw little-endian f32 weights, layer by layer
 ```
 
-The format is script-agnostic: the alphabet, the conditioning features,
-and the output head are declared per font in the header.
+Like OpenType, one format serves every script. Everything specific to a
+font, its letters, its inputs, its output, is declared in the header.
+The header is padded with trailing spaces so the weights start on a
+4-byte boundary; a renderer can map the file into memory and read the
+weights in place.
