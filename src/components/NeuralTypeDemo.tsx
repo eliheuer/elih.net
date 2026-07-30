@@ -484,6 +484,10 @@ export default function NeuralTypeDemo({
         ref={hiddenRef}
         type="text"
         defaultValue={initialText}
+        // Mirror the detected base direction (same rule as the engine's
+        // auto-detect) so native caret movement is visual: ArrowLeft
+        // moves left in RTL text too.
+        dir={/[\u0600-\u06FF]/.test(text) ? 'rtl' : 'ltr'}
         aria-label="Demo text editor"
         onInput={syncFromInput}
         onSelect={syncFromInput}

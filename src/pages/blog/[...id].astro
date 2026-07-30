@@ -23,10 +23,16 @@ const { next, prev } = await getAdjacentPosts(currentPostId)
 // Break the display title after its first colon (main: subtitle) so long
 // titles wrap on the colon instead of mid-phrase. Meta title stays untouched.
 const [titleMain, titleRest] = post.data.title.split(/:\s+(.*)/s)
-const virtuaTitleBreak =
-  currentPostId === 'virtua-grotesk' && titleRest
-    ? titleRest.match(/^(.*\bfor)\s+(.*)$/)
-    : null
+
+// Per-post second break in the subtitle, where the default wrap lands
+// mid-phrase. Each pattern captures the two halves to split on.
+const SUBTITLE_BREAKS: Record<string, RegExp> = {
+  'virtua-grotesk': /^(.*\bfor)\s+(.*)$/,
+  neuraltype: /^(.*\bPost-OpenType)\s+(.*)$/,
+}
+const subtitleBreak = titleRest
+  ? (SUBTITLE_BREAKS[currentPostId]?.exec(titleRest) ?? null)
+  : null
 ---
 
 <Layout>
@@ -41,11 +47,11 @@ const virtuaTitleBreak =
           titleRest ? (
             <>
               {titleMain}:<br />
-              {virtuaTitleBreak ? (
+              {subtitleBreak ? (
                 <>
-                  {virtuaTitleBreak[1]}
+                  {subtitleBreak[1]}
                   <br />
-                  {virtuaTitleBreak[2]}
+                  {subtitleBreak[2]}
                 </>
               ) : (
                 titleRest
@@ -56,7 +62,7 @@ const virtuaTitleBreak =
           )
         }
       </h1>
-      <p class="text-muted-foreground -mt-0.5">
+      <p class="text-muted-foreground mt-1.5">
         <time datetime={post.data.date.toISOString()}>
           {formatDate(post.data.date)}
         </time>
