@@ -34,14 +34,12 @@ elongation slider changes a model input, not a glyph substitution.
 <nav class="section-index" aria-label="Contents">
 <ol>
 <li><a href="#01-a-font-that-is-a-neural-network"><span class="n">01</span>A Font That Is a Neural Network</a></li>
-<li><a href="#02-why-square-kufic-first"><span class="n">02</span>Why Square Kufic First</a></li>
-<li><a href="#03-how-it-works-teacher-student-tracer"><span class="n">03</span>How It Works: Teacher, Student, Tracer</a></li>
-<li><a href="#04-the-ntf-file"><span class="n">04</span>The .ntf File</a></li>
-<li><a href="#05-kashida-a-parameter-not-a-glyph"><span class="n">05</span>Kashida: a Parameter, Not a Glyph</a></li>
-<li><a href="#06-the-road-to-naskh-and-nastaliq"><span class="n">06</span>The Road to Naskh and Nastaliq</a></li>
-<li><a href="#07-editing-evidence-a-font-editor-for-models"><span class="n">07</span>Editing Evidence: a Font Editor for Models</a></li>
-<li><a href="#08-prior-art"><span class="n">08</span>Prior Art</a></li>
-<li><a href="#09-early-days-and-an-invitation"><span class="n">09</span>Early Days, and an Invitation</a></li>
+<li><a href="#02-how-it-works-teacher-student-tracer"><span class="n">02</span>How It Works: Teacher, Student, Tracer</a></li>
+<li><a href="#03-the-ntf-file"><span class="n">03</span>The .ntf File</a></li>
+<li><a href="#04-kashida-a-parameter-not-a-glyph"><span class="n">04</span>Kashida: a Parameter, Not a Glyph</a></li>
+<li><a href="#05-the-road-to-naskh-and-nastaliq"><span class="n">05</span>The Road to Naskh and Nastaliq</a></li>
+<li><a href="#06-editing-evidence-a-font-editor-for-models"><span class="n">06</span>Editing Evidence: a Font Editor for Models</a></li>
+<li><a href="#07-prior-art"><span class="n">07</span>Prior Art</a></li>
 </ol>
 </nav>
 
@@ -112,29 +110,7 @@ computed outputs do not need to be enumerated. Three consequences follow:
 function, and the same text at the same parameters renders identically
 everywhere. The shapes are computed, not retrieved.
 
-### 02. Why Square Kufic First
-
-The first style target was going to be naskh, but square Kufic is the
-right first step because its letterforms live on a coarse binary grid.
-Strokes are one cell wide, counters are one cell, and the classic
-reference charts for the style are pixel charts of the four contextual
-forms. A glyph is an occupancy grid, so the generative representation is
-trivial and every part of the pipeline stays inspectable, while the
-central claims (no glyph tables, context as input, elongation as a
-parameter) still hold. This is the same principle as
-[Virtua Grotesk](/blog/virtua-grotesk): when the drawing lives on a grid,
-the sources are machine-legible, and the design project is also a
-data-engineering project.
-
-Square Kufic is a thousand-year-old discipline from architectural
-brickwork (*banna'i*) epigraphy, and it has real composition rules. One of
-them: letters in a word may touch **only along the baseline connection**;
-everywhere else, strokes keep a one-cell gap. My first letterform set
-violated this and let a ح fuse with a following م into an unreadable
-shape. The fix is an invariant of the letterform data: the edge column of
-any joined side may contain only the baseline cell.
-
-### 03. How It Works: Teacher, Student, Tracer
+### 02. How It Works: Teacher, Student, Tracer
 
 The engine is Rust on the [Linebender](https://linebender.org/) stack,
 compiled to WASM for the demo above. The pipeline has four stages:
@@ -189,7 +165,7 @@ sample shows this with the slider. Text direction is detected
 automatically, so Arabic lines run right-to-left and Latin lines run
 left-to-right, including the cursor.
 
-### 04. The .ntf File
+### 03. The .ntf File
 
 The format:
 
@@ -209,7 +185,7 @@ not because the format is for Arabic. The project briefly had an Arabic
 name and I renamed it on day one. A format that aims to replace OpenType
 cannot be named for one script.
 
-### 05. Kashida: a Parameter, Not a Glyph
+### 04. Kashida: a Parameter, Not a Glyph
 
 Arabic justification is elongation: connections between letters stretch by
 amounts the calligrapher chooses per word. OpenType's answer is U+0640
@@ -228,7 +204,7 @@ input per-connection to fill a measure. It is a variable-font axis, except
 the axis was learned. When the output head moves from grid cells to bézier
 control points (v1, below), the same input becomes continuous.
 
-### 06. The Road to Naskh and Nastaliq
+### 05. The Road to Naskh and Nastaliq
 
 Square Kufic proves the pipeline. The reason the format exists comes next.
 
@@ -251,7 +227,7 @@ are more input dimensions. The success criterion: a word like نستعليق
 rendered as one descending gesture, its shape a function of the whole
 word.
 
-### 07. Editing Evidence: a Font Editor for Models
+### 06. Editing Evidence: a Font Editor for Models
 
 If the font is a model, the font editor changes in kind: **an OpenType
 editor edits the artifact; a NeuralType editor edits evidence.** The .ntf
@@ -290,7 +266,7 @@ the tools I have been building around
 [Runebender](https://runebender.org) and [img2bez](/blog/img2bez) point at
 the same goal.
 
-### 08. Prior Art
+### 07. Prior Art
 
 Two ancestors matter most. **Metafont** (Knuth, 1979) treated letters as
 programs, pen strokes over parametrized skeletons, a whole family from
@@ -315,24 +291,3 @@ The repo's
 collects the annotated reading list, from Titus Nemeth's history of how
 machine constraints deformed printed Arabic to SIL's Awami Nastaliq
 engineering notes.
-
-### 09. Early Days, and an Invitation
-
-What exists today: a complete engine (shaping, model inference, tracing,
-layout) in about 1,500 lines of dependency-light Rust, a trained
-square-Kufic font covering Arabic with the لا ligature and Latin capitals,
-CLI proofing tools that render teacher-vs-model comparison sheets, and the
-WASM demo above. The next steps are better letterform art, a pixel-editor
-importer so training data can be drawn instead of typed, weight
-quantization, and the v1 naskh output head.
-
-I think the first post-OpenType fonts will be built on grid systems like
-this one, and I plan to work on that technology. If this is relevant to
-you, especially if you are a calligrapher, an Arabic-script type designer,
-or someone who works on complex text shaping, I want your feedback. The
-repo is
-[github.com/eliheuer/post-opentype](https://github.com/eliheuer/post-opentype);
-issues and PRs are welcome, I'm on the
-[Linebender Zulip](https://xi.zulipchat.com), and this post is itself
-[a file on GitHub](https://github.com/eliheuer/elih.net/blob/main/src/content/blog/neuraltype/index.mdx),
-so a suggestion can come as a PR.
