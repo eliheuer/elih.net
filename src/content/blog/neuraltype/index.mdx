@@ -69,9 +69,8 @@ written tradition has a continuum.
 
 A .ntf font computes f directly. The file stores the weights of a small
 neural network, and rendering runs the network once per glyph, per
-keystroke (a "forward pass"), followed by outline extraction. This is not
-a metaphor. The glyph lookup in the engine is a function call, quoted
-from the Rust source:
+keystroke (a "forward pass"), followed by outline extraction. The glyph
+function in the engine, quoted from the Rust source:
 
 ```rust
 impl GlyphSource for NeuralFont {
