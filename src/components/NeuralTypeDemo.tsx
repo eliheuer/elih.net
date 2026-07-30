@@ -22,10 +22,9 @@ import wasmUrl from '../lib/neuraltype-wasm/neuraltype_wasm_bg.wasm?url'
 
 const BG = '#0c0c0c'
 const INK = '#e8b84b' // kufic gold
-const BASELINE = 'rgba(232,184,75,0.35)'
 const SELECTION = 'rgba(232,184,75,0.22)'
-const OUTLINE = '#e6e6e6' // structure view: contour strokes
-const CORNER = '#ff980f' // structure view: corner on-curve points
+const OUTLINE = '#e5e5e5' // structure view: contour strokes (90% gray)
+const CORNER = '#ef4444' // structure view: corner on-curve points (red)
 
 // Extract the corner points of a rectilinear SVG path ("M x y L x y … Z"),
 // for the structure view. There are no curves yet — v0 outlines are traced
@@ -134,8 +133,8 @@ export default function NeuralTypeDemo({
   const [focused, setFocused] = useState(false)
   const [caretOn, setCaretOn] = useState(true)
   const [elong, setElong] = useState(0)
-  const [showGrid, setShowGrid] = useState(false)
-  const [showStructure, setShowStructure] = useState(false)
+  const [showGrid, setShowGrid] = useState(true)
+  const [showStructure, setShowStructure] = useState(true)
   const [ready, setReady] = useState(false)
   const [failed, setFailed] = useState(false)
   const [stats, setStats] = useState({ bytes: 0, params: 0 })
@@ -279,7 +278,7 @@ export default function NeuralTypeDemo({
     viewRef.current = { line, caretXs, ox, oy, cell }
 
     if (showGrid) {
-      ctx.strokeStyle = 'rgba(255,255,255,0.07)'
+      ctx.strokeStyle = '#4d4d4d'
       ctx.lineWidth = 1
       ctx.beginPath()
       for (let x = 0; x <= Math.ceil(line.width); x++) {
@@ -290,11 +289,6 @@ export default function NeuralTypeDemo({
         ctx.moveTo(ox, oy + y * cell)
         ctx.lineTo(ox + line.width * cell, oy + y * cell)
       }
-      ctx.stroke()
-      ctx.strokeStyle = BASELINE
-      ctx.beginPath()
-      ctx.moveTo(ox, oy + (line.baseline + 1) * cell)
-      ctx.lineTo(ox + line.width * cell, oy + (line.baseline + 1) * cell)
       ctx.stroke()
     }
 
@@ -313,20 +307,15 @@ export default function NeuralTypeDemo({
     ctx.translate(ox, oy)
     ctx.scale(cell, cell)
     const path = new Path2D(line.path)
+    ctx.fillStyle = INK
+    ctx.fill(path)
     if (showStructure) {
-      // Structure view: dim fill, stroked contours, corner points —
-      // the vectors the model actually produced. One continuous
-      // outline per connected group, not per-letter boxes.
-      ctx.globalAlpha = 0.14
-      ctx.fillStyle = INK
-      ctx.fill(path)
-      ctx.globalAlpha = 1
+      // Structure view over the normal fill: blue contours, red corner
+      // points — the vectors the model actually produced. One
+      // continuous outline per connected group, not per-letter boxes.
       ctx.strokeStyle = OUTLINE
-      ctx.lineWidth = 1.25 / cell
+      ctx.lineWidth = 1.5 / cell
       ctx.stroke(path)
-    } else {
-      ctx.fillStyle = INK
-      ctx.fill(path)
     }
     ctx.restore()
 
@@ -629,7 +618,7 @@ export default function NeuralTypeDemo({
             }}
             style={{ accentColor: INK }}
           />
-          show grid &amp; baseline
+          show grid
         </label>
 
         <div style={{ marginTop: 'auto', fontSize: 11.5, color: '#8a8a8a', lineHeight: 1.5 }}>
