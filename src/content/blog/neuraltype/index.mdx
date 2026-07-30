@@ -24,7 +24,8 @@ letter, its joining form, and the elongation setting go into the network,
 the letterform comes out, and the engine traces it into vector outlines
 and fills it. It is still real text: click the canvas, place the
 cursor, type in Arabic or Latin capitals, select, copy, and paste. The
-elongation slider changes a model input, not a glyph substitution.
+elongation slider sets an input to the network; the stretched
+letterforms are generated, not substituted.
 
 <NeuralTypeDemo />
 
@@ -48,7 +49,7 @@ has never fit this system well. The OpenType workaround is thousands of
 glyphs and substitution rules approximating what a hand does in one
 motion.
 
-Any font can be described as a function that rendering evaluates once
+Any font can be described as a function. Rendering evaluates it once
 per character: the character and its context go in, a shape comes out,
 and a line of text is the function applied across the string.
 
