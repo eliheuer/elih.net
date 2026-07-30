@@ -24,7 +24,8 @@ const BG = '#0c0c0c'
 const INK = '#2aa35f' // forest green
 const SELECTION = 'rgba(42,163,95,0.30)'
 const OUTLINE = '#e5e5e5' // structure view: contour strokes (90% gray)
-const CORNER = '#ef4444' // structure view: corner points (red)
+const CORNER = '#e8b84b' // structure view: corner points (gold)
+const CARET = '#e8b84b' // text cursor (gold)
 
 // Extract the corner points of a rectilinear SVG path ("M x y L x y … Z"),
 // for the structure view. There are no curves yet — v0 outlines are traced
@@ -330,11 +331,28 @@ export default function NeuralTypeDemo({
     }
 
     // Caret (collapsed selection only) — drawn even before focus, so
-    // the canvas visibly invites editing.
+    // the canvas visibly invites editing. Red I-beam with inward-facing
+    // triangles at each end.
     if (caretOn && a === b) {
-      const cx = ox + (caretXs[Math.min(a, caretXs.length - 1)] ?? 0) * cell
-      ctx.fillStyle = INK
-      ctx.fillRect(Math.round(cx) - 1, oy, 2, line.grid_h * cell)
+      const x = Math.round(ox + (caretXs[Math.min(a, caretXs.length - 1)] ?? 0) * cell)
+      const top = oy
+      const bot = oy + line.grid_h * cell
+      const tw = 5 // triangle half-width
+      const th = 7 // triangle height
+      ctx.fillStyle = CARET
+      ctx.fillRect(x - 1, top, 2, bot - top)
+      ctx.beginPath()
+      ctx.moveTo(x - tw, top)
+      ctx.lineTo(x + tw, top)
+      ctx.lineTo(x, top + th)
+      ctx.closePath()
+      ctx.fill()
+      ctx.beginPath()
+      ctx.moveTo(x - tw, bot)
+      ctx.lineTo(x + tw, bot)
+      ctx.lineTo(x, bot - th)
+      ctx.closePath()
+      ctx.fill()
     }
   }, [text, elong, showGrid, showStructure, sel, focused, caretOn])
 
