@@ -1,0 +1,69 @@
+---
+title: 'Naskh Distilled: Converting TTFs to NTFs'
+description: 'Converting Amiri, an OpenType naskh, into a neural font. A build log.'
+date: 2026-07-30
+tags: ['fonts', 'rust', 'ai', 'machine-learning', 'arabic']
+authors: ['elih']
+draft: false
+---
+
+<p class="draft-notice">This is a build log for work in progress. The conversion described here is not finished and the demo does not exist yet. Like the <a href="/blog/neuraltype">NeuralType post</a>, parts of the text are AI-generated (written with Claude).</p>
+
+[NeuralType](/blog/neuraltype) showed that a font can be a small neural
+network instead of a table of outlines, using square Kufic, a style
+that lives on a binary grid. This post is the next step: converting an
+existing OpenType font, [Amiri](https://github.com/aliftype/amiri),
+into a .ntf neural font. Naskh, real curves, real contextual behavior.
+
+Amiri is the right first target. It is an OFL revival of the Bulaq
+press naskh with more than a decade of production use and bug fixes,
+and it carries some of the richest contextual behavior in open fonts.
+After Amiri, the same pipeline should convert
+[Gulzar](https://github.com/googlefonts/Gulzar), a nastaliq, where the
+real test begins.
+
+Reproducing an existing font is not the goal of the NeuralType
+project; the goal is fonts that do the manuscript tradition justice,
+which no OpenType font does. Distillation is the rehearsal: it forces
+every pipeline component the original work will need, on training data
+that costs nothing, and it answers the sizing question early. How many
+parameters does contextual naskh actually need?
+
+### First measurement
+
+The four contextual forms (isolated, initial, medial, final) are the
+OpenType mental model. Amiri's actual behavior is much richer. Shaping
+every ordered pair of Arabic letters through Amiri with
+[rustybuzz](https://github.com/harfbuzz/rustybuzz) and counting the
+distinct glyphs each letter takes depending on its neighbor:
+
+- ب takes 10 different first-position glyphs depending on the letter
+  that follows it. ن and ت and ي: also 10 each.
+- ر takes 8 different final-position glyphs depending on the letter
+  before it.
+- Across 31 letters, pairs alone produce 150 distinct first-position
+  variants and 107 second-position variants. Medial contexts will add
+  more.
+
+A .ntf font does not enumerate these. The neighbor is an input, and
+the variants are what the network learns to produce.
+
+### The plan
+
+1. Extract: shape an all-pairs corpus plus real text through Amiri;
+   harvest every glyph-in-context with its outline.
+2. Fields: render each shape to a small distance field, the continuous
+   version of NeuralType's binary grid.
+3. Train: letter, joining form, and neighbor embeddings in; field out.
+4. Trace: composite fields per line and trace the result to bézier
+   outlines.
+5. Measure: held-out fidelity per context, worst cases first.
+6. Demo: the same editor island as the NeuralType post, with a font
+   picker.
+
+The work happens in the
+[post-opentype repo](https://github.com/eliheuer/post-opentype);
+the plan lives in
+[docs/DISTILL.md](https://github.com/eliheuer/post-opentype/blob/main/docs/DISTILL.md).
+The distilled font will be released under the OFL with a new name, as
+the license requires.
