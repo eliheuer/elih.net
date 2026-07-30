@@ -18,10 +18,11 @@ The spec, research notes, and Rust engine are on GitHub at
 dual-licensed under Apache-2.0 or MIT.
 
 The .ntf font in the demo below stores the letterforms only as the weights
-of a 55k-parameter neural network; there are no outlines in the file. Every
-shape on the canvas is generated at the moment you type it: the letter and
-its context go into the network, the letterform comes out, and the engine
-traces it into bézier outlines and fills it. It is still real text: click the canvas, place the
+of a 53,600-parameter neural network; the file contains no outline data.
+Every letterform on the canvas is generated at the moment you type it: the
+letter, its joining form, and the elongation setting go into the network,
+the letterform comes out, and the engine traces it into vector outlines
+and fills it. It is still real text: click the canvas, place the
 cursor, type in Arabic or Latin capitals, select, copy, and paste. The
 elongation slider changes a model input, not a glyph substitution.
 
@@ -124,7 +125,7 @@ compiled to WASM for the demo above. The pipeline has four stages:
    line-wide bitmap. Connected letters abut, so their strokes merge and a
    joined word becomes one connected region, with a one-cell gap after
    non-connectors and a three-cell word space.
-4. **Trace.** The composited line becomes bézier outlines: exposed cell
+4. **Trace.** The composited line becomes vector outlines: exposed cell
    edges, oriented with the filled side on the left, chained into closed
    loops. A connected word is traced as one continuous contour, and
    [kurbo](https://github.com/linebender/kurbo) carries the paths. The

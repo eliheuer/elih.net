@@ -1,8 +1,8 @@
 /**
  * NeuralTypeDemo — the NeuralType (.ntf) generative-font demo (React island).
  *
- * The font file loaded here contains no glyph outlines: it is the weights of
- * a ~55k-parameter MLP. Every shape on the canvas is generated live — each
+ * The font file loaded here contains no glyph outlines: it is the weights
+ * of a 53,600-parameter MLP. Every shape on the canvas is generated live — each
  * keystroke re-runs the model per glyph on (letter, joining form, elongation),
  * the whole line is composited and traced to bezier outlines in Rust/WASM
  * (kurbo), and the path is filled here.
@@ -645,9 +645,10 @@ export default function NeuralTypeDemo({
           {failed
             ? 'failed to load the font model'
             : ready
-              ? `click the canvas to edit: type, select, copy, paste — it is real text. ` +
-                `font file: ${stats.bytes.toLocaleString()} bytes = ${stats.params.toLocaleString()} ` +
-                `neural-net weights, no glyph tables. Every outline is generated per keystroke.`
+              ? `click the canvas to edit: type, select, copy, paste. It is real text. ` +
+                `font file: ${stats.params.toLocaleString()} f32 weights plus a small header, ` +
+                `${stats.bytes.toLocaleString()} bytes total. No glyph tables; every letterform ` +
+                `is generated per keystroke.`
               : 'loading model…'}
         </div>
       </div>
