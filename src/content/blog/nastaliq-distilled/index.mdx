@@ -1,0 +1,78 @@
+---
+title: 'Nastaliq Distilled: Converting TTFs to NTFs'
+description: 'Converting Gulzar, an OpenType nastaliq, into a neural font. A build log.'
+date: 2026-07-30
+tags: ['fonts', 'rust', 'ai', 'machine-learning', 'arabic']
+authors: ['elih']
+draft: false
+---
+
+<p class="draft-notice">This is a build log for work in progress. The conversion described here is not finished and the demo does not exist yet. Like the <a href="/blog/neuraltype">NeuralType post</a>, parts of the text are AI-generated (written with Claude).</p>
+
+[NeuralType](/blog/neuraltype) showed that a font can be a small neural
+network instead of a table of outlines, using square Kufic, a style
+that lives on a binary grid. This post is the next step: converting an
+existing OpenType font into a .ntf neural font. The target is
+[Gulzar](https://github.com/googlefonts/Gulzar), an OFL nastaliq by
+Borna Izadpanah, Fiona Ross, Alice Savoie, and Simon Cozens.
+
+Nastaliq is the right target because it is the style OpenType limits
+the most. Letters in a nastaliq word do not sit side by side on a
+baseline; they cascade diagonally, each one placed relative to the
+last, and the whole word slopes down to land on the line. OpenType
+approximates this with over a thousand glyphs and cursive-attachment
+rules. If a neural font is going to matter anywhere, it is here.
+
+Reproducing an existing font is not the goal of the NeuralType
+project; the goal is fonts that do the manuscript tradition justice,
+which no OpenType font does. Distillation is the rehearsal: it forces
+every pipeline component the original work will need, on training data
+that costs nothing, and it answers the sizing question early. How many
+parameters does nastaliq actually need?
+
+### First measurements
+
+Shaping every ordered pair of Arabic letters through Gulzar with
+[rustybuzz](https://github.com/harfbuzz/rustybuzz) and counting the
+distinct glyphs each letter takes depending on its neighbor:
+
+- ن takes 16 different first-position glyphs depending on the letter
+  that follows it. ي takes 15. م takes 14.
+- Across 31 letters, pairs alone produce 344 distinct first-position
+  variants. Longer contexts will add more. For comparison, Amiri, a
+  naskh with some of the richest contextual behavior in open fonts,
+  produces 150 on the same test.
+
+And the cascade, measured directly: shaping the word نستعليق places
+its glyphs at vertical offsets up to **1.38 em above the baseline**.
+One word spans more than a full em of vertical travel. That number is
+the metal-type box breaking.
+
+A .ntf font does not enumerate variants or attach sorts. The neighbor
+is an input, the cascade is generated geometry, and the variants are
+what the network learns to produce.
+
+### The plan
+
+1. Extract: shape an all-pairs corpus plus real Urdu and Persian text
+   through Gulzar; harvest every glyph-in-context with its outline and
+   its cursive-attachment offset.
+2. Fields: render each shape to a small distance field, the continuous
+   version of NeuralType's binary grid; the attachment offset becomes
+   a training target alongside it.
+3. Train: letter, joining form, and neighbor embeddings in; field plus
+   displacement out. The engine chains displacements, which is the
+   cascade.
+4. Trace: composite fields per word and trace the result to bézier
+   outlines.
+5. Measure: held-out fidelity per context, worst cases first.
+6. Demo: the same editor island as the NeuralType post, with a font
+   picker. Cursor, selection, copy, and paste in cascading nastaliq.
+
+Amiri, the naskh this post almost targeted, becomes the follow-up:
+same pipeline, calmer geometry. The work happens in the
+[post-opentype repo](https://github.com/eliheuer/post-opentype); the
+plan lives in
+[docs/DISTILL.md](https://github.com/eliheuer/post-opentype/blob/main/docs/DISTILL.md).
+The distilled font will be released under the OFL with a new name, as
+the license requires.
