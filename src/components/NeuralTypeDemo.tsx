@@ -315,7 +315,7 @@ export default function NeuralTypeDemo({
       // points — the vectors the model actually produced. One
       // continuous outline per connected group, not per-letter boxes.
       ctx.strokeStyle = OUTLINE
-      ctx.lineWidth = 1.5 / cell
+      ctx.lineWidth = 1.0 / cell
       ctx.stroke(path)
     }
     ctx.restore()
@@ -323,8 +323,10 @@ export default function NeuralTypeDemo({
     if (showStructure) {
       // Corner points, drawn in device space so they stay a crisp
       // fixed size at any zoom.
+      // Point size follows the cell size, so long lines with small
+      // cells keep readable letterforms under the markers.
       ctx.fillStyle = CORNER
-      const s = 6
+      const s = Math.max(2.5, Math.min(6, cell * 0.35))
       for (const [px, py] of pathPoints(line.path)) {
         ctx.fillRect(ox + px * cell - s / 2, oy + py * cell - s / 2, s, s)
       }
