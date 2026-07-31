@@ -29,6 +29,18 @@ letterforms are generated, not substituted.
 
 <NeuralTypeDemo />
 
+The same engine can load a very different .ntf file. The demo below is
+a second neural font in the same editor: nastaliq, the cascading
+Perso-Arabic style that OpenType handles worst, distilled from the
+OFL font Gulzar into a 1.36M-parameter model that generates each
+letterform and its position in the cascade from context. It runs a
+live training checkpoint that improves as training proceeds, so the
+letterforms may still be forming when you read this. There is a newer
+post specifically about this font:
+[Nastaliq Distilled](/blog/nastaliq-distilled).
+
+<NeuralTypeDemo font="/demos/neuraltype/gulzar.ntf" text="بسم الله الرحمن الرحيم" samples="بسم الله الرحمن الرحيم,بسم,الله,قلم,سلام" />
+
 ### Section Index
 
 <nav class="section-index" aria-label="Contents">

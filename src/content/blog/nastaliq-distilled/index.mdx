@@ -7,8 +7,6 @@ authors: ['elih']
 draft: false
 ---
 
-<p class="draft-notice">This is a build log for work in progress. The conversion described here is not finished and the demo does not exist yet. Like the <a href="/blog/neuraltype">NeuralType post</a>, parts of the text are AI-generated (written with Claude).</p>
-
 import NeuralTypeDemo from '../../../components/NeuralTypeDemoIsland.astro'
 
 [NeuralType](/blog/neuraltype) showed that a font can be a small neural
@@ -24,6 +22,18 @@ baseline; they cascade diagonally, each one placed relative to the
 last, and the whole word slopes down to land on the line. OpenType
 approximates this with over a thousand glyphs and cursive-attachment
 rules. If a neural font is going to matter anywhere, it is here.
+
+The demo below is the pipeline running end to end in your browser: a
+1.36M-parameter field model as a 5.4 MB .ntf file, hand-rolled
+inference in Rust compiled to WASM, cascade layout, and sub-pixel
+contour tracing. It is real text: click, place the cursor, select,
+copy, paste. One honest caveat: **the font underneath is the live
+training checkpoint**, exported mid-run and re-uploaded as training
+proceeds. Early checkpoints draw speckles where letters will be; the
+page improves because improving it means overwriting one file. This is
+what a build log looks like when the artifact is a neural network.
+
+<NeuralTypeDemo font="/demos/neuraltype/gulzar.ntf" text="بسم الله الرحمن الرحيم" samples="بسم الله الرحمن الرحيم,بسم,الله,قلم,سلام" />
 
 Reproducing an existing font is not the goal of the NeuralType
 project; the goal is fonts that do the manuscript tradition justice,
@@ -41,9 +51,8 @@ distinct glyphs each letter takes depending on its neighbor:
 - ن takes 16 different first-position glyphs depending on the letter
   that follows it. ي takes 15. م takes 14.
 - Across 31 letters, pairs alone produce 344 distinct first-position
-  variants. Longer contexts will add more. For comparison, Amiri, a
-  naskh with some of the richest contextual behavior in open fonts,
-  produces 150 on the same test.
+  variants. For comparison, Amiri, a naskh with some of the richest
+  contextual behavior in open fonts, produces 150 on the same test.
 
 And the cascade, measured directly: shaping the word نستعليق places
 its glyphs at vertical offsets up to **1.38 em above the baseline**.
@@ -56,54 +65,88 @@ what the network learns to produce.
 
 ### Extraction
 
-The first pipeline stage is built and lives in the repo
-(`crates/neuraltype-distill`). It shapes a corpus of every single
-letter, ordered pair, and ordered triple (30,783 words) through Gulzar
-using [harfrust](https://github.com/harfbuzz/harfrust), the official
-HarfBuzz Rust port, and writes an inspectable dataset: every glyph
-outline the corpus touches, and one record per letter-in-context with
-its attached dots and its displacement from the previous letter. The
-displacement chain is the cascade.
+The teacher is Gulzar plus its shaping engine. Given any text,
+HarfBuzz consults the font's rule tables and answers: these glyphs, at
+these positions. It is deterministic, and it can be asked as many
+questions as we want, for free. That is what makes distillation cheap.
+
+The extraction tool (`crates/neuraltype-distill`) asks it every short
+question: every single letter, every ordered pair, every ordered
+triple, 30,783 small words in all. Triples matter because they are the
+shortest text where a letter has a neighbor on both sides, which is
+what produces the medial forms. For every letter in every word it
+records two things: the composed shape it was drawn with (the base
+letterform and its dots, as one unit), and its displacement from the
+previous letter. The chain of displacements is the cascade, the entire
+nastaliq-specific geometry captured as a list of small vectors.
 
 The dataset: 91,263 letter-in-context records, 411 unique glyphs, and
-**1,223 unique composed letter shapes**. That last number is the
-training denominator, the nastaliq equivalent of the 437 contexts the
-square Kufic font reproduced exactly. خ alone takes 108 distinct
-composed shapes. Between adjacent letters the cascade drops as much as
+**1,145 unique composed shapes**. خ alone accounts for over a hundred
+of them. Between adjacent letters the cascade drops as much as
 1.66 em.
 
-### The live demo
+One measurement decided the model's design. With one letter of context
+on each side, 358 contexts were ambiguous: the same three letters
+could produce different shapes, because Gulzar's rules look further
+than that. With two letters of context on each side, the ambiguity is
+**zero**. Five letters of context fully determine Gulzar's choice,
+which means the network is not approximating a fuzzy relationship. It
+is compressing an exact function, the same situation as the square
+Kufic font, just three orders of magnitude larger.
 
-The demo below is the pipeline running end to end in your browser: the
-1.36M-parameter field model as a 5.4 MB .ntf file, hand-rolled
-inference in Rust compiled to WASM, cascade layout, and sub-pixel
-contour tracing. It is real text: click, place the cursor, select,
-copy, paste.
+### Fields
 
-One honest caveat: **the font underneath is the live training
-checkpoint**, exported mid-run. Early in training the model draws
-speckles where letters will be; the page improves as training
-proceeds, because improving the demo means overwriting one file. This
-is what a build log looks like when the artifact is a neural network.
+Each of the 1,145 shapes is rendered to a signed-distance field, a
+grayscale grid where the value at each cell is the distance to the
+letterform's edge, positive inside and negative outside. This is the
+continuous version of NeuralType's binary grid, and it is the
+representation the larger project settled on for a reason: a field is
+figure and ground, black and white, with no stroke or skeleton
+assumptions built in.
 
-<NeuralTypeDemo font="/demos/neuraltype/gulzar.ntf" text="بسم الله الرحمن الرحيم" samples="بسم الله الرحمن الرحيم,بسم,الله,قلم,سلام" />
+Resolution was decided by looking: at 64 pixels per em, Gulzar's
+tapers and hairlines survive thresholding; 96 was indistinguishable at
+reading size and costs 2.3 times the model outputs. The shared canvas
+is 155×219 pixels, large because nastaliq is large: swash tails and
+cascade-carried dots extend far from each letter's origin.
 
-### The plan
+### Training
 
-1. Extract: shape an all-pairs corpus plus real Urdu and Persian text
-   through Gulzar; harvest every glyph-in-context with its outline and
-   its cursive-attachment offset.
-2. Fields: render each shape to a small distance field, the continuous
-   version of NeuralType's binary grid; the attachment offset becomes
-   a training target alongside it.
-3. Train: letter, joining form, and neighbor embeddings in; field plus
-   displacement out. The engine chains displacements, which is the
-   cascade.
-4. Trace: composite fields per word and trace the result to bézier
-   outlines.
-5. Measure: held-out fidelity per context, worst cases first.
-6. Demo: the same editor island as the NeuralType post, with a font
-   picker. Cursor, selection, copy, and paste in cascading nastaliq.
+The model is small: five context embeddings feed a multilayer
+perceptron, which feeds a stack of five transposed convolutions that
+paint the field, plus a two-value head for the displacement. 1.36
+million parameters, 5.4 MB in f32, versus Gulzar's 963 KB TTF.
+Training runs in [candle](https://github.com/huggingface/candle) so
+the same code trains on CPU, Metal, or CUDA; inference in the engine
+is hand-rolled Rust with no framework, because the .ntf file is just
+weights.
+
+One forensic note from the first night: the identical training run
+learns about twenty times faster per epoch on CPU than on candle's
+Metal backend, same code, same data. At equal epochs the CPU run had
+a contour overlap (IoU) of 0.21 against Metal's 0.01. The overnight
+run moved to CPU and the difference was immediate: legible words by
+epoch 12.
+
+Build-log status, morning of 2026-07-31: epoch 34 of 100, contour IoU
+0.84 and climbing. Thin vertical strokes are the last to form, which
+is what the loss predicts: a hairline is worth a few dozen pixels
+against the thousands in bowls and letter bodies. A fine-tune pass
+with a decaying learning rate follows the main run, the same schedule
+trick that took the Kufic font from close to exact.
+
+### Status
+
+1. Extract: **built.** Corpus, cluster records, displacements.
+2. Fields: **built.** SDFs at 64 px/em on a shared canvas.
+3. Train: **running.** Field plus displacement out; the engine chains
+   displacements, which is the cascade.
+4. Trace: **built, simple version.** Sub-pixel marching squares;
+   [img2bez](/blog/img2bez) is the planned quality pass for
+   font-grade bézier outlines once the model's edges deserve them.
+5. Measure: held-out IoU per epoch exists; worst-case proof sheets and
+   evaluation on real Urdu and Persian text are still to do.
+6. Demo: **live above**, same editor island as the NeuralType post.
 
 Amiri, the naskh this post almost targeted, becomes the follow-up:
 same pipeline, calmer geometry. The work happens in the

@@ -97,16 +97,18 @@ const SAMPLES = [
   'LOREM IPSUM',
 ]
 
-let fontReady: Promise<NtfFont> | null = null
+const fontCache = new Map<string, Promise<NtfFont>>()
 function ensureFont(fontUrl: string): Promise<NtfFont> {
-  if (!fontReady) {
-    fontReady = (async () => {
+  let p = fontCache.get(fontUrl)
+  if (!p) {
+    p = (async () => {
       await init({ module_or_path: wasmUrl })
       const bytes = new Uint8Array(await (await fetch(fontUrl)).arrayBuffer())
       return new NtfFont(bytes)
     })()
+    fontCache.set(fontUrl, p)
   }
-  return fontReady
+  return p
 }
 
 type Props = { text?: string; font?: string; samples?: string }
