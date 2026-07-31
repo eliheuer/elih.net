@@ -83,9 +83,13 @@ places glyphs at vertical offsets up to **1.38 em above the
 baseline**. One word spans more than a full em of vertical travel.
 That number breaks the metal-type box emulation concept and shows why a new format is needed.
 
-A .ntf font does not enumerate variants, and it does not attach
-sorts. The neighbor is an input. The cascade is generated geometry.
-The model learns to produce the variants.
+A .ntf font takes a different path. OpenType stores every variant as
+a separate glyph and selects between them with rules, like sorts in a
+case of metal type. A .ntf font stores no variants at all. The
+neighboring letters are inputs to the model, and the model draws the
+correct shape for that context directly. The cascade works the same
+way. It is not an attachment rule between stored pieces. It is
+geometry that the model generates, one displacement at a time.
 
 ### Extraction
 
@@ -129,6 +133,13 @@ outside. This field is the continuous version of the binary grid in
 NeuralType. The project settled on fields for a reason: a field is
 figure and ground, black and white, with no stroke or skeleton
 assumptions.
+
+The image below shows the isolated خ from the training set. On the
+left is the shape. On the right is its signed-distance field, with
+the zero contour in red. The model learns to paint the picture on
+the right.
+
+![The isolated خ from Gulzar, and the same shape as a signed-distance field with the zero contour marked in red.](./sdf-kha.png)
 
 We rendered test shapes at two resolutions and looked. At 64 pixels
 per em, the tapers and hairlines of Gulzar survive the threshold. At
@@ -179,8 +190,7 @@ almost correct to exact.
 6. Demo: **live above**, in the same editor island as the NeuralType
    post.
 
-Amiri, the naskh that this post almost targeted, becomes the
-follow-up: the same pipeline with calmer geometry. The work happens
+The work happens
 in the [post-opentype repo](https://github.com/eliheuer/post-opentype).
 The plan lives in
 [docs/DISTILL.md](https://github.com/eliheuer/post-opentype/blob/main/docs/DISTILL.md).
