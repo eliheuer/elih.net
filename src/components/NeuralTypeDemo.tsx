@@ -268,7 +268,12 @@ export default function NeuralTypeDemo({
     } else {
       line = JSON.parse(font.shape(text, elong, 'auto'))
       lineCache.current = { key: cacheKey, line }
-      if ((line as any).field && !isField) setIsField(true)
+      if ((line as any).field && !isField) {
+        setIsField(true)
+        // Field demos start clean: ink and caret only.
+        setShowStructure(false)
+        setShowGrid(false)
+      }
     }
 
     // Fit the line — right-aligned for RTL, left-aligned for LTR —
@@ -278,7 +283,11 @@ export default function NeuralTypeDemo({
       (W - 2 * pad) / Math.max(line.width, 1),
       (H - 2 * pad) / line.grid_h,
     )
-    cell = Math.max(2, Math.floor(cell * dpr)) / dpr
+    // Kufic grids clamp to whole device pixels for crisp cells; field
+    // lines are 64 px/em, so fractional scales are the normal case.
+    cell = (line as any).field
+      ? Math.max(0.05, cell)
+      : Math.max(2, Math.floor(cell * dpr)) / dpr
     const ox = line.rtl
       ? Math.round((W - pad - line.width * cell) * dpr) / dpr
       : Math.round(pad * dpr) / dpr
