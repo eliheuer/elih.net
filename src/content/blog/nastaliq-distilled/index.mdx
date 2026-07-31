@@ -65,9 +65,12 @@ need?
 
 ### The Distillation Process: Measuring Gulzar
 
-We shaped every ordered pair of Arabic letters through Gulzar with
-[harfrust](https://github.com/harfbuzz/harfrust). Then we counted the
-distinct glyphs that each letter takes for each neighbor:
+The first step toward a nastaliq .ntf font is to measure the
+problem: how much contextual behavior does Gulzar contain? To answer
+this, we shaped every ordered pair of Arabic letters through Gulzar
+with [harfrust](https://github.com/harfbuzz/harfrust). Then we
+counted the distinct glyphs that each letter takes for each
+neighbor:
 
 - ن takes 16 different first-position glyphs. The letter that follows
   selects the glyph. ي takes 15. م takes 14.
@@ -78,7 +81,7 @@ distinct glyphs that each letter takes for each neighbor:
 We also measured the cascade directly. The shaped word نستعليق
 places glyphs at vertical offsets up to **1.38 em above the
 baseline**. One word spans more than a full em of vertical travel.
-That number breaks the metal-type box.
+That number breaks the metal-type box emulation concept and shows why a new format is needed.
 
 A .ntf font does not enumerate variants, and it does not attach
 sorts. The neighbor is an input. The cascade is generated geometry.
