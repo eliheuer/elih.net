@@ -45,12 +45,20 @@ code, compiled to WASM, runs the model, places each letter in the
 cascade, and traces the contours. The result is real text: click the
 canvas, place the cursor, select, copy, and paste.
 
-The goal of the NeuralType project is not to reproduce an existing
-font. The goal is fonts that do justice to the manuscript tradition,
-and no OpenType font does. Distillation is the rehearsal. It builds
-every pipeline component that the original work will need, with
-training data that costs nothing. It also answers the size question
-early: how many parameters does nastaliq need?
+The goal of the NeuralType format is not to reproduce existing
+OpenType nastaliq fonts. The goal is fonts that do justice to the
+manuscript tradition that nastaliq comes from, and no OpenType font
+does. I think the best type designers and font engineers working on
+nastaliq today will agree. If you think I am wrong, send me an email
+or a pull request.
+
+Distillation of an existing OFL nastaliq font is a technical
+exercise. It shows that a font that contains a small neural network
+is a viable alternative to OpenType. Once that is demonstrated, the
+next step is new nastaliq fonts, designed to show what a NeuralType
+font can do that an OpenType font cannot. Distillation also answers
+the file-size question early: how many parameters does nastaliq
+need?
 
 ![A calligraphic composition by Mishkín-Qalam.](./mishkin-qalam-48.jpg)
 <p class="img-credit">Calligraphy by <a href="https://en.wikipedia.org/wiki/Mishk%C3%ADn-Qalam">Mishkín-Qalam</a> (1826–1912). Public domain, via <a href="https://commons.wikimedia.org/wiki/File:Mishkin-Qalam-48.JPG">Wikimedia Commons</a>.</p>
