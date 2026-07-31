@@ -9,13 +9,16 @@ draft: false
 
 import NeuralTypeDemo from '../../../components/NeuralTypeDemoIsland.astro'
 
-[NeuralType](/blog/neuraltype) showed that a font can be a small
-neural network instead of a table of outlines. That first font used
-square Kufic, a style that lives on a binary grid. This post is the
-next step: we convert an existing OpenType font into a .ntf neural
-font. The target is [Gulzar](https://github.com/googlefonts/Gulzar),
-an OFL nastaliq by Borna Izadpanah, Fiona Ross, Alice Savoie, and
-Simon Cozens.
+A previous post introduced the [NeuralType](/blog/neuraltype)
+concept: a font can be a small neural network instead of a table of
+outlines. The first .ntf font used square Kufic, a style that lives
+on a binary grid. On its own, that is easy to write off as a neat
+trick, not a serious challenge to the OpenType format. This post is
+the next step, and it tries to prove that the technology is a viable
+alternative. We convert an existing OpenType font into a .ntf neural
+font, in the style that OpenType serves worst: nastaliq. The target
+is [Gulzar](https://github.com/googlefonts/Gulzar), an OFL nastaliq
+by Borna Izadpanah, Fiona Ross, Alice Savoie, and Simon Cozens.
 
 <NeuralTypeDemo font="/demos/neuraltype/gulzar.ntf" text="بسم الله الرحمن الرحيم" samples="بسم الله الرحمن الرحيم,بسم,الله,قلم,سلام" />
 
