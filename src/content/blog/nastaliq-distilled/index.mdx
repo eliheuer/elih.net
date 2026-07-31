@@ -24,9 +24,13 @@ by Borna Izadpanah, Fiona Ross, Alice Savoie, and Simon Cozens.
 <NeuralTypeDemo font="/demos/neuraltype/gulzar.ntf" text="بسم الله الرحمن الرحيم" samples="بسم الله الرحمن الرحيم,بسم,الله,قلم,سلام" />
 
 Nastaliq is the correct target for a demo of this technology because OpenType limits this style the
-most. Letters in a nastaliq word do not sit on one baseline. Each
-letter hangs below the letter before it, and the word slopes down to
-land on the line. OpenType approximates this behavior with more than
+most. Nastaliq is a cursive, flowing style. Letters join or break by
+the rules of the Arabic script, so a word is a chain of connected
+runs. Within a run, each letter hangs below the letter before it, and
+a long run curves far down before the word lands on the line. A
+baseline grid barely exists in this style. Words land on the line,
+but the letterforms, dots, and swashes sit in free space around it.
+OpenType approximates this behavior with more than
 one thousand glyphs and cursive-attachment rules. If a neural font
 has value anywhere, it has value here.
 
