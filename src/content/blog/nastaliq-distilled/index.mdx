@@ -3,12 +3,13 @@ title: 'Nastaliq Distilled: Converting TTFs to NTFs'
 description: 'Converting Gulzar, an OpenType nastaliq, into a neural font. A build log.'
 date: 2026-07-30
 tags: ['fonts', 'rust', 'ai', 'machine-learning', 'arabic']
-image: './mishkin-qalam-09.jpg'
+image: './share-card.png'
 authors: ['elih']
 draft: false
 ---
 
 import NeuralTypeDemo from '../../../components/NeuralTypeDemoIsland.astro'
+import { nastaliqDemo } from '../../../components/demo-presets'
 
 A previous post introduced the [NeuralType](/blog/neuraltype)
 concept: a font can be a small neural network instead of a table of
@@ -21,7 +22,7 @@ font, in the style that OpenType serves worst: nastaliq. The target
 is [Gulzar](https://github.com/googlefonts/Gulzar), an OFL nastaliq
 by Borna Izadpanah, Fiona Ross, Alice Savoie, and Simon Cozens.
 
-<NeuralTypeDemo font="/demos/neuraltype/gulzar.ntf" text="نور على نور" samples="نور على نور,بسم,سلام,قلم,نسخ" />
+<NeuralTypeDemo {...nastaliqDemo} />
 
 Nastaliq is the correct target for a demo of this technology because OpenType limits this style the
 most. Nastaliq is a cursive, flowing style. Letters join or break by
@@ -43,10 +44,10 @@ The demo above runs the full pipeline in your browser. A
 1.36M-parameter model is the font, stored as a 5.4 MB .ntf file. Rust
 code, compiled to WASM, runs the model, places each letter in the
 cascade, and traces the contours. The result is real text: click the
-canvas, place the cursor, select, copy, and paste. The sample words
-stay short for now because the training corpus stops at three-letter
-words. Letters inside longer words sit in contexts the model has not
-seen yet.
+canvas, place the cursor, select, copy, and paste. One caveat: the
+training corpus stops at three-letter words for now, so letters
+inside the longer words of the basmala sit in contexts the model has
+not seen. Those words render rough until the corpus grows.
 
 The goal of the NeuralType format is not to reproduce existing
 OpenType nastaliq fonts. The goal is fonts that do justice to the

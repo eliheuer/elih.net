@@ -9,6 +9,7 @@ draft: false
 ---
 
 import NeuralTypeDemo from '../../../components/NeuralTypeDemoIsland.astro'
+import { nastaliqDemo } from '../../../components/demo-presets'
 
 The NeuralType font format (.ntf) is an experiment in what comes after OpenType: a font
 format where the font file is a small neural network that draws each letterform
@@ -39,7 +40,7 @@ letterforms may still be forming when you read this. There is a newer
 post specifically about this font:
 [Nastaliq Distilled](/blog/nastaliq-distilled).
 
-<NeuralTypeDemo font="/demos/neuraltype/gulzar.ntf" text="نور على نور" samples="نور على نور,بسم,سلام,قلم,نسخ" />
+<NeuralTypeDemo {...nastaliqDemo} />
 
 ### Section Index
 
