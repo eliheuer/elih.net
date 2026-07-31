@@ -17,6 +17,8 @@ font. The target is [Gulzar](https://github.com/googlefonts/Gulzar),
 an OFL nastaliq by Borna Izadpanah, Fiona Ross, Alice Savoie, and
 Simon Cozens.
 
+<NeuralTypeDemo font="/demos/neuraltype/gulzar.ntf" text="بسم الله الرحمن الرحيم" samples="بسم الله الرحمن الرحيم,بسم,الله,قلم,سلام" />
+
 Nastaliq is the correct target because OpenType limits this style the
 most. Letters in a nastaliq word do not sit on one baseline. Each
 letter hangs below the letter before it, and the word slopes down to
@@ -34,8 +36,6 @@ during the run and upload it again as training continues. Early
 checkpoints draw speckles where letters will appear later. When we overwrite one file, the
 page improves. A build log looks like this when
 the artifact is a neural network.
-
-<NeuralTypeDemo font="/demos/neuraltype/gulzar.ntf" text="بسم الله الرحمن الرحيم" samples="بسم الله الرحمن الرحيم,بسم,الله,قلم,سلام" />
 
 The goal of the NeuralType project is not to reproduce an existing
 font. The goal is fonts that do justice to the manuscript tradition,
