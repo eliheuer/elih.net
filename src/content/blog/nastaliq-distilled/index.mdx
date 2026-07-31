@@ -3,6 +3,7 @@ title: 'Nastaliq Distilled: Converting TTFs to NTFs'
 description: 'Converting Gulzar, an OpenType nastaliq, into a neural font. A build log.'
 date: 2026-07-30
 tags: ['fonts', 'rust', 'ai', 'machine-learning', 'arabic']
+image: './mishkin-qalam-09.jpg'
 authors: ['elih']
 draft: false
 ---
@@ -22,12 +23,17 @@ by Borna Izadpanah, Fiona Ross, Alice Savoie, and Simon Cozens.
 
 <NeuralTypeDemo font="/demos/neuraltype/gulzar.ntf" text="بسم الله الرحمن الرحيم" samples="بسم الله الرحمن الرحيم,بسم,الله,قلم,سلام" />
 
-Nastaliq is the correct target because OpenType limits this style the
+Nastaliq is the correct target for a demo of this technology because OpenType limits this style the
 most. Letters in a nastaliq word do not sit on one baseline. Each
 letter hangs below the letter before it, and the word slopes down to
 land on the line. OpenType approximates this behavior with more than
 one thousand glyphs and cursive-attachment rules. If a neural font
 has value anywhere, it has value here.
+
+![Nastaliq calligraphy by Mishkín-Qalam.](./mishkin-qalam-09.jpg)
+*Calligraphy by [Mishkín-Qalam](https://en.wikipedia.org/wiki/Mishk%C3%ADn-Qalam)
+(1826–1912). Public domain, via
+[Wikimedia Commons](https://commons.wikimedia.org/wiki/File:Mishkin-Qalam-09.JPG).*
 
 The demo below runs the full pipeline in your browser. A
 1.36M-parameter model is the font, stored as a 5.4 MB .ntf file. Rust
@@ -46,6 +52,11 @@ and no OpenType font does. Distillation is the rehearsal. It builds
 every pipeline component that the original work will need, with
 training data that costs nothing. It also answers the size question
 early: how many parameters does nastaliq need?
+
+![A calligraphic composition by Mishkín-Qalam.](./mishkin-qalam-48.jpg)
+*Calligraphy by [Mishkín-Qalam](https://en.wikipedia.org/wiki/Mishk%C3%ADn-Qalam)
+(1826–1912). Public domain, via
+[Wikimedia Commons](https://commons.wikimedia.org/wiki/File:Mishkin-Qalam-48.JPG).*
 
 ### First measurements
 
