@@ -21,7 +21,7 @@ font, in the style that OpenType serves worst: nastaliq. The target
 is [Gulzar](https://github.com/googlefonts/Gulzar), an OFL nastaliq
 by Borna Izadpanah, Fiona Ross, Alice Savoie, and Simon Cozens.
 
-<NeuralTypeDemo font="/demos/neuraltype/gulzar.ntf" text="بسم الله الرحمن الرحيم" samples="بسم الله الرحمن الرحيم,بسم,الله,قلم,سلام" />
+<NeuralTypeDemo font="/demos/neuraltype/gulzar.ntf" text="نور على نور" samples="نور على نور,بسم,سلام,قلم,نسخ" />
 
 Nastaliq is the correct target for a demo of this technology because OpenType limits this style the
 most. Nastaliq is a cursive, flowing style. Letters join or break by
@@ -43,7 +43,10 @@ The demo above runs the full pipeline in your browser. A
 1.36M-parameter model is the font, stored as a 5.4 MB .ntf file. Rust
 code, compiled to WASM, runs the model, places each letter in the
 cascade, and traces the contours. The result is real text: click the
-canvas, place the cursor, select, copy, and paste.
+canvas, place the cursor, select, copy, and paste. The sample words
+stay short for now because the training corpus stops at three-letter
+words. Letters inside longer words sit in contexts the model has not
+seen yet.
 
 The goal of the NeuralType format is not to reproduce existing
 OpenType nastaliq fonts. The goal is fonts that do justice to the
@@ -78,10 +81,21 @@ neighbor:
   variants. Amiri, a naskh with rich contextual behavior, produces
   150 on the same test.
 
+The figure below shows word-initial ن in green, with the following
+letter in gray. The follower selects the shape.
+
+![Fourteen ordered pairs. The green word-initial ن takes a different shape for each gray follower.](./noon-variants.png)
+
 We also measured the cascade directly. The shaped word نستعليق
 places glyphs at vertical offsets up to **1.38 em above the
 baseline**. One word spans more than a full em of vertical travel.
 That number breaks the metal-type box emulation concept and shows why a new format is needed.
+
+The figure below shows the shaped word نستعليق. The letters
+alternate green and gray, the red chain joins the letter origins, and
+the gray rule is the baseline.
+
+![The word nastaliq shaped by Gulzar: letters step down from high above the baseline, and the final swash lands below it.](./cascade.png)
 
 A .ntf font takes a different path. OpenType stores every variant as
 a separate glyph and selects between them with rules, like sorts in a
@@ -114,6 +128,11 @@ The dataset holds 91,263 letter-in-context records, 411 unique
 glyphs, and **1,145 unique composed shapes**. More than 100 of those
 shapes belong to خ alone. Between adjacent letters, the cascade drops
 as much as 1.66 em.
+
+The figure below shows every composed shape of خ in the dataset, 108
+in total.
+
+![All 108 composed shapes of خ in the dataset, in a grid.](./kha-shapes.png)
 
 One measurement decided the design of the model. With one letter of
 context on each side, 358 contexts were ambiguous: the same three
@@ -149,6 +168,12 @@ shared canvas is 155×219 pixels. The canvas is large because nastaliq
 is large: swash tails and dots extend far from the origin of each
 letter.
 
+Below is the isolated خ at both resolutions, shown at the same size:
+64 pixels per em on the left, 96 on the right. The threshold keeps
+the tapers at both resolutions.
+
+![The isolated خ thresholded at 64 and 96 pixels per em, at the same size. The two are nearly identical.](./res-64-96.png)
+
 ### Training
 
 The model is small. Five context embeddings feed a multilayer
@@ -168,12 +193,17 @@ of candle. Same code, same data. At equal epochs, the CPU run reached
 a contour overlap (IoU) of 0.21 against 0.01 for Metal. We moved the
 overnight run to CPU, and words became legible by epoch 12.
 
-Build-log status, morning of 2026-07-31: epoch 34 of 100, contour IoU
-0.84. The IoU still climbs. Thin vertical strokes form last, and the loss
+Build-log status, afternoon of 2026-07-31: epoch 79 of 100, contour
+IoU 0.90. The IoU still climbs. Thin vertical strokes form last, and the loss
 explains this: a hairline is worth tens of pixels, and a bowl is
 worth thousands. A fine-tune pass with a decayed learning rate
 follows the main run. The same schedule took the Kufic font from
 almost correct to exact.
+
+The sheet below compares the teacher with the model checkpoint from
+epoch 79. Gulzar is gray on top. The model is green below.
+
+![Six corpus words rendered by Gulzar in gray above, and by the epoch-79 model in green below. The rows match closely.](./teacher-model.png)
 
 ### Status
 
