@@ -9,6 +9,8 @@ draft: false
 
 <p class="draft-notice">This is a build log for work in progress. The conversion described here is not finished and the demo does not exist yet. Like the <a href="/blog/neuraltype">NeuralType post</a>, parts of the text are AI-generated (written with Claude).</p>
 
+import NeuralTypeDemo from '../../../components/NeuralTypeDemoIsland.astro'
+
 [NeuralType](/blog/neuraltype) showed that a font can be a small neural
 network instead of a table of outlines, using square Kufic, a style
 that lives on a binary grid. This post is the next step: converting an
@@ -33,7 +35,7 @@ parameters does nastaliq actually need?
 ### First measurements
 
 Shaping every ordered pair of Arabic letters through Gulzar with
-[rustybuzz](https://github.com/harfbuzz/rustybuzz) and counting the
+[harfrust](https://github.com/harfbuzz/harfrust) and counting the
 distinct glyphs each letter takes depending on its neighbor:
 
 - ن takes 16 different first-position glyphs depending on the letter
@@ -69,6 +71,22 @@ training denominator, the nastaliq equivalent of the 437 contexts the
 square Kufic font reproduced exactly. خ alone takes 108 distinct
 composed shapes. Between adjacent letters the cascade drops as much as
 1.66 em.
+
+### The live demo
+
+The demo below is the pipeline running end to end in your browser: the
+1.36M-parameter field model as a 5.4 MB .ntf file, hand-rolled
+inference in Rust compiled to WASM, cascade layout, and sub-pixel
+contour tracing. It is real text: click, place the cursor, select,
+copy, paste.
+
+One honest caveat: **the font underneath is the live training
+checkpoint**, exported mid-run. Early in training the model draws
+speckles where letters will be; the page improves as training
+proceeds, because improving the demo means overwriting one file. This
+is what a build log looks like when the artifact is a neural network.
+
+<NeuralTypeDemo font="/demos/neuraltype/gulzar.ntf" text="بسم الله الرحمن الرحيم" samples="بسم الله الرحمن الرحيم,بسم,الله,قلم,سلام" />
 
 ### The plan
 

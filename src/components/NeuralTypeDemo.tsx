@@ -109,13 +109,15 @@ function ensureFont(fontUrl: string): Promise<NtfFont> {
   return fontReady
 }
 
-type Props = { text?: string; font?: string }
+type Props = { text?: string; font?: string; samples?: string }
 
 export default function NeuralTypeDemo({
   // قلم (qalam, "pen") by default: small enough to read the grid details.
   text: initialText = 'قلم',
   font: fontUrl = '/demos/neuraltype/kufic.ntf',
+  samples: samplesProp,
 }: Props) {
+  const samples = samplesProp ? samplesProp.split(',') : SAMPLES
   const canvasRef = useRef<HTMLCanvasElement>(null)
   const hiddenRef = useRef<HTMLInputElement>(null)
   const fontRef = useRef<NtfFont | null>(null)
@@ -141,6 +143,9 @@ export default function NeuralTypeDemo({
   const [stats, setStats] = useState({ bytes: 0, params: 0 })
   const [fullscreen, setFullscreen] = useState(false)
   const [narrow, setNarrow] = useState(false)
+  // Field fonts (nastaliq) have no elongation axis; detected from the
+  // engine's shape output.
+  const [isField, setIsField] = useState(false)
   // Cache the shaped line per (text, elong, dir): caret-blink frames
   // redraw without re-running the model.
   const lineCache = useRef<{ key: string; line: Line } | null>(null)
@@ -261,6 +266,7 @@ export default function NeuralTypeDemo({
     } else {
       line = JSON.parse(font.shape(text, elong, 'auto'))
       lineCache.current = { key: cacheKey, line }
+      if ((line as any).field && !isField) setIsField(true)
     }
 
     // Fit the line — right-aligned for RTL, left-aligned for LTR —
@@ -614,7 +620,7 @@ export default function NeuralTypeDemo({
         <div>
           <div style={groupLabel}>Text Samples</div>
           <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
-            {SAMPLES.map((s) => (
+            {samples.map((s) => (
               <button
                 key={s}
                 onClick={() => setTextAndFocus(s)}
@@ -629,7 +635,7 @@ export default function NeuralTypeDemo({
           </div>
         </div>
 
-        <label style={{ display: 'block' }}>
+        <label style={{ display: isField ? 'none' : 'block' }}>
           <div style={{ marginBottom: 4 }}>
             kashida elongation <span style={{ color: INK }}>{elong.toFixed(0)}</span>
           </div>
