@@ -43,12 +43,7 @@ The demo above runs the full pipeline in your browser. A
 1.36M-parameter model is the font, stored as a 5.4 MB .ntf file. Rust
 code, compiled to WASM, runs the model, places each letter in the
 cascade, and traces the contours. The result is real text: click the
-canvas, place the cursor, select, copy, and paste. One caveat: the
-font in the demo is the live training checkpoint. We export the checkpoint
-during the run and upload it again as training continues. Early
-checkpoints draw speckles where letters will appear later. When we overwrite one file, the
-page improves. A build log looks like this when
-the artifact is a neural network.
+canvas, place the cursor, select, copy, and paste.
 
 The goal of the NeuralType project is not to reproduce an existing
 font. The goal is fonts that do justice to the manuscript tradition,
