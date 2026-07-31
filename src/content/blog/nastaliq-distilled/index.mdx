@@ -52,6 +52,24 @@ A .ntf font does not enumerate variants or attach sorts. The neighbor
 is an input, the cascade is generated geometry, and the variants are
 what the network learns to produce.
 
+### Extraction
+
+The first pipeline stage is built and lives in the repo
+(`crates/neuraltype-distill`). It shapes a corpus of every single
+letter, ordered pair, and ordered triple (30,783 words) through Gulzar
+using [harfrust](https://github.com/harfbuzz/harfrust), the official
+HarfBuzz Rust port, and writes an inspectable dataset: every glyph
+outline the corpus touches, and one record per letter-in-context with
+its attached dots and its displacement from the previous letter. The
+displacement chain is the cascade.
+
+The dataset: 91,263 letter-in-context records, 411 unique glyphs, and
+**1,223 unique composed letter shapes**. That last number is the
+training denominator, the nastaliq equivalent of the 437 contexts the
+square Kufic font reproduced exactly. خ alone takes 108 distinct
+composed shapes. Between adjacent letters the cascade drops as much as
+1.66 em.
+
 ### The plan
 
 1. Extract: shape an all-pairs corpus plus real Urdu and Persian text
