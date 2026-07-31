@@ -300,3 +300,16 @@
   opacity: 0.5;
   font-variant-numeric: lining-nums tabular-nums;
 }
+
+/* Image credit lines: small, monospace, mid gray, visually outside
+   the body text. */
+.img-credit {
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+  line-height: 1.5;
+  color: oklch(0.55 0 0);
+  margin-top: calc(var(--prose-space) * -1 + 0.35rem);
+}
+.img-credit a {
+  color: inherit;
+}
