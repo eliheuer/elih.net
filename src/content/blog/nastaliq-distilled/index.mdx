@@ -45,9 +45,10 @@ The demo above runs the full pipeline in your browser. A
 code, compiled to WASM, runs the model, places each letter in the
 cascade, and traces the contours. The result is real text: click the
 canvas, place the cursor, select, copy, and paste. One caveat: the
-training corpus stops at three-letter words for now, so letters
-inside the longer words of the basmala sit in contexts the model has
-not seen. Those words render rough until the corpus grows.
+corpus is still small. It covers every word up to three letters,
+plus a first set of real words that includes the basmala. Words
+outside the corpus render rough, and the demo font is a live
+checkpoint, so the newest words improve as training runs.
 
 The goal of the NeuralType format is not to reproduce existing
 OpenType nastaliq fonts. The goal is fonts that do justice to the
@@ -117,7 +118,9 @@ The extraction tool (`crates/neuraltype-distill`) asks every short
 question. The corpus is every single letter, every ordered pair, and
 every ordered triple: 30,783 small words. Triples matter because a
 triple is the shortest text where a letter has a neighbor on each
-side. Those neighbors produce the medial forms.
+side. Those neighbors produce the medial forms. A second pass added
+24 real words: the basmala, Al-Fatiha, Al-Ikhlas, and نستعليق. The
+full corpus is 30,807 words.
 
 For every letter in every word, the tool records two facts. The first
 fact is the composed shape: the base letterform and its dots, as one
@@ -125,8 +128,8 @@ unit. The second fact is the displacement of the letter from the
 previous letter. The chain of displacements is the cascade. A list of
 small vectors captures all the nastaliq-specific geometry.
 
-The dataset holds 91,263 letter-in-context records, 411 unique
-glyphs, and **1,145 unique composed shapes**. More than 100 of those
+The dataset holds 91,390 letter-in-context records, 416 unique
+glyphs, and **1,150 unique composed shapes**. More than 100 of those
 shapes belong to خ alone. Between adjacent letters, the cascade drops
 as much as 1.66 em.
 
@@ -146,7 +149,7 @@ was the same situation, three orders of magnitude smaller.
 
 ### Fields
 
-We render each of the 1,145 shapes to a signed-distance field. A
+We render each of the 1,150 shapes to a signed-distance field. A
 signed-distance field is a grayscale grid. Each cell holds the
 distance to the edge of the shape, positive inside and negative
 outside. This field is the continuous version of the binary grid in
@@ -194,12 +197,17 @@ of candle. Same code, same data. At equal epochs, the CPU run reached
 a contour overlap (IoU) of 0.21 against 0.01 for Metal. We moved the
 overnight run to CPU, and words became legible by epoch 12.
 
-Build-log status, afternoon of 2026-07-31: epoch 79 of 100, contour
-IoU 0.90. The IoU still climbs. Thin vertical strokes form last, and the loss
-explains this: a hairline is worth tens of pixels, and a bowl is
-worth thousands. A fine-tune pass with a decayed learning rate
-follows the main run. The same schedule took the Kufic font from
-almost correct to exact.
+Thin vertical strokes form last, and the loss explains this: a
+hairline is worth tens of pixels, and a bowl is worth thousands.
+
+Build-log status, 2026-08-01: the main run finished at contour IoU
+0.91, and fine-tune passes on the extended corpus now stand at 0.93.
+The corpus grew because of one word: الله. Gulzar draws this word
+with a dedicated ligature, and no word in the first corpus was long
+enough to trigger it. The extended corpus adds the basmala and other
+real words, and the model is learning the ligature now. A final pass
+with a decayed learning rate comes last. The same schedule took the
+Kufic font from almost correct to exact.
 
 The sheet below compares the teacher with the model checkpoint from
 epoch 79. Gulzar is gray on top. The model is green below.
@@ -214,8 +222,8 @@ epoch 79. Gulzar is gray on top. The model is green below.
    displacement. The engine chains the displacements, and that chain
    is the cascade.
 4. Trace: **complete, simple version.** Sub-pixel marching squares
-   now. [img2bez](/blog/img2bez) is the planned quality pass for
-   font-grade bézier outlines.
+   with a bézier curve fit now. [img2bez](/blog/img2bez) is the
+   planned quality pass for font-grade outlines.
 5. Measure: held-out IoU per epoch exists. Worst-case proof sheets
    and tests on real Urdu and Persian text remain.
 6. Demo: **live above**, in the same editor island as the NeuralType
