@@ -16,18 +16,18 @@ concept: a font can be a small neural network instead of a table of
 outlines. The first .ntf font used [square Kufic](https://en.wikipedia.org/wiki/Kufic#Square_Kufic), a style that lives
 on a binary grid and resembles low-resolution pixel art. On its own, that is easy to write off as a neat
 trick, not a serious challenge to the OpenType format. This post is
-the next step, and it tries to prove that the technology is a viable
-alternative. We convert an existing OpenType font into a .ntf neural
-font, in the style that OpenType serves worst: nastaliq. The target
+the next step. It makes the case that a neural font can do the work
+of a real OpenType font. We convert one into a .ntf neural font, in
+the style that OpenType serves worst: nastaliq. The target
 is [Gulzar](https://github.com/googlefonts/Gulzar), an OFL nastaliq
 by Borna Izadpanah, Fiona Ross, Alice Savoie, and Simon Cozens.
 
 <NeuralTypeDemo {...nastaliqDemo} />
 
-Nastaliq is the correct target for a demo of this technology because OpenType limits this style the
-most. Nastaliq is a cursive, flowing style. Letters join or break by
-the rules of the Arabic script, so a word is a chain of connected
-runs. Within a run, each letter hangs below the letter before it, and
+Nastaliq is the correct target because it is the style that
+OpenType limits the most. It is a cursive, flowing style: letters
+join or break by the rules of the Arabic script, and a word is a
+chain of connected runs. Within a run, each letter hangs below the letter before it, and
 a long run curves far down before the word lands on the line. A
 baseline grid barely exists in this style. Words land on the line,
 but the letterforms, dots, and swashes sit in free space around it.
@@ -40,15 +40,15 @@ has value anywhere, it has value here.
 ![Nastaliq calligraphy by Mishkín-Qalam.](./mishkin-qalam-09.jpg)
 <p class="img-credit">Calligraphy by <a href="https://en.wikipedia.org/wiki/Mishk%C3%ADn-Qalam">Mishkín-Qalam</a> (1826–1912). Public domain, via <a href="https://commons.wikimedia.org/wiki/File:Mishkin-Qalam-09.JPG">Wikimedia Commons</a>.</p>
 
-The demo above runs the full pipeline in your browser. A
-1.36M-parameter model is the font, stored as a 5.4 MB .ntf file. Rust
-code, compiled to WASM, runs the model, places each letter in the
-cascade, and traces the contours. The result is real text: click the
-canvas, place the cursor, select, copy, and paste. One caveat: the
-corpus is still small. It covers every word up to three letters,
-plus a first set of real words that includes the basmala. Words
-outside the corpus render rough, and the demo font is a live
-checkpoint, so the newest words improve as training runs.
+The demo above runs the full pipeline in your browser. The font is
+a model with 1.36 million parameters, stored as a 5.4 MB .ntf file.
+Rust code, compiled to WASM, runs the model, places each letter in
+the cascade, and traces the contours. The result is real text: click
+the canvas, place the cursor, select, copy, and paste. One caveat:
+the corpus is still small. It covers every word up to three letters,
+plus a small set of real words that includes the basmala. Words
+outside the corpus render rough. The demo font is a live training
+checkpoint, so it improves as training runs.
 
 The goal of the NeuralType format is not to reproduce existing
 OpenType nastaliq fonts. The goal is fonts that do justice to the
@@ -58,10 +58,9 @@ nastaliq today will agree. If you think I am wrong, send me an email
 or a pull request.
 
 Distillation of an existing OFL nastaliq font is a technical
-exercise. It shows that a font that contains a small neural network
-is a viable alternative to OpenType. Once that is demonstrated, the
-next step is new nastaliq fonts, designed to show what a NeuralType
-font can do that an OpenType font cannot. Distillation also answers
+exercise. If the distilled font matches its teacher, the format
+works. After that, the next step is new nastaliq fonts, designed to
+show what a NeuralType font can do that an OpenType font cannot. Distillation also answers
 the file-size question early: how many parameters does nastaliq
 need?
 
@@ -91,7 +90,8 @@ letter in gray. The follower selects the shape.
 We also measured the cascade directly. The shaped word نستعليق
 places glyphs at vertical offsets up to **1.38 em above the
 baseline**. One word spans more than a full em of vertical travel.
-That number breaks the metal-type box emulation concept and shows why a new format is needed.
+That number does not fit in the metal-type box that digital font
+formats still emulate. This is why a new format is needed.
 
 The figure below shows the shaped word نستعليق. The letters
 alternate green and gray, the red chain joins the letter origins, and
@@ -144,8 +144,8 @@ letters produced different shapes. The rules of Gulzar look further
 than one letter. With two letters of context on each side, the
 ambiguity is **zero**. Five letters of context fully determine the
 choice that Gulzar makes. So the model does not approximate a fuzzy
-relationship. It compresses an exact function. The square Kufic font
-was the same situation, three orders of magnitude smaller.
+relationship. It compresses an exact function. The square Kufic
+font was the same problem at one thousandth the size.
 
 ### Fields
 
@@ -153,7 +153,7 @@ We render each of the 1,150 shapes to a signed-distance field. A
 signed-distance field is a grayscale grid. Each cell holds the
 distance to the edge of the shape, positive inside and negative
 outside. This field is the continuous version of the binary grid in
-NeuralType. The project settled on fields for a reason: a field is
+the first NeuralType font. The project settled on fields for a reason: a field is
 figure and ground, black and white, with no stroke or skeleton
 assumptions.
 
@@ -166,8 +166,8 @@ the right.
 
 We rendered test shapes at two resolutions and looked. At 64 pixels
 per em, the tapers and hairlines of Gulzar survive the threshold. At
-96 pixels per em, the result looks the same at reading size and
-costs 2.3 times the model outputs. So the resolution is 64. The
+96 pixels per em, the result looks the same at reading size, but the
+model must output 2.3 times more pixels. So the resolution is 64. The
 shared canvas is 155×219 pixels. The canvas is large because nastaliq
 is large: swash tails and dots extend far from the origin of each
 letter.
@@ -186,12 +186,26 @@ convolutions, and the convolutions paint the field. A separate
 two-value head predicts the displacement. The total is 1.36 million
 parameters: 5.4 MB in f32, against the 963 KB TTF of Gulzar.
 
+The model card:
+
+| nastaliq-gulzar .ntf, v0 (working name) |   |
+| --- | --- |
+| architecture | 5 context embeddings (24 dims) → MLP (120 → 256) → 5 transposed convolutions (128 → 64 → 32 → 16 → 8 → 1 channels, 4×4 kernels, stride 2) + a 2-value displacement head |
+| parameters | 1,357,995 |
+| file | 5,433,100 bytes: f32 weights + a 1.1 KB JSON header |
+| output | one 155×219 signed-distance field at 64 px/em, plus one displacement vector |
+| vocabulary | 34 tokens: 31 letters, the لا and لله ligatures, and a boundary token |
+| corpus | 30,807 words from the teacher: 91,390 letter-in-context records, 1,150 composed shapes |
+| teacher | Gulzar Regular shaped by HarfBuzz ([harfrust](https://github.com/harfbuzz/harfrust)) |
+| optimizer | AdamW, lr 3e-4, then a 1e-4 decay pass; batch 128; every 20th record held out |
+| compute | one Apple M4 Mac laptop, CPU ([candle](https://github.com/huggingface/candle) accelerate backend), about 8 minutes per epoch |
+
 Training runs in [candle](https://github.com/huggingface/candle), so
 the same code trains on CPU, Metal, or CUDA. Inference in the engine
 is hand-rolled Rust without a framework, because a .ntf file is only
 weights.
 
-The first night gave one forensic note. The same training run learns
+The first night produced one surprise. The same training run learns
 about twenty times faster per epoch on CPU than on the Metal backend
 of candle. Same code, same data. At equal epochs, the CPU run reached
 a contour overlap (IoU) of 0.21 against 0.01 for Metal. We moved the
