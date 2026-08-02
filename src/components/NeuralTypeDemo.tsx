@@ -1051,6 +1051,17 @@ export default function NeuralTypeDemo({
           </label>
         )}
 
+        {isField && (
+          <div style={{ marginTop: 14, fontSize: 11.5, color: '#8a8a8a', lineHeight: 1.6 }}>
+            the cursor is a node on the strand, the curve through the
+            text. the orange node is your position; the outlined
+            letter is what an edit follows. filled nodes sit where
+            letters join, hollow nodes at word gaps. arrow keys walk
+            the strand. drag the orange node to move a letter and its
+            tail.
+          </div>
+        )}
+
         <div style={{ marginTop: 'auto', fontSize: 11.5, color: '#8a8a8a', lineHeight: 1.5 }}>
           {failed
             ? 'failed to load the font model'
