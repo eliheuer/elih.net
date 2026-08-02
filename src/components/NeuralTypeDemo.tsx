@@ -535,7 +535,7 @@ export default function NeuralTypeDemo({
       }
       ctx.lineCap = 'round'
       const strand = buildStrand(nodes.map((_, i) => P(i)))
-      const strokeStrand = (u0: number, u1: number, w: number) => {
+      const strokeStrand = (u0: number, u1: number, w: number, color = CARET) => {
         const steps = Math.max(2, Math.ceil(Math.abs(u1 - u0) / 3))
         ctx.beginPath()
         for (let k = 0; k <= steps; k++) {
@@ -546,7 +546,7 @@ export default function NeuralTypeDemo({
         ctx.strokeStyle = BG
         ctx.lineWidth = w + 2
         ctx.stroke()
-        ctx.strokeStyle = CARET
+        ctx.strokeStyle = color
         ctx.lineWidth = w
         ctx.stroke()
       }
@@ -566,8 +566,11 @@ export default function NeuralTypeDemo({
           const i1 = focusI + dir * step
           if (i1 < 0 || i1 >= nodes.length || i0 < 0 || i0 >= nodes.length) break
           const q1 = P(i1)
-          // strand segment along the shared spline, with a halo
-          strokeStrand(strand.tOf(i0), strand.tOf(i1), 1.5)
+          // strand segment along the shared spline, with a halo; the
+          // incoming segment is orange, flowing out of the hinted
+          // letter into the active node
+          const incoming = dir === -1 && step === 1 && a === b
+          strokeStrand(strand.tOf(i0), strand.tOf(i1), 1.5, incoming ? NODE_ACTIVE : CARET)
           // node, one visible notch smaller per step: 5.5 -> 4.5 -> 3.5;
           // hollow when the slot touches a word boundary
           drawNode(q1.x, q1.y, 6.5 - step, isGap(i1))
