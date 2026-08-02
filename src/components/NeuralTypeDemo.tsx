@@ -159,6 +159,8 @@ export default function NeuralTypeDemo({
   // engine's shape output.
   const [isField, setIsField] = useState(false)
   const [showStrand, setShowStrand] = useState(false)
+  const [hideStrand, setHideStrand] = useState(false)
+  const [lockStrand, setLockStrand] = useState(false)
   // Node dragging: editing the displacement chain by hand. Offsets
   // are per caret index, in field px, and clear when the text edits.
   const nodeDrag = useRef<{
@@ -410,7 +412,7 @@ export default function NeuralTypeDemo({
     // rotating half-ring; neighbor nodes run three steps in each
     // direction and halve in size at every step. All opaque: the
     // cursor is geometry, not a glow.
-    if (isFieldLine && nodes && nodes.length) {
+    if (isFieldLine && nodes && nodes.length && !hideStrand) {
       const focusI = Math.max(0, Math.min(sel.end, nodes.length - 1))
       const P = (i: number) => ({
         x: ox + nodes[i].x * cell,
@@ -520,7 +522,7 @@ export default function NeuralTypeDemo({
       ctx.closePath()
       ctx.fill()
     }
-  }, [text, elong, showGrid, showStructure, showStrand, sel, focused, caretOn])
+  }, [text, elong, showGrid, showStructure, showStrand, hideStrand, sel, focused, caretOn])
 
   // Dragged-node offsets are edits to one layout of one string:
   // they clear when the text changes.
@@ -597,7 +599,7 @@ export default function NeuralTypeDemo({
       // caret move
       const view = viewRef.current
       const canvas = canvasRef.current
-      if (view?.nodes && canvas) {
+      if (view?.nodes && canvas && !lockStrand) {
         const rect = canvas.getBoundingClientRect()
         const fi = Math.max(0, Math.min(sel.end, view.nodes.length - 1))
         const nx = view.ox + view.nodes[fi].x * view.cell
@@ -626,7 +628,7 @@ export default function NeuralTypeDemo({
       setSel({ start: i, end: i })
       e.currentTarget.setPointerCapture(e.pointerId)
     },
-    [indexAt, sel.end],
+    [indexAt, sel.end, lockStrand],
   )
   const onPointerMove = useCallback(
     (e: React.PointerEvent<HTMLCanvasElement>) => {
@@ -919,7 +921,37 @@ export default function NeuralTypeDemo({
               }}
               style={{ accentColor: INK }}
             />
-            show full strand and node chain
+            show full strand chain
+          </label>
+        )}
+
+        {isField && (
+          <label style={{ display: 'flex', gap: 6, alignItems: 'center', cursor: 'pointer' }}>
+            <input
+              type="checkbox"
+              checked={hideStrand}
+              onChange={(e) => {
+                setHideStrand(e.target.checked)
+                focusText()
+              }}
+              style={{ accentColor: INK }}
+            />
+            hide strand chain
+          </label>
+        )}
+
+        {isField && (
+          <label style={{ display: 'flex', gap: 6, alignItems: 'center', cursor: 'pointer' }}>
+            <input
+              type="checkbox"
+              checked={lockStrand}
+              onChange={(e) => {
+                setLockStrand(e.target.checked)
+                focusText()
+              }}
+              style={{ accentColor: INK }}
+            />
+            lock strand chain
           </label>
         )}
 
