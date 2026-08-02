@@ -214,27 +214,29 @@ overnight run to CPU, and words became legible by epoch 12.
 Thin vertical strokes form last, and the loss explains this: a
 hairline is worth tens of pixels, and a bowl is worth thousands.
 
-Build-log status, 2026-08-01: the main run finished at contour IoU
-0.91, and fine-tune passes on the extended corpus now stand at 0.93.
-The corpus grew because of one word: الله. Gulzar draws this word
-with a dedicated ligature, and no word in the first corpus was long
-enough to trigger it. The extended corpus adds the basmala and other
-real words, and the model is learning the ligature now. A final pass
-with a decayed learning rate comes last. The same schedule took the
-Kufic font from almost correct to exact.
+Build-log status, 2026-08-02: training is complete at contour IoU
+0.94. The corpus grew because of one word: الله. Gulzar draws this
+word with a dedicated ligature, and no word in the first corpus was
+long enough to trigger it. The extended corpus added the basmala and
+other real words, but the new rows were a sliver of the gradient and
+learned slowly. The fix was to oversample them: the trainer repeats
+the long-word rows dozens of times per epoch, and the ligature
+converged in eight epochs. A decayed learning rate pass finished the
+run, the same schedule that took the Kufic font from almost correct
+to exact. The basmala now renders exactly, ligature included.
 
-The sheet below compares the teacher with the model checkpoint from
-epoch 79. Gulzar is gray on top. The model is green below.
+The sheet below compares the teacher with the final model. Gulzar is
+gray on top. The model is green below.
 
-![Six corpus words rendered by Gulzar in gray above, and by the epoch-79 model in green below. The rows match closely.](./teacher-model.png)
+![The basmala words, نور, and نستعليق rendered by Gulzar in gray above, and by the final model in green below. The rows match, including the الله ligature.](./teacher-model.png)
 
 ### Status
 
 1. Extract: **complete.** Corpus, cluster records, displacements.
 2. Fields: **complete.** SDFs at 64 px/em on a shared canvas.
-3. Train: **in progress.** The model outputs a field plus a
+3. Train: **complete.** The model outputs a field plus a
    displacement. The engine chains the displacements, and that chain
-   is the cascade.
+   is the cascade. Final contour IoU: 0.94.
 4. Trace: **complete, simple version.** Sub-pixel marching squares
    with a bézier curve fit now. [img2bez](/blog/img2bez) is the
    planned quality pass for font-grade outlines.
