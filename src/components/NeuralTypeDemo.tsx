@@ -248,6 +248,7 @@ export default function NeuralTypeDemo({
   // redraw without re-running the model.
   const lineCache = useRef<{ key: string; line: Line; path2d: Path2D } | null>(null)
   const selCache = useRef<{ key: string; path: Path2D | null } | null>(null)
+  const hintCache = useRef<{ key: string; path: Path2D | null } | null>(null)
 
   // Load engine + font once.
   useEffect(() => {
@@ -488,6 +489,50 @@ export default function NeuralTypeDemo({
         y: oy + nodes[i].y * cell,
       })
       const p0 = P(focusI)
+      const chars = [...text]
+      // a node is a "gap slot" when an edit there touches a word
+      // boundary: adjacent to a space or the ends of the line
+      const isGap = (i: number) =>
+        i === 0 || i >= chars.length || chars[i - 1] === ' ' || chars[i] === ' '
+      const drawNode = (x: number, y: number, r: number, hollow: boolean) => {
+        ctx.fillStyle = BG
+        ctx.beginPath()
+        ctx.arc(x, y, r + 1, 0, Math.PI * 2)
+        ctx.fill()
+        if (hollow) {
+          ctx.strokeStyle = CARET
+          ctx.lineWidth = 1.6
+          ctx.beginPath()
+          ctx.arc(x, y, r - 0.8, 0, Math.PI * 2)
+          ctx.stroke()
+        } else {
+          ctx.fillStyle = CARET
+          ctx.beginPath()
+          ctx.arc(x, y, r, 0, Math.PI * 2)
+          ctx.fill()
+        }
+      }
+      // insertion hint: outline the cluster the caret sits after, so
+      // an edit's landing place is visible even inside ligatures
+      if (a === b && focusI > 0 && focusI <= chars.length && chars[focusI - 1] !== ' ') {
+        const hkey = `${text}\u0000${focusI}`
+        if (hintCache.current?.key !== hkey) {
+          const svg = (fontRef.current as any)?.selection_path?.(text, focusI - 1, focusI) as
+            | string
+            | undefined
+          hintCache.current = { key: hkey, path: svg && svg.trim() ? new Path2D(svg) : null }
+        }
+        const hint = hintCache.current.path
+        if (hint) {
+          ctx.save()
+          ctx.translate(ox, oy)
+          ctx.scale(cell, cell)
+          ctx.strokeStyle = NODE_ACTIVE
+          ctx.lineWidth = 1.2 / cell
+          ctx.stroke(hint)
+          ctx.restore()
+        }
+      }
       ctx.lineCap = 'round'
       const strand = buildStrand(nodes.map((_, i) => P(i)))
       const strokeStrand = (u0: number, u1: number, w: number) => {
@@ -510,14 +555,7 @@ export default function NeuralTypeDemo({
         strokeStrand(0, strand.tEnd, 1)
         for (let i = 0; i < nodes.length; i++) {
           const q = P(i)
-          ctx.fillStyle = BG
-          ctx.beginPath()
-          ctx.arc(q.x, q.y, 4, 0, Math.PI * 2)
-          ctx.fill()
-          ctx.fillStyle = CARET
-          ctx.beginPath()
-          ctx.arc(q.x, q.y, 3, 0, Math.PI * 2)
-          ctx.fill()
+          drawNode(q.x, q.y, 3.5, isGap(i))
         }
       }
       ctx.strokeStyle = CARET
@@ -530,16 +568,9 @@ export default function NeuralTypeDemo({
           const q1 = P(i1)
           // strand segment along the shared spline, with a halo
           strokeStrand(strand.tOf(i0), strand.tOf(i1), 1.5)
-          // node, one visible notch smaller per step: 5.5 -> 4.5 -> 3.5,
-          // on a 1px background rim
-          ctx.fillStyle = BG
-          ctx.beginPath()
-          ctx.arc(q1.x, q1.y, 7.5 - step, 0, Math.PI * 2)
-          ctx.fill()
-          ctx.fillStyle = CARET
-          ctx.beginPath()
-          ctx.arc(q1.x, q1.y, 6.5 - step, 0, Math.PI * 2)
-          ctx.fill()
+          // node, one visible notch smaller per step: 5.5 -> 4.5 -> 3.5;
+          // hollow when the slot touches a word boundary
+          drawNode(q1.x, q1.y, 6.5 - step, isGap(i1))
         }
       }
       // the active node, orange on a 1px background rim
