@@ -341,6 +341,11 @@ export default function NeuralTypeDemo({
           ctx.scale(cell, cell)
           ctx.fillStyle = CLOUD_FILL
           ctx.fill(cloud)
+          // 1px background outline under the gold, so the cloud
+          // separates from the ink it crosses
+          ctx.strokeStyle = BG
+          ctx.lineWidth = 3.5 / cell
+          ctx.stroke(cloud)
           ctx.strokeStyle = CLOUD_STROKE
           ctx.lineWidth = 1.5 / cell
           ctx.stroke(cloud)
@@ -407,26 +412,45 @@ export default function NeuralTypeDemo({
           if (i1 < 0 || i1 >= nodes.length || i0 < 0 || i0 >= nodes.length) break
           const q0 = P(i0)
           const q1 = P(i1)
-          // strand segment
+          // strand segment, with a 1px background halo
           const mx = (q0.x + q1.x) / 2
-          ctx.lineWidth = 1.5
           ctx.beginPath()
           ctx.moveTo(q0.x, q0.y)
           ctx.bezierCurveTo(mx, q0.y, mx, q1.y, q1.x, q1.y)
+          ctx.strokeStyle = BG
+          ctx.lineWidth = 3.5
           ctx.stroke()
-          // node, one visible notch smaller per step: 5.5 -> 4.5 -> 3.5
+          ctx.strokeStyle = CARET
+          ctx.lineWidth = 1.5
+          ctx.stroke()
+          // node, one visible notch smaller per step: 5.5 -> 4.5 -> 3.5,
+          // on a 1px background rim
+          ctx.fillStyle = BG
+          ctx.beginPath()
+          ctx.arc(q1.x, q1.y, 7.5 - step, 0, Math.PI * 2)
+          ctx.fill()
+          ctx.fillStyle = CARET
           ctx.beginPath()
           ctx.arc(q1.x, q1.y, 6.5 - step, 0, Math.PI * 2)
           ctx.fill()
         }
       }
-      // the active node, in orange
+      // the active node, orange on a 1px background rim
+      ctx.fillStyle = BG
+      ctx.beginPath()
+      ctx.arc(p0.x, p0.y, 8, 0, Math.PI * 2)
+      ctx.fill()
       ctx.fillStyle = NODE_ACTIVE
       ctx.beginPath()
       ctx.arc(p0.x, p0.y, 7, 0, Math.PI * 2)
       ctx.fill()
-      // rotating half-ring, in yellow
+      // rotating half-ring, yellow over a background halo
       const theta = ((performance.now() % 1600) / 1600) * Math.PI * 2
+      ctx.beginPath()
+      ctx.arc(p0.x, p0.y, 11, theta, theta + Math.PI)
+      ctx.strokeStyle = BG
+      ctx.lineWidth = 4.5
+      ctx.stroke()
       ctx.strokeStyle = RING
       ctx.lineWidth = 2.5
       ctx.beginPath()
