@@ -56,6 +56,31 @@ export class NtfFont {
         return this;
     }
     /**
+     * Selection cloud for field fonts: the union of the selected
+     * clusters' fields, traced at a raised iso level. The SDF gives
+     * the dilation for free, so the outline is a smooth blob that
+     * hugs the ink -- the cloud band of manuscript illumination,
+     * not a row of boxes. Returns an SVG path in line coordinates.
+     * @param {string} text
+     * @param {number} start
+     * @param {number} end
+     * @returns {string}
+     */
+    selection_path(text, start, end) {
+        let deferred2_0;
+        let deferred2_1;
+        try {
+            const ptr0 = passStringToWasm0(text, wasm.__wbindgen_malloc, wasm.__wbindgen_realloc);
+            const len0 = WASM_VECTOR_LEN;
+            const ret = wasm.ntffont_selection_path(this.__wbg_ptr, ptr0, len0, start, end);
+            deferred2_0 = ret[0];
+            deferred2_1 = ret[1];
+            return getStringFromWasm0(ret[0], ret[1]);
+        } finally {
+            wasm.__wbindgen_free(deferred2_0, deferred2_1, 1);
+        }
+    }
+    /**
      * Shape `text` at elongation `elong` ∈ [0, max_elong].
      * Returns JSON: { width, grid_h, baseline, path, glyphs } where
      * `path` is ONE SVG path for the whole line (connected letters

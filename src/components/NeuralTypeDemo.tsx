@@ -26,6 +26,10 @@ const SELECTION = 'rgba(42,163,95,0.30)'
 const OUTLINE = '#e5e5e5' // structure view: contour strokes (90% gray)
 const CORNER = '#ef4444' // structure view: corner points (red)
 const CARET = '#ef4444' // text cursor (red)
+// Selection cloud (field fonts): the gold band of manuscript
+// illumination, hugging the ink instead of boxing it.
+const CLOUD_FILL = 'rgba(201,162,39,0.16)'
+const CLOUD_STROKE = 'rgba(201,162,39,0.75)'
 
 // Extract the corner points of a rectilinear SVG path ("M x y L x y … Z"),
 // for the structure view. There are no curves yet — v0 outlines are traced
@@ -63,6 +67,9 @@ type Line = {
   glyphs: { ch: string; form: string; x: number; advance: number }[]
   /// Per-logical-character spans for caret/selection/hit-testing.
   spans: { i: number; x: number; w: number }[]
+  /// Field fonts: one 2D point per caret index, on the displacement
+  /// chain. The cursor lives on these nodes, not between boxes.
+  nodes?: { i: number; x: number; y: number }[]
 }
 
 /// Caret x (in line units) for every logical caret index 0..=n.
@@ -127,6 +134,7 @@ export default function NeuralTypeDemo({
   const viewRef = useRef<{
     line: Line
     caretXs: number[]
+    nodes: { x: number; y: number }[] | null
     ox: number
     oy: number
     cell: number
@@ -150,7 +158,8 @@ export default function NeuralTypeDemo({
   const [isField, setIsField] = useState(false)
   // Cache the shaped line per (text, elong, dir): caret-blink frames
   // redraw without re-running the model.
-  const lineCache = useRef<{ key: string; line: Line } | null>(null)
+  const lineCache = useRef<{ key: string; line: Line; path2d: Path2D } | null>(null)
+  const selCache = useRef<{ key: string; path: Path2D | null } | null>(null)
 
   // Load engine + font once.
   useEffect(() => {
@@ -267,7 +276,7 @@ export default function NeuralTypeDemo({
       line = lineCache.current.line
     } else {
       line = JSON.parse(font.shape(text, elong, 'auto'))
-      lineCache.current = { key: cacheKey, line }
+      lineCache.current = { key: cacheKey, line, path2d: new Path2D(line.path) }
       if ((line as any).field && !isField) {
         setIsField(true)
         // Field demos start clean: ink and caret only.
@@ -293,7 +302,9 @@ export default function NeuralTypeDemo({
       : Math.round(pad * dpr) / dpr
     const oy = Math.round(((H - line.grid_h * cell) / 2) * dpr) / dpr
     const caretXs = caretPositions(line, text)
-    viewRef.current = { line, caretXs, ox, oy, cell }
+    const isFieldLine = !!(line as any).field
+    const nodes = line.nodes ?? null
+    viewRef.current = { line, caretXs, nodes, ox, oy, cell }
 
     if (showGrid) {
       ctx.strokeStyle = '#4d4d4d'
@@ -310,13 +321,35 @@ export default function NeuralTypeDemo({
       ctx.stroke()
     }
 
-    // Selection highlight, behind the glyphs.
+    // Selection, behind the glyphs. Field fonts get the cloud: the
+    // union of the selected letters' distance fields, traced at a
+    // raised iso level, like the cloud bands around manuscript text.
     const [a, b] = [Math.min(sel.start, sel.end), Math.max(sel.start, sel.end)]
     if (b > a) {
-      ctx.fillStyle = SELECTION
-      for (const s of line.spans) {
-        if (s.i >= a && s.i < b) {
-          ctx.fillRect(ox + s.x * cell, oy, s.w * cell, line.grid_h * cell)
+      if (isFieldLine && fontRef.current) {
+        const key = `${text}\u0000${a}\u0000${b}`
+        if (selCache.current?.key !== key) {
+          const svg = (fontRef.current as any).selection_path(text, a, b) as string
+          selCache.current = { key, path: svg.trim() ? new Path2D(svg) : null }
+        }
+        const cloud = selCache.current.path
+        if (cloud) {
+          ctx.save()
+          ctx.translate(ox, oy)
+          ctx.scale(cell, cell)
+          ctx.fillStyle = CLOUD_FILL
+          ctx.fill(cloud)
+          ctx.strokeStyle = CLOUD_STROKE
+          ctx.lineWidth = 1.5 / cell
+          ctx.stroke(cloud)
+          ctx.restore()
+        }
+      } else {
+        ctx.fillStyle = SELECTION
+        for (const s of line.spans) {
+          if (s.i >= a && s.i < b) {
+            ctx.fillRect(ox + s.x * cell, oy, s.w * cell, line.grid_h * cell)
+          }
         }
       }
     }
@@ -324,7 +357,7 @@ export default function NeuralTypeDemo({
     ctx.save()
     ctx.translate(ox, oy)
     ctx.scale(cell, cell)
-    const path = new Path2D(line.path)
+    const path = lineCache.current!.path2d
     ctx.fillStyle = INK
     ctx.fill(path)
     if (showStructure) {
@@ -349,10 +382,54 @@ export default function NeuralTypeDemo({
       }
     }
 
-    // Caret (collapsed selection only) — drawn even before focus, so
-    // the canvas visibly invites editing. Red I-beam with inward-facing
-    // triangles at each end.
-    if (caretOn && a === b) {
+    // Field caret: a node on the displacement chain. A filled point
+    // with a pulsing ring marks the current position; curves run to
+    // the neighboring chain nodes and fade with distance. This is
+    // the cascade itself as the cursor, not a metal-type slot.
+    if (isFieldLine && nodes && nodes.length) {
+      const focusI = Math.max(0, Math.min(sel.end, nodes.length - 1))
+      const P = (i: number) => ({
+        x: ox + nodes[i].x * cell,
+        y: oy + nodes[i].y * cell,
+      })
+      const p0 = P(focusI)
+      ctx.lineCap = 'round'
+      for (const dir of [-1, 1]) {
+        for (let step = 1; step <= 3; step++) {
+          const i0 = focusI + dir * (step - 1)
+          const i1 = focusI + dir * step
+          if (i1 < 0 || i1 >= nodes.length || i0 < 0 || i0 >= nodes.length) break
+          const q0 = P(i0)
+          const q1 = P(i1)
+          const alpha = [0.5, 0.28, 0.14][step - 1]
+          const mx = (q0.x + q1.x) / 2
+          ctx.strokeStyle = CARET
+          ctx.globalAlpha = alpha
+          ctx.lineWidth = 1.5
+          ctx.beginPath()
+          ctx.moveTo(q0.x, q0.y)
+          ctx.bezierCurveTo(mx, q0.y, mx, q1.y, q1.x, q1.y)
+          ctx.stroke()
+          ctx.fillStyle = CARET
+          ctx.beginPath()
+          ctx.arc(q1.x, q1.y, [3, 2.2, 1.5][step - 1], 0, Math.PI * 2)
+          ctx.fill()
+        }
+      }
+      ctx.globalAlpha = 1
+      ctx.fillStyle = CARET
+      ctx.beginPath()
+      ctx.arc(p0.x, p0.y, 4.5, 0, Math.PI * 2)
+      ctx.fill()
+      const phase = (performance.now() % 1400) / 1400
+      ctx.strokeStyle = CARET
+      ctx.globalAlpha = 0.8 * (1 - phase)
+      ctx.lineWidth = 2
+      ctx.beginPath()
+      ctx.arc(p0.x, p0.y, 7 + 10 * phase, 0, Math.PI * 2)
+      ctx.stroke()
+      ctx.globalAlpha = 1
+    } else if (caretOn && a === b) {
       const x = Math.round(ox + (caretXs[Math.min(a, caretXs.length - 1)] ?? 0) * cell)
       const top = oy
       const bot = oy + line.grid_h * cell
@@ -375,6 +452,18 @@ export default function NeuralTypeDemo({
     }
   }, [text, elong, showGrid, showStructure, sel, focused, caretOn])
 
+  // Field fonts animate the caret ring continuously.
+  useEffect(() => {
+    if (!ready || !isField) return
+    let raf = 0
+    const loop = () => {
+      draw()
+      raf = requestAnimationFrame(loop)
+    }
+    raf = requestAnimationFrame(loop)
+    return () => cancelAnimationFrame(raf)
+  }, [ready, isField, draw])
+
   useEffect(() => {
     if (ready) draw()
   }, [ready, draw])
@@ -395,9 +484,21 @@ export default function NeuralTypeDemo({
     if (!canvas || !view) return null
     const rect = canvas.getBoundingClientRect()
     const gx = (clientX - rect.left - view.ox) / view.cell
-    void clientY
+    const gy = (clientY - rect.top - view.oy) / view.cell
     let best = 0
     let bestD = Infinity
+    if (view.nodes && view.nodes.length) {
+      // 2D nearest chain node: clicks follow the cascade, not a
+      // horizontal ruler
+      view.nodes.forEach((pt, i) => {
+        const d = (gx - pt.x) ** 2 + (gy - pt.y) ** 2
+        if (d < bestD) {
+          bestD = d
+          best = i
+        }
+      })
+      return best
+    }
     view.caretXs.forEach((x, i) => {
       const d = Math.abs(gx - x)
       if (d < bestD) {
