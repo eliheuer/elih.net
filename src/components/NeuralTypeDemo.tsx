@@ -96,6 +96,75 @@ function caretPositions(line: Line, text: string): number[] {
   return pos
 }
 
+/// A natural cubic spline through the strand nodes: C2 continuous
+/// (curvature never jumps), chord-length parameterized so uneven
+/// node spacing does not kink the curve. Coincident nodes (ligature
+/// interiors) collapse to one spline point but keep their params.
+function buildStrand(pts: { x: number; y: number }[]) {
+  const keep: number[] = []
+  const tOfIndex: number[] = new Array(pts.length).fill(0)
+  for (let i = 0; i < pts.length; i++) {
+    const last = keep.length ? pts[keep[keep.length - 1]] : null
+    if (!last || Math.hypot(pts[i].x - last.x, pts[i].y - last.y) > 0.75) keep.push(i)
+    tOfIndex[i] = keep.length - 1
+  }
+  const n = keep.length
+  const xs = keep.map((i) => pts[i].x)
+  const ys = keep.map((i) => pts[i].y)
+  // chord-length params
+  const t: number[] = [0]
+  for (let k = 1; k < n; k++) {
+    t.push(t[k - 1] + Math.max(1e-6, Math.hypot(xs[k] - xs[k - 1], ys[k] - ys[k - 1])))
+  }
+  // natural spline second derivatives (Thomas algorithm), per axis
+  const second = (v: number[]): number[] => {
+    if (n < 3) return new Array(n).fill(0)
+    const a = new Array(n).fill(0)
+    const b = new Array(n).fill(0)
+    const c = new Array(n).fill(0)
+    const d = new Array(n).fill(0)
+    b[0] = 1
+    b[n - 1] = 1
+    for (let k = 1; k < n - 1; k++) {
+      const h0 = t[k] - t[k - 1]
+      const h1 = t[k + 1] - t[k]
+      a[k] = h0
+      b[k] = 2 * (h0 + h1)
+      c[k] = h1
+      d[k] = 6 * ((v[k + 1] - v[k]) / h1 - (v[k] - v[k - 1]) / h0)
+    }
+    for (let k = 1; k < n; k++) {
+      const m = a[k] / b[k - 1]
+      b[k] -= m * c[k - 1]
+      d[k] -= m * d[k - 1]
+    }
+    const m2 = new Array(n).fill(0)
+    m2[n - 1] = d[n - 1] / b[n - 1]
+    for (let k = n - 2; k >= 0; k--) m2[k] = (d[k] - c[k] * m2[k + 1]) / b[k]
+    return m2
+  }
+  const mx = second(xs)
+  const my = second(ys)
+  const evalAxis = (v: number[], m2: number[], k: number, u: number) => {
+    const h = t[k + 1] - t[k]
+    const A = (t[k + 1] - u) / h
+    const B = (u - t[k]) / h
+    return (
+      A * v[k] +
+      B * v[k + 1] +
+      (((A * A * A - A) * m2[k] + (B * B * B - B) * m2[k + 1]) * h * h) / 6
+    )
+  }
+  const sample = (u: number) => {
+    if (n === 1) return { x: xs[0], y: ys[0] }
+    const uu = Math.max(t[0], Math.min(t[n - 1], u))
+    let k = 0
+    while (k < n - 2 && t[k + 1] < uu) k++
+    return { x: evalAxis(xs, mx, k, uu), y: evalAxis(ys, my, k, uu) }
+  }
+  return { sample, tOf: (i: number) => t[tOfIndex[Math.max(0, Math.min(i, pts.length - 1))]], tEnd: n ? t[n - 1] : 0 }
+}
+
 const SAMPLES = [
   'قلم', // qalam, "pen" — the default
   'كن فيكون', // kun fayakun, "Be, and it is" — shares the first row
@@ -420,22 +489,25 @@ export default function NeuralTypeDemo({
       })
       const p0 = P(focusI)
       ctx.lineCap = 'round'
+      const strand = buildStrand(nodes.map((_, i) => P(i)))
+      const strokeStrand = (u0: number, u1: number, w: number) => {
+        const steps = Math.max(2, Math.ceil(Math.abs(u1 - u0) / 3))
+        ctx.beginPath()
+        for (let k = 0; k <= steps; k++) {
+          const q = strand.sample(u0 + ((u1 - u0) * k) / steps)
+          if (k === 0) ctx.moveTo(q.x, q.y)
+          else ctx.lineTo(q.x, q.y)
+        }
+        ctx.strokeStyle = BG
+        ctx.lineWidth = w + 2
+        ctx.stroke()
+        ctx.strokeStyle = CARET
+        ctx.lineWidth = w
+        ctx.stroke()
+      }
       if (showStrand) {
         // the full strand and every node, end to end
-        for (let i = 0; i + 1 < nodes.length; i++) {
-          const q0 = P(i)
-          const q1 = P(i + 1)
-          const mx = (q0.x + q1.x) / 2
-          ctx.beginPath()
-          ctx.moveTo(q0.x, q0.y)
-          ctx.bezierCurveTo(mx, q0.y, mx, q1.y, q1.x, q1.y)
-          ctx.strokeStyle = BG
-          ctx.lineWidth = 3
-          ctx.stroke()
-          ctx.strokeStyle = CARET
-          ctx.lineWidth = 1
-          ctx.stroke()
-        }
+        strokeStrand(0, strand.tEnd, 1)
         for (let i = 0; i < nodes.length; i++) {
           const q = P(i)
           ctx.fillStyle = BG
@@ -455,19 +527,9 @@ export default function NeuralTypeDemo({
           const i0 = focusI + dir * (step - 1)
           const i1 = focusI + dir * step
           if (i1 < 0 || i1 >= nodes.length || i0 < 0 || i0 >= nodes.length) break
-          const q0 = P(i0)
           const q1 = P(i1)
-          // strand segment, with a 1px background halo
-          const mx = (q0.x + q1.x) / 2
-          ctx.beginPath()
-          ctx.moveTo(q0.x, q0.y)
-          ctx.bezierCurveTo(mx, q0.y, mx, q1.y, q1.x, q1.y)
-          ctx.strokeStyle = BG
-          ctx.lineWidth = 3.5
-          ctx.stroke()
-          ctx.strokeStyle = CARET
-          ctx.lineWidth = 1.5
-          ctx.stroke()
+          // strand segment along the shared spline, with a halo
+          strokeStrand(strand.tOf(i0), strand.tOf(i1), 1.5)
           // node, one visible notch smaller per step: 5.5 -> 4.5 -> 3.5,
           // on a 1px background rim
           ctx.fillStyle = BG
