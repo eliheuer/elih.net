@@ -5,6 +5,7 @@ export class NtfFont {
     free(): void;
     [Symbol.dispose](): void;
     alphabet(): string;
+    clear_node_offsets(): void;
     max_elong(): number;
     n_params(): number;
     /**
@@ -25,7 +26,10 @@ export class NtfFont {
      * `path` is ONE SVG path for the whole line (connected letters
      * are one continuous contour) in grid units (y-down), and
      * `glyphs` is cluster metadata [{ch, form, x, advance}].
+     * Set the total placement offset for the cluster at caret index
+     * `i` (field px, y-down). Dragging a node calls this.
      */
+    set_node_offset(i: number, dx: number, dy: number): void;
     shape(text: string, elong: number, dir: string): string;
 }
 
@@ -35,10 +39,12 @@ export interface InitOutput {
     readonly memory: WebAssembly.Memory;
     readonly __wbg_ntffont_free: (a: number, b: number) => void;
     readonly ntffont_alphabet: (a: number) => [number, number];
+    readonly ntffont_clear_node_offsets: (a: number) => void;
     readonly ntffont_max_elong: (a: number) => number;
     readonly ntffont_n_params: (a: number) => number;
     readonly ntffont_new: (a: number, b: number) => [number, number, number];
     readonly ntffont_selection_path: (a: number, b: number, c: number, d: number, e: number) => [number, number];
+    readonly ntffont_set_node_offset: (a: number, b: number, c: number, d: number) => void;
     readonly ntffont_shape: (a: number, b: number, c: number, d: number, e: number, f: number) => [number, number];
     readonly __wbindgen_externrefs: WebAssembly.Table;
     readonly __wbindgen_free: (a: number, b: number, c: number) => void;

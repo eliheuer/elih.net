@@ -31,7 +31,7 @@ const CARET = '#ef4444' // text cursor (red)
 const CLOUD_FILL = 'rgba(160,160,160,0.22)'
 const NODE_ACTIVE = '#f97316' // the selected strand node (orange)
 const RING = '#facc15' // the rotating half-ring (yellow)
-const CLOUD_STROKE = 'rgba(201,162,39,0.75)'
+const CLOUD_STROKE = '#f97316' // same orange as the active node
 
 // Extract the corner points of a rectilinear SVG path ("M x y L x y … Z"),
 // for the structure view. There are no curves yet — v0 outlines are traced
@@ -158,6 +158,21 @@ export default function NeuralTypeDemo({
   // Field fonts (nastaliq) have no elongation axis; detected from the
   // engine's shape output.
   const [isField, setIsField] = useState(false)
+  const [showStrand, setShowStrand] = useState(false)
+  // Node dragging: editing the displacement chain by hand. Offsets
+  // are per caret index, in field px, and clear when the text edits.
+  const nodeDrag = useRef<{
+    i: number
+    startX: number
+    startY: number
+    baseDx: number
+    baseDy: number
+  } | null>(null)
+  const nodeOffsets = useRef<Map<number, { dx: number; dy: number }>>(new Map())
+  // debug handle for headless tests
+  if (typeof window !== 'undefined') {
+    ;(window as any).__ntf = { viewRef, fontRef, nodeOffsets, nodeDrag, sel }
+  }
   // Cache the shaped line per (text, elong, dir): caret-blink frames
   // redraw without re-running the model.
   const lineCache = useRef<{ key: string; line: Line; path2d: Path2D } | null>(null)
@@ -403,6 +418,34 @@ export default function NeuralTypeDemo({
       })
       const p0 = P(focusI)
       ctx.lineCap = 'round'
+      if (showStrand) {
+        // the full strand and every node, end to end
+        for (let i = 0; i + 1 < nodes.length; i++) {
+          const q0 = P(i)
+          const q1 = P(i + 1)
+          const mx = (q0.x + q1.x) / 2
+          ctx.beginPath()
+          ctx.moveTo(q0.x, q0.y)
+          ctx.bezierCurveTo(mx, q0.y, mx, q1.y, q1.x, q1.y)
+          ctx.strokeStyle = BG
+          ctx.lineWidth = 3
+          ctx.stroke()
+          ctx.strokeStyle = CARET
+          ctx.lineWidth = 1
+          ctx.stroke()
+        }
+        for (let i = 0; i < nodes.length; i++) {
+          const q = P(i)
+          ctx.fillStyle = BG
+          ctx.beginPath()
+          ctx.arc(q.x, q.y, 4, 0, Math.PI * 2)
+          ctx.fill()
+          ctx.fillStyle = CARET
+          ctx.beginPath()
+          ctx.arc(q.x, q.y, 3, 0, Math.PI * 2)
+          ctx.fill()
+        }
+      }
       ctx.strokeStyle = CARET
       ctx.fillStyle = CARET
       for (const dir of [-1, 1]) {
@@ -477,7 +520,17 @@ export default function NeuralTypeDemo({
       ctx.closePath()
       ctx.fill()
     }
-  }, [text, elong, showGrid, showStructure, sel, focused, caretOn])
+  }, [text, elong, showGrid, showStructure, showStrand, sel, focused, caretOn])
+
+  // Dragged-node offsets are edits to one layout of one string:
+  // they clear when the text changes.
+  useEffect(() => {
+    if (!nodeOffsets.current.size) return
+    nodeOffsets.current.clear()
+    ;(fontRef.current as any)?.clear_node_offsets?.()
+    lineCache.current = null
+    selCache.current = null
+  }, [text])
 
   // Field fonts animate the caret ring continuously.
   useEffect(() => {
@@ -540,6 +593,31 @@ export default function NeuralTypeDemo({
     (e: React.PointerEvent<HTMLCanvasElement>) => {
       e.preventDefault()
       const el = hiddenRef.current
+      // grabbing the active node starts a chain edit instead of a
+      // caret move
+      const view = viewRef.current
+      const canvas = canvasRef.current
+      if (view?.nodes && canvas) {
+        const rect = canvas.getBoundingClientRect()
+        const fi = Math.max(0, Math.min(sel.end, view.nodes.length - 1))
+        const nx = view.ox + view.nodes[fi].x * view.cell
+        const ny = view.oy + view.nodes[fi].y * view.cell
+        const dx = e.clientX - rect.left - nx
+        const dy = e.clientY - rect.top - ny
+        if (dx * dx + dy * dy < 12 * 12) {
+          const base = nodeOffsets.current.get(fi) ?? { dx: 0, dy: 0 }
+          nodeDrag.current = {
+            i: fi,
+            startX: e.clientX,
+            startY: e.clientY,
+            baseDx: base.dx,
+            baseDy: base.dy,
+          }
+          e.currentTarget.setPointerCapture(e.pointerId)
+          el?.focus()
+          return
+        }
+      }
       const i = indexAt(e.clientX, e.clientY)
       if (!el || i === null) return
       el.focus()
@@ -548,10 +626,23 @@ export default function NeuralTypeDemo({
       setSel({ start: i, end: i })
       e.currentTarget.setPointerCapture(e.pointerId)
     },
-    [indexAt],
+    [indexAt, sel.end],
   )
   const onPointerMove = useCallback(
     (e: React.PointerEvent<HTMLCanvasElement>) => {
+      const nd = nodeDrag.current
+      if (nd) {
+        const view = viewRef.current
+        const font = fontRef.current as any
+        if (!view || !font?.set_node_offset) return
+        const dx = nd.baseDx + (e.clientX - nd.startX) / view.cell
+        const dy = nd.baseDy + (e.clientY - nd.startY) / view.cell
+        nodeOffsets.current.set(nd.i, { dx, dy })
+        font.set_node_offset(nd.i, dx, dy)
+        lineCache.current = null
+        selCache.current = null
+        return
+      }
       const anchor = dragAnchor.current
       if (anchor === null) return
       const i = indexAt(e.clientX, e.clientY)
@@ -565,6 +656,7 @@ export default function NeuralTypeDemo({
   )
   const onPointerUp = useCallback(() => {
     dragAnchor.current = null
+    nodeDrag.current = null
   }, [])
 
   const groupLabel: React.CSSProperties = {
@@ -815,6 +907,21 @@ export default function NeuralTypeDemo({
           />
           show grid
         </label>
+
+        {isField && (
+          <label style={{ display: 'flex', gap: 6, alignItems: 'center', cursor: 'pointer' }}>
+            <input
+              type="checkbox"
+              checked={showStrand}
+              onChange={(e) => {
+                setShowStrand(e.target.checked)
+                focusText()
+              }}
+              style={{ accentColor: INK }}
+            />
+            show full strand and node chain
+          </label>
+        )}
 
         <div style={{ marginTop: 'auto', fontSize: 11.5, color: '#8a8a8a', lineHeight: 1.5 }}>
           {failed

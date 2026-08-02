@@ -26,6 +26,9 @@ export class NtfFont {
             wasm.__wbindgen_free(deferred1_0, deferred1_1, 1);
         }
     }
+    clear_node_offsets() {
+        wasm.ntffont_clear_node_offsets(this.__wbg_ptr);
+    }
     /**
      * @returns {number}
      */
@@ -86,6 +89,16 @@ export class NtfFont {
      * `path` is ONE SVG path for the whole line (connected letters
      * are one continuous contour) in grid units (y-down), and
      * `glyphs` is cluster metadata [{ch, form, x, advance}].
+     * Set the total placement offset for the cluster at caret index
+     * `i` (field px, y-down). Dragging a node calls this.
+     * @param {number} i
+     * @param {number} dx
+     * @param {number} dy
+     */
+    set_node_offset(i, dx, dy) {
+        wasm.ntffont_set_node_offset(this.__wbg_ptr, i, dx, dy);
+    }
+    /**
      * @param {string} text
      * @param {number} elong
      * @param {string} dir
