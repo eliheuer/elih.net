@@ -28,7 +28,9 @@ const CORNER = '#ef4444' // structure view: corner points (red)
 const CARET = '#ef4444' // text cursor (red)
 // Selection cloud (field fonts): the gold band of manuscript
 // illumination, hugging the ink instead of boxing it.
-const CLOUD_FILL = 'rgba(201,162,39,0.16)'
+const CLOUD_FILL = 'rgba(160,160,160,0.22)'
+const NODE_ACTIVE = '#f97316' // the selected strand node (orange)
+const RING = '#facc15' // the rotating half-ring (yellow)
 const CLOUD_STROKE = 'rgba(201,162,39,0.75)'
 
 // Extract the corner points of a rectilinear SVG path ("M x y L x y … Z"),
@@ -382,10 +384,12 @@ export default function NeuralTypeDemo({
       }
     }
 
-    // Field caret: a node on the displacement chain. A filled point
-    // with a pulsing ring marks the current position; curves run to
-    // the neighboring chain nodes and fade with distance. This is
-    // the cascade itself as the cursor, not a metal-type slot.
+    // Field caret: the strand and its nodes. The strand is the curve
+    // that flows through the string (the displacement chain); the
+    // nodes are the caret positions on it. The active node carries a
+    // rotating half-ring; neighbor nodes run three steps in each
+    // direction and halve in size at every step. All opaque: the
+    // cursor is geometry, not a glow.
     if (isFieldLine && nodes && nodes.length) {
       const focusI = Math.max(0, Math.min(sel.end, nodes.length - 1))
       const P = (i: number) => ({
@@ -394,6 +398,8 @@ export default function NeuralTypeDemo({
       })
       const p0 = P(focusI)
       ctx.lineCap = 'round'
+      ctx.strokeStyle = CARET
+      ctx.fillStyle = CARET
       for (const dir of [-1, 1]) {
         for (let step = 1; step <= 3; step++) {
           const i0 = focusI + dir * (step - 1)
@@ -401,34 +407,31 @@ export default function NeuralTypeDemo({
           if (i1 < 0 || i1 >= nodes.length || i0 < 0 || i0 >= nodes.length) break
           const q0 = P(i0)
           const q1 = P(i1)
-          const alpha = [0.5, 0.28, 0.14][step - 1]
+          // strand segment
           const mx = (q0.x + q1.x) / 2
-          ctx.strokeStyle = CARET
-          ctx.globalAlpha = alpha
           ctx.lineWidth = 1.5
           ctx.beginPath()
           ctx.moveTo(q0.x, q0.y)
           ctx.bezierCurveTo(mx, q0.y, mx, q1.y, q1.x, q1.y)
           ctx.stroke()
-          ctx.fillStyle = CARET
+          // node, one visible notch smaller per step: 5.5 -> 4.5 -> 3.5
           ctx.beginPath()
-          ctx.arc(q1.x, q1.y, [3, 2.2, 1.5][step - 1], 0, Math.PI * 2)
+          ctx.arc(q1.x, q1.y, 6.5 - step, 0, Math.PI * 2)
           ctx.fill()
         }
       }
-      ctx.globalAlpha = 1
-      ctx.fillStyle = CARET
+      // the active node, in orange
+      ctx.fillStyle = NODE_ACTIVE
       ctx.beginPath()
-      ctx.arc(p0.x, p0.y, 4.5, 0, Math.PI * 2)
+      ctx.arc(p0.x, p0.y, 7, 0, Math.PI * 2)
       ctx.fill()
-      const phase = (performance.now() % 1400) / 1400
-      ctx.strokeStyle = CARET
-      ctx.globalAlpha = 0.8 * (1 - phase)
-      ctx.lineWidth = 2
+      // rotating half-ring, in yellow
+      const theta = ((performance.now() % 1600) / 1600) * Math.PI * 2
+      ctx.strokeStyle = RING
+      ctx.lineWidth = 2.5
       ctx.beginPath()
-      ctx.arc(p0.x, p0.y, 7 + 10 * phase, 0, Math.PI * 2)
+      ctx.arc(p0.x, p0.y, 11, theta, theta + Math.PI)
       ctx.stroke()
-      ctx.globalAlpha = 1
     } else if (caretOn && a === b) {
       const x = Math.round(ox + (caretXs[Math.min(a, caretXs.length - 1)] ?? 0) * cell)
       const top = oy
