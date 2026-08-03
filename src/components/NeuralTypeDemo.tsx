@@ -376,7 +376,10 @@ export default function NeuralTypeDemo({
 
     // Fit the line — right-aligned for RTL, left-aligned for LTR —
     // snapped to whole device pixels for crisp edges.
-    const pad = 28
+    // enough margin that the cursor node and ring never clip at the
+    // canvas edge (ring radius 15 + halo, plus edge nodes sitting
+    // slightly outside the ink)
+    const pad = 44
     let cell = Math.min(
       (W - 2 * pad) / Math.max(line.width, 1),
       (H - 2 * pad) / line.grid_h,
@@ -527,8 +530,11 @@ export default function NeuralTypeDemo({
           ctx.save()
           ctx.translate(ox, oy)
           ctx.scale(cell, cell)
+          ctx.lineWidth = 4.5 / cell
+          ctx.strokeStyle = BG
+          ctx.stroke(hint)
+          ctx.lineWidth = 2.5 / cell
           ctx.strokeStyle = NODE_ACTIVE
-          ctx.lineWidth = 1.2 / cell
           ctx.stroke(hint)
           ctx.restore()
         }
