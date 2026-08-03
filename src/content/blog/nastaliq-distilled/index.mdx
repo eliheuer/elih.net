@@ -230,6 +230,23 @@ gray on top. The model is green below.
 
 ![The basmala words, نور, and نستعليق rendered by Gulzar in gray above, and by the final model in green below. The rows match, including the الله ligature.](./teacher-model.png)
 
+### Tracing with img2bez
+
+The model outputs a field, but text needs outlines. The demo uses
+two tracers. While you type, a fast sub-pixel tracer draws each word
+with no added latency. When input settles, each word upgrades to a
+quality outline from [img2bez](/blog/img2bez), the autotracer I
+built for turning rasters into font-grade bézier curves. The upgrade
+runs in a Web Worker, so the editor never blocks.
+
+The .ntf pipeline pushed one new capability back into img2bez. Its
+sub-pixel stage already treated an image as a signed field, so we
+removed the image: `trace_sdf` traces the model's distance field
+directly. It samples the field lazily, takes exact iso-crossings,
+and fits curves in Smooth mode, where every segment is a
+tangent-continuous cubic. No raster exists anywhere in the render
+path: the model paints a field, and the field becomes curves.
+
 ### Status
 
 1. Extract: **complete.** Corpus, cluster records, displacements.
@@ -237,9 +254,9 @@ gray on top. The model is green below.
 3. Train: **complete.** The model outputs a field plus a
    displacement. The engine chains the displacements, and that chain
    is the cascade. Final contour IoU: 0.94.
-4. Trace: **complete, simple version.** Sub-pixel marching squares
-   with a bézier curve fit now. [img2bez](/blog/img2bez) is the
-   planned quality pass for font-grade outlines.
+4. Trace: **complete.** A fast sub-pixel tracer for live typing,
+   and [img2bez](/blog/img2bez) as the quality pass. See the section
+   above.
 5. Measure: held-out IoU per epoch exists. Worst-case proof sheets
    and tests on real Urdu and Persian text remain.
 6. Demo: **live above**, in the same editor island as the NeuralType
