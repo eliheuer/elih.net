@@ -7,6 +7,7 @@ export const ntffont_clear_node_offsets: (a: number) => void;
 export const ntffont_max_elong: (a: number) => number;
 export const ntffont_n_params: (a: number) => number;
 export const ntffont_new: (a: number, b: number) => [number, number, number];
+export const ntffont_refine_word: (a: number, b: number, c: number) => number;
 export const ntffont_selection_path: (a: number, b: number, c: number, d: number, e: number) => [number, number];
 export const ntffont_set_node_offset: (a: number, b: number, c: number, d: number) => void;
 export const ntffont_shape: (a: number, b: number, c: number, d: number, e: number, f: number) => [number, number];

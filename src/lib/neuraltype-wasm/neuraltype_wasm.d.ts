@@ -13,6 +13,14 @@ export class NtfFont {
      */
     constructor(bytes: Uint8Array);
     /**
+     * Trace one word with the img2bez quality fitter and cache the
+     * outline. Returns true when a new outline was produced (the
+     * caller should re-shape and redraw). Called asynchronously by
+     * the editor after typing pauses; shape() itself never blocks
+     * on img2bez.
+     */
+    refine_word(word: string): boolean;
+    /**
      * Selection cloud for field fonts: the union of the selected
      * clusters' fields, traced at a raised iso level. The SDF gives
      * the dilation for free, so the outline is a smooth blob that
@@ -43,6 +51,7 @@ export interface InitOutput {
     readonly ntffont_max_elong: (a: number) => number;
     readonly ntffont_n_params: (a: number) => number;
     readonly ntffont_new: (a: number, b: number) => [number, number, number];
+    readonly ntffont_refine_word: (a: number, b: number, c: number) => number;
     readonly ntffont_selection_path: (a: number, b: number, c: number, d: number, e: number) => [number, number];
     readonly ntffont_set_node_offset: (a: number, b: number, c: number, d: number) => void;
     readonly ntffont_shape: (a: number, b: number, c: number, d: number, e: number, f: number) => [number, number];

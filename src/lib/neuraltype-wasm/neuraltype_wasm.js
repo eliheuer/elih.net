@@ -59,6 +59,21 @@ export class NtfFont {
         return this;
     }
     /**
+     * Trace one word with the img2bez quality fitter and cache the
+     * outline. Returns true when a new outline was produced (the
+     * caller should re-shape and redraw). Called asynchronously by
+     * the editor after typing pauses; shape() itself never blocks
+     * on img2bez.
+     * @param {string} word
+     * @returns {boolean}
+     */
+    refine_word(word) {
+        const ptr0 = passStringToWasm0(word, wasm.__wbindgen_malloc, wasm.__wbindgen_realloc);
+        const len0 = WASM_VECTOR_LEN;
+        const ret = wasm.ntffont_refine_word(this.__wbg_ptr, ptr0, len0);
+        return ret !== 0;
+    }
+    /**
      * Selection cloud for field fonts: the union of the selected
      * clusters' fields, traced at a raised iso level. The SDF gives
      * the dilation for free, so the outline is a smooth blob that

@@ -636,6 +636,32 @@ export default function NeuralTypeDemo({
     selCache.current = null
   }, [text])
 
+  // Progressive rendering: typing draws with the fast tracer at zero
+  // added latency; once input settles, each word upgrades to the
+  // img2bez quality outline, one word at a time off the hot path.
+  useEffect(() => {
+    if (!ready || !isField) return
+    let cancelled = false
+    const timer = window.setTimeout(() => {
+      const words = [...new Set(text.split(' ').filter(Boolean))]
+      const step = (k: number) => {
+        if (cancelled || k >= words.length) return
+        const font = fontRef.current as any
+        if (font?.refine_word?.(words[k])) {
+          lineCache.current = null
+          selCache.current = null
+          hintCache.current = null
+        }
+        window.setTimeout(() => step(k + 1), 30)
+      }
+      step(0)
+    }, 160)
+    return () => {
+      cancelled = true
+      window.clearTimeout(timer)
+    }
+  }, [text, ready, isField])
+
   // Field fonts animate the caret ring continuously.
   useEffect(() => {
     if (!ready || !isField) return
