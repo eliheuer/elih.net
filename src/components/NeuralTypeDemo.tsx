@@ -240,6 +240,7 @@ export default function NeuralTypeDemo({
     baseDy: number
   } | null>(null)
   const nodeOffsets = useRef<Map<number, { dx: number; dy: number }>>(new Map())
+  const refineWorker = useRef<Worker | null>(null)
   // debug handle for headless tests
   if (typeof window !== 'undefined') {
     ;(window as any).__ntf = { viewRef, fontRef, nodeOffsets, nodeDrag, sel }
@@ -638,12 +639,39 @@ export default function NeuralTypeDemo({
 
   // Progressive rendering: typing draws with the fast tracer at zero
   // added latency; once input settles, each word upgrades to the
-  // img2bez quality outline, one word at a time off the hot path.
+  // img2bez quality outline. The tracing runs in a Web Worker, so
+  // the main thread never blocks -- results are installed into the
+  // word cache as they arrive. Falls back to in-thread refinement
+  // where workers are unavailable.
   useEffect(() => {
     if (!ready || !isField) return
+    if (!refineWorker.current) {
+      try {
+        const w = new Worker(new URL('../lib/ntfRefineWorker.ts', import.meta.url), {
+          type: 'module',
+        })
+        w.onmessage = (e: MessageEvent<{ word: string; svg: string }>) => {
+          const font = fontRef.current as any
+          if (font?.insert_word_trace?.(e.data.word, e.data.svg)) {
+            lineCache.current = null
+            selCache.current = null
+            hintCache.current = null
+          }
+        }
+        refineWorker.current = w
+      } catch {
+        refineWorker.current = null
+      }
+    }
     let cancelled = false
     const timer = window.setTimeout(() => {
       const words = [...new Set(text.split(' ').filter(Boolean))]
+      if (refineWorker.current) {
+        for (const word of words) {
+          refineWorker.current.postMessage({ fontUrl, word })
+        }
+        return
+      }
       const step = (k: number) => {
         if (cancelled || k >= words.length) return
         const font = fontRef.current as any
@@ -655,12 +683,12 @@ export default function NeuralTypeDemo({
         window.setTimeout(() => step(k + 1), 30)
       }
       step(0)
-    }, 160)
+    }, 120)
     return () => {
       cancelled = true
       window.clearTimeout(timer)
     }
-  }, [text, ready, isField])
+  }, [text, ready, isField, fontUrl])
 
   // Field fonts animate the caret ring continuously.
   useEffect(() => {

@@ -30,6 +30,21 @@ export class NtfFont {
         wasm.ntffont_clear_node_offsets(this.__wbg_ptr);
     }
     /**
+     * Install a worker-traced outline into the word cache. Returns
+     * true when the cache changed (the caller should re-shape).
+     * @param {string} word
+     * @param {string} svg
+     * @returns {boolean}
+     */
+    insert_word_trace(word, svg) {
+        const ptr0 = passStringToWasm0(word, wasm.__wbindgen_malloc, wasm.__wbindgen_realloc);
+        const len0 = WASM_VECTOR_LEN;
+        const ptr1 = passStringToWasm0(svg, wasm.__wbindgen_malloc, wasm.__wbindgen_realloc);
+        const len1 = WASM_VECTOR_LEN;
+        const ret = wasm.ntffont_insert_word_trace(this.__wbg_ptr, ptr0, len0, ptr1, len1);
+        return ret !== 0;
+    }
+    /**
      * @returns {number}
      */
     max_elong() {
@@ -133,6 +148,27 @@ export class NtfFont {
             return getStringFromWasm0(ret[0], ret[1]);
         } finally {
             wasm.__wbindgen_free(deferred3_0, deferred3_1, 1);
+        }
+    }
+    /**
+     * Trace one word with the img2bez fitter and return the outline
+     * as an SVG path in word-grid coordinates, without caching.
+     * Workers call this off the main thread.
+     * @param {string} word
+     * @returns {string}
+     */
+    trace_word_svg(word) {
+        let deferred2_0;
+        let deferred2_1;
+        try {
+            const ptr0 = passStringToWasm0(word, wasm.__wbindgen_malloc, wasm.__wbindgen_realloc);
+            const len0 = WASM_VECTOR_LEN;
+            const ret = wasm.ntffont_trace_word_svg(this.__wbg_ptr, ptr0, len0);
+            deferred2_0 = ret[0];
+            deferred2_1 = ret[1];
+            return getStringFromWasm0(ret[0], ret[1]);
+        } finally {
+            wasm.__wbindgen_free(deferred2_0, deferred2_1, 1);
         }
     }
 }

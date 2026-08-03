@@ -6,6 +6,11 @@ export class NtfFont {
     [Symbol.dispose](): void;
     alphabet(): string;
     clear_node_offsets(): void;
+    /**
+     * Install a worker-traced outline into the word cache. Returns
+     * true when the cache changed (the caller should re-shape).
+     */
+    insert_word_trace(word: string, svg: string): boolean;
     max_elong(): number;
     n_params(): number;
     /**
@@ -39,6 +44,12 @@ export class NtfFont {
      */
     set_node_offset(i: number, dx: number, dy: number): void;
     shape(text: string, elong: number, dir: string): string;
+    /**
+     * Trace one word with the img2bez fitter and return the outline
+     * as an SVG path in word-grid coordinates, without caching.
+     * Workers call this off the main thread.
+     */
+    trace_word_svg(word: string): string;
 }
 
 export type InitInput = RequestInfo | URL | Response | BufferSource | WebAssembly.Module;
@@ -48,6 +59,7 @@ export interface InitOutput {
     readonly __wbg_ntffont_free: (a: number, b: number) => void;
     readonly ntffont_alphabet: (a: number) => [number, number];
     readonly ntffont_clear_node_offsets: (a: number) => void;
+    readonly ntffont_insert_word_trace: (a: number, b: number, c: number, d: number, e: number) => number;
     readonly ntffont_max_elong: (a: number) => number;
     readonly ntffont_n_params: (a: number) => number;
     readonly ntffont_new: (a: number, b: number) => [number, number, number];
@@ -55,6 +67,7 @@ export interface InitOutput {
     readonly ntffont_selection_path: (a: number, b: number, c: number, d: number, e: number) => [number, number];
     readonly ntffont_set_node_offset: (a: number, b: number, c: number, d: number) => void;
     readonly ntffont_shape: (a: number, b: number, c: number, d: number, e: number, f: number) => [number, number];
+    readonly ntffont_trace_word_svg: (a: number, b: number, c: number) => [number, number];
     readonly __wbindgen_free: (a: number, b: number, c: number) => void;
     readonly __wbindgen_malloc: (a: number, b: number) => number;
     readonly __wbindgen_realloc: (a: number, b: number, c: number, d: number) => number;
