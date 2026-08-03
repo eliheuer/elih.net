@@ -1051,26 +1051,27 @@ export default function NeuralTypeDemo({
           </label>
         )}
 
-        {isField && (
-          <div style={{ marginTop: 14, fontSize: 11.5, color: '#8a8a8a', lineHeight: 1.6 }}>
-            the cursor is a node on the strand, the curve through the
-            text. the orange node is your position; the outlined
-            letter is what an edit follows. filled nodes sit where
-            letters join, hollow nodes at word gaps. arrow keys walk
-            the strand. drag the orange node to move a letter and its
-            tail.
-          </div>
-        )}
-
-        <div style={{ marginTop: 'auto', fontSize: 11.5, color: '#8a8a8a', lineHeight: 1.5 }}>
-          {failed
-            ? 'failed to load the font model'
-            : ready
-              ? `click the canvas to edit: type, select, copy, paste. It is real text. ` +
-                `font file: ${stats.params.toLocaleString()} f32 weights plus a small header, ` +
-                `${stats.bytes.toLocaleString()} bytes total. No glyph tables; every letterform ` +
-                `is generated per keystroke.`
-              : 'loading model…'}
+        <div style={{ marginTop: 'auto', fontSize: 11.5, color: '#8a8a8a', lineHeight: 1.6 }}>
+          {failed ? (
+            'failed to load the font model'
+          ) : ready ? (
+            <>
+              {isField && (
+                <p style={{ margin: '0 0 8px' }}>
+                  click and type: real text. the cursor is a node on
+                  the strand, the curve through the text. arrows walk
+                  it; drag the orange node to move a letter.
+                </p>
+              )}
+              <p style={{ margin: 0 }}>
+                {`the font is a ${stats.params.toLocaleString()}-weight model, ` +
+                  `${stats.bytes.toLocaleString()} bytes. no glyph tables; every ` +
+                  `letterform is generated per keystroke.`}
+              </p>
+            </>
+          ) : (
+            'loading model…'
+          )}
         </div>
       </div>
 
