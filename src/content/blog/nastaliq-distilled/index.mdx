@@ -243,8 +243,9 @@ The .ntf pipeline pushed one new capability back into img2bez. Its
 sub-pixel stage already treated an image as a signed field, so we
 removed the image: `trace_sdf` traces the model's distance field
 directly. It samples the field lazily, takes exact iso-crossings,
-and fits curves in Smooth mode, where every segment is a
-tangent-continuous cubic. No raster exists anywhere in the render
+fits the contour faithfully with the type-design cleanup turned off,
+and re-splines the result as a periodic cubic spline: every point is
+smooth and the curvature is continuous (G2). No raster exists anywhere in the render
 path: the model paints a field, and the field becomes curves.
 
 ### Status
