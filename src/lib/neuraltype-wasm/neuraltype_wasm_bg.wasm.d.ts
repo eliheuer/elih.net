@@ -11,6 +11,7 @@ export const ntffont_new: (a: number, b: number) => [number, number, number];
 export const ntffont_refine_word: (a: number, b: number, c: number) => number;
 export const ntffont_selection_path: (a: number, b: number, c: number, d: number, e: number) => [number, number];
 export const ntffont_set_node_offset: (a: number, b: number, c: number, d: number) => void;
+export const ntffont_set_quality_trace: (a: number, b: number) => void;
 export const ntffont_shape: (a: number, b: number, c: number, d: number, e: number, f: number) => [number, number];
 export const ntffont_trace_word_svg: (a: number, b: number, c: number) => [number, number];
 export const __wbindgen_free: (a: number, b: number, c: number) => void;

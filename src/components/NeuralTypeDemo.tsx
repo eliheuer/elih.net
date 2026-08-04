@@ -230,6 +230,7 @@ export default function NeuralTypeDemo({
   const [showStrand, setShowStrand] = useState(false)
   const [hideStrand, setHideStrand] = useState(false)
   const [lockStrand, setLockStrand] = useState(false)
+  const [qualityTrace, setQualityTrace] = useState(true)
   // Node dragging: editing the displacement chain by hand. Offsets
   // are per caret index, in field px, and clear when the text edits.
   const nodeDrag = useRef<{
@@ -1108,6 +1109,25 @@ export default function NeuralTypeDemo({
               style={{ accentColor: INK }}
             />
             lock strand chain
+          </label>
+        )}
+
+        {isField && (
+          <label style={{ display: 'flex', gap: 6, alignItems: 'center', cursor: 'pointer' }}>
+            <input
+              type="checkbox"
+              checked={qualityTrace}
+              onChange={(e) => {
+                setQualityTrace(e.target.checked)
+                ;(fontRef.current as any)?.set_quality_trace?.(e.target.checked)
+                lineCache.current = null
+                selCache.current = null
+                hintCache.current = null
+                focusText()
+              }}
+              style={{ accentColor: INK }}
+            />
+            img2bez trace
           </label>
         )}
 

@@ -129,6 +129,14 @@ export class NtfFont {
         wasm.ntffont_set_node_offset(this.__wbg_ptr, i, dx, dy);
     }
     /**
+     * Toggle the img2bez quality tracer (true) vs the fast marching
+     * squares tracer (false) for rendering.
+     * @param {boolean} on
+     */
+    set_quality_trace(on) {
+        wasm.ntffont_set_quality_trace(this.__wbg_ptr, on);
+    }
+    /**
      * @param {string} text
      * @param {number} elong
      * @param {string} dir

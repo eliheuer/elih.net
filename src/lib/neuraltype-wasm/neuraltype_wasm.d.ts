@@ -43,6 +43,11 @@ export class NtfFont {
      * `i` (field px, y-down). Dragging a node calls this.
      */
     set_node_offset(i: number, dx: number, dy: number): void;
+    /**
+     * Toggle the img2bez quality tracer (true) vs the fast marching
+     * squares tracer (false) for rendering.
+     */
+    set_quality_trace(on: boolean): void;
     shape(text: string, elong: number, dir: string): string;
     /**
      * Trace one word with the img2bez fitter and return the outline
@@ -66,6 +71,7 @@ export interface InitOutput {
     readonly ntffont_refine_word: (a: number, b: number, c: number) => number;
     readonly ntffont_selection_path: (a: number, b: number, c: number, d: number, e: number) => [number, number];
     readonly ntffont_set_node_offset: (a: number, b: number, c: number, d: number) => void;
+    readonly ntffont_set_quality_trace: (a: number, b: number) => void;
     readonly ntffont_shape: (a: number, b: number, c: number, d: number, e: number, f: number) => [number, number];
     readonly ntffont_trace_word_svg: (a: number, b: number, c: number) => [number, number];
     readonly __wbindgen_free: (a: number, b: number, c: number) => void;
