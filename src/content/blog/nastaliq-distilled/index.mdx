@@ -248,6 +248,79 @@ and re-splines the result as a periodic cubic spline: every point is
 smooth and the curvature is continuous (G2). No raster exists anywhere in the render
 path: the model paints a field, and the field becomes curves.
 
+### Three ways to make it bigger, none of which worked
+
+The model in the demo is 1.36 million parameters and reaches a
+contour IoU of 0.945. The obvious next move is to make it bigger. We
+tried three versions of bigger, and all three came out worse. The
+results are worth writing down, because the reasons differ.
+
+**More pixels.** We retrained at 96 px/em instead of 64, on the same
+architecture. The model grew to 3.10 million parameters and the
+letters looked the same. Almost all of the new parameters went to a
+single place. The field is painted by a stack of transposed
+convolutions that starts from a small seed grid, and that seed comes
+from one linear layer. A bigger canvas means a bigger seed, and that
+one layer holds 93% of the model. The part that describes a letter,
+the 256 numbers the perceptron produces, never changed. The model
+knew exactly as much as before and had more pixels to spread it
+over.
+
+The deeper reason is that pixel count was never the limit. The model
+outputs a distance field, not a bitmap, and the tracer finds the
+zero crossing by interpolating between samples. A field at 64 px/em
+already locates an edge to a fraction of a pixel. Raising the
+resolution improves a number that was not the bottleneck.
+
+**Wider layers.** So we spent the parameters on the description
+instead: 512 numbers instead of 256, and double the channels in
+every convolution, on the original 64 px/em canvas. That model is
+5.36 million parameters, and after 200 epochs it reached 0.809
+against the small model's 0.945. It draws heavier strokes and merges
+letters that should stay apart. In نستعليق the joints dissolve.
+
+It was not too big for the data. A model that has memorized its
+training set shows falling training error alongside rising held-out
+error, and both fell together the whole way. It was undertrained and
+badly tuned: the same learning rate as a model a quarter its size,
+no normalization between the wider layers, and a curve still
+climbing when the run ended. At epoch 100 the small model had
+reached 0.914 and a held-out error of 0.00011. The wide model needed
+200 epochs to reach 0.806 at 0.00032, three times the error.
+
+**A different output entirely.** The third attempt gave up on fields
+and predicted outlines directly, in the same spirit as the
+[Virtua Grotesk](/blog/virtua-grotesk) model. The teacher's own
+béziers become a token stream of drawing commands and quantized
+coordinate deltas: 135 tokens of vocabulary, 91,339 sequences, 17
+million tokens. A 12.7 million parameter decoder-only transformer
+learns to continue that stream from the five-letter context.
+
+It does not draw letters. Next-token accuracy stalled at 0.482 and
+two learning rate drops moved it by two thousandths. What comes out
+is a scatter of small closed contours. The dots land near where dots
+belong, and on longer words you can see fragments following the
+downward slope of the nastaliq baseline, so the model has learned
+something about where ink goes. It has not learned to close a
+stroke.
+
+![Three words. The teacher's outlines on the left, the field model in the middle drawing them almost identically, and the vector model on the right producing only small scattered fragments.](./vector-fragments.png)
+
+| | parameters | file | result |
+| --- | --- | --- | --- |
+| field, 64 px/em | 1,357,995 | 5.4 MB | IoU 0.945, ships in the demo |
+| field, 96 px/em | 3,101,483 | 12.4 MB | IoU 0.825, no visible gain |
+| field, 64 px/em, wide | 5,357,091 | 21.4 MB | IoU 0.809, strokes merge |
+| vector, outline tokens | 12,693,639 | 53.3 MB | accuracy 0.482, fragments |
+
+The honest summary is that the smallest model is still the best one,
+and that none of these runs found the real ceiling. The next suspect
+is not the model but what it is taught. Every letter-in-context is
+supervised against one shape, chosen as the most common when the
+teacher draws more than one. Where Gulzar genuinely varies, the
+model is being asked to learn an average of two different letters.
+That is a data question, and it comes before any more parameters.
+
 ### Status
 
 1. Extract: **complete.** Corpus, cluster records, displacements.
@@ -262,6 +335,9 @@ path: the model paints a field, and the field becomes curves.
    and tests on real Urdu and Persian text remain.
 6. Demo: **live above**, in the same editor island as the NeuralType
    post.
+7. Scale: **three attempts, none better.** More pixels, wider
+   layers, and a vector-output model all lost to the 1.36 million
+   parameter original. See the section above.
 
 The work happens
 in the [post-opentype repo](https://github.com/eliheuer/post-opentype).
