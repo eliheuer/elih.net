@@ -25,8 +25,8 @@ self.onmessage = async (e: MessageEvent<{ fontUrl: string; word: string }>) => {
   try {
     const font = await ensure(fontUrl)
     const svg = font.trace_word_svg(word)
-    ;(self as any).postMessage({ word, svg })
+    ;(self as any).postMessage({ fontUrl, word, svg })
   } catch {
-    ;(self as any).postMessage({ word, svg: '' })
+    ;(self as any).postMessage({ fontUrl, word, svg: '' })
   }
 }

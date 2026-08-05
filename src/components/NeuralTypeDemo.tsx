@@ -175,6 +175,12 @@ const SAMPLES = [
   'LOREM IPSUM',
 ]
 
+/// Opening caret position for a piece of text: one node in from the
+/// start, clamped for one-character strings.
+function startCaret(t: string) {
+  return Math.min(1, t.length)
+}
+
 const fontCache = new Map<string, Promise<NtfFont>>()
 function ensureFont(fontUrl: string): Promise<NtfFont> {
   let p = fontCache.get(fontUrl)
@@ -189,12 +195,13 @@ function ensureFont(fontUrl: string): Promise<NtfFont> {
   return p
 }
 
-type Props = { text?: string; font?: string; samples?: string }
+type Props = { text?: string; font?: string; vectorFont?: string; samples?: string }
 
 export default function NeuralTypeDemo({
   // قلم (qalam, "pen") by default: small enough to read the grid details.
   text: initialText = 'قلم',
-  font: fontUrl = '/demos/neuraltype/kufic.ntf',
+  font: fontUrlProp = '/demos/neuraltype/kufic.ntf',
+  vectorFont: vectorFontUrl,
   samples: samplesProp,
 }: Props) {
   const samples = samplesProp ? samplesProp.split(',') : SAMPLES
@@ -213,7 +220,10 @@ export default function NeuralTypeDemo({
   const dragAnchor = useRef<number | null>(null)
 
   const [text, setText] = useState(initialText)
-  const [sel, setSel] = useState({ start: initialText.length, end: initialText.length })
+  // The caret opens one node in from the start of the text, not at
+  // the end: it sits on a letter junction where the strand and the
+  // node ring are both visible, which shows what the cursor is.
+  const [sel, setSel] = useState({ start: startCaret(initialText), end: startCaret(initialText) })
   const [focused, setFocused] = useState(false)
   const [caretOn, setCaretOn] = useState(true)
   const [elong, setElong] = useState(0)
@@ -227,10 +237,14 @@ export default function NeuralTypeDemo({
   // Field fonts (nastaliq) have no elongation axis; detected from the
   // engine's shape output.
   const [isField, setIsField] = useState(false)
-  const [showStrand, setShowStrand] = useState(false)
+  const [showStrand, setShowStrand] = useState(true)
   const [hideStrand, setHideStrand] = useState(false)
   const [lockStrand, setLockStrand] = useState(false)
   const [qualityTrace, setQualityTrace] = useState(true)
+  // Two models can back the same demo: the field model (SDF + tracer)
+  // and the vector model (transformer emitting outline tokens).
+  const [model, setModel] = useState<'field' | 'vector'>('field')
+  const fontUrl = model === 'vector' && vectorFontUrl ? vectorFontUrl : fontUrlProp
   // Node dragging: editing the displacement chain by hand. Offsets
   // are per caret index, in field px, and clear when the text edits.
   const nodeDrag = useRef<{
@@ -260,6 +274,10 @@ export default function NeuralTypeDemo({
         const font = await ensureFont(fontUrl)
         if (!alive) return
         fontRef.current = font
+        // model switch: stale layout caches belong to the other font
+        lineCache.current = null
+        selCache.current = null
+        hintCache.current = null
         const bytes = new Uint8Array(await (await fetch(fontUrl)).arrayBuffer())
         setStats({ bytes: bytes.length, params: font.n_params() })
         setReady(true)
@@ -326,19 +344,28 @@ export default function NeuralTypeDemo({
     hiddenRef.current?.focus({ preventScroll: true })
   }, [])
 
-  // Focus the editor as soon as the model is ready.
+  // Focus the editor as soon as the model is ready. The hidden input
+  // would otherwise focus with its own default caret, which does not
+  // match the opening node position.
   useEffect(() => {
-    if (ready) focusText()
+    if (!ready) return
+    focusText()
+    const el = hiddenRef.current
+    if (el) {
+      const c = startCaret(el.value)
+      el.setSelectionRange(c, c)
+    }
   }, [ready, focusText])
 
   const setTextAndFocus = useCallback((t: string) => {
     const el = hiddenRef.current
     if (!el) return
+    const c = startCaret(t)
     el.value = t
     el.focus({ preventScroll: true })
-    el.setSelectionRange(t.length, t.length)
+    el.setSelectionRange(c, c)
     setText(t)
-    setSel({ start: t.length, end: t.length })
+    setSel({ start: c, end: c })
   }, [])
 
   const draw = useCallback(() => {
@@ -648,20 +675,27 @@ export default function NeuralTypeDemo({
     if (!ready || !isField) return
     if (!refineWorker.current) {
       try {
-        const w = new Worker(new URL('../lib/ntfRefineWorker.ts', import.meta.url), {
-          type: 'module',
-        })
-        w.onmessage = (e: MessageEvent<{ word: string; svg: string }>) => {
-          const font = fontRef.current as any
-          if (font?.insert_word_trace?.(e.data.word, e.data.svg)) {
-            lineCache.current = null
-            selCache.current = null
-            hintCache.current = null
-          }
-        }
-        refineWorker.current = w
+        refineWorker.current = new Worker(
+          new URL('../lib/ntfRefineWorker.ts', import.meta.url),
+          { type: 'module' },
+        )
       } catch {
         refineWorker.current = null
+      }
+    }
+    if (refineWorker.current) {
+      // reassigned every run so the closure sees the active fontUrl:
+      // results from the other model are dropped, not cross-installed
+      refineWorker.current.onmessage = (
+        e: MessageEvent<{ fontUrl?: string; word: string; svg: string }>,
+      ) => {
+        if (e.data.fontUrl && e.data.fontUrl !== fontUrl) return
+        const font = fontRef.current as any
+        if (font?.insert_word_trace?.(e.data.word, e.data.svg)) {
+          lineCache.current = null
+          selCache.current = null
+          hintCache.current = null
+        }
       }
     }
     let cancelled = false
@@ -1066,6 +1100,30 @@ export default function NeuralTypeDemo({
           />
           show grid
         </label>
+
+        {vectorFontUrl && (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+            {(['field', 'vector'] as const).map((m) => (
+              <label
+                key={m}
+                style={{ display: 'flex', gap: 6, alignItems: 'center', cursor: 'pointer' }}
+              >
+                <input
+                  type="radio"
+                  name="ntf-model"
+                  checked={model === m}
+                  onChange={() => {
+                    setModel(m)
+                    setReady(false)
+                    focusText()
+                  }}
+                  style={{ accentColor: INK }}
+                />
+                {m} model
+              </label>
+            ))}
+          </div>
+        )}
 
         {isField && (
           <label style={{ display: 'flex', gap: 6, alignItems: 'center', cursor: 'pointer' }}>
