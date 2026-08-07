@@ -125,15 +125,19 @@ computed outputs do not need to be enumerated. In practice this means:
 - **Open-ended context.** Today the neural network sees the letter, its joining
   form, and the elongation. More context can be added as new inputs: the
   neighboring letters, the position in the word, the space left on the
-  line. A table needs a glyph for every case; a function just needs the
-  case as an input.
+  line.
 - **A small, uniform file.** No table graph, no rule bytecode: a JSON
-  header and a weight blob. The font in the demo is 215 KB of f32
-  weights, before any quantization.
+  header and a weight blob. The font in the first demo is 215 KB of f32
+  weights, before any quantization. The nastaliq font is bigger, 5.4 MB,
+  which is a lot for a font. This is early work and the format is not
+  optimized yet; quantizing the weights alone would cut it to about a
+  quarter of that.
 
 "Generative" here does not mean random. The same text at the same
 settings produces identical outlines every time, on every machine. The
-shapes are computed, not retrieved.
+shapes are computed, not retrieved. Variation could be added on purpose
+later, a seed input that lets letterforms vary the way handwriting does,
+but it would be a choice, and reproducible.
 
 ### 02. How It Works: Teacher, Student, Tracer
 
