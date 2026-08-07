@@ -1,6 +1,6 @@
 ---
-title: 'Nastaliq Distilled: Converting TTFs to NTFs'
-description: 'Converting Gulzar, an OpenType nastaliq, into a neural font. A build log.'
+title: 'Nasta’liq Distilled: Converting TTFs to NTFs'
+description: 'Converting Gulzar, an OpenType Nasta’liq, into a neural font. A build log.'
 date: 2026-07-30
 tags: ['fonts', 'rust', 'ai', 'machine-learning', 'arabic']
 image: './share-card.png'
@@ -19,16 +19,40 @@ the next step. It makes the case that a neural font can do the work
 of a real OpenType font, and more.
 
 We convert a standard OpenType font into a neural .ntf font, in one
-of the styles that OpenType serves worst: nastaliq. The font we will
+of the styles that OpenType serves worst, Nasta’liq. The font we will
 use is [Gulzar](https://github.com/googlefonts/Gulzar), an OFL
-licensed nastaliq by Borna Izadpanah, Fiona Ross, Alice Savoie, and
+licensed Nasta’liq by Borna Izadpanah, Fiona Ross, Alice Savoie, and
 Simon Cozens. The early result is below. Move the cursor with the
 arrow keys, press space to separate joined letters, type, paste, copy, and drag the
 orange node to move a letter.
 
 <NeuralTypeDemo {...nastaliqDemo} />
 
-Nastaliq is a cursive, flowing style: letters join or break by the
+The demo above runs the full pipeline in your browser. The font is
+a model with 1.36 million parameters, stored as a 5.4 MB .ntf file.
+The engine is Rust compiled to WASM, mostly built with
+[Linebender](https://linebender.org/) crates. It runs the model, places each
+letter in the cascade, and traces the contours. One caveat: the
+model has only been trained on short words so far, every word up to
+three letters long plus some common longer ones. Unseen words
+render rough, because parts of them sit in contexts the model never
+saw, and there it has to guess. This is a training-data problem,
+not a limit of the format, and the fix is to grow the training set
+toward real Urdu and Persian text.
+
+NeuralType is a general format, and Nasta’liq is one use case among
+many. I am using it for the early demo fonts because it makes the
+strongest case. Distillation is the test: if the distilled font
+matches its teacher, the format works. It also answers the
+file-size question early: how many parameters does Nasta’liq need?
+The goal after that is new fonts, designed for the format, that do
+justice to the manuscript and calligraphy tradition Nasta’liq comes
+from.
+
+![Nasta’liq calligraphy by Mishkín-Qalam.](./mishkin-qalam-09.jpg)
+<p class="img-credit">Calligraphy by <a href="https://en.wikipedia.org/wiki/Mishk%C3%ADn-Qalam">Mishkín-Qalam</a> (1826–1912). Public domain, via <a href="https://commons.wikimedia.org/wiki/File:Mishkin-Qalam-09.JPG">Wikimedia Commons</a>.</p>
+
+Nasta’liq is a cursive, flowing style: letters join or break by the
 rules of the Arabic script, and a word is a chain of connected
 runs. Within a run, each letter hangs below the letter before it, so a
 long run starts high above the line and steps down until its last
@@ -37,46 +61,15 @@ word sits on can be straight or curved, and letterforms, dots, and
 swashes move freely around it to fill the space in a pleasing way.
 OpenType approximates this behavior with more than
 one thousand glyphs and cursive-attachment rules. Even so, no
-OpenType nastaliq font has come anywhere near the style as it
-developed in manuscript and calligraphy culture. If a neural font
-has value anywhere, it has value here.
-
-![Nastaliq calligraphy by Mishkín-Qalam.](./mishkin-qalam-09.jpg)
-<p class="img-credit">Calligraphy by <a href="https://en.wikipedia.org/wiki/Mishk%C3%ADn-Qalam">Mishkín-Qalam</a> (1826–1912). Public domain, via <a href="https://commons.wikimedia.org/wiki/File:Mishkin-Qalam-09.JPG">Wikimedia Commons</a>.</p>
-
-The demo runs the full pipeline in your browser. The font is
-a model with 1.36 million parameters, stored as a 5.4 MB .ntf file.
-The engine is Rust compiled to WASM, mostly built with
-[Linebender](https://linebender.org/) crates. It runs the model, places each
-letter in the cascade, and traces the contours. The result is real text: click
-the canvas, place the cursor, select, copy, and paste. One caveat: the
-model has only been trained on a small set of words so far: every
-word up to three letters long, plus some common longer ones. Words
-it has not been trained on render rough, because parts of a long
-word sit in contexts the short words never showed the model, and
-there it has to guess. This is a training-data problem, not a limit
-of the format, and the fix is to grow the training set toward real
-Urdu and Persian text.
-
-NeuralType is a general format, and nastaliq is one use case among
-many. I am using it for the early demo fonts because it makes the strongest case. The goal is
-not to reproduce existing OpenType nastaliq fonts. The goal is fonts
-that do justice to the manuscript and calligraphy tradition that nastaliq comes
-from, and no OpenType font does.
-
-Distillation of an existing OFL nastaliq font is a technical
-exercise. If the distilled font matches its teacher, the format
-works. After that, the next step is new nastaliq fonts, designed to
-show what a NeuralType font can do that an OpenType font cannot. Distillation also answers
-the file-size question early: how many parameters does nastaliq
-need?
+OpenType Nasta’liq font has come anywhere near the style as it
+developed in manuscript and calligraphy culture.
 
 ![A calligraphic composition by Mishkín-Qalam.](./mishkin-qalam-48.jpg)
 <p class="img-credit">Calligraphy by <a href="https://en.wikipedia.org/wiki/Mishk%C3%ADn-Qalam">Mishkín-Qalam</a> (1826–1912). Public domain, via <a href="https://commons.wikimedia.org/wiki/File:Mishkin-Qalam-48.JPG">Wikimedia Commons</a>.</p>
 
 ### The Distillation Process: Measuring Gulzar
 
-The first step toward a nastaliq .ntf font is to measure the
+The first step toward a Nasta’liq .ntf font is to measure the
 problem: how much contextual behavior does Gulzar contain? To answer
 this, we shaped every two-letter word through Gulzar
 with [harfrust](https://github.com/harfbuzz/harfrust) and counted
@@ -102,7 +95,7 @@ The figure below shows the shaped word نستعليق. The letters
 alternate green and gray, the red chain joins the letter origins, and
 the gray rule is the baseline.
 
-![The word nastaliq shaped by Gulzar: letters step down from high above the baseline, and the final swash lands below it.](./cascade.png)
+![The word Nasta’liq shaped by Gulzar: letters step down from high above the baseline, and the final swash lands below it.](./cascade.png)
 
 ### Extraction
 
@@ -146,10 +139,7 @@ from this teacher. That number measures Gulzar, not the goal. The
 goal is calligraphy-quality text on the web, and a calligrapher is
 aware of everything: the whole word, the line, the space on the
 page. A neural font can grow toward that by taking more of the text
-as input. An OpenType font cannot grow that way, no matter how many rules
-are added, because it is built on the metal-type model of fixed
-shapes in fixed rectangles, and that model was never the right one
-for this tradition.
+as input.
 
 ### Shapes as Fields
 
@@ -178,9 +168,7 @@ between cells, at finer than pixel precision. A small error in the
 model's output nudges the edge slightly instead of punching a hole
 in the letter. This field is the continuous version of the binary
 grid in the first NeuralType font: figure and ground, with no stroke
-or skeleton assumptions. This choice is not obvious, and later in
-this post an experiment tries the other route, a model that writes
-curve points directly.
+or skeleton assumptions.
 
 The image below shows the isolated خ from the training set. On the
 left is the shape. On the right is its signed-distance field, with
@@ -189,29 +177,26 @@ the right.
 
 ![The isolated خ from Gulzar, and the same shape as a signed-distance field with the zero contour marked in red.](./sdf-kha.png)
 
-The figure below zooms all the way in. The red box on the left
-marks a small patch of the field, and the right side shows that
-patch cell by cell. Each cell is one value of the field, printed as
-a distance in pixels: negative outside the letter, positive inside.
-The red line is the outline, drawn where the values cross zero.
-Reading neighboring cells places that crossing at a fraction of a
-pixel, which is how a coarse grid still yields a precise edge. This
-patch happens to cross a thin part of the stroke, so two edges pass
-through it, with the inside of the stroke between them.
+The figure below zooms in. The red box marks a small patch of the
+field, shown cell by cell on the right, each cell printed with its
+distance in pixels: negative outside, positive inside. The red line
+is the outline, drawn where the values cross zero. Reading
+neighboring cells places that crossing at a fraction of a pixel,
+which is how a coarse grid still yields a precise edge. This patch
+crosses a thin stroke, so two edges pass through it.
 
 ![A patch of the distance field enlarged to a grid of numbered cells. Values rise from negative to positive and back, and the red zero contour passes between the cells at interpolated positions.](./sdf-cells.png)
 
-We rendered test shapes at two resolutions and looked. At 64 pixels
+We rendered test shapes at two resolutions. At 64 pixels
 per em, the tapers and hairlines of Gulzar survive the threshold. At
 96 pixels per em, the result looks the same at reading size, but the
 model must output 2.3 times more pixels. So the resolution is 64. The
-shared canvas is 155×219 pixels. The canvas is large because nastaliq
+shared canvas is 155×219 pixels. The canvas is large because Nasta’liq
 is large: swash tails and dots extend far from the origin of each
 letter.
 
-Below is the isolated خ at both resolutions, shown at the same size:
-64 pixels per em on the left, 96 on the right. The threshold keeps
-the tapers at both resolutions.
+Below is the isolated خ at both resolutions, shown at the same
+size: 64 on the left, 96 on the right.
 
 ![The isolated خ thresholded at 64 and 96 pixels per em, at the same size. The two are nearly identical.](./res-64-96.png)
 
@@ -229,7 +214,7 @@ letter. The total is 1.36 million parameters: 5.4 MB stored as
 
 The model card:
 
-| nastaliq-gulzar .ntf, v0 (working name) |   |
+| Nasta’liq-gulzar .ntf, v0 (working name) |   |
 | --- | --- |
 | architecture | 5 context embeddings (24 dims) → MLP (120 → 256) → 5 transposed convolutions (128 → 64 → 32 → 16 → 8 → 1 channels, 4×4 kernels, stride 2) + a 2-value displacement head |
 | parameters | 1,357,995 |
@@ -253,13 +238,7 @@ and the teacher's ink overlap, divided by the area covered by
 either. Identical shapes score 1.0, and shapes with no overlap
 score 0.
 
-The first night produced one surprise: the Metal backend of candle
-trained far worse than plain CPU. Same code, same data, and at equal
-epochs the CPU run had reached an IoU of 0.21 while Metal sat at
-0.01. The overnight run moved to CPU, and words were legible by
-epoch 12.
-
-Thin strokes form last. The training loss explains why: a hairline
+Words were legible by epoch 12. Thin strokes form last. The training loss explains why: a hairline
 is worth tens of pixels and a bowl is worth thousands, so the model
 gets the bowls right first.
 
@@ -313,9 +292,11 @@ edge at a fraction of a pixel.
 **Wider layers.** Doubling the width of every layer gave 5.36
 million parameters and a worse score: 0.809 against the small
 model's 0.945, with heavy strokes and letters merging where they
-should stay apart. The problem was not size but a borrowed recipe: it trained with the
-same settings as a model a quarter as large, and its score was
-still climbing when the run ended.
+should stay apart. The problem was not size but a borrowed recipe:
+it trained with the same settings as a model a quarter as large,
+and settings do not transfer across model sizes
+([hyperparameter transfer](https://arxiv.org/abs/2203.03466)). Its
+score was still climbing when the run ended.
 
 **Outlines instead of fields.** The third attempt predicted curve
 points directly as a stream of drawing tokens, with a 12.7 million
@@ -339,24 +320,17 @@ teacher, sharp features are rounded, and small features are
 weakened or missing. Smooth curves are acceptable, and matching
 OpenType exactly is not the goal, but the lost detail must be
 recovered before the model can be considered complete. None of the
-three attempts addressed this. The 96 px/em model added parameters
-to the output grid, not to the representation of the letterforms.
-The wide model added capacity but reused the training settings of a
-model a quarter its size, and settings do not transfer across model
-sizes: a larger model needs its own learning rate and schedule
-([hyperparameter transfer](https://arxiv.org/abs/2203.03466)).
+three attempts addressed this gap.
 
 The vector failure matches the published record.
 [DeepVecFont](https://arxiv.org/abs/2110.06688) generated outlines
 as command sequences and needed image-guided refinement to produce
 usable curves; [DeepVecFont-v2](https://arxiv.org/abs/2303.14585)
-had to redesign the outline representation to make the sequences
+redesigned the outline representation to make the sequences
 learnable at all; and
 [VecFontSDF](https://arxiv.org/abs/2303.12675) moved vector font
 synthesis onto signed distance functions, the representation this
-project already uses. Predicting curve points one at a time is
-fragile because one wrong point breaks a contour, while a field
-degrades gradually. The published results and this one agree.
+project already uses.
 
 The next steps are about information, not parameters. First, extend
 the corpus to real Urdu and Persian text. Second, keep the

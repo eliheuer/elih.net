@@ -31,13 +31,13 @@ cursor, type in Arabic or Latin capitals, select, copy, and paste.
 
 The pixel-art Kufic above may not convince you that a neural font can
 replace OpenType, so here is a trickier style. The demo below shows
-nastaliq, one of the Perso-Arabic styles OpenType handles worst. No
-OpenType nastaliq font has ever matched the calligraphy it comes from
+Nasta’liq, one of the Perso-Arabic styles OpenType handles worst. No
+OpenType Nasta’liq font has ever matched the calligraphy it comes from
 and the people who made OpenType never thought it would be a suitable format for styles like this.
 
-This font was distilled from Gulzar, an OFL nastaliq, into a model of
+This font was distilled from Gulzar, an OFL Nasta’liq, into a model of
 1.36 million parameters. A separate post covers how it
-works: [Nastaliq Distilled](/blog/nastaliq-distilled).
+works: [Nasta’liq Distilled](/blog/nastaliq-distilled).
 
 <NeuralTypeDemo {...nastaliqDemo} />
 
@@ -56,7 +56,7 @@ works: [Nastaliq Distilled](/blog/nastaliq-distilled).
 An OpenType font is a compression scheme for the Latin letter: one fixed
 outline per glyph, reused everywhere, in per-glyph cells that digital type
 inherited from metal sorts. Arabic in its manuscript forms, naskh and
-above all nastaliq, is one continuous, context-dependent stroke, and it
+above all Nasta’liq, is one continuous, context-dependent stroke, and it
 has never fit this system well. The OpenType workaround is thousands of
 glyphs and substitution rules approximating what a hand does in one
 motion.
@@ -80,7 +80,7 @@ a person has to draw the glyph and write the rule, so contextual behavior
 costs one glyph and one rule per case, and the number of cases is limited
 by what a type designer can enumerate by hand. Many new AI tools help with
 this work, but it is still a massive amount of labor, and the result is
-still incapable of reproducing the best naskh and nastaliq manuscripts on
+still incapable of reproducing the best naskh and Nasta’liq manuscripts on
 the web.
 
 Arabic fonts reduce each letter to four forms (isolated, initial, medial, final). The
@@ -128,7 +128,7 @@ computed outputs do not need to be enumerated. In practice this means:
   line.
 - **A small, uniform file.** No table graph, no rule bytecode: a JSON
   header and a weight blob. The font in the first demo is 215 KB of f32
-  weights, before any quantization. The nastaliq font is bigger, 5.4 MB,
+  weights, before any quantization. The Nasta’liq font is bigger, 5.4 MB,
   which is a lot for a font. This is early work and the format is not
   optimized yet; quantizing the weights alone would cut it to about a
   quarter of that.
