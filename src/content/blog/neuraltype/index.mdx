@@ -182,18 +182,20 @@ font.
 
 ### 03. The .ntf File
 
-The format:
+The whole format is four things in order:
 
 ```
-offset  size    content
-0       4       magic "NTF0"
-4       4       u32 LE: header length H
-8       H       JSON header (format, script, style, alphabet, layer sizes)
-8+H     ...     raw little-endian f32 weights, layer by layer
+magic bytes "NTF0"
+header length
+JSON header (format, script, style, alphabet, layer sizes)
+f32 weights, layer by layer
 ```
+
+The full byte-level spec is in
+[SPEC.md](https://github.com/eliheuer/post-opentype/blob/main/docs/SPEC.md)
+in the repo.
 
 Like OpenType, one format serves every script. Everything specific to a
 font, its letters, its inputs, its output, is declared in the header.
-The header is padded with trailing spaces so the weights start on a
-4-byte boundary; a renderer can map the file into memory and read the
-weights in place.
+The weights are stored so a renderer can use them straight out of the
+file, with no unpacking step: loading a font is just reading it.
