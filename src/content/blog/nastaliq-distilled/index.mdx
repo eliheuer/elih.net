@@ -27,10 +27,11 @@ by Borna Izadpanah, Fiona Ross, Alice Savoie, and Simon Cozens.
 Nastaliq is the correct target because it is one of the styles that
 OpenType limits the most. It is a cursive, flowing style: letters
 join or break by the rules of the Arabic script, and a word is a
-chain of connected runs. Within a run, each letter hangs below the letter before it, and
-a long run curves far down before the word lands on the line. A
-baseline grid barely exists in this style. Words land on the line,
-but the letterforms, dots, and swashes sit in free space around it.
+chain of connected runs. Within a run, each letter hangs below the letter before it, so a
+long run starts high above the line and steps down until its last
+letter lands on it. In its handwritten form a baseline grid barely exists. The line a
+word sits on can be straight or curved, and letterforms, dots, and
+swashes move freely around it to fill the space in a pleasing way.
 OpenType approximates this behavior with more than
 one thousand glyphs and cursive-attachment rules. Even so, no
 OpenType nastaliq font has come anywhere near the style as it
@@ -42,17 +43,17 @@ has value anywhere, it has value here.
 
 The demo above runs the full pipeline in your browser. The font is
 a model with 1.36 million parameters, stored as a 5.4 MB .ntf file.
-Rust code, compiled to WASM, runs the model, places each letter in
-the cascade, and traces the contours. The result is real text: click
+The engine is Rust compiled to WASM. It runs the model, places each
+letter in the cascade, and traces the contours. The result is real text: click
 the canvas, place the cursor, select, copy, and paste. One caveat: the
 model has only been trained on a small set of words so far: every
 word up to three letters long, plus some common longer ones. Words
 it has not been trained on render rough.
 
 NeuralType is a general format, and nastaliq is one use case among
-many. It leads here because it makes the strongest case. The goal is
+many. I am using it for the early demo fonts because it makes the strongest case. The goal is
 not to reproduce existing OpenType nastaliq fonts. The goal is fonts
-that do justice to the manuscript tradition that nastaliq comes
+that do justice to the manuscript and calligraphy tradition that nastaliq comes
 from, and no OpenType font does.
 
 Distillation of an existing OFL nastaliq font is a technical
