@@ -22,7 +22,7 @@ dual-licensed under Apache-2.0 or MIT.
 The .ntf font in the demo below is one small file: a short header that
 names the alphabet, then the weights of the neural network.
 Every letterform on the canvas is generated at the moment you type it: the
-letter, its joining form, and the elongation setting go into the network,
+letter, its joining form, and the elongation setting go into the neural network,
 the letterform comes out, and the engine traces it into vector outlines
 and fills it. It is still real text: click the canvas, place the
 cursor, type in Arabic or Latin capitals, select, copy, and paste.
@@ -90,7 +90,7 @@ elongation, and in OpenType every one of those variants costs another
 glyph and another rule.
 
 A .ntf font replaces the lookup with a computation. The file stores the
-weights of a small neural network, and rendering runs the network once
+weights of a small neural network, and rendering runs the neural network once
 per glyph, per keystroke (a "forward pass"), followed by outline
 extraction. Here is the glyph function in the engine:
 
@@ -109,18 +109,20 @@ impl GlyphSource for NeuralFont {
 ```
 
 The character, its joining form, and the elongation value go in; the
-letterform comes out. The function does contain one lookup: it finds the
-character's position in the font's alphabet, which tells the network
-which letter to draw. That lookup retrieves a number, not a shape,
-because no shapes are stored.
+letterform comes out. The function does contain one lookup: the font's
+header lists the characters it supports, and the code finds the typed
+character's position in that list. That position only tells the neural
+network which letter it is working with; the joining form and the
+elongation come in as separate inputs, and the neural network draws the
+letterform for all three together.
 
 Computing the function instead of storing its outputs matters because
 computed outputs do not need to be enumerated. In practice this means:
 
-- **Continuous parameters.** Justification by elongation is a scalar
-  input, not a substituted glyph. Any learned axis (weight, slope,
+- **Continuous parameters.** Justification by elongation is a number,
+  not a substituted glyph. Any learned axis (weight, slope,
   formality) works the same way: variable fonts without masters.
-- **Open-ended context.** Today the network sees the letter, its joining
+- **Open-ended context.** Today the neural network sees the letter, its joining
   form, and the elongation. More context can be added as new inputs: the
   neighboring letters, the position in the word, the space left on the
   line. A table needs a glyph for every case; a function just needs the
@@ -145,7 +147,7 @@ compiled to WASM for the demo above. The pipeline has four stages:
 
 The model learns its letterforms from a teacher program: hand-written
 code that draws each form as an ASCII-art grid in the Rust source. The
-network is trained until it reproduces the teacher's output exactly.
+neural network is trained until it reproduces the teacher's output exactly.
 Each grid
 holds only the letter's skeleton (the *rasm*); dots are added in a
 separate step, which is why the art below has none. ب, ت, and ث all
