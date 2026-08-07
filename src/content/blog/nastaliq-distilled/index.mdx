@@ -89,8 +89,8 @@ Counting glyphs measures one half of the problem: how many shapes
 there are. The other half is how far words climb. The shaped word
 نستعليق places glyphs at vertical offsets up to **1.38 em above the
 baseline**. One word spans more than a full em of vertical travel.
-That number does not fit in the metal-type box that digital font
-formats still emulate. This is why a new format is needed.
+That geometry strains the metal-type box that digital font formats
+still emulate. Numbers like this are why we are trying a new format.
 
 The figure below shows the shaped word نستعليق. The letters
 alternate green and gray, the red chain joins the letter origins, and
@@ -98,20 +98,14 @@ the gray rule is the baseline.
 
 ![The word nastaliq shaped by Gulzar: letters step down from high above the baseline, and the final swash lands below it.](./cascade.png)
 
-A .ntf font takes a different path. OpenType stores every variant as
-a separate glyph and selects between them with rules, like sorts in a
-case of metal type. A .ntf font stores no variants at all. The
-neighboring letters are inputs to the model, and the model draws the
-correct shape for that context directly. The cascade works the same
-way. It is not an attachment rule between stored pieces. It is
-geometry that the model generates, one displacement at a time.
-
 ### Extraction
 
-The teacher is Gulzar plus its shaping engine. For any text, HarfBuzz
-consults the rule tables of the font and answers: these glyphs, at
-these positions. The answers are deterministic, and the questions are
-free. That is what makes distillation cheap.
+Distillation needs a teacher: a working system whose output the new
+model learns to copy. Here the teacher is not the Gulzar font file
+by itself. It is Gulzar plus HarfBuzz, the shaping engine that reads
+text, consults the rule tables in the font, and answers: these
+glyphs, at these positions. The answers are deterministic, and the
+questions are free. That is what makes distillation cheap.
 
 The extraction tool (`crates/neuraltype-distill`) asks every short
 question. The corpus is every single letter, every ordered pair, and
