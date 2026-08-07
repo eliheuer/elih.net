@@ -198,7 +198,7 @@ The model card:
 | corpus | 30,807 words from the teacher: 91,390 letter-in-context records, 1,150 composed shapes |
 | teacher | Gulzar Regular shaped by HarfBuzz ([harfrust](https://github.com/harfbuzz/harfrust)) |
 | optimizer | AdamW, lr 3e-4, then a 1e-4 decay pass; batch 128; every 20th record held out |
-| compute | one Apple M4 Mac laptop, CPU ([candle](https://github.com/huggingface/candle) accelerate backend), about 8 minutes per epoch |
+| compute | one Apple M4 Mac laptop, CPU ([candle](https://github.com/huggingface/candle) accelerate backend), about 8 minutes per epoch. Later runs moved to a Linux PC with an RTX 2060 SUPER, at 100 seconds per epoch |
 
 Training runs in [candle](https://github.com/huggingface/candle), so
 the same code trains on CPU, Metal, or CUDA. Inference in the engine
@@ -254,6 +254,13 @@ The model in the demo is 1.36 million parameters and reaches a
 contour IoU of 0.945. The obvious next move is to make it bigger. We
 tried three versions of bigger, and all three came out worse. The
 results are worth writing down, because the reasons differ.
+
+A note on why three failures fit in two days. The training moved off
+the laptop and onto a Linux PC with a used gaming GPU, which took a
+19-minute epoch down to 100 seconds. That is the difference between
+testing one idea a day and testing three overnight, and most of what
+follows is negative results, which is exactly the kind of work you only
+do when a run is cheap.
 
 **More pixels.** We retrained at 96 px/em instead of 64, on the same
 architecture. The model grew to 3.10 million parameters and the

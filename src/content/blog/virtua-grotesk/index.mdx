@@ -322,7 +322,13 @@ Virtua-12M-v0.1 is a 12M-parameter decoder-only transformer trained from
 scratch on one machine. It does not require cloud compute or a GPU cluster.
 The model has two implementations: an
 [MLX](https://github.com/ml-explore/mlx) build for an M4 Mac and a PyTorch
-build for a Linux PC with a gaming GPU.
+build for a Linux PC with a gaming GPU. Training has since moved to the
+Linux box, an eight-year-old card with 8 GB of memory, which runs a
+training step in about a sixteenth of a second and finishes a full run
+in twenty minutes rather than an afternoon. Both builds are held to
+producing identical output, checked by a script that loads one set of
+weights into each and compares them, because everything downstream
+still runs on the Mac.
 
 The model card:
 
@@ -335,7 +341,7 @@ The model card:
 | pretraining | 28,770 Regular-Bold pairs traced from Google Fonts |
 | fine-tuning | 50 human-graded Virtua Grotesk Bold pairs; 463 glyphs in the corpus |
 | optimizer | AdamW, lr 3e-4, 200-step warmup, cosine decay, batch 24, dropout 0.1 |
-| compute | one Apple M4 Pro laptop (MLX); the full training session in 3h20m |
+| compute | v0.1 trained on one Apple M4 Pro laptop (MLX) in 3h20m; training now runs on a Linux PC with an RTX 2060 SUPER |
 | checkpoint | 50 MB fp32 safetensors |
 
 Decoder-only transformers use the same architecture as GPT. Each token
@@ -424,14 +430,46 @@ glyph) onto the dyadic grid, with
 [img2ufo](https://github.com/eliheuer/img2ufo) assembling a UFO. This is
 how v0.1's pretraining data was made: OFL families traced onto the grid.
 
-The OFL families from Google Fonts are a grab-bag of unrelated designs.
-The model needs one coherent design system, so the dataset is now original
+That pretraining is the part of v0.1 I would not repeat, for a reason
+worth stating plainly. The OFL training outlines were extracted from
+compiled font binaries, not from sources. Compiled fonts carry point
+bloat and conversion artifacts: IBM Plex's Arabic `beh` has 95 points
+in the shipped binary against about 20 in the source it was built from.
+Training on that teaches the model to draw dense, compiled-looking
+outlines, which is the opposite of the goal. The whole point is clean
+source files a person can edit.
+
+The second problem is the one the grid was meant to solve. The OFL
+families from Google Fonts are a grab-bag of unrelated designs, and a
+model spends its capacity absorbing the accidents of a thousand
+different drawing conventions rather than learning one. Consistency is
+signal. Both problems point the same way, so the dataset is now original
 work on the dyadic self-labeling grid system only: Virtua Grotesk across
 weights first, then expanding to a Plantin-like oldstyle and other designs
-using the same grid system. The goal is a general model that knows one
+using the same grid system.
+
+One more correction, about measurement rather than data. The first
+Regular-to-Bold result I recorded was a coordinate error of 20.9 against
+a baseline of 31.3, and it was a lucky draw. Running the same evaluation
+across five seeds gives 24.0 ± 1.6, which is the number in the table
+above. A single training run is an anecdote, and small models on small
+corpora vary enough that the difference between anecdote and result is
+the difference between a claim that survives and one that does not.
+
+The goal is a general model that knows one
 method for converting shapes to outlines and nothing else, not confined to
 the neo-grotesk style, even to the point where it can be used for logos,
 icons, and other font-adjacent kinds of vector graphics.
+
+That expansion has started with Arabic. Virtua now has 316 Arabic
+glyphs drawn in each of the two masters, and the model's training set
+has roughly doubled as a result: 111 approved Regular-to-Bold pairs, of
+which about half are Arabic. The held-out glyph the model is scored on
+is an Arabic one. This is a script where the weight-transfer task is
+harder than in Latin, because a heavier Arabic letter is not the Latin
+move of thickening stems while holding the skeleton still, and it is the
+next real test of whether the method generalizes past the alphabet it
+was designed on.
 
 This is the first step in what I see as a decade-long transformation of digital typography.
 The aim is fonts that are models, not tables of
