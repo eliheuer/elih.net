@@ -18,17 +18,19 @@ trick, not a serious challenge to the OpenType format. This post is
 the next step. It makes the case that a neural font can do the work
 of a real OpenType font, and more.
 
-We convert a standard OpenType font into a .ntf neural network based font, in
-one of the styles that OpenType serves worst, nastaliq. The font we will use
-is [Gulzar](https://github.com/googlefonts/Gulzar), an OFL licensed nastaliq
-by Borna Izadpanah, Fiona Ross, Alice Savoie, and Simon Cozens. See the early result below, move the cursor with the arrow keys and hit space the seperate joined letters, you can even reposition things by draggin some of the nodes.
+We convert a standard OpenType font into a neural .ntf font, in one
+of the styles that OpenType serves worst: nastaliq. The font we will
+use is [Gulzar](https://github.com/googlefonts/Gulzar), an OFL
+licensed nastaliq by Borna Izadpanah, Fiona Ross, Alice Savoie, and
+Simon Cozens. The early result is below. Move the cursor with the
+arrow keys, press space to separate joined letters, and drag the
+orange node to move a letter.
 
 <NeuralTypeDemo {...nastaliqDemo} />
 
-Nastaliq works well as a demo of this technology because it is one of the styles that
-OpenType limits the most. It is a cursive, flowing style: letters
-join or break by the rules of the Arabic script, and a word is a
-chain of connected runs. Within a run, each letter hangs below the letter before it, so a
+Nastaliq is a cursive, flowing style: letters join or break by the
+rules of the Arabic script, and a word is a chain of connected
+runs. Within a run, each letter hangs below the letter before it, so a
 long run starts high above the line and steps down until its last
 letter lands on it. In its handwritten form a baseline grid barely exists. The line a
 word sits on can be straight or curved, and letterforms, dots, and
@@ -115,7 +117,8 @@ The extraction tool (`crates/neuraltype-distill`) shapes every
 short word. The corpus is every single letter, every two-letter
 word, and every three-letter word: 30,783 small words. The
 three-letter words matter because they are the shortest text where
-a letter has a neighbor on each side. Those neighbors produce the medial forms. A second pass added
+a letter has a neighbor on each side. Those neighbors produce the medial forms, the shapes a letter takes
+in the middle of a word. A second pass added
 24 real words: the bismillah, Al-Fatiha, Al-Ikhlas, and نستعليق. The
 full corpus is 30,807 words.
 
