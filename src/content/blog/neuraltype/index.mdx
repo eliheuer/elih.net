@@ -176,10 +176,9 @@ every supported (letter, form, elongation) context, 437 samples. A small
 multilayer perceptron (an MLP, the simplest kind of neural network:
 layers of learned weights, each feeding the next) trains on it in a few
 minutes on CPU and reproduces all 437 exactly.
-The teacher never ships. The weights are the font.
-
-The alphabet also carries Latin capitals, and elongation works for both
-scripts. Text direction is detected automatically.
+The teacher program is only used for training and is not part of the
+.ntf file. The file holds only the trained weights: the weights are the
+font.
 
 ### 03. The .ntf File
 
