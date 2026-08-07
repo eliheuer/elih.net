@@ -1075,32 +1075,6 @@ export default function NeuralTypeDemo({
           />
         </label>
 
-        <label style={{ display: 'flex', gap: 6, alignItems: 'center', cursor: 'pointer' }}>
-          <input
-            type="checkbox"
-            checked={showStructure}
-            onChange={(e) => {
-              setShowStructure(e.target.checked)
-              focusText()
-            }}
-            style={{ accentColor: INK }}
-          />
-          vector outline
-        </label>
-
-        <label style={{ display: 'flex', gap: 6, alignItems: 'center', cursor: 'pointer' }}>
-          <input
-            type="checkbox"
-            checked={showGrid}
-            onChange={(e) => {
-              setShowGrid(e.target.checked)
-              focusText()
-            }}
-            style={{ accentColor: INK }}
-          />
-          show grid
-        </label>
-
         {vectorFontUrl && (
           <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
             {(['field', 'vector'] as const).map((m) => (
@@ -1123,21 +1097,6 @@ export default function NeuralTypeDemo({
               </label>
             ))}
           </div>
-        )}
-
-        {isField && (
-          <label style={{ display: 'flex', gap: 6, alignItems: 'center', cursor: 'pointer' }}>
-            <input
-              type="checkbox"
-              checked={showStrand}
-              onChange={(e) => {
-                setShowStrand(e.target.checked)
-                focusText()
-              }}
-              style={{ accentColor: INK }}
-            />
-            show full strand chain
-          </label>
         )}
 
         {isField && (
@@ -1194,11 +1153,21 @@ export default function NeuralTypeDemo({
             'failed to load the font model'
           ) : ready ? (
             <>
-              {isField && (
+              {isField ? (
                 <p style={{ margin: '0 0 8px' }}>
-                  click and type: real text. the cursor is a node on
-                  the strand, the curve through the text. arrows walk
-                  it; drag the orange node to move a letter.
+                  click and type: real text. select, copy, and paste
+                  as in any text field. arrow keys move the cursor,
+                  a node on the strand, the curve through the text.
+                  drag the orange node to move a letter. space
+                  breaks the join between letters.
+                </p>
+              ) : (
+                <p style={{ margin: '0 0 8px' }}>
+                  click and type: real text, in Arabic or Latin
+                  capitals. select, copy, and paste as in any text
+                  field. arrow keys move the cursor. space breaks
+                  the join between Arabic letters. the slider adds
+                  kashida elongation.
                 </p>
               )}
               <p style={{ margin: 0 }}>
