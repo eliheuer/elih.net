@@ -35,8 +35,7 @@ OpenType nastaliq font has ever matched the calligraphy it comes from
 and the people who made OpenType never thought it would be a suitable format for styles like this.
 
 This font was distilled from Gulzar, an OFL nastaliq, into a model of
-1.36 million parameters. From context alone, it draws each letterform
-and decides where it sits in the cascade. A separate post covers how it
+1.36 million parameters. A separate post covers how it
 works: [Nastaliq Distilled](/blog/nastaliq-distilled).
 
 <NeuralTypeDemo {...nastaliqDemo} />
@@ -70,10 +69,12 @@ glyph = f(character, context, parameters)
 ```
 
 The difference between the two formats is how that function is computed.
-An OpenType font computes it by lookup. Every shape the font can produce
-was drawn ahead of time and stored in a table, and the layout rules
-(cmap, GSUB, GPOS) select among the stored shapes and position them. The
-output set is finite. If a script needs a form the tables do not contain,
+An OpenType font computes it by lookup: the shapes were drawn ahead of
+time and stored in tables, and the layout rules (cmap, GSUB, GPOS)
+select among them and position them. Variable fonts add interpolation
+between drawn masters, but the principle holds: the font can only
+produce shapes a person drew, or blends of them.
+If a script needs a form the tables do not contain,
 a person has to draw the glyph and write the rule, so contextual behavior
 costs one glyph and one rule per case, and the number of cases is limited
 by what a type designer can enumerate by hand. Many new AI tools help with
