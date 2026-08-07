@@ -210,13 +210,17 @@ the tapers at both resolutions.
 
 ![The isolated خ thresholded at 64 and 96 pixels per em, at the same size. The two are nearly identical.](./res-64-96.png)
 
-### Training
+### Training the Student
 
-The model is small. Five context embeddings feed a multilayer
-perceptron. The perceptron feeds a stack of five transposed
-convolutions, and the convolutions paint the field. A separate
-two-value head predicts the displacement. The total is 1.36 million
-parameters: 5.4 MB in f32, against the 963 KB TTF of Gulzar.
+The model is small, and it works in three steps. First, each of the
+five context letters comes in as a learned code, a short list of
+numbers the model chooses for each letter during training. Second, a
+small network mixes the five codes into one description of the shape
+to draw: 256 numbers. Third, a stack of five upscaling layers turns
+that description into the field, doubling the size of the picture at
+each step. A separate small output predicts the offset to the next
+letter. The total is 1.36 million parameters: 5.4 MB stored as
+32-bit numbers, against the 963 KB TTF of Gulzar.
 
 The model card:
 
@@ -233,29 +237,37 @@ The model card:
 | compute | one Apple M4 Mac laptop, CPU ([candle](https://github.com/huggingface/candle) accelerate backend), about 8 minutes per epoch. Later runs moved to a Linux PC with an RTX 2060 SUPER, at 100 seconds per epoch |
 
 Training runs in [candle](https://github.com/huggingface/candle), so
-the same code trains on CPU, Metal, or CUDA. Inference in the engine
-is hand-rolled Rust without a framework, because a .ntf file is only
-weights.
+the same code trains on CPU, Metal, or CUDA. Inference, running the trained model to generate a
+letterform, is plain Rust in the engine, with no machine-learning
+framework. A .ntf file is only weights, and running weights is only
+arithmetic.
 
-The first night produced one surprise. The same training run learns
-about twenty times faster per epoch on CPU than on the Metal backend
-of candle. Same code, same data. At equal epochs, the CPU run reached
-a contour overlap (IoU) of 0.21 against 0.01 for Metal. We moved the
-overnight run to CPU, and words became legible by epoch 12.
+Progress is measured with IoU, intersection over union, the
+standard score for shape agreement: the area where the model's ink
+and the teacher's ink overlap, divided by the area covered by
+either. Identical shapes score 1.0, and shapes with no overlap
+score 0.
 
-Thin vertical strokes form last, and the loss explains this: a
-hairline is worth tens of pixels, and a bowl is worth thousands.
+The first night produced one surprise: the Metal backend of candle
+trained far worse than plain CPU. Same code, same data, and at equal
+epochs the CPU run had reached an IoU of 0.21 while Metal sat at
+0.01. The overnight run moved to CPU, and words were legible by
+epoch 12.
 
-Build-log status, 2026-08-02: training is complete at contour IoU
-0.94. The corpus grew because of one word: الله. Gulzar draws this
-word with a dedicated ligature, and no word in the first corpus was
-long enough to trigger it. The extended corpus added the bismillah and
-other real words, but the new rows were a sliver of the gradient and
-learned slowly. The fix was to oversample them: the trainer repeats
-the long-word rows dozens of times per epoch, and the ligature
-converged in eight epochs. A decayed learning rate pass finished the
-run, the same schedule that took the Kufic font from almost correct
-to exact. The bismillah now renders exactly, ligature included.
+Thin strokes form last. The training loss explains why: a hairline
+is worth tens of pixels and a bowl is worth thousands, so the model
+gets the bowls right first.
+
+The hardest word was الله. Gulzar draws it with a dedicated
+ligature, and no word in the first corpus was long enough to trigger
+it. Adding the bismillah and other real words put the ligature in
+the data, but a few dozen words in a corpus of thirty thousand learn
+slowly. The fix was to repeat those words dozens of times per epoch,
+and the ligature converged in eight epochs.
+
+Training finished at an IoU of 0.945. A final pass with a decaying learning rate settled the last details,
+the same schedule that took the Kufic font from almost correct to
+exact. The bismillah now renders better, ligatures included.
 
 The sheet below compares the teacher with the final model. Gulzar is
 gray on top. The model is green below.
@@ -366,7 +378,7 @@ That is a data question, and it comes before any more parameters.
 2. Fields: **complete.** SDFs at 64 px/em on a shared canvas.
 3. Train: **complete.** The model outputs a field plus a
    displacement. The engine chains the displacements, and that chain
-   is the cascade. Final contour IoU: 0.94.
+   is the cascade. Final contour IoU: 0.945.
 4. Trace: **complete.** A fast sub-pixel tracer for live typing,
    and [img2bez](/blog/img2bez) as the quality pass. See the section
    above.
