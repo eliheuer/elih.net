@@ -240,6 +240,7 @@ export default function NeuralTypeDemo({
   const [showStrand, setShowStrand] = useState(true)
   const [hideStrand, setHideStrand] = useState(false)
   const [lockStrand, setLockStrand] = useState(false)
+  const [hideCursor, setHideCursor] = useState(false)
   const [qualityTrace, setQualityTrace] = useState(true)
   // Two models can back the same demo: the field model (SDF + tracer)
   // and the vector model (transformer emitting outline tokens).
@@ -265,6 +266,14 @@ export default function NeuralTypeDemo({
   const lineCache = useRef<{ key: string; line: Line; path2d: Path2D } | null>(null)
   const selCache = useRef<{ key: string; path: Path2D | null } | null>(null)
   const hintCache = useRef<{ key: string; path: Path2D | null } | null>(null)
+  // Neighbor-letter outlines for the bar caret (hidden-strand mode):
+  // the letter before and after the caret, so the position is legible
+  // even where the bar's x estimate is off in a deep cascade.
+  const caretHintCache = useRef<{
+    key: string
+    prev: Path2D | null
+    next: Path2D | null
+  } | null>(null)
 
   // Load engine + font once.
   useEffect(() => {
@@ -514,7 +523,7 @@ export default function NeuralTypeDemo({
     // rotating half-ring; neighbor nodes run three steps in each
     // direction and halve in size at every step. All opaque: the
     // cursor is geometry, not a glow.
-    if (isFieldLine && nodes && nodes.length && !hideStrand) {
+    if (isFieldLine && nodes && nodes.length && !hideStrand && !hideCursor) {
       const focusI = Math.max(0, Math.min(sel.end, nodes.length - 1))
       const P = (i: number) => ({
         x: ox + nodes[i].x * cell,
