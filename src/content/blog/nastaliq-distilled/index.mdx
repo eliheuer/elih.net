@@ -44,18 +44,18 @@ The demo above runs the full pipeline in your browser. The font is
 a model with 1.36 million parameters, stored as a 5.4 MB .ntf file.
 Rust code, compiled to WASM, runs the model, places each letter in
 the cascade, and traces the contours. The result is real text: click
-the canvas, place the cursor, select, copy, and paste. One caveat:
-the corpus is still small. It covers every word up to three letters,
-plus a small set of real words that includes the basmala. Words
-outside the corpus render rough. The demo font is a live training
-checkpoint, so it improves as training runs.
+the canvas, place the cursor, select, copy, and paste. One caveat: the
+model has only been trained on a small set of words so far: every
+word up to three letters long, plus some common longer ones. Words
+it has not been trained on render rough.
 
-The goal of the NeuralType format is not to reproduce existing
-OpenType nastaliq fonts. The goal is fonts that do justice to the
-manuscript tradition that nastaliq comes from, and no OpenType font
-does. I think the best type designers and font engineers working on
-nastaliq today will agree. If you think I am wrong, send me an email
-or a pull request.
+NeuralType is a general format, and nastaliq is one use case among
+many. It leads here because it makes the strongest case. The goal is
+not to reproduce existing OpenType nastaliq fonts. The goal is fonts
+that do justice to the manuscript tradition that nastaliq comes
+from, and no OpenType font does. I think the best type designers and
+font engineers working on nastaliq today will agree. If you think I
+am wrong, send me an email or a pull request.
 
 Distillation of an existing OFL nastaliq font is a technical
 exercise. If the distilled font matches its teacher, the format
