@@ -13,7 +13,7 @@ import { nastaliqDemo } from '../../../components/demo-presets'
 
 A previous post introduced the [NeuralType](/blog/neuraltype)
 concept: a font can be a small neural network instead of a table of
-outlines. The first .ntf font used [square Kufic](https://en.wikipedia.org/wiki/Kufic#Square_Kufic), a style that resembles low-resolution pixel art. On its own, that is easy to write off as a neat
+outlines. The first .ntf font was [square Kufic](https://en.wikipedia.org/wiki/Kufic#Square_Kufic), a style that resembles low-resolution pixel art. On its own, that is easy to write off as a neat
 trick, not a serious challenge to the OpenType format. This post is
 the next step. It makes the case that a neural font can do the work
 of a real OpenType font, and more.
@@ -22,9 +22,10 @@ We convert a standard OpenType font into a neural .ntf font, in one
 of the styles that OpenType serves worst, Nasta’liq. The font we will
 use is [Gulzar](https://github.com/googlefonts/Gulzar), an OFL
 licensed Nasta’liq by Borna Izadpanah, Fiona Ross, Alice Savoie, and
-Simon Cozens. The early result is below. Move the cursor with the
-arrow keys, press space to separate joined letters, type, paste, copy, and drag the
-orange node to move a letter.
+Simon Cozens. The early result is below. Type, copy, and paste as
+in any text field. Move the cursor with the arrow keys, press space
+to separate joined letters, and drag the orange node to move a
+letter.
 
 <NeuralTypeDemo {...nastaliqDemo} />
 
@@ -32,22 +33,16 @@ The demo above runs the full pipeline in your browser. The font is
 a model with 1.36 million parameters, stored as a 5.4 MB .ntf file.
 The engine is Rust compiled to WASM, mostly built with
 [Linebender](https://linebender.org/) crates. It runs the model, places each
-letter in the cascade, and traces the contours. One caveat: the
-model has only been trained on short words so far, every word up to
-three letters long plus some common longer ones. Unseen words
-render rough, because parts of them sit in contexts the model never
-saw, and there it has to guess. This is a training-data problem,
-not a limit of the format, and the fix is to grow the training set
-toward real Urdu and Persian text.
+letter in the cascade, and traces the contours.
 
 NeuralType is a general format, and Nasta’liq is one use case among
 many. I am using it for the early demo fonts because it makes the
 strongest case. Distillation is the test: if the distilled font
 matches its teacher, the format works. It also answers the
 file-size question early: how many parameters does Nasta’liq need?
-The goal after that is new fonts, designed for the format, that do
-justice to the manuscript and calligraphy tradition Nasta’liq comes
-from.
+The goal after that is new fonts, designed for the format, that
+render the script in a form true to the manuscript and calligraphy
+tradition Nasta’liq comes from.
 
 ![Nasta’liq calligraphy by Mishkín-Qalam.](./mishkin-qalam-09.jpg)
 <p class="img-credit">Calligraphy by <a href="https://en.wikipedia.org/wiki/Mishk%C3%ADn-Qalam">Mishkín-Qalam</a> (1826–1912). Public domain, via <a href="https://commons.wikimedia.org/wiki/File:Mishkin-Qalam-09.JPG">Wikimedia Commons</a>.</p>
@@ -115,6 +110,11 @@ a letter has a neighbor on each side. Those neighbors produce the medial forms, 
 in the middle of a word. A second pass added
 24 real words: the bismillah, Al-Fatiha, Al-Ikhlas, and نستعليق. The
 full corpus is 30,807 words.
+
+This corpus is also why unseen words in the demo render rough. A
+longer word contains letter contexts that no short word ever showed
+the model, and there it has to guess. The fix is a larger corpus,
+built from real Urdu and Persian text.
 
 For every letter in every word, the tool records two facts. The first
 fact is the composed shape: the base letterform and its dots, as one
