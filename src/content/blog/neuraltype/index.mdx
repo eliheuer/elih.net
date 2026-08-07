@@ -19,8 +19,8 @@ The spec, research notes, and Rust engine are on GitHub at
 [github.com/eliheuer/post-opentype](https://github.com/eliheuer/post-opentype),
 dual-licensed under Apache-2.0 or MIT.
 
-The .ntf font in the demo below is 214,612 bytes: a 204-byte header
-naming the alphabet and the layer sizes, then 53,600 weights.
+The .ntf font in the demo below is one small file: a short header that
+names the alphabet, then the weights of the neural network.
 Every letterform on the canvas is generated at the moment you type it: the
 letter, its joining form, and the elongation setting go into the network,
 the letterform comes out, and the engine traces it into vector outlines
