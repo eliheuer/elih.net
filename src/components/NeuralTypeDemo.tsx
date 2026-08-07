@@ -238,8 +238,6 @@ export default function NeuralTypeDemo({
   // engine's shape output.
   const [isField, setIsField] = useState(false)
   const [showStrand, setShowStrand] = useState(true)
-  const [hideStrand, setHideStrand] = useState(false)
-  const [lockStrand, setLockStrand] = useState(false)
   const [hideCursor, setHideCursor] = useState(false)
   const [qualityTrace, setQualityTrace] = useState(true)
   // Two models can back the same demo: the field model (SDF + tracer)
@@ -266,14 +264,6 @@ export default function NeuralTypeDemo({
   const lineCache = useRef<{ key: string; line: Line; path2d: Path2D } | null>(null)
   const selCache = useRef<{ key: string; path: Path2D | null } | null>(null)
   const hintCache = useRef<{ key: string; path: Path2D | null } | null>(null)
-  // Neighbor-letter outlines for the bar caret (hidden-strand mode):
-  // the letter before and after the caret, so the position is legible
-  // even where the bar's x estimate is off in a deep cascade.
-  const caretHintCache = useRef<{
-    key: string
-    prev: Path2D | null
-    next: Path2D | null
-  } | null>(null)
 
   // Load engine + font once.
   useEffect(() => {
@@ -523,7 +513,7 @@ export default function NeuralTypeDemo({
     // rotating half-ring; neighbor nodes run three steps in each
     // direction and halve in size at every step. All opaque: the
     // cursor is geometry, not a glow.
-    if (isFieldLine && nodes && nodes.length && !hideStrand && !hideCursor) {
+    if (isFieldLine && nodes && nodes.length && !hideCursor) {
       const focusI = Math.max(0, Math.min(sel.end, nodes.length - 1))
       const P = (i: number) => ({
         x: ox + nodes[i].x * cell,
@@ -641,7 +631,7 @@ export default function NeuralTypeDemo({
       ctx.beginPath()
       ctx.arc(p0.x, p0.y, 15, theta, theta + Math.PI)
       ctx.stroke()
-    } else if (caretOn && a === b) {
+    } else if (caretOn && a === b && !hideCursor) {
       const x = Math.round(ox + (caretXs[Math.min(a, caretXs.length - 1)] ?? 0) * cell)
       const top = oy
       const bot = oy + line.grid_h * cell
@@ -662,7 +652,7 @@ export default function NeuralTypeDemo({
       ctx.closePath()
       ctx.fill()
     }
-  }, [text, elong, showGrid, showStructure, showStrand, hideStrand, sel, focused, caretOn])
+  }, [text, elong, showGrid, showStructure, showStrand, hideCursor, sel, focused, caretOn])
 
   // Dragged-node offsets are edits to one layout of one string:
   // they clear when the text changes.
@@ -799,7 +789,7 @@ export default function NeuralTypeDemo({
       // caret move
       const view = viewRef.current
       const canvas = canvasRef.current
-      if (view?.nodes && canvas && !lockStrand) {
+      if (view?.nodes && canvas) {
         const rect = canvas.getBoundingClientRect()
         const fi = Math.max(0, Math.min(sel.end, view.nodes.length - 1))
         const nx = view.ox + view.nodes[fi].x * view.cell
@@ -828,7 +818,7 @@ export default function NeuralTypeDemo({
       setSel({ start: i, end: i })
       e.currentTarget.setPointerCapture(e.pointerId)
     },
-    [indexAt, sel.end, lockStrand],
+    [indexAt, sel.end],
   )
   const onPointerMove = useCallback(
     (e: React.PointerEvent<HTMLCanvasElement>) => {
@@ -1108,35 +1098,18 @@ export default function NeuralTypeDemo({
           </div>
         )}
 
-        {isField && (
-          <label style={{ display: 'flex', gap: 6, alignItems: 'center', cursor: 'pointer' }}>
-            <input
-              type="checkbox"
-              checked={hideStrand}
-              onChange={(e) => {
-                setHideStrand(e.target.checked)
-                focusText()
-              }}
-              style={{ accentColor: INK }}
-            />
-            hide strand chain
-          </label>
-        )}
-
-        {isField && (
-          <label style={{ display: 'flex', gap: 6, alignItems: 'center', cursor: 'pointer' }}>
-            <input
-              type="checkbox"
-              checked={lockStrand}
-              onChange={(e) => {
-                setLockStrand(e.target.checked)
-                focusText()
-              }}
-              style={{ accentColor: INK }}
-            />
-            lock strand chain
-          </label>
-        )}
+        <label style={{ display: 'flex', gap: 6, alignItems: 'center', cursor: 'pointer' }}>
+          <input
+            type="checkbox"
+            checked={hideCursor}
+            onChange={(e) => {
+              setHideCursor(e.target.checked)
+              focusText()
+            }}
+            style={{ accentColor: INK }}
+          />
+          hide cursors
+        </label>
 
         {isField && (
           <label style={{ display: 'flex', gap: 6, alignItems: 'center', cursor: 'pointer' }}>
