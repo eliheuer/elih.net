@@ -11,21 +11,19 @@ draft: false
 import NeuralTypeDemo from '../../../components/NeuralTypeDemoIsland.astro'
 import { nastaliqDemo } from '../../../components/demo-presets'
 
-A previous post introduced the [NeuralType](/blog/neuraltype)
-idea: a font can be a small neural network instead of a table of
-outlines. The first .ntf font was
+A previous post introduced the [NeuralType (.ntf)](/blog/neuraltype) font format concept: a font can be a small neural network, instead of a system
+that emulates Gutenberg's movable type in virtual
+rectangles. The first .ntf font was
 [square Kufic](https://en.wikipedia.org/wiki/Kufic#Square_Kufic), a
 style that looks like pixel art. That is easy to write off as a
-neat trick. This post makes the case that a neural font can do the
-work of a real OpenType font, and more.
+neat trick, but this post makes the case that a neural network based font can do the
+work of a real OpenType font and more.
 
-We convert a standard OpenType font into a neural .ntf font, in one
-of the styles that OpenType serves worst: Nasta’liq. The font we will
-use is [Gulzar](https://github.com/googlefonts/Gulzar), an OFL
+I converted a standard OpenType font into a neural network based font font, in one
+of the styles that OpenType serves worst, Nasta’liq. The font I
+used is [Gulzar](https://github.com/googlefonts/Gulzar), an OFL
 licensed Nasta’liq by Borna Izadpanah, Fiona Ross, Alice Savoie, and
-Simon Cozens. The early result is below. Type, copy, and paste as
-in any text field. Move the cursor with the arrow keys, press space
-to separate joined letters, and drag the orange node to move a
+Simon Cozens. The early result is below. Type, copy, paste, move the cursor with the arrow keys, press space to separate joined letters, and drag the orange node to move a
 letter.
 
 <NeuralTypeDemo {...nastaliqDemo} />
