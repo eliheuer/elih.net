@@ -48,7 +48,11 @@ letter in the cascade, and traces the contours. The result is real text: click
 the canvas, place the cursor, select, copy, and paste. One caveat: the
 model has only been trained on a small set of words so far: every
 word up to three letters long, plus some common longer ones. Words
-it has not been trained on render rough.
+it has not been trained on render rough, because parts of a long
+word sit in contexts the short words never showed the model, and
+there it has to guess. This is a training-data problem, not a limit
+of the format, and the fix is to grow the training set toward real
+Urdu and Persian text.
 
 NeuralType is a general format, and nastaliq is one use case among
 many. I am using it for the early demo fonts because it makes the strongest case. The goal is
@@ -70,16 +74,13 @@ need?
 
 The first step toward a nastaliq .ntf font is to measure the
 problem: how much contextual behavior does Gulzar contain? To answer
-this, we shaped every ordered pair of Arabic letters through Gulzar
-with [harfrust](https://github.com/harfbuzz/harfrust). Then we
-counted the distinct glyphs that each letter takes for each
-neighbor:
-
-- ن takes 16 different first-position glyphs. The letter that follows
-  selects the glyph. ي takes 15. م takes 14.
-- Across 31 letters, the pairs produce 344 distinct first-position
-  variants. Amiri, a naskh with rich contextual behavior, produces
-  150 on the same test.
+this, we shaped every two-letter word through Gulzar
+with [harfrust](https://github.com/harfbuzz/harfrust) and counted
+how many different glyphs each letter takes at the start of the
+word. The count depends on the letter that follows: ن is drawn with
+16 different glyphs, ي with 15, م with 14. Across all 31 letters,
+Gulzar uses 344 distinct word-initial glyphs. Amiri, a naskh with
+rich contextual behavior, uses 150 on the same test.
 
 The figure below shows word-initial ن in green, with the following
 letter in gray. The follower selects the shape.
@@ -105,22 +106,23 @@ Distillation needs a teacher: a working system whose output the new
 model learns to copy. Here the teacher is not the Gulzar font file
 by itself. It is Gulzar plus HarfBuzz, the shaping engine that reads
 text, consults the rule tables in the font, and answers: these
-glyphs, at these positions. The answers are deterministic, and the
-questions are free. That is what makes distillation cheap.
+glyphs, at these positions. The same text always shapes to the same
+result, and shaping a word takes a fraction of a millisecond, so
+training data can be generated in any quantity.
 
-The extraction tool (`crates/neuraltype-distill`) asks every short
-question. The corpus is every single letter, every ordered pair, and
-every ordered triple: 30,783 small words. Triples matter because a
-triple is the shortest text where a letter has a neighbor on each
-side. Those neighbors produce the medial forms. A second pass added
-24 real words: the basmala, Al-Fatiha, Al-Ikhlas, and نستعليق. The
+The extraction tool (`crates/neuraltype-distill`) shapes every
+short word. The corpus is every single letter, every two-letter
+word, and every three-letter word: 30,783 small words. The
+three-letter words matter because they are the shortest text where
+a letter has a neighbor on each side. Those neighbors produce the medial forms. A second pass added
+24 real words: the bismillah, Al-Fatiha, Al-Ikhlas, and نستعليق. The
 full corpus is 30,807 words.
 
 For every letter in every word, the tool records two facts. The first
 fact is the composed shape: the base letterform and its dots, as one
-unit. The second fact is the displacement of the letter from the
-previous letter. The chain of displacements is the cascade. A list of
-small vectors captures all the nastaliq-specific geometry.
+unit. The second fact is where the letter sits relative to the letter
+before it: how far across, and how far down. Following those offsets
+letter by letter rebuilds the downward cascade of the word.
 
 The dataset holds 91,390 letter-in-context records, 416 unique
 glyphs, and **1,150 unique composed shapes**. More than 100 of those
@@ -132,24 +134,48 @@ in total.
 
 ![All 108 composed shapes of خ in the dataset, in a grid.](./kha-shapes.png)
 
-One measurement decided the design of the model. With one letter of
-context on each side, 358 contexts were ambiguous: the same three
-letters produced different shapes. The rules of Gulzar look further
-than one letter. With two letters of context on each side, the
-ambiguity is **zero**. Five letters of context fully determine the
-choice that Gulzar makes. So the model does not approximate a fuzzy
-relationship. It compresses an exact function. The square Kufic
-font was the same problem at one thousandth the size.
+One measurement set the size of the model's input. Given a letter
+and two neighbors on each side, Gulzar always draws exactly one
+shape, so a five-letter window is all the context there is to learn
+from this teacher. That number measures Gulzar, not the goal. The
+goal is calligraphy-quality text on the web, and a calligrapher is
+aware of everything: the whole word, the line, the space on the
+page. A neural font can grow toward that by taking more of the text
+as input. An OpenType font cannot grow that way, no matter how many rules
+are added, because it is built on the metal-type model of fixed
+shapes in fixed rectangles, and that model was never the right one
+for this tradition.
 
-### Fields
+### Shapes as Fields
 
-We render each of the 1,150 shapes to a signed-distance field. A
-signed-distance field is a grayscale grid. Each cell holds the
-distance to the edge of the shape, positive inside and negative
-outside. This field is the continuous version of the binary grid in
-the first NeuralType font. The project settled on fields for a reason: a field is
-figure and ground, black and white, with no stroke or skeleton
-assumptions.
+Extraction leaves us with 1,150 shapes, stored as bézier outlines.
+The model has to learn to output these shapes, and that raises the
+central design question of the project: output them in what form?
+An outline is a list of curve points, and the list is a different
+length for every shape. That is a hard thing for a small neural
+network to produce: get one point wrong and the whole contour
+breaks. A neural network learns best when the output is a fixed
+grid of numbers, where a small change in the weights makes a small
+change in the picture. So we do not ask the model to write curves.
+We ask it to paint a picture that curves can be recovered from
+exactly.
+
+We render each of the 1,150 shapes to a signed-distance field. It
+looks like a soft grayscale image of the letter, but the gray means
+something different. In an ordinary image, each pixel says how much
+ink is at that spot, and pixels away from the letter's edge say
+nothing useful. In a signed-distance field, each cell holds the
+distance to the nearest edge of the shape: positive inside, negative
+outside. Every cell knows where the edge is, even cells far from it.
+The outline of the letter is the line where the field crosses zero,
+and because the field changes smoothly, that line can be found
+between cells, at finer than pixel precision. A small error in the
+model's output nudges the edge slightly instead of punching a hole
+in the letter. This field is the continuous version of the binary
+grid in the first NeuralType font: figure and ground, with no stroke
+or skeleton assumptions. This choice is not obvious, and later in
+this post an experiment tries the other route, a model that writes
+curve points directly.
 
 The image below shows the isolated خ from the training set. On the
 left is the shape. On the right is its signed-distance field, with
@@ -157,6 +183,18 @@ the zero contour in red. The model learns to paint the picture on
 the right.
 
 ![The isolated خ from Gulzar, and the same shape as a signed-distance field with the zero contour marked in red.](./sdf-kha.png)
+
+The figure below zooms all the way in. The red box on the left
+marks a small patch of the field, and the right side shows that
+patch cell by cell. Each cell is one value of the field, printed as
+a distance in pixels: negative outside the letter, positive inside.
+The red line is the outline, drawn where the values cross zero.
+Reading neighboring cells places that crossing at a fraction of a
+pixel, which is how a coarse grid still yields a precise edge. This
+patch happens to cross a thin part of the stroke, so two edges pass
+through it, with the inside of the stroke between them.
+
+![A patch of the distance field enlarged to a grid of numbered cells. Values rise from negative to positive and back, and the red zero contour passes between the cells at interpolated positions.](./sdf-cells.png)
 
 We rendered test shapes at two resolutions and looked. At 64 pixels
 per em, the tapers and hairlines of Gulzar survive the threshold. At
@@ -211,18 +249,18 @@ hairline is worth tens of pixels, and a bowl is worth thousands.
 Build-log status, 2026-08-02: training is complete at contour IoU
 0.94. The corpus grew because of one word: الله. Gulzar draws this
 word with a dedicated ligature, and no word in the first corpus was
-long enough to trigger it. The extended corpus added the basmala and
+long enough to trigger it. The extended corpus added the bismillah and
 other real words, but the new rows were a sliver of the gradient and
 learned slowly. The fix was to oversample them: the trainer repeats
 the long-word rows dozens of times per epoch, and the ligature
 converged in eight epochs. A decayed learning rate pass finished the
 run, the same schedule that took the Kufic font from almost correct
-to exact. The basmala now renders exactly, ligature included.
+to exact. The bismillah now renders exactly, ligature included.
 
 The sheet below compares the teacher with the final model. Gulzar is
 gray on top. The model is green below.
 
-![The basmala words, نور, and نستعليق rendered by Gulzar in gray above, and by the final model in green below. The rows match, including the الله ligature.](./teacher-model.png)
+![The bismillah words, نور, and نستعليق rendered by Gulzar in gray above, and by the final model in green below. The rows match, including the الله ligature.](./teacher-model.png)
 
 ### Tracing with img2bez
 
