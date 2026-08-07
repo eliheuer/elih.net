@@ -12,14 +12,15 @@ import NeuralTypeDemo from '../../../components/NeuralTypeDemoIsland.astro'
 import { nastaliqDemo } from '../../../components/demo-presets'
 
 A previous post introduced the [NeuralType](/blog/neuraltype)
-concept: a font can be a small neural network instead of a table of
-outlines. The first .ntf font was [square Kufic](https://en.wikipedia.org/wiki/Kufic#Square_Kufic), a style that resembles low-resolution pixel art. On its own, that is easy to write off as a neat
-trick, not a serious challenge to the OpenType format. This post is
-the next step. It makes the case that a neural font can do the work
-of a real OpenType font, and more.
+idea: a font can be a small neural network instead of a table of
+outlines. The first .ntf font was
+[square Kufic](https://en.wikipedia.org/wiki/Kufic#Square_Kufic), a
+style that looks like pixel art. That is easy to write off as a
+neat trick. This post makes the case that a neural font can do the
+work of a real OpenType font, and more.
 
 We convert a standard OpenType font into a neural .ntf font, in one
-of the styles that OpenType serves worst, Nasta’liq. The font we will
+of the styles that OpenType serves worst: Nasta’liq. The font we will
 use is [Gulzar](https://github.com/googlefonts/Gulzar), an OFL
 licensed Nasta’liq by Borna Izadpanah, Fiona Ross, Alice Savoie, and
 Simon Cozens. The early result is below. Type, copy, and paste as
@@ -35,42 +36,46 @@ The engine is Rust compiled to WASM, mostly built with
 [Linebender](https://linebender.org/) crates. It runs the model, places each
 letter in the cascade, and traces the contours.
 
-NeuralType is a general format, and Nasta’liq is one use case among
-many. I am using it for the early demo fonts because it makes the
-strongest case. Distillation is the test: if the distilled font
-matches its teacher, the format works. It also answers the
-file-size question early: how many parameters does Nasta’liq need?
-The goal after that is new fonts, designed for the format, that
-render the script in a form true to the manuscript and calligraphy
-tradition Nasta’liq comes from.
+NeuralType is a general format, and Nasta’liq is one use case
+among many. I am using it for the early demo fonts because it makes
+the strongest case.
+
+Distillation is the test. If the distilled font matches its
+teacher, the format works. It also answers a basic question early:
+how many parameters does Nasta’liq need? After that, the goal is
+new fonts, designed for the format, that render the script in a
+form true to the manuscript and calligraphy tradition it comes
+from.
 
 ![Nasta’liq calligraphy by Mishkín-Qalam.](./mishkin-qalam-09.jpg)
 <p class="img-credit">Calligraphy by <a href="https://en.wikipedia.org/wiki/Mishk%C3%ADn-Qalam">Mishkín-Qalam</a> (1826–1912). Public domain, via <a href="https://commons.wikimedia.org/wiki/File:Mishkin-Qalam-09.JPG">Wikimedia Commons</a>.</p>
 
-Nasta’liq is a cursive, flowing style: letters join or break by the
-rules of the Arabic script, and a word is a chain of connected
-runs. Within a run, each letter hangs below the letter before it, so a
-long run starts high above the line and steps down until its last
-letter lands on it. In its handwritten form a baseline grid barely exists. The line a
-word sits on can be straight or curved, and letterforms, dots, and
-swashes move freely around it to fill the space in a pleasing way.
-OpenType approximates this behavior with more than
-one thousand glyphs and cursive-attachment rules. Even so, no
-OpenType Nasta’liq font has come anywhere near the style as it
-developed in manuscript and calligraphy culture.
+Nasta’liq is a cursive, flowing style. Letters join or break by
+the rules of the Arabic script, and a word is a chain of connected
+runs. Within a run, each letter hangs below the letter before it.
+A long run starts high above the line and steps down until its
+last letter lands on it.
+
+In handwriting there is no baseline grid. The line a word sits on
+can be straight or curved, and letterforms, dots, and swashes move
+freely around it to fill the space. OpenType approximates all of
+this with more than one thousand glyphs and cursive-attachment
+rules. Even so, no OpenType Nasta’liq font has come close to the
+style as it developed in manuscript and calligraphy culture.
 
 ![A calligraphic composition by Mishkín-Qalam.](./mishkin-qalam-48.jpg)
 <p class="img-credit">Calligraphy by <a href="https://en.wikipedia.org/wiki/Mishk%C3%ADn-Qalam">Mishkín-Qalam</a> (1826–1912). Public domain, via <a href="https://commons.wikimedia.org/wiki/File:Mishkin-Qalam-48.JPG">Wikimedia Commons</a>.</p>
 
 ### The Distillation Process: Measuring Gulzar
 
-The first step toward a Nasta’liq .ntf font is to measure the
-problem: how much contextual behavior does Gulzar contain? To answer
-this, we shaped every two-letter word through Gulzar
-with [harfrust](https://github.com/harfbuzz/harfrust) and counted
-how many different glyphs each letter takes at the start of the
-word. The count depends on the letter that follows: ن is drawn with
-16 different glyphs, ي with 15, م with 14. Across all 31 letters,
+The first step is to measure the problem: how much contextual
+behavior does Gulzar contain?
+
+We shaped every two-letter word through Gulzar with
+[harfrust](https://github.com/harfbuzz/harfrust) and counted how
+many different glyphs each letter takes at the start of the word.
+The count depends on the letter that follows. ن is drawn with 16
+different glyphs, ي with 15, م with 14. Across all 31 letters,
 Gulzar uses 344 distinct word-initial glyphs. Amiri, a naskh with
 rich contextual behavior, uses 150 on the same test.
 
@@ -98,29 +103,31 @@ Distillation needs a teacher: a working system whose output the new
 model learns to copy. Here the teacher is not the Gulzar font file
 by itself. It is Gulzar plus HarfBuzz, the shaping engine that reads
 text, consults the rule tables in the font, and answers: these
-glyphs, at these positions. The same text always shapes to the same
-result, and shaping a word takes a fraction of a millisecond, so
-training data can be generated in any quantity.
+glyphs, at these positions.
+
+The same text always shapes to the same result, and shaping a word
+takes a fraction of a millisecond. So training data can be
+generated in any quantity.
 
 The extraction tool (`crates/neuraltype-distill`) shapes every
-short word. The corpus is every single letter, every two-letter
-word, and every three-letter word: 30,783 small words. The
-three-letter words matter because they are the shortest text where
-a letter has a neighbor on each side. Those neighbors produce the medial forms, the shapes a letter takes
-in the middle of a word. A second pass added
-24 real words: the bismillah, Al-Fatiha, Al-Ikhlas, and نستعليق. The
-full corpus is 30,807 words.
+short word: every single letter, every two-letter word, and every
+three-letter word. That is 30,783 small words. The three-letter
+words matter because they are the shortest text where a letter has
+a neighbor on each side. Those neighbors produce the medial forms,
+the shapes a letter takes in the middle of a word. A second pass
+added 24 real words: the bismillah, Al-Fatiha, Al-Ikhlas, and
+نستعليق. The full corpus is 30,807 words.
 
 This corpus is also why unseen words in the demo render rough. A
 longer word contains letter contexts that no short word ever showed
 the model, and there it has to guess. The fix is a larger corpus,
 built from real Urdu and Persian text.
 
-For every letter in every word, the tool records two facts. The first
-fact is the composed shape: the base letterform and its dots, as one
-unit. The second fact is where the letter sits relative to the letter
-before it: how far across, and how far down. Following those offsets
-letter by letter rebuilds the downward cascade of the word.
+For every letter in every word, the tool records two facts. The
+first is the composed shape: the base letterform and its dots, as
+one unit. The second is the offset from the previous letter: how
+far across, and how far down. Following the offsets letter by
+letter rebuilds the downward cascade of the word.
 
 The dataset holds 91,390 letter-in-context records, 416 unique
 glyphs, and **1,150 unique composed shapes**. More than 100 of those
@@ -134,26 +141,27 @@ in total.
 
 One measurement set the size of the model's input. Given a letter
 and two neighbors on each side, Gulzar always draws exactly one
-shape, so a five-letter window is all the context there is to learn
-from this teacher. That number measures Gulzar, not the goal. The
-goal is calligraphy-quality text on the web, and a calligrapher is
-aware of everything: the whole word, the line, the space on the
-page. A neural font can grow toward that by taking more of the text
-as input.
+shape. So a five-letter window captures everything this teacher
+knows.
+
+That number measures Gulzar, not the goal. A calligrapher is aware
+of everything: the whole word, the line, the space on the page. A
+neural font can grow toward that by taking more of the text as
+input.
 
 ### Shapes as Fields
 
 Extraction leaves us with 1,150 shapes, stored as bézier outlines.
-The model has to learn to output these shapes, and that raises the
-central design question of the project: output them in what form?
-An outline is a list of curve points, and the list is a different
-length for every shape. That is a hard thing for a small neural
-network to produce: get one point wrong and the whole contour
-breaks. A neural network learns best when the output is a fixed
-grid of numbers, where a small change in the weights makes a small
-change in the picture. So we do not ask the model to write curves.
-We ask it to paint a picture that curves can be recovered from
-exactly.
+The model has to learn to draw these shapes. In what form should
+it output them?
+
+An outline is a list of curve points, and the list has a different
+length for every shape. That is hard for a small neural network:
+get one point wrong and the whole contour breaks. A neural network
+learns best when the output is a fixed grid of numbers, where a
+small change in the weights makes a small change in the picture.
+So we do not ask the model to write curves. We ask it to paint a
+picture that curves can be recovered from exactly.
 
 We render each of the 1,150 shapes to a signed-distance field. It
 looks like a soft grayscale image of the letter, but the gray means
@@ -161,14 +169,16 @@ something different. In an ordinary image, each pixel says how much
 ink is at that spot, and pixels away from the letter's edge say
 nothing useful. In a signed-distance field, each cell holds the
 distance to the nearest edge of the shape: positive inside, negative
-outside. Every cell knows where the edge is, even cells far from it.
-The outline of the letter is the line where the field crosses zero,
-and because the field changes smoothly, that line can be found
+outside. Every cell knows where the edge is, even cells far from
+it.
+
+The outline of the letter is the line where the field crosses
+zero. Because the field changes smoothly, that line can be found
 between cells, at finer than pixel precision. A small error in the
 model's output nudges the edge slightly instead of punching a hole
-in the letter. This field is the continuous version of the binary
-grid in the first NeuralType font: figure and ground, with no stroke
-or skeleton assumptions.
+in the letter. The field is the continuous version of the binary
+grid in the first NeuralType font: figure and ground, with no
+stroke or skeleton assumptions.
 
 The image below shows the isolated خ from the training set. On the
 left is the shape. On the right is its signed-distance field, with
@@ -209,8 +219,10 @@ small network mixes the five codes into one description of the shape
 to draw: 256 numbers. Third, a stack of five upscaling layers turns
 that description into the field, doubling the size of the picture at
 each step. A separate small output predicts the offset to the next
-letter. The total is 1.36 million parameters: 5.4 MB stored as
-32-bit numbers, against the 963 KB TTF of Gulzar.
+letter.
+
+The total is 1.36 million parameters, 5.4 MB stored as 32-bit
+numbers. The Gulzar TTF is 963 KB.
 
 The model card:
 
@@ -264,11 +276,12 @@ The model outputs a field, but text needs outlines. The demo uses
 two tracers. While you type, a fast sub-pixel tracer draws each word
 with no added latency. When input settles, each word upgrades to a
 quality outline from [img2bez](/blog/img2bez), the autotracer I
-built for turning rasters into font-grade bézier curves. The upgrade
-runs in a Web Worker, a background thread the browser provides, so
-the slower tracing never runs on the thread that handles typing and
-drawing. The editor stays responsive, and each word's outline swaps
-in when it is ready.
+built for turning rasters into font-grade bézier curves.
+
+The upgrade runs in a Web Worker, a background thread the browser
+provides. The slow tracing never runs on the thread that handles
+typing and drawing, so the editor stays responsive. Each word's
+outline swaps in when it is ready.
 
 Working on the .ntf pipeline added one new ability to img2bez: it
 now traces the model's distance field directly, with no image step
