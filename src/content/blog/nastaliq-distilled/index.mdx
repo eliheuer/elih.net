@@ -308,11 +308,9 @@ edge at a fraction of a pixel.
 **Wider layers.** Doubling the width of every layer gave 5.36
 million parameters and a worse score: 0.809 against the small
 model's 0.945, with heavy strokes and letters merging where they
-should stay apart. It was not too big for the data; training and
-held-out error fell together the whole way, which rules out
-memorization. It was undertrained and badly tuned: the same
-learning rate as a model a quarter its size, and a score still
-climbing when the run ended.
+should stay apart. The problem was not size but a borrowed recipe: it trained with the
+same settings as a model a quarter as large, and its score was
+still climbing when the run ended.
 
 **Outlines instead of fields.** The third attempt predicted curve
 points directly as a stream of drawing tokens, with a 12.7 million
@@ -325,17 +323,48 @@ downward slope of the words, but strokes never close.
 
 | | parameters | file | result |
 | --- | --- | --- | --- |
-| field, 64 px/em | 1,357,995 | 5.4 MB | IoU 0.945, ships in the demo |
+| field, 64 px/em | 1,357,995 | 5.4 MB | IoU 0.945, the font in the demo |
 | field, 96 px/em | 3,101,483 | 12.4 MB | IoU 0.825, no visible gain |
 | field, 64 px/em, wide | 5,357,091 | 21.4 MB | IoU 0.809, strokes merge |
 | vector, outline tokens | 12,693,639 | 53.3 MB | accuracy 0.482, fragments |
 
-The smallest model is still the best one, and none of these runs
-found the real ceiling. The next suspect is the data, not the model.
-Where the teacher draws the same context more than one way, the
-training set keeps only the most common shape, so the model is asked
-to learn an average of two different letters. That question comes
-before any more parameters.
+The smallest model is still the best one, but it is not finished.
+An IoU of 0.945 leaves real detail on the table: next to the
+teacher, some of the sharpness of the original is lost, and small
+details soften or disappear. The smoothness of the traced curves is
+welcome, and matching OpenType stroke for stroke is not the goal,
+but those details have to come back before this can be called fully
+working. The lesson of the three failures is that none of them
+aimed at that gap. A bigger canvas spent the new parameters on
+pixels, and the wide model spent them on capacity it never got to
+use, because training settings do not carry over across model
+sizes: a model four times as large needs its own learning rate and
+schedule, a result the research on
+[hyperparameter transfer](https://arxiv.org/abs/2203.03466) makes
+precise.
+
+The vector failure matches the published record.
+[DeepVecFont](https://arxiv.org/abs/2110.06688) generated outlines
+as command sequences and needed image-guided refinement to produce
+usable curves; [DeepVecFont-v2](https://arxiv.org/abs/2303.14585)
+had to redesign the outline representation to make the sequences
+learnable at all; and
+[VecFontSDF](https://arxiv.org/abs/2303.12675) moved vector font
+synthesis onto signed distance functions, the representation this
+project already uses. Predicting curve points one at a time is
+fragile because one wrong point breaks a contour, while a field
+degrades gracefully. The literature and our result point the same
+way.
+
+So the right direction is not more parameters, it is more
+information. Grow the corpus toward real Urdu and Persian text.
+Keep the teacher's genuine variants instead of averaging them:
+where Gulzar draws the same context more than one way, the training
+set currently keeps only the most common shape, and that question
+comes before any more capacity. After the data, the promising
+research direction is representations that store more shape per
+parameter, such as a model that answers the distance question
+directly for any point instead of painting a fixed grid of them.
 
 ### Project Status
 
