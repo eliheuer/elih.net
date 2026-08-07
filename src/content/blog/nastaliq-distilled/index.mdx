@@ -23,7 +23,7 @@ of the styles that OpenType serves worst: nastaliq. The font we will
 use is [Gulzar](https://github.com/googlefonts/Gulzar), an OFL
 licensed nastaliq by Borna Izadpanah, Fiona Ross, Alice Savoie, and
 Simon Cozens. The early result is below. Move the cursor with the
-arrow keys, press space to separate joined letters, and drag the
+arrow keys, press space to separate joined letters, type, paste, copy, and drag the
 orange node to move a letter.
 
 <NeuralTypeDemo {...nastaliqDemo} />
@@ -44,9 +44,10 @@ has value anywhere, it has value here.
 ![Nastaliq calligraphy by Mishkín-Qalam.](./mishkin-qalam-09.jpg)
 <p class="img-credit">Calligraphy by <a href="https://en.wikipedia.org/wiki/Mishk%C3%ADn-Qalam">Mishkín-Qalam</a> (1826–1912). Public domain, via <a href="https://commons.wikimedia.org/wiki/File:Mishkin-Qalam-09.JPG">Wikimedia Commons</a>.</p>
 
-The demo above runs the full pipeline in your browser. The font is
+The demo runs the full pipeline in your browser. The font is
 a model with 1.36 million parameters, stored as a 5.4 MB .ntf file.
-The engine is Rust compiled to WASM. It runs the model, places each
+The engine is Rust compiled to WASM, mostly built with
+[Linebender](https://linebender.org/) crates. It runs the model, places each
 letter in the cascade, and traces the contours. The result is real text: click
 the canvas, place the cursor, select, copy, and paste. One caveat: the
 model has only been trained on a small set of words so far: every
