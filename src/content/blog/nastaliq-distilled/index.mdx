@@ -329,19 +329,17 @@ downward slope of the words, but strokes never close.
 | vector, outline tokens | 12,693,639 | 53.3 MB | accuracy 0.482, fragments |
 
 The smallest model is still the best one, but it is not finished.
-An IoU of 0.945 leaves real detail on the table: next to the
-teacher, some of the sharpness of the original is lost, and small
-details soften or disappear. The smoothness of the traced curves is
-welcome, and matching OpenType stroke for stroke is not the goal,
-but those details have to come back before this can be called fully
-working. The lesson of the three failures is that none of them
-aimed at that gap. A bigger canvas spent the new parameters on
-pixels, and the wide model spent them on capacity it never got to
-use, because training settings do not carry over across model
-sizes: a model four times as large needs its own learning rate and
-schedule, a result the research on
-[hyperparameter transfer](https://arxiv.org/abs/2203.03466) makes
-precise.
+At an IoU of 0.945, visible detail is lost: compared to the
+teacher, sharp features are rounded, and small features are
+weakened or missing. Smooth curves are acceptable, and matching
+OpenType exactly is not the goal, but the lost detail must be
+recovered before the model can be considered complete. None of the
+three attempts addressed this. The 96 px/em model added parameters
+to the output grid, not to the representation of the letterforms.
+The wide model added capacity but reused the training settings of a
+model a quarter its size, and settings do not transfer across model
+sizes: a larger model needs its own learning rate and schedule
+([hyperparameter transfer](https://arxiv.org/abs/2203.03466)).
 
 The vector failure matches the published record.
 [DeepVecFont](https://arxiv.org/abs/2110.06688) generated outlines
@@ -353,18 +351,16 @@ learnable at all; and
 synthesis onto signed distance functions, the representation this
 project already uses. Predicting curve points one at a time is
 fragile because one wrong point breaks a contour, while a field
-degrades gracefully. The literature and our result point the same
-way.
+degrades gradually. The published results and this one agree.
 
-So the right direction is not more parameters, it is more
-information. Grow the corpus toward real Urdu and Persian text.
-Keep the teacher's genuine variants instead of averaging them:
-where Gulzar draws the same context more than one way, the training
-set currently keeps only the most common shape, and that question
-comes before any more capacity. After the data, the promising
-research direction is representations that store more shape per
-parameter, such as a model that answers the distance question
-directly for any point instead of painting a fixed grid of them.
+The next steps are about information, not parameters. First, extend
+the corpus to real Urdu and Persian text. Second, keep the
+teacher's variants: where Gulzar draws the same context more than
+one way, the training set currently keeps only the most common
+shape, so the model is trained on an average of different letters.
+Third, after the data, test representations that store more shape
+per parameter, such as a model that returns the distance value for
+any queried point instead of a fixed grid of samples.
 
 ### Project Status
 
