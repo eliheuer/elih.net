@@ -90,7 +90,7 @@ glyph and another rule.
 A .ntf font replaces the lookup with a computation. The file stores the
 weights of a small neural network, and rendering runs the network once
 per glyph, per keystroke (a "forward pass"), followed by outline
-extraction. Here is he glyph function in the engine:
+extraction. Here is the glyph function in the engine:
 
 ```rust
 impl GlyphSource for NeuralFont {
