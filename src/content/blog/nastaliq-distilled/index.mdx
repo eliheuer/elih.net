@@ -17,14 +17,14 @@ outlines. The first .ntf font used [square Kufic](https://en.wikipedia.org/wiki/
 on a binary grid and resembles low-resolution pixel art. On its own, that is easy to write off as a neat
 trick, not a serious challenge to the OpenType format. This post is
 the next step. It makes the case that a neural font can do the work
-of a real OpenType font. We convert one into a .ntf neural font, in
+of a real OpenType font. We convert a standard OpenType font into a .ntf neural network based font, in
 the style that OpenType serves worst: nastaliq. The target
-is [Gulzar](https://github.com/googlefonts/Gulzar), an OFL nastaliq
+is [Gulzar](https://github.com/googlefonts/Gulzar), an OFL licensed nastaliq
 by Borna Izadpanah, Fiona Ross, Alice Savoie, and Simon Cozens.
 
 <NeuralTypeDemo {...nastaliqDemo} />
 
-Nastaliq is the correct target because it is the style that
+Nastaliq is the correct target because it is one of the styles that
 OpenType limits the most. It is a cursive, flowing style: letters
 join or break by the rules of the Arabic script, and a word is a
 chain of connected runs. Within a run, each letter hangs below the letter before it, and
