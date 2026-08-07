@@ -28,15 +28,13 @@ cursor, type in Arabic or Latin capitals, select, copy, and paste.
 
 <NeuralTypeDemo />
 
-The same engine can load a very different .ntf file. The demo below is
-a second neural font in the same editor: nastaliq, the cascading
-Perso-Arabic style that OpenType handles worst, distilled from the
-OFL font Gulzar into a 1.36M-parameter model that generates each
-letterform and its position in the cascade from context. It runs a
-live training checkpoint that improves as training proceeds, so the
-letterforms may still be forming when you read this. There is a newer
-post specifically about this font:
-[Nastaliq Distilled](/blog/nastaliq-distilled).
+I know that the low-resolution pixel art style above might not have convinced you this is a viable OpenType replacement yet, so here is a tricyer style. The demo below shows 
+nastaliq, one of the Perso-Arabic styles OpenType handles worst. No OpenType Nastaliq font has ever been able to reproduce the style of calligraphy these fonts are based on.
+
+This font was distilled from Gulzar, an OFL nastaliq, into a model of
+1.36 million parameters. From context alone, it draws each letterform
+and decides where that letterform sits in the cascade. A separate post
+covers how this works in more detail: [Nastaliq Distilled](/blog/nastaliq-distilled).
 
 <NeuralTypeDemo {...nastaliqDemo} />
 
