@@ -281,79 +281,45 @@ two tracers. While you type, a fast sub-pixel tracer draws each word
 with no added latency. When input settles, each word upgrades to a
 quality outline from [img2bez](/blog/img2bez), the autotracer I
 built for turning rasters into font-grade bézier curves. The upgrade
-runs in a Web Worker, so the editor never blocks.
+runs in a Web Worker, a background thread the browser provides, so
+the slower tracing never runs on the thread that handles typing and
+drawing. The editor stays responsive, and each word's outline swaps
+in when it is ready.
 
-The .ntf pipeline pushed one new capability back into img2bez. Its
-sub-pixel stage already treated an image as a signed field, so we
-removed the image: `trace_sdf` traces the model's distance field
-directly. It samples the field lazily, takes exact iso-crossings,
-fits the contour faithfully with the type-design cleanup turned off,
-and re-splines the result as a periodic cubic spline: every point is
-smooth and the curvature is continuous (G2). No raster exists anywhere in the render
+Working on the .ntf pipeline added one new ability to img2bez: it
+now traces the model's distance field directly, with no image step
+in between. The curves it fits are smooth everywhere, with no
+corners or kinks. No raster image exists anywhere in the render
 path: the model paints a field, and the field becomes curves.
 
-### Three ways to make it bigger, none of which worked
+### Making It Bigger
 
-The model in the demo is 1.36 million parameters and reaches a
-contour IoU of 0.945. The obvious next move is to make it bigger. We
-tried three versions of bigger, and all three came out worse. The
-results are worth writing down, because the reasons differ.
+The model in the demo is 1.36 million parameters. The obvious next
+move was a bigger model. We tried three versions of bigger, and all
+three came out worse, each for a different reason.
 
-A note on why three failures fit in two days. The training moved off
-the laptop and onto a Linux PC with a used gaming GPU, which took a
-19-minute epoch down to 100 seconds. That is the difference between
-testing one idea a day and testing three overnight, and most of what
-follows is negative results, which is exactly the kind of work you only
-do when a run is cheap.
+**More pixels.** Retraining at 96 px/em grew the model to 3.10
+million parameters, and the letters looked the same. Almost all of
+the new parameters went into the one layer that seeds the larger
+picture, not into knowledge of the letterforms. And resolution was
+never the limit: a distance field at 64 px/em already places an
+edge at a fraction of a pixel.
 
-**More pixels.** We retrained at 96 px/em instead of 64, on the same
-architecture. The model grew to 3.10 million parameters and the
-letters looked the same. Almost all of the new parameters went to a
-single place. The field is painted by a stack of transposed
-convolutions that starts from a small seed grid, and that seed comes
-from one linear layer. A bigger canvas means a bigger seed, and that
-one layer holds 93% of the model. The part that describes a letter,
-the 256 numbers the perceptron produces, never changed. The model
-knew exactly as much as before and had more pixels to spread it
-over.
+**Wider layers.** Doubling the width of every layer gave 5.36
+million parameters and a worse score: 0.809 against the small
+model's 0.945, with heavy strokes and letters merging where they
+should stay apart. It was not too big for the data; training and
+held-out error fell together the whole way, which rules out
+memorization. It was undertrained and badly tuned: the same
+learning rate as a model a quarter its size, and a score still
+climbing when the run ended.
 
-The deeper reason is that pixel count was never the limit. The model
-outputs a distance field, not a bitmap, and the tracer finds the
-zero crossing by interpolating between samples. A field at 64 px/em
-already locates an edge to a fraction of a pixel. Raising the
-resolution improves a number that was not the bottleneck.
-
-**Wider layers.** So we spent the parameters on the description
-instead: 512 numbers instead of 256, and double the channels in
-every convolution, on the original 64 px/em canvas. That model is
-5.36 million parameters, and after 200 epochs it reached 0.809
-against the small model's 0.945. It draws heavier strokes and merges
-letters that should stay apart. In نستعليق the joints dissolve.
-
-It was not too big for the data. A model that has memorized its
-training set shows falling training error alongside rising held-out
-error, and both fell together the whole way. It was undertrained and
-badly tuned: the same learning rate as a model a quarter its size,
-no normalization between the wider layers, and a curve still
-climbing when the run ended. At epoch 100 the small model had
-reached 0.914 and a held-out error of 0.00011. The wide model needed
-200 epochs to reach 0.806 at 0.00032, three times the error.
-
-**A different output entirely.** The third attempt gave up on fields
-and predicted outlines directly, in the same spirit as the
-[Virtua Grotesk](/blog/virtua-grotesk) model. The teacher's own
-béziers become a token stream of drawing commands and quantized
-coordinate deltas: 135 tokens of vocabulary, 91,339 sequences, 17
-million tokens. A 12.7 million parameter decoder-only transformer
-learns to continue that stream from the five-letter context.
-
-It does not draw letters. Next-token accuracy stalled at 0.482 and
-two learning rate drops moved it by two thousandths. What comes out
-is a scatter of small closed contours. The dots land near where dots
-belong, and on longer words you can see fragments following the
-downward slope of the nastaliq baseline, so the model has learned
-something about where ink goes. It has not learned to close a
-stroke.
+**Outlines instead of fields.** The third attempt predicted curve
+points directly as a stream of drawing tokens, with a 12.7 million
+parameter transformer, in the same spirit as the
+[Virtua Grotesk](/blog/virtua-grotesk) model. It never learned to
+draw. Dots land near where dots belong, and fragments follow the
+downward slope of the words, but strokes never close.
 
 ![Three words. The teacher's outlines on the left, the field model in the middle drawing them almost identically, and the vector model on the right producing only small scattered fragments.](./vector-fragments.png)
 
@@ -364,35 +330,20 @@ stroke.
 | field, 64 px/em, wide | 5,357,091 | 21.4 MB | IoU 0.809, strokes merge |
 | vector, outline tokens | 12,693,639 | 53.3 MB | accuracy 0.482, fragments |
 
-The honest summary is that the smallest model is still the best one,
-and that none of these runs found the real ceiling. The next suspect
-is not the model but what it is taught. Every letter-in-context is
-supervised against one shape, chosen as the most common when the
-teacher draws more than one. Where Gulzar genuinely varies, the
-model is being asked to learn an average of two different letters.
-That is a data question, and it comes before any more parameters.
+The smallest model is still the best one, and none of these runs
+found the real ceiling. The next suspect is the data, not the model.
+Where the teacher draws the same context more than one way, the
+training set keeps only the most common shape, so the model is asked
+to learn an average of two different letters. That question comes
+before any more parameters.
 
-### Status
+### Project Status
 
-1. Extract: **complete.** Corpus, cluster records, displacements.
-2. Fields: **complete.** SDFs at 64 px/em on a shared canvas.
-3. Train: **complete.** The model outputs a field plus a
-   displacement. The engine chains the displacements, and that chain
-   is the cascade. Final contour IoU: 0.945.
-4. Trace: **complete.** A fast sub-pixel tracer for live typing,
-   and [img2bez](/blog/img2bez) as the quality pass. See the section
-   above.
-5. Measure: held-out IoU per epoch exists. Worst-case proof sheets
-   and tests on real Urdu and Persian text remain.
-6. Demo: **live above**, in the same editor island as the NeuralType
-   post.
-7. Scale: **three attempts, none better.** More pixels, wider
-   layers, and a vector-output model all lost to the 1.36 million
-   parameter original. See the section above.
-
-The work happens
+The pipeline is complete and the demo above runs it end to end.
+What remains is testing: worst-case proof sheets, and real Urdu and
+Persian text. The work happens
 in the [post-opentype repo](https://github.com/eliheuer/post-opentype).
 The plan lives in
 [docs/DISTILL.md](https://github.com/eliheuer/post-opentype/blob/main/docs/DISTILL.md).
-The distilled font is licenced under the OFL, with Gulzar's copyright
+The distilled font is licensed under the OFL, with Gulzar's copyright
 notice and credit.
