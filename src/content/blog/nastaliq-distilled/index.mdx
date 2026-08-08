@@ -11,186 +11,167 @@ draft: false
 import NeuralTypeDemo from '../../../components/NeuralTypeDemoIsland.astro'
 import { nastaliqDemo } from '../../../components/demo-presets'
 
-A previous post introduced the [NeuralType (.ntf)](/blog/neuraltype) font format concept: a font can be a small neural network, instead of a system
-that emulates Gutenberg's movable type in virtual
-rectangles. The first .ntf font was
+A previous post introduced the [NeuralType (.ntf)](/blog/neuraltype) font
+format. An .ntf font is a small neural network, not a system that emulates
+Gutenberg's movable type with virtual rectangles. The first .ntf font was
 [square Kufic](https://en.wikipedia.org/wiki/Kufic#Square_Kufic), a
-style that looks like low-resolution pixel art. That is easy to write off as a
-neat trick, but this post makes the case that a neural network based font can do the
-work of a real OpenType font and more.
+style that resembles low-resolution pixel art. That font was a simple test just to see if the concept could work.
+This post tests whether a neural font can reproduce a complex OpenType font and be a real alternative to to Opentype format.
 
-I converted a standard OpenType font into a .ntf, in one
-of the styles that OpenType serves worst, Nasta’liq. The font I
-used is [Gulzar](https://github.com/googlefonts/Gulzar). The early result is in the interactive demo below. Type, copy, paste, move the cursor with the arrow keys, and press space to separate joined letters.
+I converted [Gulzar](https://github.com/googlefonts/Gulzar), an OpenType
+Nasta’liq font, into a .ntf. OpenType handles Nasta’liq poorly so this seems like a good style to use for exploring this concept. The current
+result is in the interactive demo below. Type, copy, paste, move the cursor with the arrow
+keys, and press space to separate joined letters.
 
 <NeuralTypeDemo {...nastaliqDemo} />
 
-The demo runs the full pipeline in your browser. The font is
-a model with 1.36 million parameters, stored as a 5.4 MB .ntf file.
-The engine is Rust compiled to WASM, mostly built with
+The demo runs the full pipeline in the browser. The font is a
+1.36-million-parameter model stored in a 5.4 MB .ntf file. The engine is Rust
+compiled to WASM and built mostly with
 [Linebender](https://linebender.org/) crates.
 
-Distillation is just a test to see if the format will work.
-It also answers some basic questions early, how many parameters are needed and what does the file size look like? After that, the goal is
-new fonts, designed for the format, that do things that OpenType can not.
+Distillation of existing OpenType fonts tests whether the format works. It also gives early estimates of the required parameter count and file size. The longer-term goal is to design
+new fonts for the format that can do things OpenType cannot.
 
 ![Nasta’liq calligraphy by Mishkín-Qalam.](./mishkin-qalam-09.jpg)
 <p class="img-credit">Calligraphy by <a href="https://en.wikipedia.org/wiki/Mishk%C3%ADn-Qalam">Mishkín-Qalam</a> (1826–1912). Public domain, via <a href="https://commons.wikimedia.org/wiki/File:Mishkin-Qalam-09.JPG">Wikimedia Commons</a>.</p>
 
-Nasta’liq is a cursive, flowing style of the Perso-Arabic script.
-Words break into groups of joined letters, and within a group each
-letter hangs below the one before it. A long group starts high
-above the baseline and steps down until its last letter lands on it.
-
-Letterforms and dots move freely around to fill the space.
-OpenType approximates all of this with more than one thousand glyphs and cursive-attachment
-rules. Even so, no OpenType Nasta’liq font has come close to the
-style as it developed in manuscript and calligraphy form.
+Nasta’liq is a cursive style of the Perso-Arabic script. In manuscript
+calligraphy, composition happens at the levels of the letter, word, line, and
+page. Joined letter groups descend from right to left. Different words can
+follow different baselines, and the line can curve rather than remain
+horizontal. A calligrapher can stack words, extend strokes, and adjust the
+positions of letters and dots to balance the black and white space.
 
 ![A calligraphic composition by Mishkín-Qalam.](./mishkin-qalam-48.jpg)
 <p class="img-credit">Calligraphy by <a href="https://en.wikipedia.org/wiki/Mishk%C3%ADn-Qalam">Mishkín-Qalam</a> (1826–1912). Public domain, via <a href="https://commons.wikimedia.org/wiki/File:Mishkin-Qalam-48.JPG">Wikimedia Commons</a>.</p>
 
-### The Distillation Process: Measuring Gulzar
+An OpenType Nasta’liq font turns these choices into predefined glyphs and
+shaping rules. OpenType can select contextual forms and move each glyph in both
+axes, so it can reproduce the descending connections. But OpenType shaping does
+not make new compositional decisions from the outlines or the available page
+space. The font designer must anticipate contexts and encode the alternatives,
+positioning, and collision fixes.
+
+Gulzar describes itself as typographic rather than calligraphic. It uses
+multiple contextual forms, separate glyphs for dots, height-specific
+substitutions, and kerning rules. This project distills Gulzar's typographic
+system, not the full manuscript tradition.
+
+### Measuring Gulzar
 
 The first step is to measure the problem: how much contextual
 behavior does Gulzar contain?
 
-We shaped every two-letter word through Gulzar with
+We shaped every two-letter word in Gulzar with
 [harfrust](https://github.com/harfbuzz/harfrust) and counted how
-many different glyphs each letter takes at the start of the word.
-The count depends on the letter that follows. ن is drawn with 16
-different glyphs, ي with 15, م with 14. Across all 31 letters,
-Gulzar uses 344 distinct word-initial glyphs. Amiri, a naskh with
-rich contextual behavior, uses 150 on the same test.
+many glyphs each letter uses at the start of a word. The form varies with the
+following letter. Gulzar uses 16 initial forms for ن, 15 for ي, and 14 for م.
+Across all 31 letters, it uses 344 distinct word-initial glyphs. Amiri, a Naskh
+font with rich contextual behavior, uses 150 in the same test.
 
 The figure below shows initial ن in green, with the following
 letter in gray. The follower selects the shape.
 
 ![Fourteen ordered pairs. The green word-initial ن takes a different shape for each gray follower.](./noon-variants.png)
 
-The shaped word نستعليق places glyphs at vertical offsets up to **1.38 em above the
-baseline**. One word spans more than a full em of vertical travel.
-That geometry strains the metal-type box that digital font formats
-still emulate. Numbers like this are why we are trying a new format.
+In the shaped word نستعليق, glyphs reach **1.38 em above the baseline**. The
+word spans more than a full em of vertical travel. This geometry strains the
+metal-type box that digital font formats still emulate and motivates the new
+format.
 
 The figure below shows the word نستعليق shaped by Gulzar. The
-letters alternate green and gray so each one is distinct, and the
-gray rule is the baseline. Each red dot is an attachment point: the
-position where Gulzar places one letter relative to the letter
-before it. The red line connects the attachment points in writing
-order. The step from each dot to the next is the per-letter offset
-that the model will have to learn.
+letters alternate between green and gray, and the gray rule marks the baseline.
+Each red dot is an attachment point where Gulzar places one letter relative to
+the previous letter. The red line connects the points in writing order. The
+model must learn the offset between each pair of points.
 
 ![The word Nasta’liq shaped by Gulzar: letters step down from high above the baseline, and the final swash lands below it.](./cascade.png)
 
 ### Extraction
 
-Distillation needs a teacher: a working system whose output the new
-model learns to copy. Here the teacher is not the Gulzar font file
-by itself. It is Gulzar plus HarfBuzz, the shaping engine that reads
-text, consults the rule tables in the font, and answers: these
-glyphs, at these positions.
+Distillation needs a teacher, a working system whose output the new model can
+copy. The teacher is not the Gulzar font file alone. It is Gulzar plus
+HarfBuzz, the shaping engine that reads text, consults the font's rule tables,
+and returns glyphs and positions.
 
-The same text always shapes to the same result, and shaping a word
-takes a fraction of a millisecond. So training data can be
-generated in any quantity.
+The same text always produces the same result, and shaping one word takes a
+fraction of a millisecond. The extraction tool can therefore generate as much
+training data as needed.
 
-The extraction tool (`crates/neuraltype-distill`) shapes every
-short word: every single letter, every two-letter word, and every
-three-letter word. That is 30,783 small words. The three-letter
-words matter because they are the shortest text where a letter has
-a neighbor on each side. Those neighbors produce the medial forms,
-the shapes a letter takes in the middle of a word. A second pass
-added 24 real words, drawn from the bismillah and the surahs
-Al-Fatiha and Al-Ikhlas, plus the word نستعليق. The full corpus is
+The extraction tool (`crates/neuraltype-distill`) shapes every one-, two-, and
+three-letter word, for a total of 30,783. Three-letter words are the shortest
+strings in which a letter has a neighbor on both sides. These contexts produce
+medial forms. A second pass added 24 real words from the bismillah and the
+surahs Al-Fatiha and Al-Ikhlas, plus the word نستعليق. The full corpus contains
 30,807 words.
 
-This corpus also explains the demo's limits. Words that are not in
-it render broken, because a longer word contains letter contexts
-that the model was never trained on, and there it has to guess. The
-fix is a larger corpus, built from real Urdu and Persian text.
+The corpus also explains the demo's limits. Longer words can contain letter
+contexts absent from the training data, so the model must guess and often
+renders them poorly. A larger corpus of real Urdu and Persian text should
+reduce these failures.
 
-For every letter in every word, the tool records two things. The
-first is the shape of the letter, dots included, as one unit. The
-second is the offset from the previous letter, the red steps in
-the figure above. The largest single step in the dataset drops
-1.66 em.
+For each letter, the tool records its complete shape, including dots, and its
+offset from the previous letter. These offsets are the red steps in the figure
+above. The largest single step in the dataset drops 1.66 em.
 
-Across the whole corpus that comes to 91,390 records, holding
-**1,150 unique letter shapes**. More than 100 of those shapes
-belong to خ alone.
+The corpus contains 91,390 records and **1,150 unique letter shapes**. More
+than 100 belong to خ alone.
 
 The figure below shows every shape of خ in the dataset, 108 in
 total.
 
 ![All 108 shapes of خ in the dataset, in a grid.](./kha-shapes.png)
 
-### Shapes as Fields
+### Signed-Distance Fields
 
-Extraction leaves us with 1,150 shapes, stored as bézier outlines.
-What form should the model's output take?
+Extraction produces 1,150 shapes stored as bézier outlines. The model needs a
+fixed output representation for these shapes.
 
-The obvious answer is outlines, but they are the wrong output
-here. An outline is a list of curve points,
-the list has a different length for every shape, and one wrong
-point breaks the whole contour. That is a fragile target for a
-model that must draw from scratch. The
+Outlines are not suitable here. Each outline has a different number of curve
+points, and one wrong point can break an entire contour. This makes outlines a
+fragile target for a model that draws from scratch. The
 [Virtua Grotesk](/blog/virtua-grotesk) model does write curve
-points, but it edits an outline it is given as input; here there
-is no outline to start from. A fixed grid of numbers is a steadier
-target, so a small change in the weights makes a small change in the
-picture.
+points, but it edits an outline supplied as input. This model has no starting
+outline. A fixed grid is more stable because a small change in the weights
+produces a small change in the image.
 
-The solution that has worked best so far is a signed-distance
-field. The idea is simple. Instead of storing a picture of the
-letter, every cell in the grid stores one number: its distance to
-the letter's nearest edge. Inside the letter the number is
-positive, outside it is negative, and the edge itself is exactly
-at zero.
+The best representation tested so far is a signed-distance field. Each cell in
+the grid stores its distance to the nearest edge of the letter. Values are
+positive inside the letter and negative outside. The edge is the zero contour.
 
-The figure below shows how this works in one dimension. The red
-line on the left is a single row of cells. The middle panel plots
-that row's numbers: the curve rises where the row passes through
-ink and falls where it leaves, and the letter's edge is wherever
-the curve crosses zero, marked with red dots.
+The figure below shows one row of the field. The red line in the left panel
+marks the row. The middle panel plots its values. The curve rises as the row
+enters the letter and falls as it leaves. The red dots mark the zero crossings
+at the letter's edges.
 
-The right panel magnifies one crossing, and it answers the
-resolution question. The grid is coarse, but the edge is not read
-off the grid. It is computed from two neighboring cells: draw the
-line between their values and take the point where it crosses
-zero. That point can land anywhere between the two cells, so the
-edge's position is continuous. This is why a low-resolution field
-still yields an exact outline: the outline comes from the
-crossings, not the cells. It also makes the model's job safe. A
-small error in a cell's value only slides a crossing sideways,
-instead of punching a hole in the letter.
+The right panel magnifies one crossing. The edge does not snap to the grid. Its
+position is interpolated between two neighboring cell values and can fall
+anywhere between them. A low-resolution field can therefore produce a precise
+outline. Errors are also local: a small error in one cell shifts the crossing
+instead of breaking the contour.
 
 ![Three panels: the خ distance field with a red slice line, the slice's values as a curve crossing zero at each stroke edge, and one crossing magnified to show the edge landing between two cells.](./sdf-slice.png)
 
 The image below shows the isolated خ from the training set. On the
 left is the shape. On the right is its signed-distance field, with
-the zero contour in red. The model learns to paint the picture on
-the right.
+the zero contour in red. The model learns to reproduce this field.
 
 ![The isolated خ from Gulzar, and the same shape as a signed-distance field with the zero contour marked in red.](./sdf-kha.png)
 
-The figure below zooms in. The red box marks a small patch of the
-field, shown cell by cell on the right, each cell printed with its
-distance in pixels: negative outside, positive inside. The red line
-is the outline, drawn where the values cross zero. Reading
-neighboring cells places that crossing at a fraction of a pixel,
-which is how a coarse grid still yields a precise edge. This patch
-crosses a thin stroke, so two edges pass through it.
+The next figure shows a small patch of the field cell by cell. Each cell lists
+its distance in pixels: negative outside and positive inside. The red outline
+passes through the interpolated zero crossings. This patch contains a thin
+stroke, so the outline crosses it twice.
 
 ![A patch of the distance field enlarged to a grid of numbered cells. Values rise from negative to positive and back, and the red zero contour passes between the cells at interpolated positions.](./sdf-cells.png)
 
-We rendered test shapes at two resolutions. At 64 pixels
-per em, the tapers and hairlines of Gulzar survive the threshold. At
-96 pixels per em, the result looks the same at reading size, but the
-model must output 2.3 times more pixels. So the resolution is 64. The
-shared canvas is 155×219 pixels. The canvas is large because Nasta’liq
-is large: swash tails and dots extend far from the origin of each
-letter.
+We rendered test shapes at two resolutions. At 64 pixels per em, Gulzar's
+tapers and hairlines survive the threshold. At 96 pixels per em, the result
+looks the same at reading size, but the model must output 2.3 times more pixels.
+The model therefore uses 64 pixels per em on a shared 155×219-pixel canvas.
+Nasta’liq needs this large canvas because swash tails and dots extend far from
+each letter's origin.
 
 Below is the isolated خ at both resolutions, shown at the same
 size: 64 on the left, 96 on the right.
@@ -199,19 +180,15 @@ size: 64 on the left, 96 on the right.
 
 ### Training the Student
 
-The model reads five letters at a time: the letter being drawn,
-plus two neighbors on each side. Five is enough, because we
-measured it: given the same five letters, Gulzar always draws the
-same shape.
+The model reads a five-letter window: the current letter and two neighbors on
+each side. Five letters are enough. Given the same window, Gulzar always draws
+the same shape.
 
-The model is small, and it works in three steps. First, each of the
-five context letters comes in as a learned code, a short list of
-numbers the model chooses for each letter during training. Second, a
-small network mixes the five codes into one description of the shape
-to draw: 256 numbers. Third, a stack of five upscaling layers turns
-that description into the field, doubling the size of the picture at
-each step. A separate small output predicts the offset to the next
-letter.
+The model has three stages. First, it represents each context letter with a
+short list of numbers learned during training. Second, a small network combines
+the five lists into a 256-number description of the target shape. Third, five
+upscaling layers turn that description into a field, doubling the image size at
+each step. A separate output predicts the offset to the next letter.
 
 The total is 1.36 million parameters, 5.4 MB stored as 32-bit
 numbers. The Gulzar TTF is 963 KB.
@@ -230,32 +207,28 @@ The model card:
 | optimizer | AdamW, lr 3e-4, then a 1e-4 decay pass; batch 128; every 20th record held out |
 | compute | one Apple M4 Mac laptop, CPU ([candle](https://github.com/huggingface/candle) accelerate backend), about 8 minutes per epoch. Later runs moved to a Linux PC with an RTX 2060 SUPER, at 100 seconds per epoch |
 
-Training runs in [candle](https://github.com/huggingface/candle), so
-the same code trains on CPU, Metal, or CUDA. Inference, running the trained model to generate a
-letterform, is plain Rust in the engine, with no machine-learning
-framework. A .ntf file is only weights, and running weights is only
-arithmetic.
+Training uses [candle](https://github.com/huggingface/candle). The same code
+runs on CPU, Metal, or CUDA. Inference uses plain Rust in the engine and
+requires no machine-learning framework. The engine reads the weights directly.
 
-Progress is measured with IoU, intersection over union, the
-standard score for shape agreement: the area where the model's ink
-and the teacher's ink overlap, divided by the area covered by
-either. Identical shapes score 1.0, and shapes with no overlap
-score 0.
+Progress is measured with intersection over union (IoU), a standard score for
+shape agreement. It divides the overlapping ink area by the total area covered
+by either shape. Identical shapes score 1.0. Shapes with no overlap score 0.
 
-Words were legible by epoch 12. Thin strokes form last. The training loss explains why: a hairline
-is worth tens of pixels and a bowl is worth thousands, so the model
-gets the bowls right first.
+Words were legible by epoch 12. Thin strokes formed last. A hairline contributes
+tens of pixels to the loss, while a bowl contributes thousands, so the model
+learns bowls first.
 
-The hardest word was الله. Gulzar draws it with a dedicated
-ligature, and no word in the first corpus was long enough to trigger
-it. Adding the bismillah and other real words put the ligature in
-the data, but a few dozen words in a corpus of thirty thousand learn
-slowly. The fix was to repeat those words dozens of times per epoch,
-and the ligature converged in eight epochs.
+The hardest word was الله. Gulzar uses a dedicated ligature, but no word in the
+first corpus was long enough to trigger it. The bismillah and other real words
+added the ligature to the data. These few dozen examples had little weight in a
+corpus of thirty thousand words. Repeating them dozens of times per epoch made
+the ligature converge in eight epochs.
 
-Training finished at an IoU of 0.945. A final pass with a decaying learning rate settled the last details,
-the same schedule that took the Kufic font from almost correct to
-exact. The bismillah now renders better, ligatures included.
+Training finished at an IoU of 0.945. A final pass with a decaying learning
+rate refined the remaining details. The same schedule took the Kufic font from
+almost correct to exact. The bismillah now renders more accurately, including
+its ligatures.
 
 The sheet below compares the teacher with the final model. Gulzar is
 gray on top. The model is green below.
@@ -264,48 +237,42 @@ gray on top. The model is green below.
 
 ### Tracing with img2bez
 
-The model outputs a field, but text needs outlines. The demo uses
-two tracers. While you type, a fast sub-pixel tracer draws each word
-with no added latency. When input settles, each word upgrades to a
-quality outline from [img2bez](/blog/img2bez), the autotracer I
-built for turning rasters into font-grade bézier curves.
+The model outputs a field, but text needs outlines. The demo uses two tracers.
+While you type, a fast sub-pixel tracer draws each word. When input settles,
+[img2bez](/blog/img2bez) replaces it with a higher-quality outline. I built
+img2bez to turn rasters into font-grade bézier curves.
 
-The upgrade runs in a Web Worker, a background thread the browser
-provides. The slow tracing never runs on the thread that handles
-typing and drawing, so the editor stays responsive. Each word's
-outline swaps in when it is ready.
+The slower tracer runs in a Web Worker, separate from the thread that handles
+typing and drawing. The editor stays responsive, and each new outline appears
+when ready.
 
-Working on the .ntf pipeline added one new ability to img2bez: it
-now traces the model's distance field directly, with no image step
-in between. The curves it fits are smooth everywhere, with no
-corners or kinks. No raster image exists anywhere in the render
-path: the model paints a field, and the field becomes curves.
+This pipeline added direct distance-field input to img2bez. It now traces the
+model's field without an intermediate image. The fitted curves are smooth, with
+no corners or kinks. The render path creates no raster image. The model outputs
+a field, and img2bez converts it to curves.
 
-### Making It Bigger
+### Scaling Attempts
 
-The model in the demo is 1.36 million parameters. The obvious next
-move was a bigger model. We tried three versions of bigger, and all
-three came out worse, each for a different reason.
+The demo model has 1.36 million parameters. Three larger designs performed
+worse for different reasons.
 
 **More pixels.** Retraining at 96 px/em grew the model to 3.10
-million parameters, and the letters looked the same. Almost all of
-the new parameters went into the one layer that seeds the larger
-picture, not into knowledge of the letterforms. And resolution was
-never the limit: a distance field at 64 px/em already places an
-edge at a fraction of a pixel.
+million parameters, but the letters looked the same. Almost all new parameters
+went into the layer that seeds the larger image, not into the layers that model
+letterforms. The 64 px/em field already places edges at fractional-pixel
+positions, so grid resolution was not the limit.
 
 **Wider layers.** Doubling the width of every layer gave 5.36
-million parameters and a worse score: 0.809 against the small
-model's 0.945, with heavy strokes and letters merging where they
-should stay apart. The problem was not size but a borrowed recipe:
-it trained with the same settings as a model a quarter as large,
-and settings do not transfer across model sizes
-([hyperparameter transfer](https://arxiv.org/abs/2203.03466)). Its
-score was still climbing when the run ended.
+million parameters and reduced the score from 0.945 to 0.809. Strokes became
+heavy, and letters merged where they should remain separate. The larger model
+reused settings from a model one quarter its size, but training settings do not
+transfer reliably across model sizes
+([hyperparameter transfer](https://arxiv.org/abs/2203.03466)). Its score was
+still rising when the run ended.
 
 **Outlines instead of fields.** The third attempt predicted curve
-points directly as a stream of drawing tokens, with a 12.7 million
-parameter transformer, in the same spirit as the
+points as a stream of drawing tokens. It used a 12.7-million-parameter
+transformer similar to the
 [Virtua Grotesk](/blog/virtua-grotesk) model. It never learned to
 draw. Dots land near where dots belong, and fragments follow the
 downward slope of the words, but strokes never close.
@@ -319,40 +286,34 @@ downward slope of the words, but strokes never close.
 | field, 64 px/em, wide | 5,357,091 | 21.4 MB | IoU 0.809, strokes merge |
 | vector, outline tokens | 12,693,639 | 53.3 MB | accuracy 0.482, fragments |
 
-The smallest model is still the best one, but it is not finished.
-At an IoU of 0.945, visible detail is lost: compared to the
-teacher, sharp features are rounded, and small features are
-weakened or missing. Smooth curves are acceptable, and matching
-OpenType exactly is not the goal, but the lost detail must be
-recovered before the model can be considered complete. None of the
-three attempts addressed this gap.
+The smallest model still performs best, but it is incomplete. At an IoU of
+0.945, it rounds sharp features and weakens or omits small ones. Exact OpenType
+output is not the goal, and some smoothing is acceptable. The missing detail
+still needs to be recovered. None of the three larger designs addressed this
+problem.
 
-The vector failure matches the published record.
-[DeepVecFont](https://arxiv.org/abs/2110.06688) generated outlines
-as command sequences and needed image-guided refinement to produce
-usable curves; [DeepVecFont-v2](https://arxiv.org/abs/2303.14585)
-redesigned the outline representation to make the sequences
-learnable at all; and
-[VecFontSDF](https://arxiv.org/abs/2303.12675) moved vector font
-synthesis onto signed distance functions, the representation this
-project already uses.
+The vector result is consistent with previous research.
+[DeepVecFont](https://arxiv.org/abs/2110.06688) generated outlines as command
+sequences but needed image-guided refinement to produce usable curves.
+[DeepVecFont-v2](https://arxiv.org/abs/2303.14585) redesigned the outline
+representation to make the sequences learnable.
+[VecFontSDF](https://arxiv.org/abs/2303.12675) instead based vector font
+synthesis on signed-distance functions, the representation used here.
 
-The next steps are about information, not parameters. First, extend
-the corpus to real Urdu and Persian text. Second, keep the
-teacher's variants: where Gulzar draws the same context more than
-one way, the training set currently keeps only the most common
-shape, so the model is trained on an average of different letters.
-Third, after the data, test representations that store more shape
-per parameter, such as a model that returns the distance value for
+The next work will focus on data and representation. First, extend the corpus
+with real Urdu and Persian text. Second, preserve the teacher's variants. When
+Gulzar draws the same context in more than one way, the training set currently
+keeps only the most common shape. Third, test representations that store more
+shape information per parameter, such as a model that returns the distance at
 any queried point instead of a fixed grid of samples.
 
 ### Project Status
 
-The pipeline is complete and the demo above runs it end to end.
-What remains is testing: worst-case proof sheets, and real Urdu and
-Persian text. The work happens
+The current pipeline is complete, and the demo runs it end to end. Work now
+focuses on a larger corpus, model quality, worst-case proof sheets, and tests
+with real Urdu and Persian text. Development happens
 in the [post-opentype repo](https://github.com/eliheuer/post-opentype).
 The plan lives in
 [docs/DISTILL.md](https://github.com/eliheuer/post-opentype/blob/main/docs/DISTILL.md).
-The distilled font is licensed under the OFL, with Gulzar's copyright
+The distilled font is licensed under the OFL and retains Gulzar's copyright
 notice and credit.
