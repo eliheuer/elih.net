@@ -796,7 +796,11 @@ export default function NeuralTypeDemo({
         const ny = view.oy + view.nodes[fi].y * view.cell
         const dx = e.clientX - rect.left - nx
         const dy = e.clientY - rect.top - ny
-        if (dx * dx + dy * dy < 16 * 16) {
+        // Hit radius covers the whole visible target: the 10px node
+        // plus the 15px rotating ring, with a little slack. Anything
+        // tighter makes ring-edge grabs fall through to a caret move,
+        // which teleports the cursor mid-gesture.
+        if (dx * dx + dy * dy < 24 * 24) {
           const base = nodeOffsets.current.get(fi) ?? { dx: 0, dy: 0 }
           nodeDrag.current = {
             i: fi,
