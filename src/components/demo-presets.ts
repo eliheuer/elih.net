@@ -3,6 +3,8 @@
 // editing it here updates every instance at once.
 export const nastaliqDemo = {
   font: '/demos/neuraltype/gulzar.ntf',
+  f16Font: '/demos/neuraltype/gulzar-f16.ntf',
+  int8Font: '/demos/neuraltype/gulzar-int8.ntf',
   // The engine and the demo both support a second, vector-output
   // model: set `vectorFont` to a neuraltype-vector-v1 .ntf and a
   // model picker appears. Left unset because the trained vector

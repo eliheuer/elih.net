@@ -7,10 +7,20 @@ import NeuralTypeDemo from './NeuralTypeDemo.tsx'
 interface Props {
   text?: string
   font?: string
+  f16Font?: string
+  int8Font?: string
   vectorFont?: string
   samples?: string
 }
-const { text, font, vectorFont, samples } = Astro.props
+const { text, font, f16Font, int8Font, vectorFont, samples } = Astro.props
 ---
 
-<NeuralTypeDemo client:only="react" text={text} font={font} vectorFont={vectorFont} samples={samples} />
+<NeuralTypeDemo
+  client:only="react"
+  text={text}
+  font={font}
+  f16Font={f16Font}
+  int8Font={int8Font}
+  vectorFont={vectorFont}
+  samples={samples}
+/>

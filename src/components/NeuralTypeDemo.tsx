@@ -19,6 +19,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import init, { NtfFont } from '../lib/neuraltype-wasm/neuraltype_wasm.js'
 import wasmUrl from '../lib/neuraltype-wasm/neuraltype_wasm_bg.wasm?url'
+import { loadNtf } from '../lib/loadNtf'
 
 const BG = '#0c0c0c'
 const INK = '#2aa35f' // forest green
@@ -87,7 +88,9 @@ function caretPositions(line: Line, text: string): number[] {
       pos.push(line.rtl ? line.width : 0)
     } else if (i === 0) {
       const s = spans.get(0)
-      pos.push(s ? (charRtl(chars[0]) ? s.x + s.w : s.x) : line.rtl ? line.width : 0)
+      pos.push(
+        s ? (charRtl(chars[0]) ? s.x + s.w : s.x) : line.rtl ? line.width : 0,
+      )
     } else {
       const s = spans.get(i - 1)
       pos.push(s ? (charRtl(chars[i - 1]) ? s.x : s.x + s.w) : pos[i - 1])
@@ -105,7 +108,8 @@ function buildStrand(pts: { x: number; y: number }[]) {
   const tOfIndex: number[] = new Array(pts.length).fill(0)
   for (let i = 0; i < pts.length; i++) {
     const last = keep.length ? pts[keep[keep.length - 1]] : null
-    if (!last || Math.hypot(pts[i].x - last.x, pts[i].y - last.y) > 0.75) keep.push(i)
+    if (!last || Math.hypot(pts[i].x - last.x, pts[i].y - last.y) > 0.75)
+      keep.push(i)
     tOfIndex[i] = keep.length - 1
   }
   const n = keep.length
@@ -114,7 +118,10 @@ function buildStrand(pts: { x: number; y: number }[]) {
   // chord-length params
   const t: number[] = [0]
   for (let k = 1; k < n; k++) {
-    t.push(t[k - 1] + Math.max(1e-6, Math.hypot(xs[k] - xs[k - 1], ys[k] - ys[k - 1])))
+    t.push(
+      t[k - 1] +
+        Math.max(1e-6, Math.hypot(xs[k] - xs[k - 1], ys[k] - ys[k - 1])),
+    )
   }
   // natural spline second derivatives (Thomas algorithm), per axis
   const second = (v: number[]): number[] => {
@@ -162,7 +169,11 @@ function buildStrand(pts: { x: number; y: number }[]) {
     while (k < n - 2 && t[k + 1] < uu) k++
     return { x: evalAxis(xs, mx, k, uu), y: evalAxis(ys, my, k, uu) }
   }
-  return { sample, tOf: (i: number) => t[tOfIndex[Math.max(0, Math.min(i, pts.length - 1))]], tEnd: n ? t[n - 1] : 0 }
+  return {
+    sample,
+    tOf: (i: number) => t[tOfIndex[Math.max(0, Math.min(i, pts.length - 1))]],
+    tEnd: n ? t[n - 1] : 0,
+  }
 }
 
 const SAMPLES = [
@@ -181,26 +192,36 @@ function startCaret(t: string) {
   return Math.min(1, t.length)
 }
 
-const fontCache = new Map<string, Promise<NtfFont>>()
-function ensureFont(fontUrl: string): Promise<NtfFont> {
+type LoadedFont = { font: NtfFont; storedBytes: number }
+const fontCache = new Map<string, Promise<LoadedFont>>()
+function ensureFont(fontUrl: string): Promise<LoadedFont> {
   let p = fontCache.get(fontUrl)
   if (!p) {
     p = (async () => {
       await init({ module_or_path: wasmUrl })
-      const bytes = new Uint8Array(await (await fetch(fontUrl)).arrayBuffer())
-      return new NtfFont(bytes)
+      const { engine, storedBytes } = await loadNtf(fontUrl)
+      return { font: new NtfFont(engine), storedBytes }
     })()
     fontCache.set(fontUrl, p)
   }
   return p
 }
 
-type Props = { text?: string; font?: string; vectorFont?: string; samples?: string }
+type Props = {
+  text?: string
+  font?: string
+  f16Font?: string
+  int8Font?: string
+  vectorFont?: string
+  samples?: string
+}
 
 export default function NeuralTypeDemo({
   // قلم (qalam, "pen") by default: small enough to read the grid details.
   text: initialText = 'قلم',
   font: fontUrlProp = '/demos/neuraltype/kufic.ntf',
+  f16Font: f16FontUrl,
+  int8Font: int8FontUrl,
   vectorFont: vectorFontUrl,
   samples: samplesProp,
 }: Props) {
@@ -223,7 +244,10 @@ export default function NeuralTypeDemo({
   // The caret opens one node in from the start of the text, not at
   // the end: it sits on a letter junction where the strand and the
   // node ring are both visible, which shows what the cursor is.
-  const [sel, setSel] = useState({ start: startCaret(initialText), end: startCaret(initialText) })
+  const [sel, setSel] = useState({
+    start: startCaret(initialText),
+    end: startCaret(initialText),
+  })
   const [focused, setFocused] = useState(false)
   const [caretOn, setCaretOn] = useState(true)
   const [elong, setElong] = useState(0)
@@ -243,7 +267,17 @@ export default function NeuralTypeDemo({
   // Two models can back the same demo: the field model (SDF + tracer)
   // and the vector model (transformer emitting outline tokens).
   const [model, setModel] = useState<'field' | 'vector'>('field')
-  const fontUrl = model === 'vector' && vectorFontUrl ? vectorFontUrl : fontUrlProp
+  const [precision, setPrecision] = useState<'f32' | 'f16' | 'int8'>(
+    int8FontUrl ? 'int8' : f16FontUrl ? 'f16' : 'f32',
+  )
+  const precisionFonts = {
+    f32: fontUrlProp,
+    f16: f16FontUrl,
+    int8: int8FontUrl,
+  }
+  const fieldFontUrl = precisionFonts[precision] ?? fontUrlProp
+  const fontUrl =
+    model === 'vector' && vectorFontUrl ? vectorFontUrl : fieldFontUrl
   // Node dragging: editing the displacement chain by hand. Offsets
   // are per caret index, in field px, and clear when the text edits.
   const nodeDrag = useRef<{
@@ -261,7 +295,9 @@ export default function NeuralTypeDemo({
   }
   // Cache the shaped line per (text, elong, dir): caret-blink frames
   // redraw without re-running the model.
-  const lineCache = useRef<{ key: string; line: Line; path2d: Path2D } | null>(null)
+  const lineCache = useRef<{ key: string; line: Line; path2d: Path2D } | null>(
+    null,
+  )
   const selCache = useRef<{ key: string; path: Path2D | null } | null>(null)
   const hintCache = useRef<{ key: string; path: Path2D | null } | null>(null)
 
@@ -270,15 +306,15 @@ export default function NeuralTypeDemo({
     let alive = true
     ;(async () => {
       try {
-        const font = await ensureFont(fontUrl)
+        const loaded = await ensureFont(fontUrl)
         if (!alive) return
+        const font = loaded.font
         fontRef.current = font
         // model switch: stale layout caches belong to the other font
         lineCache.current = null
         selCache.current = null
         hintCache.current = null
-        const bytes = new Uint8Array(await (await fetch(fontUrl)).arrayBuffer())
-        setStats({ bytes: bytes.length, params: font.n_params() })
+        setStats({ bytes: loaded.storedBytes, params: font.n_params() })
         setReady(true)
       } catch {
         if (alive) setFailed(true)
@@ -449,7 +485,11 @@ export default function NeuralTypeDemo({
       if (isFieldLine && fontRef.current) {
         const key = `${text}\u0000${a}\u0000${b}`
         if (selCache.current?.key !== key) {
-          const svg = (fontRef.current as any).selection_path(text, a, b) as string
+          const svg = (fontRef.current as any).selection_path(
+            text,
+            a,
+            b,
+          ) as string
           selCache.current = { key, path: svg.trim() ? new Path2D(svg) : null }
         }
         const cloud = selCache.current.path
@@ -545,13 +585,23 @@ export default function NeuralTypeDemo({
       }
       // insertion hint: outline the cluster the caret sits after, so
       // an edit's landing place is visible even inside ligatures
-      if (a === b && focusI > 0 && focusI <= chars.length && chars[focusI - 1] !== ' ') {
+      if (
+        a === b &&
+        focusI > 0 &&
+        focusI <= chars.length &&
+        chars[focusI - 1] !== ' '
+      ) {
         const hkey = `${text}\u0000${focusI}`
         if (hintCache.current?.key !== hkey) {
-          const svg = (fontRef.current as any)?.selection_path?.(text, focusI - 1, focusI) as
-            | string
-            | undefined
-          hintCache.current = { key: hkey, path: svg && svg.trim() ? new Path2D(svg) : null }
+          const svg = (fontRef.current as any)?.selection_path?.(
+            text,
+            focusI - 1,
+            focusI,
+          ) as string | undefined
+          hintCache.current = {
+            key: hkey,
+            path: svg && svg.trim() ? new Path2D(svg) : null,
+          }
         }
         const hint = hintCache.current.path
         if (hint) {
@@ -569,7 +619,12 @@ export default function NeuralTypeDemo({
       }
       ctx.lineCap = 'round'
       const strand = buildStrand(nodes.map((_, i) => P(i)))
-      const strokeStrand = (u0: number, u1: number, w: number, color = CARET) => {
+      const strokeStrand = (
+        u0: number,
+        u1: number,
+        w: number,
+        color = CARET,
+      ) => {
         const steps = Math.max(2, Math.ceil(Math.abs(u1 - u0) / 3))
         ctx.beginPath()
         for (let k = 0; k <= steps; k++) {
@@ -598,13 +653,19 @@ export default function NeuralTypeDemo({
         for (let step = 1; step <= 3; step++) {
           const i0 = focusI + dir * (step - 1)
           const i1 = focusI + dir * step
-          if (i1 < 0 || i1 >= nodes.length || i0 < 0 || i0 >= nodes.length) break
+          if (i1 < 0 || i1 >= nodes.length || i0 < 0 || i0 >= nodes.length)
+            break
           const q1 = P(i1)
           // strand segment along the shared spline, with a halo; the
           // incoming segment is orange, flowing out of the hinted
           // letter into the active node
           const incoming = dir === -1 && step === 1 && a === b
-          strokeStrand(strand.tOf(i0), strand.tOf(i1), 2.5, incoming ? RING : CARET)
+          strokeStrand(
+            strand.tOf(i0),
+            strand.tOf(i1),
+            2.5,
+            incoming ? RING : CARET,
+          )
           // node, one visible notch smaller per step: 5.5 -> 4.5 -> 3.5;
           // hollow when the slot touches a word boundary
           drawNode(q1.x, q1.y, 9.5 - 1.5 * step, isGap(i1))
@@ -632,7 +693,9 @@ export default function NeuralTypeDemo({
       ctx.arc(p0.x, p0.y, 15, theta, theta + Math.PI)
       ctx.stroke()
     } else if (caretOn && a === b && !hideCursor) {
-      const x = Math.round(ox + (caretXs[Math.min(a, caretXs.length - 1)] ?? 0) * cell)
+      const x = Math.round(
+        ox + (caretXs[Math.min(a, caretXs.length - 1)] ?? 0) * cell,
+      )
       const top = oy
       const bot = oy + line.grid_h * cell
       const tw = 5 // triangle half-width
@@ -652,7 +715,17 @@ export default function NeuralTypeDemo({
       ctx.closePath()
       ctx.fill()
     }
-  }, [text, elong, showGrid, showStructure, showStrand, hideCursor, sel, focused, caretOn])
+  }, [
+    text,
+    elong,
+    showGrid,
+    showStructure,
+    showStrand,
+    hideCursor,
+    sel,
+    focused,
+    caretOn,
+  ])
 
   // Dragged-node offsets are edits to one layout of one string:
   // they clear when the text changes.
@@ -750,36 +823,39 @@ export default function NeuralTypeDemo({
   }, [fullscreen, ready, draw])
 
   // Pointer → caret index, via the engine's cluster map.
-  const indexAt = useCallback((clientX: number, clientY: number): number | null => {
-    const canvas = canvasRef.current
-    const view = viewRef.current
-    if (!canvas || !view) return null
-    const rect = canvas.getBoundingClientRect()
-    const gx = (clientX - rect.left - view.ox) / view.cell
-    const gy = (clientY - rect.top - view.oy) / view.cell
-    let best = 0
-    let bestD = Infinity
-    if (view.nodes && view.nodes.length) {
-      // 2D nearest chain node: clicks follow the cascade, not a
-      // horizontal ruler
-      view.nodes.forEach((pt, i) => {
-        const d = (gx - pt.x) ** 2 + (gy - pt.y) ** 2
+  const indexAt = useCallback(
+    (clientX: number, clientY: number): number | null => {
+      const canvas = canvasRef.current
+      const view = viewRef.current
+      if (!canvas || !view) return null
+      const rect = canvas.getBoundingClientRect()
+      const gx = (clientX - rect.left - view.ox) / view.cell
+      const gy = (clientY - rect.top - view.oy) / view.cell
+      let best = 0
+      let bestD = Infinity
+      if (view.nodes && view.nodes.length) {
+        // 2D nearest chain node: clicks follow the cascade, not a
+        // horizontal ruler
+        view.nodes.forEach((pt, i) => {
+          const d = (gx - pt.x) ** 2 + (gy - pt.y) ** 2
+          if (d < bestD) {
+            bestD = d
+            best = i
+          }
+        })
+        return best
+      }
+      view.caretXs.forEach((x, i) => {
+        const d = Math.abs(gx - x)
         if (d < bestD) {
           bestD = d
           best = i
         }
       })
       return best
-    }
-    view.caretXs.forEach((x, i) => {
-      const d = Math.abs(gx - x)
-      if (d < bestD) {
-        bestD = d
-        best = i
-      }
-    })
-    return best
-  }, [])
+    },
+    [],
+  )
 
   const onPointerDown = useCallback(
     (e: React.PointerEvent<HTMLCanvasElement>) => {
@@ -968,7 +1044,9 @@ export default function NeuralTypeDemo({
           const el = hiddenRef.current
           if (!el) return
           e.preventDefault()
-          const t = e.clipboardData.getData('text/plain').replace(/\s*\n\s*/g, ' ')
+          const t = e.clipboardData
+            .getData('text/plain')
+            .replace(/\s*\n\s*/g, ' ')
           const a = el.selectionStart ?? 0
           const b = el.selectionEnd ?? 0
           el.setRangeText(t, a, b, 'end')
@@ -1009,14 +1087,30 @@ export default function NeuralTypeDemo({
         }}
       >
         {fullscreen ? (
-          <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round">
+          <svg
+            width="14"
+            height="14"
+            viewBox="0 0 16 16"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="1.6"
+            strokeLinecap="round"
+          >
             <path d="M14 6h-4V2" />
             <path d="M10 6l5-5" />
             <path d="M2 10h4v4" />
             <path d="M6 10l-5 5" />
           </svg>
         ) : (
-          <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round">
+          <svg
+            width="14"
+            height="14"
+            viewBox="0 0 16 16"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="1.6"
+            strokeLinecap="round"
+          >
             <path d="M10 2h4v4" />
             <path d="M14 2l-5 5" />
             <path d="M6 14H2v-4" />
@@ -1064,7 +1158,8 @@ export default function NeuralTypeDemo({
 
         <label style={{ display: isField ? 'none' : 'block' }}>
           <div style={{ marginBottom: 4 }}>
-            kashida elongation <span style={{ color: INK }}>{elong.toFixed(0)}</span>
+            kashida elongation{' '}
+            <span style={{ color: INK }}>{elong.toFixed(0)}</span>
           </div>
           <input
             type="range"
@@ -1083,7 +1178,12 @@ export default function NeuralTypeDemo({
             {(['field', 'vector'] as const).map((m) => (
               <label
                 key={m}
-                style={{ display: 'flex', gap: 6, alignItems: 'center', cursor: 'pointer' }}
+                style={{
+                  display: 'flex',
+                  gap: 6,
+                  alignItems: 'center',
+                  cursor: 'pointer',
+                }}
               >
                 <input
                   type="radio"
@@ -1102,7 +1202,53 @@ export default function NeuralTypeDemo({
           </div>
         )}
 
-        <label style={{ display: 'flex', gap: 6, alignItems: 'center', cursor: 'pointer' }}>
+        {(f16FontUrl || int8FontUrl) && model === 'field' && (
+          <div>
+            <div style={groupLabel}>Weight Precision</div>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+              {(
+                [
+                  ['f32', '32-bit'],
+                  ...(f16FontUrl ? ([['f16', '16-bit']] as const) : []),
+                  ...(int8FontUrl ? ([['int8', '8-bit']] as const) : []),
+                ] as const
+              ).map(([value, label]) => (
+                <label
+                  key={value}
+                  style={{
+                    display: 'flex',
+                    gap: 6,
+                    alignItems: 'center',
+                    cursor: 'pointer',
+                  }}
+                >
+                  <input
+                    type="radio"
+                    name="ntf-precision"
+                    checked={precision === value}
+                    onChange={() => {
+                      setPrecision(value)
+                      setReady(false)
+                      setFailed(false)
+                      focusText()
+                    }}
+                    style={{ accentColor: INK }}
+                  />
+                  {label}
+                </label>
+              ))}
+            </div>
+          </div>
+        )}
+
+        <label
+          style={{
+            display: 'flex',
+            gap: 6,
+            alignItems: 'center',
+            cursor: 'pointer',
+          }}
+        >
           <input
             type="checkbox"
             checked={hideCursor}
@@ -1116,7 +1262,14 @@ export default function NeuralTypeDemo({
         </label>
 
         {isField && (
-          <label style={{ display: 'flex', gap: 6, alignItems: 'center', cursor: 'pointer' }}>
+          <label
+            style={{
+              display: 'flex',
+              gap: 6,
+              alignItems: 'center',
+              cursor: 'pointer',
+            }}
+          >
             <input
               type="checkbox"
               checked={qualityTrace}
@@ -1134,26 +1287,31 @@ export default function NeuralTypeDemo({
           </label>
         )}
 
-        <div style={{ marginTop: 'auto', fontSize: 11.5, color: '#8a8a8a', lineHeight: 1.6 }}>
+        <div
+          style={{
+            marginTop: 'auto',
+            fontSize: 11.5,
+            color: '#8a8a8a',
+            lineHeight: 1.6,
+          }}
+        >
           {failed ? (
             'failed to load the font model'
           ) : ready ? (
             <>
               {isField ? (
                 <p style={{ margin: '0 0 8px' }}>
-                  click and type: real text. select, copy, and paste
-                  as in any text field. arrow keys move the cursor,
-                  a node on the strand, the curve through the text.
-                  drag the orange node to move a letter. space
-                  breaks the join between letters.
+                  click and type: real text. select, copy, and paste as in any
+                  text field. arrow keys move the cursor, a node on the strand,
+                  the curve through the text. drag the orange node to move a
+                  letter. space breaks the join between letters.
                 </p>
               ) : (
                 <p style={{ margin: '0 0 8px' }}>
-                  click and type: real text, in Arabic or Latin
-                  capitals. select, copy, and paste as in any text
-                  field. arrow keys move the cursor. space breaks
-                  the join between Arabic letters. the slider adds
-                  kashida elongation.
+                  click and type: real text, in Arabic or Latin capitals.
+                  select, copy, and paste as in any text field. arrow keys move
+                  the cursor. space breaks the join between Arabic letters. the
+                  slider adds kashida elongation.
                 </p>
               )}
               <p style={{ margin: 0 }}>
@@ -1169,13 +1327,25 @@ export default function NeuralTypeDemo({
       </div>
 
       {/* Canvas: the text editor surface. */}
-      <div style={{ flex: 1, minWidth: 0, ...(narrow ? { aspectRatio: '16 / 10' } : {}) }}>
+      <div
+        style={{
+          flex: 1,
+          minWidth: 0,
+          ...(narrow ? { aspectRatio: '16 / 10' } : {}),
+        }}
+      >
         <canvas
           ref={canvasRef}
           onPointerDown={onPointerDown}
           onPointerMove={onPointerMove}
           onPointerUp={onPointerUp}
-          style={{ width: '100%', height: '100%', display: 'block', cursor: 'text', touchAction: 'none' }}
+          style={{
+            width: '100%',
+            height: '100%',
+            display: 'block',
+            cursor: 'text',
+            touchAction: 'none',
+          }}
         />
       </div>
     </div>

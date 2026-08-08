@@ -4,6 +4,7 @@
 /// the main thread to install into its word cache.
 import init, { NtfFont } from './neuraltype-wasm/neuraltype_wasm'
 import wasmUrl from './neuraltype-wasm/neuraltype_wasm_bg.wasm?url'
+import { loadNtf } from './loadNtf'
 
 const fonts = new Map<string, Promise<NtfFont>>()
 
@@ -12,8 +13,8 @@ function ensure(fontUrl: string): Promise<NtfFont> {
   if (!p) {
     p = (async () => {
       await init({ module_or_path: wasmUrl })
-      const bytes = new Uint8Array(await (await fetch(fontUrl)).arrayBuffer())
-      return new NtfFont(bytes)
+      const { engine } = await loadNtf(fontUrl)
+      return new NtfFont(engine)
     })()
     fonts.set(fontUrl, p)
   }

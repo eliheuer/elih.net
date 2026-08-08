@@ -25,9 +25,9 @@ keys, and press space to separate joined letters.
 
 <NeuralTypeDemo {...nastaliqDemo} />
 
-The demo runs the full pipeline in the browser. The font is a
-1.36-million-parameter model stored in a 5.4 MB .ntf file. The engine is Rust
-compiled to WASM and built mostly with
+The demo runs the full pipeline in the browser. The font has 1.36 million
+parameters and takes 1.38 MB. The engine is Rust compiled to WASM and built
+mostly with
 [Linebender](https://linebender.org/) crates.
 
 Distillation of existing OpenType fonts tests whether the format works. It also gives early estimates of the required parameter count and file size. The longer-term goal is to design
@@ -182,17 +182,32 @@ refined the remaining details.
 The sheet below compares the teacher with the final model. Gulzar is
 gray on top. The model is green below.
 
-![The bismillah words, نور, and نستعليق rendered by Gulzar in gray above, and by the final model in green below. The rows match, including the الله ligature.](./teacher-model.png)
+![Five words rendered by Gulzar in gray above and by the final model in green below.](./teacher-model.png)
 
-The final model has 1.36 million parameters and takes 5.4 MB, compared with 963
-KB for the Gulzar TTF.
+The final model has 1.36 million parameters and takes 1.38 MB, compared with 963
+KB for the Gulzar TTF. It stores the weights as 8-bit values, then expands them
+to 32 bits in memory. The same weights take 5.4 MB when stored as 32-bit values.
+The precision controls let you compare the 32-bit, 16-bit, and 8-bit versions.
+
+The 8-bit output is close to the original. Some strokes and letter positions
+shift. Quantization-aware fine-tuning may reduce these differences. We will also
+test a smaller decoder and factor the model's largest layer.
+
+These numbers do not predict the size of a font designed for NeuralType. This
+model spends its capacity copying Gulzar's 1,150 OpenType-derived shapes. A
+native design could learn a smaller set of rules, but whole-line composition
+could also require a larger model. The native square Kufic prototype is 215 KB,
+but it is much simpler than Nasta’liq. About 1 MB is a reasonable target for a
+native Nasta’liq font. It is not a measured result yet.
 
 The model card:
 
 | Nasta’liq-gulzar .ntf, v0 (working name) |   |
 | --- | --- |
 | parameters | 1,357,995 |
-| file | 5,433,100 bytes: f32 weights + a 1.1 KB JSON header |
+| file | 1,380,371 bytes: blockwise int8 weights and scales |
+| f16 comparison | 2,717,110 bytes |
+| f32 comparison | 5,433,100 bytes |
 | output | one 155×219 signed-distance field at 64 px/em, plus one x/y position vector |
 | vocabulary | 34 tokens: 31 letters, the لا and لله ligatures, and a boundary token |
 | corpus | 30,807 words from the teacher: 91,390 cluster records, 1,150 composed shapes |
@@ -248,9 +263,9 @@ has no displacement head.
 
 ![Three words. The teacher's outlines on the left, the field model in the middle drawing them almost identically, and the vector model on the right producing only small scattered fragments.](./vector-fragments.png)
 
-| | trainable parameters | file | result |
+| | trainable parameters | f32 export | result |
 | --- | --- | --- | --- |
-| field, 64 px/em | 1,357,995 | 5.4 MB | IoU 0.945, the font in the demo |
+| field, 64 px/em | 1,357,995 | 5.4 MB | IoU 0.945, compressed to 1.38 MB in the demo |
 | field, 96 px/em | 3,101,483 | 12.4 MB | IoU 0.825, no visible gain |
 | field, 64 px/em, wide | 5,357,091 | 21.4 MB | IoU 0.809, strokes merge |
 | vector, outline tokens | 12,693,639 | 53.3 MB | accuracy 0.482, fragments |
