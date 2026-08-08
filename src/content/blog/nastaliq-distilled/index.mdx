@@ -114,25 +114,21 @@ total.
 
 ### Signed-Distance Fields
 
-The model has to reproduce 1,150 letter shapes from Gulzar. We could train it to
-generate the bézier outlines directly, but one wrong drawing command can break
-a contour. Instead, we convert each shape to a signed-distance field. The model
-predicts this field, and the renderer converts it back into an outline.
+We convert Gulzar's 1,150 letter shapes into signed-distance fields. This lets
+the model predict a grid of numbers instead of a sequence of bézier drawing
+commands. Each number is the distance to the nearest edge of the letter. Values
+are positive inside the letter and negative outside. The edge is where the
+values cross zero.
 
-In a signed-distance field, each cell stores its distance to the nearest edge
-of the letter. Values are positive inside the letter and negative outside. The
-edge is zero.
+The figure follows one horizontal row through خ. The red line in the left panel
+marks the row. The middle panel plots its values. Each red dot marks a zero
+crossing where the row passes through an edge of the letter.
 
-The figure below shows one row of the field. The red line in the left panel
-marks the row. The middle panel plots its values. The curve rises as the row
-enters the letter and falls as it leaves. The red dots mark the zero crossings
-at the letter's edges.
-
-The right panel magnifies one crossing. The edge does not snap to the grid. Its
-position is interpolated between two neighboring cell values and can fall
-anywhere between them. A low-resolution field can therefore produce a precise
-outline. Errors are also local: a small error in one cell shifts the crossing
-instead of breaking the contour.
+The right panel enlarges one crossing. It falls between two cells, and its
+position is calculated from their values. The outline is therefore not limited
+to the grid. A small prediction error moves the nearby edge. It does not break
+the rest of the outline. The renderer follows the zero crossings to recover the
+bézier curves.
 
 ![Three panels: the خ distance field with a red slice line, the slice's values as a curve crossing zero at each stroke edge, and one crossing magnified to show the edge landing between two cells.](./sdf-slice.png)
 
