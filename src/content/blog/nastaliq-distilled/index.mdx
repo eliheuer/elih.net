@@ -165,24 +165,32 @@ size: 64 on the left, 96 on the right.
 
 ### Training the Student
 
-The engine runs the model once for each letter cluster. Each pass reads five
-slots: the cluster, up to two letters before it, and up to two letters after it.
-The pass returns that cluster's signed-distance field and its position in the
-cascade.
+This model is trained to copy the shapes and positions produced by Gulzar and
+HarfBuzz. A font designed for the NeuralType format from the ground up could instead use the whole line or page as context and shape each letter as part of the larger composition, closer
+to how a calligrapher works on paper.
 
-Three input slots left 369 cases in which the same context produced different
-shapes. Five slots left none. Placement still varies in 20 five-slot contexts,
-so the trainer uses the average offset. This model does not read the full word
-or line.
+We use [Candle](https://github.com/huggingface/candle) to train the model because
+it provides tools in Rust and runs on CPU, Metal, or CUDA.
 
-The model has 1.36 million parameters and takes 5.4 MB, compared with 963 KB
-for the Gulzar TTF.
+Progress is measured with intersection over union (IoU), a standard score for
+shape agreement. It divides the overlapping ink area by the total area covered
+by either shape. Identical shapes score 1.0. Shapes with no overlap score 0.
+
+Training finished at an IoU of 0.945. Fine-tuning at lower learning rates
+refined the remaining details.
+
+The sheet below compares the teacher with the final model. Gulzar is
+gray on top. The model is green below.
+
+![The bismillah words, نور, and نستعليق rendered by Gulzar in gray above, and by the final model in green below. The rows match, including the الله ligature.](./teacher-model.png)
+
+The final model has 1.36 million parameters and takes 5.4 MB, compared with 963
+KB for the Gulzar TTF.
 
 The model card:
 
 | Nasta’liq-gulzar .ntf, v0 (working name) |   |
 | --- | --- |
-| architecture | 5 context-token embeddings (24 dims) → MLP (120 → 256) → 5 transposed convolutions (128 → 64 → 32 → 16 → 8 → 1 channels, 4×4 kernels, stride 2) + a 2-value displacement head |
 | parameters | 1,357,995 |
 | file | 5,433,100 bytes: f32 weights + a 1.1 KB JSON header |
 | output | one 155×219 signed-distance field at 64 px/em, plus one x/y position vector |
@@ -191,33 +199,6 @@ The model card:
 | teacher | Gulzar Regular shaped by HarfBuzz ([harfrust](https://github.com/harfbuzz/harfrust)) |
 | optimizer | AdamW, lr 3e-4, then fine-tuning at 1e-4 and 5e-5; batch 128; every 20th context held out |
 | compute | one Apple M4 Mac laptop, CPU ([candle](https://github.com/huggingface/candle) accelerate backend), about 8 minutes per epoch. Later runs moved to a Linux PC with an RTX 2060 SUPER, at 100 seconds per epoch |
-
-Training uses [candle](https://github.com/huggingface/candle). The same code
-runs on CPU, Metal, or CUDA. Inference uses plain Rust in the engine and
-requires no machine-learning framework. The engine reads the weights directly.
-
-Progress is measured with intersection over union (IoU), a standard score for
-shape agreement. It divides the overlapping ink area by the total area covered
-by either shape. Identical shapes score 1.0. Shapes with no overlap score 0.
-
-Words were legible by epoch 12. Thin strokes formed last. A hairline contributes
-tens of pixels to the loss, while a bowl contributes thousands, so the model
-learns bowls first.
-
-The hardest word was الله. Gulzar uses a dedicated ligature, but no word in the
-first corpus was long enough to trigger it. The bismillah and other real words
-added the ligature to the data. These few dozen examples had little weight in a
-corpus of thirty thousand words. Repeating them dozens of times per epoch made
-the ligature converge in eight epochs.
-
-Training finished at an IoU of 0.945. Fine-tuning at lower learning rates
-refined the remaining details. The bismillah now renders more accurately,
-including its ligatures.
-
-The sheet below compares the teacher with the final model. Gulzar is
-gray on top. The model is green below.
-
-![The bismillah words, نور, and نستعليق rendered by Gulzar in gray above, and by the final model in green below. The rows match, including the الله ligature.](./teacher-model.png)
 
 ### Tracing with img2bez
 
