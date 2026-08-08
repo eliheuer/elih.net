@@ -49,17 +49,12 @@ not make new compositional decisions from the outlines or the available page
 space. The font designer must anticipate contexts and encode the alternatives,
 positioning, and collision fixes.
 
-Gulzar describes itself as typographic rather than calligraphic. It uses
-multiple contextual forms, separate glyphs for dots, height-specific
-substitutions, and kerning rules. This project distills Gulzar's typographic
-system, not the full manuscript tradition.
-
 ### Measuring Gulzar
 
 The first step is to measure the problem: how much contextual
 behavior does Gulzar contain?
 
-We shaped every two-letter word in Gulzar with
+I shaped every two-letter word in Gulzar with
 [harfrust](https://github.com/harfbuzz/harfrust) and counted how
 many glyphs each letter uses at the start of a word. The form varies with the
 following letter. Gulzar uses 16 initial forms for ن, 15 for ي, and 14 for م.
@@ -71,12 +66,7 @@ letter in gray. The follower selects the shape.
 
 ![Fourteen ordered pairs. The green word-initial ن takes a different shape for each gray follower.](./noon-variants.png)
 
-In the shaped word نستعليق, glyphs reach **1.38 em above the baseline**. The
-word spans more than a full em of vertical travel. This geometry strains the
-metal-type box that digital font formats still emulate and motivates the new
-format.
-
-The figure below shows the word نستعليق shaped by Gulzar. The
+The figure below shows the word نستعليق shaped by Gulzar. glyphs reach **1.38 em above the baseline**. The word spans more than a full em of vertical travel. The
 letters alternate between green and gray, and the gray rule marks the baseline.
 Each red dot is an attachment point where Gulzar places one letter relative to
 the previous letter. The red line connects the points in writing order. The
