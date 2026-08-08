@@ -1,5 +1,5 @@
 ---
-title: 'Nasta’liq Distilled: From OpenType to NeuralType'
+title: 'Nasta’liq Distilled: Post-OpenType Neural Network Fonts'
 description: 'Converting Gulzar, an OpenType Nasta’liq, into a neural font. A build log.'
 date: 2026-07-30
 tags: ['fonts', 'rust', 'ai', 'machine-learning', 'arabic']
@@ -91,34 +91,40 @@ extraction tool shapes every one-, two-, and three-letter word, for a total of
 30,783.
 Three-letter words are the shortest strings in which a letter has a neighbor on
 both sides. These contexts produce medial forms. A second pass added 24 real
-words from the bismillah and the
-surahs Al-Fatiha and Al-Ikhlas, plus the word نستعليق. The full corpus contains
-30,807 words.
+words from the bismillah, the surahs Al-Fatiha and Al-Ikhlas, and the word
+نستعليق. The full corpus contains 30,807 words.
 
 The corpus also explains the demo's limits. Longer words can contain letter
 contexts absent from the training data, so the model must guess and often
 renders them poorly. A larger corpus of real Urdu and Persian text should
 reduce these failures.
 
-For each letter, the tool records its complete shape, including dots, and its
-offset from the previous letter. These offsets are the red steps in the figure
-above.
+For each letter cluster, the tool records its composed shape and its position.
+It records the first cluster's origin, then each later cluster's offset from the
+previous one. These offsets are the red steps in the figure above.
 
-The corpus contains 91,390 records and **1,150 unique letter shapes**. More
-than 100 belong to خ alone.
+The corpus contains 91,390 cluster records and **1,150 distinct composed
+shapes**. The letter خ uses 108 of them.
 
-The figure below shows every shape of خ in the dataset, 108 in
-total.
+The figure below shows all 108 shapes used for خ.
 
 ![All 108 shapes of خ in the dataset, in a grid.](./kha-shapes.png)
 
 ### Signed-Distance Fields
 
-We convert Gulzar's 1,150 letter shapes into signed-distance fields. This lets
+We convert the 1,150 composed shapes into signed-distance fields. This lets
 the model predict a grid of numbers instead of a sequence of bézier drawing
-commands. Each number is the distance to the nearest edge of the letter. Values
-are positive inside the letter and negative outside. The edge is where the
-values cross zero.
+commands.
+
+A signed-distance field stores the outline more usefully than a grayscale
+image. Instead of recording the coverage of each pixel, it records the distance
+to the nearest edge. Values are positive inside the shape and negative
+outside. The edge is where the values cross zero. These distances let us place
+the edge between grid cells.
+
+A [2007 paper from Valve](https://steamcdn-a.akamaihd.net/apps/valve/2007/SIGGRAPH2007_AlphaTestedMagnification.pdf)
+used this representation to render sharp vector graphics from low-resolution
+textures in the Source game engine.
 
 The figure follows one horizontal row through خ. The red line in the left panel
 marks the row. The middle panel plots its values. Each red dot marks a zero
@@ -150,7 +156,7 @@ tapers and hairlines survive the threshold. At 96 pixels per em, the result
 looks the same at reading size, but the model must output 2.3 times more pixels.
 The model therefore uses 64 pixels per em on a shared 155×219-pixel canvas.
 Nasta’liq needs this large canvas because swash tails and dots extend far from
-each letter's origin.
+each cluster's origin.
 
 Below is the isolated خ at both resolutions, shown at the same
 size: 64 on the left, 96 on the right.
@@ -159,31 +165,31 @@ size: 64 on the left, 96 on the right.
 
 ### Training the Student
 
-The model reads a five-letter window: the current letter and two neighbors on
-each side. Five letters are enough. Given the same window, Gulzar always draws
-the same shape.
+The engine runs the model once for each letter cluster. Each pass reads five
+slots: the cluster, up to two letters before it, and up to two letters after it.
+The pass returns that cluster's signed-distance field and its position in the
+cascade.
 
-The model has three stages. First, it represents each context letter with a
-short list of numbers learned during training. Second, a small network combines
-the five lists into a 256-number description of the target shape. Third, five
-upscaling layers turn that description into a field, doubling the image size at
-each step. A separate output predicts the offset to the next letter.
+Three input slots left 369 cases in which the same context produced different
+shapes. Five slots left none. Placement still varies in 20 five-slot contexts,
+so the trainer uses the average offset. This model does not read the full word
+or line.
 
-The total is 1.36 million parameters, 5.4 MB stored as 32-bit
-numbers. The Gulzar TTF is 963 KB.
+The model has 1.36 million parameters and takes 5.4 MB, compared with 963 KB
+for the Gulzar TTF.
 
 The model card:
 
 | Nasta’liq-gulzar .ntf, v0 (working name) |   |
 | --- | --- |
-| architecture | 5 context embeddings (24 dims) → MLP (120 → 256) → 5 transposed convolutions (128 → 64 → 32 → 16 → 8 → 1 channels, 4×4 kernels, stride 2) + a 2-value displacement head |
+| architecture | 5 context-token embeddings (24 dims) → MLP (120 → 256) → 5 transposed convolutions (128 → 64 → 32 → 16 → 8 → 1 channels, 4×4 kernels, stride 2) + a 2-value displacement head |
 | parameters | 1,357,995 |
 | file | 5,433,100 bytes: f32 weights + a 1.1 KB JSON header |
-| output | one 155×219 signed-distance field at 64 px/em, plus one displacement vector |
+| output | one 155×219 signed-distance field at 64 px/em, plus one x/y position vector |
 | vocabulary | 34 tokens: 31 letters, the لا and لله ligatures, and a boundary token |
-| corpus | 30,807 words from the teacher: 91,390 letter-in-context records, 1,150 composed shapes |
+| corpus | 30,807 words from the teacher: 91,390 cluster records, 1,150 composed shapes |
 | teacher | Gulzar Regular shaped by HarfBuzz ([harfrust](https://github.com/harfbuzz/harfrust)) |
-| optimizer | AdamW, lr 3e-4, then a 1e-4 decay pass; batch 128; every 20th record held out |
+| optimizer | AdamW, lr 3e-4, then fine-tuning at 1e-4 and 5e-5; batch 128; every 20th context held out |
 | compute | one Apple M4 Mac laptop, CPU ([candle](https://github.com/huggingface/candle) accelerate backend), about 8 minutes per epoch. Later runs moved to a Linux PC with an RTX 2060 SUPER, at 100 seconds per epoch |
 
 Training uses [candle](https://github.com/huggingface/candle). The same code
@@ -204,10 +210,9 @@ added the ligature to the data. These few dozen examples had little weight in a
 corpus of thirty thousand words. Repeating them dozens of times per epoch made
 the ligature converge in eight epochs.
 
-Training finished at an IoU of 0.945. A final pass with a decaying learning
-rate refined the remaining details. The same schedule took the Kufic font from
-almost correct to exact. The bismillah now renders more accurately, including
-its ligatures.
+Training finished at an IoU of 0.945. Fine-tuning at lower learning rates
+refined the remaining details. The bismillah now renders more accurately,
+including its ligatures.
 
 The sheet below compares the teacher with the final model. Gulzar is
 gray on top. The model is green below.
@@ -232,16 +237,17 @@ a field, and img2bez converts it to curves.
 
 ### Scaling Attempts
 
-The demo model has 1.36 million parameters. Three larger designs performed
-worse for different reasons.
+The demo model has 1.36 million parameters. Three larger designs failed to
+improve it for different reasons.
 
 **More pixels.** Retraining at 96 px/em grew the model to 3.10
 million parameters, but the letters looked the same. Almost all new parameters
 went into the layer that seeds the larger image, not into the layers that model
 letterforms. The 64 px/em field already places edges at fractional-pixel
-positions, so grid resolution was not the limit.
+positions, so grid resolution was not the limit. The two IoU scores use
+different grids and cannot be compared directly.
 
-**Wider layers.** Doubling the width of every layer gave 5.36
+**Wider layers.** Doubling the latent width and decoder channels gave 5.36
 million parameters and reduced the score from 0.945 to 0.809. Strokes became
 heavy, and letters merged where they should remain separate. The larger model
 reused settings from a model one quarter its size, but training settings do not
@@ -256,20 +262,23 @@ transformer similar to the
 draw. Dots land near where dots belong, and fragments follow the
 downward slope of the words, but strokes never close.
 
+The vector file also stores a fixed 2.6 MB placement table because this model
+has no displacement head.
+
 ![Three words. The teacher's outlines on the left, the field model in the middle drawing them almost identically, and the vector model on the right producing only small scattered fragments.](./vector-fragments.png)
 
-| | parameters | file | result |
+| | trainable parameters | file | result |
 | --- | --- | --- | --- |
 | field, 64 px/em | 1,357,995 | 5.4 MB | IoU 0.945, the font in the demo |
 | field, 96 px/em | 3,101,483 | 12.4 MB | IoU 0.825, no visible gain |
 | field, 64 px/em, wide | 5,357,091 | 21.4 MB | IoU 0.809, strokes merge |
 | vector, outline tokens | 12,693,639 | 53.3 MB | accuracy 0.482, fragments |
 
-The smallest model still performs best, but it is incomplete. At an IoU of
-0.945, it rounds sharp features and weakens or omits small ones. Exact OpenType
-output is not the goal, and some smoothing is acceptable. The missing detail
-still needs to be recovered. None of the three larger designs addressed this
-problem.
+The smallest model is the one used in the demo, but it is incomplete. At an IoU
+of 0.945, it rounds sharp features and weakens or omits small ones. Exact
+OpenType output is not the goal, and some smoothing is acceptable. The missing
+detail still needs to be recovered. None of the three larger designs addressed
+this problem.
 
 The vector result is consistent with previous research.
 [DeepVecFont](https://arxiv.org/abs/2110.06688) generated outlines as command
@@ -280,11 +289,10 @@ representation to make the sequences learnable.
 synthesis on signed-distance functions, the representation used here.
 
 The next work will focus on data and representation. First, extend the corpus
-with real Urdu and Persian text. Second, preserve the teacher's variants. When
-Gulzar draws the same context in more than one way, the training set currently
-keeps only the most common shape. Third, test representations that store more
-shape information per parameter, such as a model that returns the distance at
-any queried point instead of a fixed grid of samples.
+with real Urdu and Persian text. Second, preserve placement variants instead of
+averaging their offsets. Third, test representations that store more shape
+information per parameter, such as a model that returns the distance at any
+queried point instead of a fixed grid of samples.
 
 ### Project Status
 
