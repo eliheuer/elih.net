@@ -15,37 +15,32 @@ A previous post introduced the [NeuralType (.ntf)](/blog/neuraltype) font format
 that emulates Gutenberg's movable type in virtual
 rectangles. The first .ntf font was
 [square Kufic](https://en.wikipedia.org/wiki/Kufic#Square_Kufic), a
-style that looks like pixel art. That is easy to write off as a
+style that looks like low-resolution pixel art. That is easy to write off as a
 neat trick, but this post makes the case that a neural network based font can do the
 work of a real OpenType font and more.
 
-I converted a standard OpenType font into a neural network based font, in one
+I converted a standard OpenType font into a .ntf, in one
 of the styles that OpenType serves worst, Nasta’liq. The font I
 used is [Gulzar](https://github.com/googlefonts/Gulzar). The early result is in the interactive demo below. Type, copy, paste, move the cursor with the arrow keys, and press space to separate joined letters.
 
 <NeuralTypeDemo {...nastaliqDemo} />
 
-The demo above runs the full pipeline in your browser. The font is
+The demo runs the full pipeline in your browser. The font is
 a model with 1.36 million parameters, stored as a 5.4 MB .ntf file.
 The engine is Rust compiled to WASM, mostly built with
-[Linebender](https://linebender.org/) crates. It runs the model, places each
-letter in the cascade, and traces the contours.
+[Linebender](https://linebender.org/) crates.
 
-Distillation is the test. If the distilled font matches its
-teacher, the format works. It also answers a basic question early:
-how many parameters does Nasta’liq need? After that, the goal is
-new fonts, designed for the format, that render the script in a
-form true to the manuscript and calligraphy tradition it comes
-from.
+Distillation is just a test to see if the format will work.
+It also answers some basic questions early, how many parameters are needed and what does the file size look like? After that, the goal is
+new fonts, designed for the format, that do things that OpenType can not.
 
 ![Nasta’liq calligraphy by Mishkín-Qalam.](./mishkin-qalam-09.jpg)
 <p class="img-credit">Calligraphy by <a href="https://en.wikipedia.org/wiki/Mishk%C3%ADn-Qalam">Mishkín-Qalam</a> (1826–1912). Public domain, via <a href="https://commons.wikimedia.org/wiki/File:Mishkin-Qalam-09.JPG">Wikimedia Commons</a>.</p>
 
-Nasta’liq is a cursive, flowing style. Letters join or break by
-the rules of the Arabic script, and a word is a chain of connected
-runs. Within a run, each letter hangs below the letter before it.
-A long run starts high above the line and steps down until its
-last letter lands on it.
+Nasta’liq is a cursive, flowing style. Some
+letters join to the letter after them and some do not by the rules of the Perso-Arabic script, so a word is a series of connected groups. Within a group, each letter hangs
+below the letter before it. A long group starts high above the line
+and steps down until its last letter lands on it.
 
 In handwriting there is no baseline grid. The line a word sits on
 can be straight or curved, and letterforms, dots, and swashes move
