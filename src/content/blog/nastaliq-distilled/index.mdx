@@ -21,9 +21,7 @@ work of a real OpenType font and more.
 
 I converted a standard OpenType font into a neural network based font, in one
 of the styles that OpenType serves worst, Nasta’liq. The font I
-used is [Gulzar](https://github.com/googlefonts/Gulzar), an OFL
-licensed Nasta’liq by Borna Izadpanah, Fiona Ross, Alice Savoie, and
-Simon Cozens. The early result is in the interactive demo below. Type, copy, paste, move the cursor with the arrow keys, and press space to separate joined letters.
+used is [Gulzar](https://github.com/googlefonts/Gulzar). The early result is in the interactive demo below. Type, copy, paste, move the cursor with the arrow keys, and press space to separate joined letters.
 
 <NeuralTypeDemo {...nastaliqDemo} />
 
@@ -32,10 +30,6 @@ a model with 1.36 million parameters, stored as a 5.4 MB .ntf file.
 The engine is Rust compiled to WASM, mostly built with
 [Linebender](https://linebender.org/) crates. It runs the model, places each
 letter in the cascade, and traces the contours.
-
-NeuralType is a general format, and Nasta’liq is one use case
-among many. I am using it for the early demo fonts because it makes
-the strongest case.
 
 Distillation is the test. If the distilled font matches its
 teacher, the format works. It also answers a basic question early:
