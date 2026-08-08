@@ -66,7 +66,7 @@ letter in gray. The follower selects the shape.
 
 ![Fourteen ordered pairs. The green word-initial ن takes a different shape for each gray follower.](./noon-variants.png)
 
-The figure below shows the word نستعليق shaped by Gulzar. glyphs reach **1.38 em above the baseline**. The word spans more than a full em of vertical travel. The
+The figure below shows the word نستعليق shaped by Gulzar. Glyphs reach **1.38 em above the baseline**. The word spans more than a full em of vertical travel. The
 letters alternate between green and gray, and the gray rule marks the baseline.
 Each red dot is an attachment point where Gulzar places one letter relative to
 the previous letter. The red line connects the points in writing order. The
@@ -85,10 +85,13 @@ The same text always produces the same result, and shaping one word takes a
 fraction of a millisecond. The extraction tool can therefore generate as much
 training data as needed.
 
-The extraction tool (`crates/neuraltype-distill`) shapes every one-, two-, and
-three-letter word, for a total of 30,783. Three-letter words are the shortest
-strings in which a letter has a neighbor on both sides. These contexts produce
-medial forms. A second pass added 24 real words from the bismillah and the
+The
+[`crates/neuraltype-distill`](https://github.com/eliheuer/post-opentype/tree/main/crates/neuraltype-distill)
+extraction tool shapes every one-, two-, and three-letter word, for a total of
+30,783.
+Three-letter words are the shortest strings in which a letter has a neighbor on
+both sides. These contexts produce medial forms. A second pass added 24 real
+words from the bismillah and the
 surahs Al-Fatiha and Al-Ikhlas, plus the word نستعليق. The full corpus contains
 30,807 words.
 
@@ -99,7 +102,7 @@ reduce these failures.
 
 For each letter, the tool records its complete shape, including dots, and its
 offset from the previous letter. These offsets are the red steps in the figure
-above. The largest single step in the dataset drops 1.66 em.
+above.
 
 The corpus contains 91,390 records and **1,150 unique letter shapes**. More
 than 100 belong to خ alone.
@@ -111,20 +114,14 @@ total.
 
 ### Signed-Distance Fields
 
-Extraction produces 1,150 shapes stored as bézier outlines. The model needs a
-fixed output representation for these shapes.
+The model has to reproduce 1,150 letter shapes from Gulzar. We could train it to
+generate the bézier outlines directly, but one wrong drawing command can break
+a contour. Instead, we convert each shape to a signed-distance field. The model
+predicts this field, and the renderer converts it back into an outline.
 
-Outlines are not suitable here. Each outline has a different number of curve
-points, and one wrong point can break an entire contour. This makes outlines a
-fragile target for a model that draws from scratch. The
-[Virtua Grotesk](/blog/virtua-grotesk) model does write curve
-points, but it edits an outline supplied as input. This model has no starting
-outline. A fixed grid is more stable because a small change in the weights
-produces a small change in the image.
-
-The best representation tested so far is a signed-distance field. Each cell in
-the grid stores its distance to the nearest edge of the letter. Values are
-positive inside the letter and negative outside. The edge is the zero contour.
+In a signed-distance field, each cell stores its distance to the nearest edge
+of the letter. Values are positive inside the letter and negative outside. The
+edge is zero.
 
 The figure below shows one row of the field. The red line in the left panel
 marks the row. The middle panel plots its values. The curve rises as the row
