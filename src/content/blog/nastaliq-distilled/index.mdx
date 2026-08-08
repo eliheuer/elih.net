@@ -40,11 +40,10 @@ new fonts, designed for the format, that do things that OpenType can not.
 Nasta’liq is a cursive, flowing style of the Perso-Arabic script.
 Words break into groups of joined letters, and within a group each
 letter hangs below the one before it. A long group starts high
-above the line and steps down until its last letter lands on it.
+above the baseline and steps down until its last letter lands on it.
 
-The line a word sits on can be straight or curved, and letterforms, dots, and swashes move
-freely around it to fill the space. OpenType approximates all of
-this with more than one thousand glyphs and cursive-attachment
+Letterforms and dots move freely around to fill the space.
+OpenType approximates all of this with more than one thousand glyphs and cursive-attachment
 rules. Even so, no OpenType Nasta’liq font has come close to the
 style as it developed in manuscript and calligraphy form.
 
@@ -64,21 +63,23 @@ different glyphs, ي with 15, م with 14. Across all 31 letters,
 Gulzar uses 344 distinct word-initial glyphs. Amiri, a naskh with
 rich contextual behavior, uses 150 on the same test.
 
-The figure below shows word-initial ن in green, with the following
+The figure below shows initial ن in green, with the following
 letter in gray. The follower selects the shape.
 
 ![Fourteen ordered pairs. The green word-initial ن takes a different shape for each gray follower.](./noon-variants.png)
 
-Counting glyphs measures one half of the problem: how many shapes
-there are. The other half is how far words climb. The shaped word
-نستعليق places glyphs at vertical offsets up to **1.38 em above the
+The shaped word نستعليق places glyphs at vertical offsets up to **1.38 em above the
 baseline**. One word spans more than a full em of vertical travel.
 That geometry strains the metal-type box that digital font formats
 still emulate. Numbers like this are why we are trying a new format.
 
-The figure below shows the shaped word نستعليق. The letters
-alternate green and gray, the red chain joins the letter origins, and
-the gray rule is the baseline.
+The figure below shows the word نستعليق shaped by Gulzar. The
+letters alternate green and gray so each one is distinct, and the
+gray rule is the baseline. Each red dot is an attachment point: the
+position where Gulzar places one letter relative to the letter
+before it. The red line connects the attachment points in writing
+order. The step from each dot to the next is the per-letter offset
+that the model will have to learn.
 
 ![The word Nasta’liq shaped by Gulzar: letters step down from high above the baseline, and the final swash lands below it.](./cascade.png)
 
@@ -100,70 +101,71 @@ three-letter word. That is 30,783 small words. The three-letter
 words matter because they are the shortest text where a letter has
 a neighbor on each side. Those neighbors produce the medial forms,
 the shapes a letter takes in the middle of a word. A second pass
-added 24 real words: the bismillah, Al-Fatiha, Al-Ikhlas, and
-نستعليق. The full corpus is 30,807 words.
+added 24 real words, drawn from the bismillah and the surahs
+Al-Fatiha and Al-Ikhlas, plus the word نستعليق. The full corpus is
+30,807 words.
 
-This corpus is also why unseen words in the demo render rough. A
-longer word contains letter contexts that no short word ever showed
-the model, and there it has to guess. The fix is a larger corpus,
-built from real Urdu and Persian text.
+This corpus also explains the demo's limits. Words that are not in
+it render broken, because a longer word contains letter contexts
+that the model was never trained on, and there it has to guess. The
+fix is a larger corpus, built from real Urdu and Persian text.
 
-For every letter in every word, the tool records two facts. The
-first is the composed shape: the base letterform and its dots, as
-one unit. The second is the offset from the previous letter: how
-far across, and how far down. Following the offsets letter by
-letter rebuilds the downward cascade of the word.
+For every letter in every word, the tool records two things. The
+first is the shape of the letter, dots included, as one unit. The
+second is the offset from the previous letter, the red steps in
+the figure above. The largest single step in the dataset drops
+1.66 em.
 
-The dataset holds 91,390 letter-in-context records, 416 unique
-glyphs, and **1,150 unique composed shapes**. More than 100 of those
-shapes belong to خ alone. Between adjacent letters, the cascade drops
-as much as 1.66 em.
+Across the whole corpus that comes to 91,390 records, holding
+**1,150 unique letter shapes**. More than 100 of those shapes
+belong to خ alone.
 
-The figure below shows every composed shape of خ in the dataset, 108
-in total.
+The figure below shows every shape of خ in the dataset, 108 in
+total.
 
-![All 108 composed shapes of خ in the dataset, in a grid.](./kha-shapes.png)
-
-One measurement set the size of the model's input. Given a letter
-and two neighbors on each side, Gulzar always draws exactly one
-shape. So a five-letter window captures everything this teacher
-knows.
-
-That number measures Gulzar, not the goal. A calligrapher is aware
-of everything: the whole word, the line, the space on the page. A
-neural font can grow toward that by taking more of the text as
-input.
+![All 108 shapes of خ in the dataset, in a grid.](./kha-shapes.png)
 
 ### Shapes as Fields
 
 Extraction leaves us with 1,150 shapes, stored as bézier outlines.
-The model has to learn to draw these shapes. In what form should
-it output them?
+What form should the model's output take?
 
-An outline is a list of curve points, and the list has a different
-length for every shape. That is hard for a small neural network:
-get one point wrong and the whole contour breaks. A neural network
-learns best when the output is a fixed grid of numbers, where a
-small change in the weights makes a small change in the picture.
-So we do not ask the model to write curves. We ask it to paint a
-picture that curves can be recovered from exactly.
+The obvious answer is outlines, but they are the wrong output
+here. An outline is a list of curve points,
+the list has a different length for every shape, and one wrong
+point breaks the whole contour. That is a fragile target for a
+model that must draw from scratch. The
+[Virtua Grotesk](/blog/virtua-grotesk) model does write curve
+points, but it edits an outline it is given as input; here there
+is no outline to start from. A fixed grid of numbers is a steadier
+target, so a small change in the weights makes a small change in the
+picture.
 
-We render each of the 1,150 shapes to a signed-distance field. It
-looks like a soft grayscale image of the letter, but the gray means
-something different. In an ordinary image, each pixel says how much
-ink is at that spot, and pixels away from the letter's edge say
-nothing useful. In a signed-distance field, each cell holds the
-distance to the nearest edge of the shape: positive inside, negative
-outside. Every cell knows where the edge is, even cells far from
-it.
+The solution that has worked best so far is a signed-distance
+field. The idea is simple. Instead of storing a picture of the
+letter, every cell in the grid stores one number: its distance to
+the letter's nearest edge. Inside the letter the number is
+positive, outside it is negative, and the edge itself is exactly
+at zero.
 
-The outline of the letter is the line where the field crosses
-zero. Because the field changes smoothly, that line can be found
-between cells, at finer than pixel precision. A small error in the
-model's output nudges the edge slightly instead of punching a hole
-in the letter. The field is the continuous version of the binary
-grid in the first NeuralType font: figure and ground, with no
-stroke or skeleton assumptions.
+The figure below shows how this works in one dimension. The red
+line on the left is a single row of cells. The middle panel plots
+that row's numbers: the curve rises where the row passes through
+ink and falls where it leaves, and the letter's edge is wherever
+the curve crosses zero, marked with red dots.
+
+The right panel magnifies one crossing, and it answers the
+resolution question. The grid is coarse, but the edge is not read
+off the grid. It is computed from two neighboring cells: draw the
+line between their values and take the point where it crosses
+zero. That point can land anywhere between the two cells, so the
+edge's position is continuous. This is why a low-resolution field
+still yields an exact outline: the outline comes from the
+crossings, not the cells. It also makes the model's job safe. A
+small error in a cell's value only slides a crossing sideways,
+instead of punching a hole in the letter.
+
+![Three panels: the خ distance field with a red slice line, the slice's values as a curve crossing zero at each stroke edge, and one crossing magnified to show the edge landing between two cells.](./sdf-slice.png)
 
 The image below shows the isolated خ from the training set. On the
 left is the shape. On the right is its signed-distance field, with
@@ -196,6 +198,11 @@ size: 64 on the left, 96 on the right.
 ![The isolated خ thresholded at 64 and 96 pixels per em, at the same size. The two are nearly identical.](./res-64-96.png)
 
 ### Training the Student
+
+The model reads five letters at a time: the letter being drawn,
+plus two neighbors on each side. Five is enough, because we
+measured it: given the same five letters, Gulzar always draws the
+same shape.
 
 The model is small, and it works in three steps. First, each of the
 five context letters comes in as a learned code, a short list of
