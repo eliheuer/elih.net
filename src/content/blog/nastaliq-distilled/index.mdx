@@ -27,14 +27,14 @@ serve as a practical alternative to OpenType.
 I converted [Gulzar](https://github.com/googlefonts/Gulzar), an OpenType
 Nasta’liq font, into a .ntf. The result is in the interactive demo below. Type,
 copy, paste, move the cursor with the arrow
-keys, and press space to separate joined letters.
+keys, and press space to separate joined letters, click and drag to select multiple letters at once.
 
 <NeuralTypeDemo {...nastaliqDemo} />
 
 The demo runs the full pipeline in the browser. The font has 1.36 million
-parameters and takes 1.38 MB. The engine is Rust compiled to WASM and built
-mostly with
-[Linebender](https://linebender.org/) crates.
+parameters and takes 1.38 MB with 8-bit weights. The rendering engine is
+written in Rust, compiled to WASM, and built with
+[Linebender](https://linebender.org/) libraries. The demo does not use an OpenType shaping engine. It uses behavior learned by the model to shape the text.
 
 ### Why Nasta’liq
 
@@ -44,26 +44,18 @@ mostly with
 Nasta’liq is a relativly non-linear style of the Perso-Arabic script. In
 calligraphy form, composition is relativly freeform. A calligrapher can stack words, extend strokes, and adjust the positions of letters and dots to balance the black and white space.
 
-The difference is clearer when the same text is shown both ways. Mir Ali
-Haravi treats the seven lines as one composition. He changes their length,
-angle, and position to fill the page. Gulzar changes the letters within each
-line, but sets the lines on straight, evenly spaced baselines.
-
-![The same seven lines of Persian text. Mir Ali Haravi's manuscript composition is on the left. The same lines set in the Gulzar OpenType font are on the right.](./manuscript-gulzar-comparison.png)
-<p class="img-credit">Left: calligraphy by Mir Ali Haravi (1476–1544), ca. 1530–50, from a folio in the Shah Jahan Album. Public domain, The Metropolitan Museum of Art, via <a href="https://commons.wikimedia.org/wiki/File:%22Shah_Jahan_on_Horseback%22,_Folio_from_the_Shah_Jahan_Album_MET_DP235886.jpg">Wikimedia Commons</a>. Right: the same text set in <a href="https://github.com/googlefonts/Gulzar">Gulzar</a>.</p>
-
-Mir Emad Hassani uses the same freedom across a full page of _Al-Fatiha_. The
-manuscript fits six lines into one composition. Gulzar sets the same line
-breaks independently.
+The limits of OpenType are clear when the same text is shown in manuscript
+form and set in an OpenType font. You do not need to read Nasta’liq to compare
+them. Spend a minute finding the same forms and notice how they render differently. These images show the difference better than a description of the problem can.
 
 ![Al-Fatiha in Nasta’liq by Mir Emad Hassani on the left. The same six lines set in Gulzar on the right.](./fatiha-gulzar-comparison.png)
 <p class="img-credit">Left: <em>Al-Fatiha</em> in Nasta’liq by Mir Emad Hassani (1554–1615), National Museum of Iran. Public domain, via <a href="https://commons.wikimedia.org/wiki/File:Nasta%27liq_calligraphy_style_-_Mir_Emad_Hassani_09.png">Wikimedia Commons</a>. Right: the same text set in <a href="https://github.com/googlefonts/Gulzar">Gulzar</a>.</p>
 
-One short phrase shows how far this freedom can go. Mishkín-Qalam turns
-_Yá Bahá’u’l-Abhá_ (يا بهاء الأبهى) into a two-level composition. Letters that
-follow one another in the text are separated, stacked, and joined by long
-strokes. Gulzar sets the same phrase on one line. The colors match the same
-letters in each version.
+![The same seven lines of Persian text. Mir Ali Haravi's manuscript composition is on the left. The same lines set in the Gulzar OpenType font are on the right.](./manuscript-gulzar-comparison.png)
+<p class="img-credit">Left: calligraphy by Mir Ali Haravi (1476–1544), ca. 1530–50, from a folio in the Shah Jahan Album. Public domain, The Metropolitan Museum of Art, via <a href="https://commons.wikimedia.org/wiki/File:%22Shah_Jahan_on_Horseback%22,_Folio_from_the_Shah_Jahan_Album_MET_DP235886.jpg">Wikimedia Commons</a>. Right: the same text set in <a href="https://github.com/googlefonts/Gulzar">Gulzar</a>.</p>
+
+One short phrase shows how far this freedom can go. Letters that
+follow one another in the text are separated, stacked, and aranged to make a non-linear composition. This is an extreame example, but go back and look at the manuscripts above and you will find similar behavior where dots are moved far from their imediatly logical positions for the sake over the overall composition. 
 
 ![The phrase Yá Bahá’u’l-Abhá as a stacked calligraphic composition by Mishkín-Qalam on the left and as a line of text set in Gulzar on the right. Matching letters use the same colors.](./greatest-name-comparison.png)
 <p class="img-credit">Left: <em>Yá Bahá’u’l-Abhá</em>, original calligraphy by <a href="https://en.wikipedia.org/wiki/Mishk%C3%ADn-Qalam">Mishkín-Qalam</a> (1826–1912). Color diagram by Любослов Езыкин, September–October 2015, <a href="https://creativecommons.org/licenses/by-sa/4.0/">CC BY-SA 4.0</a>, via <a href="https://commons.wikimedia.org/wiki/File:Arabic_letters_in_the_Greatest_Name.svg">Wikimedia Commons</a>. Right: the same text set in <a href="https://github.com/googlefonts/Gulzar">Gulzar</a>.</p>
