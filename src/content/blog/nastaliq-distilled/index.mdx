@@ -163,11 +163,43 @@ size: 64 on the left, 96 on the right.
 
 ![The isolated خ thresholded at 64 and 96 pixels per em, at the same size. The two are nearly identical.](./res-64-96.png)
 
+### How the Network Works
+
+The extraction step has already narrowed the problem. The network does not have
+to learn a language, recognize letters in an image, or discover how Gulzar
+works. Each training record supplies a target letter, its nearby letters, the
+shape Gulzar draws, and where Gulzar places it. The network only has to learn
+the mapping between them.
+
+The current model reads the target letter and up to two letters on either side.
+This limit belongs to this distilled model, not to NeuralType. A lookup table
+turns each letter into 24 numbers learned during training. The network combines
+these numbers into a 256-number description of the target shape.
+
+This description feeds two outputs. A small branch predicts the horizontal and
+vertical step to the next shape. The main branch expands the description into
+128 small 7×5 maps. Five upscaling layers combine and enlarge them until they
+form one 155×219 signed-distance field.
+
+![The current model in four steps: read the target and nearby letters, combine their learned values into a shape description, enlarge that description through five layers, then output a distance field and an x/y position.](./model-architecture.png)
+
+The model is simple because the task is closer to compression than invention.
+Gulzar and HarfBuzz always produce the same shape for the same extracted
+context, and the corpus contains only 1,150 target shapes. The decoder can reuse
+what it learns about strokes, curves, and dots across all of them. It does not
+use attention, diffusion, or a language model. One pass through a few ordinary
+layers produces each shape and position.
+
 ### Training the Student
 
-This model is trained to copy the shapes and positions produced by Gulzar and
-HarfBuzz. A font designed for the NeuralType format from the ground up could instead use the whole line or page as context and shape each letter as part of the larger composition, closer
-to how a calligrapher works on paper.
+Training starts with random weights, so the first predictions are wrong. For
+each group of examples, the model predicts a field and a position. Candle
+compares every field cell with Gulzar's field and compares the two positions.
+It combines these differences into one error score, then adjusts the weights to
+reduce that score. Repeating this process teaches one set of weights to produce
+all 1,150 shapes.
+
+![Training as a loop: compare Gulzar's target field with the model's prediction, measure the difference, adjust the network's weights, and repeat.](./training-loop.png)
 
 We use [Candle](https://github.com/huggingface/candle) to train the model because
 it provides tools in Rust and runs on CPU, Metal, or CUDA.
@@ -185,81 +217,90 @@ gray on top. The model is green below.
 ![Five words rendered by Gulzar in gray above and by the final model in green below.](./teacher-model.png)
 
 The final model has 1.36 million parameters and takes 1.38 MB, compared with 963
-KB for the Gulzar TTF. It stores the weights as 8-bit values, then expands them
-to 32 bits in memory. The same weights take 5.4 MB when stored as 32-bit values.
-The precision controls let you compare the 32-bit, 16-bit, and 8-bit versions.
+KB for the Gulzar TTF. It stores the weights as 8-bit values. The same weights
+take 5.4 MB when stored as 32-bit values. The precision controls in the demo let
+you compare the 32-bit, 16-bit, and 8-bit versions.
 
 The 8-bit output is close to the original. Some strokes and letter positions
-shift. Quantization-aware fine-tuning may reduce these differences. We will also
-test a smaller decoder and factor the model's largest layer.
+shift. Quantization-aware fine-tuning may reduce these differences.
 
-These numbers do not predict the size of a font designed for NeuralType. This
+Further file-size reductions are possible. We have not spent much time on
+optimization yet. One part of the model contains 84 percent of its weights. We
+could replace it with two smaller layers, for example.
+
+These numbers do not fully predict the size of a font designed for the NeuralType format. This
 model spends its capacity copying Gulzar's 1,150 OpenType-derived shapes. A
 native design could learn a smaller set of rules, but whole-line composition
-could also require a larger model. The native square Kufic prototype is 215 KB,
+could also require a larger model, which for a lot of use cases would be worth the extra file size. The native square Kufic prototype is 215 KB,
 but it is much simpler than Nasta’liq. About 1 MB is a reasonable target for a
-native Nasta’liq font. It is not a measured result yet.
+native Nasta’liq font, and even up to 5-10MB would be worth it for something not possible in other formats.
 
 The model card:
 
-| Nasta’liq-gulzar .ntf, v0 (working name) |   |
+| `gulzar-int8.ntf` | |
 | --- | --- |
+| size | 1,380,371 bytes |
 | parameters | 1,357,995 |
-| file | 1,380,371 bytes: blockwise int8 weights and scales |
-| f16 comparison | 2,717,110 bytes |
-| f32 comparison | 5,433,100 bytes |
-| output | one 155×219 signed-distance field at 64 px/em, plus one x/y position vector |
-| vocabulary | 34 tokens: 31 letters, the لا and لله ligatures, and a boundary token |
-| corpus | 30,807 words from the teacher: 91,390 cluster records, 1,150 composed shapes |
-| teacher | Gulzar Regular shaped by HarfBuzz ([harfrust](https://github.com/harfbuzz/harfrust)) |
-| optimizer | AdamW, lr 3e-4, then fine-tuning at 1e-4 and 5e-5; batch 128; every 20th context held out |
-| compute | one Apple M4 Mac laptop, CPU ([candle](https://github.com/huggingface/candle) accelerate backend), about 8 minutes per epoch. Later runs moved to a Linux PC with an RTX 2060 SUPER, at 100 seconds per epoch |
+| output | one 155×219 signed-distance field at 64 px/em, plus one x/y position |
+| coverage | 31 Arabic letters, plus the لا and لله ligatures |
+| training data | 30,807 words, 91,390 training records, and 1,150 shapes |
+| teacher | Gulzar Regular shaped by HarfBuzz |
+| compute | about 8 minutes per epoch on an Apple M4 CPU; about 100 seconds on an NVIDIA RTX 2060 SUPER |
+| validation | IoU 0.945 |
+
+### Beyond This Model
+
+The network above is a baseline, not a limit of the format. The .ntf file names
+its model type and dimensions, so later versions can use different
+architectures.
+
+A native NeuralType font could use a small
+[Transformer](https://arxiv.org/abs/1706.03762) to read a whole line or page at
+once. Its attention layers would let every letter respond to the rest of the
+composition. Page dimensions could also be inputs. The model could then balance
+the line as a whole instead of copying Gulzar one local shape at a time.
+
+The fixed grid could also be replaced by a continuous field. Instead of
+returning all 33,945 cell values at once, the network would receive an x/y point
+and return the distance at that point. The renderer could ask for more samples
+around hairlines and tapers. Work on
+[continuous signed-distance functions](https://arxiv.org/abs/1901.05103),
+[SIREN](https://arxiv.org/abs/2006.09661), and
+[Fourier features](https://arxiv.org/abs/2006.10739) shows several ways to build
+this kind of coordinate-based network.
+
+![The current distilled model uses nearby letters and returns one fixed grid per shape. A possible native model reads a whole line or page and returns the distance at any requested x/y point.](./future-architecture.png)
+
+Diffusion is newer, but it is not an obvious fit for a font. It usually needs
+many passes to produce one result. A font needs deterministic output while the
+user types. The next useful experiment is a small whole-line context model with
+a continuous distance-field decoder. This is a proposed direction, not part of
+the current demo.
 
 ### Tracing with img2bez
 
 The model outputs a field, but text needs outlines. The demo uses two tracers.
 While you type, a fast sub-pixel tracer draws each word. When input settles,
-[img2bez](/blog/img2bez) replaces it with a higher-quality outline. I built
-img2bez to turn rasters into font-grade bézier curves.
+[img2bez](/blog/img2bez) replaces it with a higher-quality outline. img2bez is a
+Rust crate I built specifically for tracing AI-generated glyph images. It finds
+the edge, fits bézier curves to it, and produces an outline that can be used in
+a font. Its settings can favor accuracy, smoother curves, or fewer points. The
+demo uses the Clean profile with a tight, faithful fit. It applies light
+smoothing and uses SmoothG2 mode to keep the joins between curves smooth.
 
 The slower tracer runs in a Web Worker, separate from the thread that handles
 typing and drawing. The editor stays responsive, and each new outline appears
 when ready.
 
-This pipeline added direct distance-field input to img2bez. It now traces the
-model's field without an intermediate image. The fitted curves are smooth, with
-no corners or kinks. The render path creates no raster image. The model outputs
-a field, and img2bez converts it to curves.
+For this project, I added direct distance-field input to img2bez. It traces the
+model's field directly, without first turning it into a raster image.
 
-### Scaling Attempts
+### Failed Scaling Attempts
 
-The demo model has 1.36 million parameters. Three larger designs failed to
-improve it for different reasons.
-
-**More pixels.** Retraining at 96 px/em grew the model to 3.10
-million parameters, but the letters looked the same. Almost all new parameters
-went into the layer that seeds the larger image, not into the layers that model
-letterforms. The 64 px/em field already places edges at fractional-pixel
-positions, so grid resolution was not the limit. The two IoU scores use
-different grids and cannot be compared directly.
-
-**Wider layers.** Doubling the latent width and decoder channels gave 5.36
-million parameters and reduced the score from 0.945 to 0.809. Strokes became
-heavy, and letters merged where they should remain separate. The larger model
-reused settings from a model one quarter its size, but training settings do not
-transfer reliably across model sizes
-([hyperparameter transfer](https://arxiv.org/abs/2203.03466)). Its score was
-still rising when the run ended.
-
-**Outlines instead of fields.** The third attempt predicted curve
-points as a stream of drawing tokens. It used a 12.7-million-parameter
-transformer similar to the
-[Virtua Grotesk](/blog/virtua-grotesk) model. It never learned to
-draw. Dots land near where dots belong, and fragments follow the
-downward slope of the words, but strokes never close.
-
-The vector file also stores a fixed 2.6 MB placement table because this model
-has no displacement head.
+I tested three ways to improve the model. Increasing the field resolution made
+the model larger but did not improve the letters. Widening the network made the
+results worse. Training a transformer to draw outlines directly produced
+fragments instead of complete shapes.
 
 ![Three words. The teacher's outlines on the left, the field model in the middle drawing them almost identically, and the vector model on the right producing only small scattered fragments.](./vector-fragments.png)
 
@@ -284,11 +325,12 @@ representation to make the sequences learnable.
 [VecFontSDF](https://arxiv.org/abs/2303.12675) instead based vector font
 synthesis on signed-distance functions, the representation used here.
 
-The next work will focus on data and representation. First, extend the corpus
-with real Urdu and Persian text. Second, preserve placement variants instead of
-averaging their offsets. Third, test representations that store more shape
-information per parameter, such as a model that returns the distance at any
-queried point instead of a fixed grid of samples.
+The next work will also improve the data. The corpus needs more real Urdu and
+Persian text. It also needs to preserve placement variants. Gulzar can place the
+same local letter context differently in different words. The current training
+step combines these examples and uses their average position, which may not
+match any of them. A future model should keep the variants and use more context
+to choose between them.
 
 ### Project Status
 
