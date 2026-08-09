@@ -21,20 +21,47 @@ WIDTH = 2400
 HEIGHT = 1100
 BACKGROUND = "#0b0b0b"
 
-# Colors from the source diagram, indexed by character position in TEXT.
+# Runebender's mark-label palette. The theme defines these colors in OKLCH;
+# the SVG uses its generated sRGB values for renderer compatibility.
+RUNEBENDER_COLORS = {
+    "red": "#e04c44",
+    "orange": "#ec7433",
+    "yellow": "#e8c944",
+    "green": "#4fb772",
+    "blue": "#4494db",
+    "purple": "#8a6fe1",
+    "pink": "#e56aaa",
+}
+
+# Colors indexed by character position in TEXT.
 COLORS = {
-    0: "#ff6600",  # ي
-    1: "#9ade00",  # ا
-    3: "#4e9a06",  # ب
-    4: "#f1caff",  # ه
-    5: "#ccff42",  # ا
-    6: "#ba00ff",  # ء
-    8: "#ff4141",  # ا
-    9: "#ffc022",  # ل
-    10: "#19aeff",  # أ
-    11: "#009100",  # ب
-    12: "#f1caff",  # ه
-    13: "#0084c8",  # ى
+    0: RUNEBENDER_COLORS["orange"],  # ي
+    1: RUNEBENDER_COLORS["green"],  # ا
+    3: RUNEBENDER_COLORS["purple"],  # ب
+    4: RUNEBENDER_COLORS["pink"],  # ه
+    5: RUNEBENDER_COLORS["yellow"],  # ا
+    6: RUNEBENDER_COLORS["blue"],  # ء
+    8: RUNEBENDER_COLORS["red"],  # ا
+    9: RUNEBENDER_COLORS["yellow"],  # ل
+    10: RUNEBENDER_COLORS["blue"],  # أ
+    11: RUNEBENDER_COLORS["purple"],  # ب
+    12: RUNEBENDER_COLORS["pink"],  # ه
+    13: RUNEBENDER_COLORS["green"],  # ى
+}
+
+# Recolor the matching sections of the Wikimedia source illustration.
+SOURCE_COLOR_MAP = {
+    "#ff6600": COLORS[0],
+    "#9ade00": COLORS[1],
+    "#4e9a06": COLORS[3],
+    "#f1caff": COLORS[4],
+    "#ccff42": COLORS[5],
+    "#ba00ff": COLORS[6],
+    "#ff4141": COLORS[8],
+    "#ffc022": COLORS[9],
+    "#19aeff": COLORS[10],
+    "#009100": COLORS[11],
+    "#0084c8": COLORS[13],
 }
 
 SVG_NS = "http://www.w3.org/2000/svg"
@@ -106,8 +133,52 @@ def colored_gulzar(font_path: Path, temp_dir: Path) -> ET.Element:
         raise RuntimeError(
             f"HarfBuzz returned {len(clusters)} glyphs but drew {len(uses)}"
         )
+
+    defs = root.find(f"{{{SVG_NS}}}defs")
+    if defs is None:
+        defs = ET.Element(f"{{{SVG_NS}}}defs")
+        root.insert(0, defs)
+    gradient = ET.SubElement(
+        defs,
+        f"{{{SVG_NS}}}linearGradient",
+        {
+            "id": "lam-alef-colors",
+            "gradientUnits": "userSpaceOnUse",
+            "x1": "20",
+            "y1": "0",
+            "x2": "152",
+            "y2": "0",
+        },
+    )
+    for offset, color in (
+        ("0%", COLORS[10]),
+        ("58%", COLORS[10]),
+        ("58%", COLORS[9]),
+        ("100%", COLORS[9]),
+    ):
+        ET.SubElement(
+            gradient,
+            f"{{{SVG_NS}}}stop",
+            {"offset": offset, "stop-color": color},
+        )
+
+    lam_alef_part = 0
     for use, cluster in zip(uses, clusters):
-        use.set("fill", COLORS.get(cluster, "#c5c5c5"))
+        if cluster == 9:
+            # Gulzar combines ل and أ into one ligature and emits the hamza as
+            # a separate mark. Preserve the two source colors in the figure.
+            if lam_alef_part == 0:
+                use.set("fill", COLORS[10])
+            else:
+                href = use.get("{http://www.w3.org/1999/xlink}href")
+                glyph = root.find(f".//*[@id='{href.removeprefix('#')}']")
+                if glyph is None:
+                    raise RuntimeError("Could not find Gulzar lam-alef glyph")
+                for path in glyph.findall(f".//{{{SVG_NS}}}path"):
+                    path.set("fill", "url(#lam-alef-colors)")
+            lam_alef_part += 1
+        else:
+            use.set("fill", COLORS.get(cluster, "#c5c5c5"))
 
     _, _, view_width, view_height = map(float, root.get("viewBox").split())
     scale = min(1100 / view_width, 1000 / view_height)
@@ -129,6 +200,17 @@ def arabic_source(source_path: Path) -> ET.Element:
         for group in source_root.findall(f"{{{SVG_NS}}}g")
         if group.get(f"{{{INKSCAPE_NS}}}label") == "arabic"
     )
+
+    for element in arabic.iter():
+        fill = element.get("fill")
+        if fill:
+            element.set("fill", SOURCE_COLOR_MAP.get(fill.lower(), fill))
+
+        style = element.get("style")
+        if style:
+            for source_color, replacement in SOURCE_COLOR_MAP.items():
+                style = style.replace(source_color, replacement)
+            element.set("style", style)
 
     view_x, view_y, view_width, view_height = 7, 30, 1400, 940
     scale = min(1100 / view_width, 1000 / view_height)
