@@ -2,18 +2,23 @@
 title: 'Nasta’liq Distilled: Post-OpenType Neural Network Fonts'
 description: 'Converting Gulzar, an OpenType Nasta’liq, into a neural font. A build log.'
 date: 2026-07-30
+dateNote: 'Updated August 9, 2026'
 tags: ['fonts', 'rust', 'ai', 'machine-learning', 'arabic']
 image: './share-card.png'
 authors: ['elih']
 draft: false
 ---
 
+import { Image } from 'astro:assets'
 import NeuralTypeDemo from '../../../components/NeuralTypeDemoIsland.astro'
 import { nastaliqDemo } from '../../../components/demo-presets'
+import BahramGurImage from './bahram-gur-turquoise-pavilion.jpg'
+import NizamiCoverImage from './nizami-khamsa-cover.jpg'
 
 A previous post introduced the [NeuralType (.ntf)](/blog/neuraltype) font
-format. An .ntf font is a small neural network, not a system that emulates
-Gutenberg's movable type with virtual rectangles. The first .ntf font was
+format. An .ntf font is a small neural network with a short header, not a system
+that emulates Gutenberg's movable type with virtual metal rectangles containing
+fixed glyph shapes. The first .ntf font was
 [square Kufic](https://en.wikipedia.org/wiki/Kufic#Square_Kufic), a
 style that resembles low-resolution pixel art. That font was a simple test just to see if the concept could work.
 This post tests whether a neural font can reproduce a complex OpenType font and be a real alternative to to Opentype format.
@@ -39,8 +44,25 @@ new fonts for the format that can do things OpenType cannot.
 Nasta’liq is a relativly non-linear style of the Perso-Arabic script. In
 calligraphy form, composition if relativly freeform. A calligrapher can stack words, extend strokes, and adjust the positions of letters and dots to balance the black and white space.
 
-![A calligraphic composition by Mishkín-Qalam.](./mishkin-qalam-48.jpg)
-<p class="img-credit">Calligraphy by <a href="https://en.wikipedia.org/wiki/Mishk%C3%ADn-Qalam">Mishkín-Qalam</a> (1826–1912). Public domain, via <a href="https://commons.wikimedia.org/wiki/File:Mishkin-Qalam-48.JPG">Wikimedia Commons</a>.</p>
+One short phrase shows how far this freedom can go. Mishkín-Qalam turns
+_Yá Bahá’u’l-Abhá_ (يا بهاء الأبهى) into a two-level composition. Letters that
+follow one another in the text are separated, stacked, and joined by long
+strokes. Gulzar sets the same phrase on one line. The colors match the same
+letters in each version.
+
+![The phrase Yá Bahá’u’l-Abhá as a stacked calligraphic composition by Mishkín-Qalam on the left and as a line of text set in Gulzar on the right. Matching letters use the same colors.](./greatest-name-comparison.png)
+<p class="img-credit">Left: <em>Yá Bahá’u’l-Abhá</em>, original calligraphy by <a href="https://en.wikipedia.org/wiki/Mishk%C3%ADn-Qalam">Mishkín-Qalam</a> (1826–1912). Color diagram by Любослов Езыкин, September–October 2015, <a href="https://creativecommons.org/licenses/by-sa/4.0/">CC BY-SA 4.0</a>, via <a href="https://commons.wikimedia.org/wiki/File:Arabic_letters_in_the_Greatest_Name.svg">Wikimedia Commons</a>. Right: the same text set in <a href="https://github.com/googlefonts/Gulzar">Gulzar</a>.</p>
+
+An OpenType font could store this exact design as one glyph. It cannot create a
+new arrangement like this from the text itself.
+
+The same difference appears across several lines. Mir Ali
+Haravi treats the seven lines as one composition. He changes their length,
+angle, and position to fill the page. Gulzar changes the letters within each
+line, but sets the lines on straight, evenly spaced baselines.
+
+![The same seven lines of Persian text. Mir Ali Haravi's manuscript composition is on the left. The same lines set in the Gulzar OpenType font are on the right.](./manuscript-gulzar-comparison.png)
+<p class="img-credit">Left: calligraphy by Mir Ali Haravi (1476–1544), ca. 1530–50, from a folio in the Shah Jahan Album. Public domain, The Metropolitan Museum of Art, via <a href="https://commons.wikimedia.org/wiki/File:%22Shah_Jahan_on_Horseback%22,_Folio_from_the_Shah_Jahan_Album_MET_DP235886.jpg">Wikimedia Commons</a>. Right: the same text set in <a href="https://github.com/googlefonts/Gulzar">Gulzar</a>.</p>
 
 An OpenType Nasta’liq font turns these choices into predefined glyphs and
 shaping rules. OpenType can select contextual forms and move each glyph in both
@@ -48,6 +70,34 @@ axes, so it can reproduce the descending connections. But OpenType shaping does
 not make new compositional decisions from the outlines or the available page
 space. The font designer must anticipate contexts and encode the alternatives,
 positioning, and collision fixes.
+
+The page below comes from a 1548 manuscript of Nizami's _Khamsa_. Small blocks
+of Nasta’liq sit above and below the scene. The writing, architecture,
+illustration, and empty space form one page.
+
+<Image
+  src={BahramGurImage}
+  alt="A manuscript page showing Bahram Gur in the turquoise pavilion, with blocks of Nasta’liq above and below the painted scene."
+  width={560}
+  height={794}
+  class="mx-auto h-auto max-w-full rounded-md"
+/>
+<p class="img-credit">“Bahram Gur in the Turquoise-Blue Pavilion,” from Nizami's <em>Khamsa</em>. Calligraphy by Murshid al-Shirazi, Shiraz, 1548. Public domain, Freer Gallery of Art, via <a href="https://commons.wikimedia.org/wiki/File:Bahram_Gur_in_the_turquoise-blue_pavilion_(Khamsa).jpg">Wikimedia Commons</a>.</p>
+
+The inside cover below frames two columns of Nasta’liq with layers of painted
+and gilded ornament. The text occupies only a small part of the page.
+
+<Image
+  src={NizamiCoverImage}
+  alt="The inside cover of a Nizami Khamsa, with two columns of Nasta’liq surrounded by blue and gold ornament."
+  width={560}
+  height={772}
+  class="mx-auto h-auto max-w-full rounded-md"
+/>
+<p class="img-credit">Inside cover of Nizami's <em>Khamsa</em>. Calligraphy by Sultan Muhammad Nur (ca. 1472–ca. 1536) and Mahmud Muzahib (ca. 1500–1560); painting by Shaikh Zada (active 1510–1550). Herat, 1524–25. Public domain, The Metropolitan Museum of Art, via <a href="https://commons.wikimedia.org/wiki/File:Overflap_and_Inside_Cover_of_a_Khamsa_(Quintet)_of_Nizami_MET_DP251276.jpg">Wikimedia Commons</a>.</p>
+
+![A calligraphic composition by Mishkín-Qalam.](./mishkin-qalam-48.jpg)
+<p class="img-credit">Calligraphy by <a href="https://en.wikipedia.org/wiki/Mishk%C3%ADn-Qalam">Mishkín-Qalam</a> (1826–1912). Public domain, via <a href="https://commons.wikimedia.org/wiki/File:Mishkin-Qalam-48.JPG">Wikimedia Commons</a>.</p>
 
 ### Measuring Gulzar
 
@@ -163,13 +213,10 @@ size: 64 on the left, 96 on the right.
 
 ![The isolated خ thresholded at 64 and 96 pixels per em, at the same size. The two are nearly identical.](./res-64-96.png)
 
-### How the Network Works
+### How the Neural Network Works
 
-The extraction step has already narrowed the problem. The network does not have
-to learn a language, recognize letters in an image, or discover how Gulzar
-works. Each training record supplies a target letter, its nearby letters, the
-shape Gulzar draws, and where Gulzar places it. The network only has to learn
-the mapping between them.
+The network learns to copy Gulzar. It takes letters and their context as input,
+then predicts the shapes and positions that Gulzar would use.
 
 The current model reads the target letter and up to two letters on either side.
 This limit belongs to this distilled model, not to NeuralType. A lookup table
