@@ -43,14 +43,14 @@ learned to reproduce Gulzar as shaped by
 <p class="img-credit">Calligraphy by <a href="https://en.wikipedia.org/wiki/Mishk%C3%ADn-Qalam">Mishkín-Qalam</a> (1826–1912). Public domain, via <a href="https://commons.wikimedia.org/wiki/File:Mishkin-Qalam-09.JPG">Wikimedia Commons</a>.</p>
 
 Nasta’liq is a relatively nonlinear style of the Perso-Arabic script. Its
-traditional calligraphic compositions allow more freedom than those of many
+traditional calligraphic compositions allow more freedom than many
 other styles. A calligrapher
 can stack words, extend strokes, and adjust the positions of letters and dots
 to balance black and white space.
 
 The limits of OpenType are easier to see when the same text is shown two ways.
 The next two figures place historical calligraphy beside the same text set in
-Gulzar. You do not need to read Nasta’liq to compare them. Just look at the forms and try to find differences between the two sides.
+Gulzar. You do not need to read Nasta’liq to compare them. Just look at the forms and try to find differences between the two sides. Pay attention the the negative space between the forms.
 
 ![Al-Fatiha in Nasta’liq by Mir Emad Hassani on the left. The same six lines set in Gulzar on the right.](./fatiha-gulzar-comparison.png)
 <p class="img-credit">Left: <em>Al-Fatiha</em> in Nasta’liq by Mir Emad Hassani (1554–1615), National Museum of Iran. Public domain, via <a href="https://commons.wikimedia.org/wiki/File:Nasta%27liq_calligraphy_style_-_Mir_Emad_Hassani_09.png">Wikimedia Commons</a>. Right: the same text set in <a href="https://github.com/googlefonts/Gulzar">Gulzar</a>.</p>
@@ -58,9 +58,7 @@ Gulzar. You do not need to read Nasta’liq to compare them. Just look at the fo
 ![The same seven lines of Persian text. Mir Ali Haravi’s calligraphic album folio is on the left. The same lines set in the Gulzar OpenType font are on the right.](./manuscript-gulzar-comparison.png)
 <p class="img-credit">Left: the opening prose passage of the preface to Saadi’s <em>Golestan</em>. Calligraphy by Mir Ali Haravi (died ca. 1550), ca. 1530–50, from a folio in the Shah Jahan Album. Public domain, The Metropolitan Museum of Art, via <a href="https://commons.wikimedia.org/wiki/File:%22Shah_Jahan_on_Horseback%22,_Folio_from_the_Shah_Jahan_Album_MET_DP235886.jpg">Wikimedia Commons</a>. Right: the same text set in <a href="https://github.com/googlefonts/Gulzar">Gulzar</a>.</p>
 
-One short phrase shows how far this freedom can go. The calligrapher separates,
-stacks, and repositions letters that follow one another in the text. This is an
-extreme example, but the compositions above use the same principle more subtly,
+One short phrase shows how freeform and non-linear Nasta’liq can be. The calligrapher separates, stacks, and repositions letters that follow one another in the text. This is an extreme example, but the compositions above use the same principle more subtly,
 moving letters and dots away from their expected positions to balance the page.
 
 ![The phrase Yá Bahá’u’l-Abhá as a stacked calligraphic composition by Mishkín-Qalam on the left and as a line of text set in Gulzar on the right. Matching letters use the same colors.](./greatest-name-comparison.png)
@@ -69,9 +67,7 @@ moving letters and dots away from their expected positions to balance the page.
 OpenType could reproduce this exact composition with a ligature glyph while
 preserving the underlying text. But that would store one finished design for
 one phrase. It would not teach the font how to compose other text. A Nasta’liq
-font designed as a neural network could instead use the whole passage and the
-available space to generate an arrangement in a learned style. That is a goal
-for a future font designed from the ground up as a neural network, not a feature of this distilled Gulzar model.
+font designed as a neural network could instead make new compositions based on a learned style. The whole line or even the whole page could adjust to fill space in a pleasing way. That is a goal for a future font designed from the ground up as a neural network, not a feature of this distilled Gulzar model.
 
 ![A calligraphic composition by Mishkín-Qalam.](./mishkin-qalam-48.jpg)
 <p class="img-credit">Calligraphy by <a href="https://en.wikipedia.org/wiki/Mishk%C3%ADn-Qalam">Mishkín-Qalam</a> (1826–1912). Public domain, via <a href="https://commons.wikimedia.org/wiki/File:Mishkin-Qalam-48.JPG">Wikimedia Commons</a>.</p>
@@ -84,10 +80,25 @@ for a future font designed from the ground up as a neural network, not a feature
 />
 <p class="img-credit">“Bahram Gur in the Red Palace on Tuesday,” folio 220 from Nizami’s <em>Khamsa</em>. Calligraphy by Sultan Muhammad Nur (ca. 1472–ca. 1536) and Mahmud Muzahib (ca. 1500–1560); painting by Shaikh Zada (active 1510–1550). Herat, 1524–25. Public domain, The Metropolitan Museum of Art, via <a href="https://commons.wikimedia.org/wiki/File:%22Bahram_Gur_in_the_Red_Palace_on_Tuesday%22,_Folio_220_from_a_Khamsa_(Quintet)_of_Nizami_of_Ganja_MET_DP-22880-001.jpg">Wikimedia Commons</a>.</p>
 
-For this experiment, I used [Gulzar](https://gulzarfont.org/), a contemporary
-Urdu Nasta’liq typeface intended for sustained reading. It is not a perfect
-match for the historical examples, but it is the best available open option. I
-could not find another usable OpenType Nasta’liq font under the OFL.
+[Gulzar](https://gulzarfont.org/) is a contemporary Urdu Nasta’liq typeface
+intended for sustained reading. It is not a perfect match for the historical
+examples, but it is the best available open-source option. I could not find
+another usable OpenType Nasta’liq font under the OFL. [Noto
+Nastaliq](https://notofonts.github.io/noto-docs/specimen/NotoNastaliqUrdu/) is a
+poor-quality Nasta’liq design. [Awami
+Nastaliq](https://software.sil.org/awami/resources/) is more capable, but it uses
+Graphite rather than OpenType.
+
+[Graphite](https://en.wikipedia.org/wiki/Graphite_%28smart_font_technology%29)
+is a programmable font-shaping system developed by SIL. It stores fixed glyphs
+and shaping rules in the font, and an application needs the Graphite engine to
+run those rules. Awami does not support OpenType rendering.
+
+NeuralType takes a different approach. Instead of requiring a font engineer to
+describe the design with substitution and positioning rules, it learns shape
+and placement from examples. NeuralType also requires its own engine today, but
+a learned model could eventually respond to a whole line or page without
+reducing the design to fixed glyphs and hand-written rules.
 
 ### Measuring Gulzar
 
