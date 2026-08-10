@@ -64,7 +64,7 @@ Gulzar. You do not need to read Nasta’liq to compare them. Just look at the fo
 <p class="img-credit">Left: the opening prose passage of the preface to Saadi’s <em>Golestan</em>. Calligraphy by Mir Ali Haravi (died ca. 1550), ca. 1530–50, from a folio in the Shah Jahan Album. Public domain, The Metropolitan Museum of Art, via <a href="https://commons.wikimedia.org/wiki/File:%22Shah_Jahan_on_Horseback%22,_Folio_from_the_Shah_Jahan_Album_MET_DP235886.jpg">Wikimedia Commons</a>. Right: the same text set in <a href="https://github.com/googlefonts/Gulzar">Gulzar</a>.</p>
 
 One short phrase shows how freeform and nonlinear Nasta’liq can be. The calligrapher separates, stacks, and repositions letters that follow one another in the text. This is an extreme example, but the compositions above use the same principle more subtly,
-moving letters and dots away from their expected positions to balance the page.
+moving letters and dots away from their expected positions to balance the composition and negative space.
 
 ![The phrase Yá Bahá’u’l-Abhá as a stacked calligraphic composition by Mishkín-Qalam on the left and as a line of text set in Gulzar on the right. Matching letters use the same colors.](./greatest-name-comparison.png)
 <p class="img-credit">Left: <em>Yá Bahá’u’l-Abhá</em>, original calligraphy by <a href="https://en.wikipedia.org/wiki/Mishk%C3%ADn-Qalam">Mishkín-Qalam</a> (1826–1912). Color diagram by Любослов Езыкин, September–October 2015, <a href="https://creativecommons.org/licenses/by-sa/4.0/">CC BY-SA 4.0</a>, via <a href="https://commons.wikimedia.org/wiki/File:Arabic_letters_in_the_Greatest_Name.svg">Wikimedia Commons</a>. Right: the same text set in <a href="https://github.com/googlefonts/Gulzar">Gulzar</a>.</p>
@@ -91,44 +91,30 @@ does not do this.
 
 ### Other Approaches
 
-I used [Gulzar](https://gulzarfont.org/) because it is the best OpenType font I
-found under the SIL Open Font License (OFL). It is a contemporary Urdu
-Nasta’liq typeface, not an exact match for these historical examples. [Noto
-Nastaliq](https://notofonts.github.io/noto-docs/specimen/NotoNastaliqUrdu/) is
-the only comparable OFL-licensed OpenType font I found, and, in my view, is
-slightly worse. [Awami
-Nastaliq](https://software.sil.org/awami/resources/) is also OFL-licensed, but
-implements its shaping in Graphite rather than OpenType Layout. This shortage,
-relative to the style’s historical and cultural importance, suggests that the
-usual technical and economic approach is failing.
+I used [Gulzar](https://gulzarfont.org/) because it is the best current
+OFL licensed Nasta’liq font I found that uses OpenType Layout. [Noto Nastaliq
+Urdu](https://notofonts.github.io/noto-docs/specimen/NotoNastaliqUrdu/) is the
+only comparable option I could verify and, in my view, is slightly worse.
+[Awami Nastaliq](https://software.sil.org/awami/resources/) uses
+[Graphite](https://graphite.sil.org/), while SIL’s older [Nastaliq
+Navees](https://scripts.sil.org/cms/scripts/page.php?id=nastaliq_download&site_id=nrsi)
+relies on the obsolete QuickDraw GX system.
 
-[Graphite](https://graphite.sil.org/) was developed by
-[SIL International](https://www.sil.org/), a Christian nonprofit that develops
-language software. With OpenType Layout, a shaping engine such as
-[HarfBuzz](https://harfbuzz.github.io/what-does-harfbuzz-do.html) uses its own
-script-specific logic to apply substitution and positioning tables stored in
-the font. A Graphite font instead contains the complete rule set for its
-shaping model. Awami uses these rules to avoid
-collisions and fit one sloping cluster beneath another. The tradeoff is limited
-software support.
+Other systems have tried to move beyond OpenType Layout. Graphite lets a font
+supply more complex shaping rules. [DecoType’s](https://decotype.com/) Advanced
+Composition Engine powered
+[Tasmeem](https://decotype.com/pdfs/Tasmeem_Manual.pdf), a proprietary InDesign
+extension with greater control over Arabic composition. Both approaches are
+procedural: designers define the behavior through rules rather than training a
+model from examples. Both require specialized software, and neither achieved
+broad adoption.
 
-[DecoType’s](https://decotype.com/) Advanced Composition Engine (ACE)
-synthesizes contextual forms and alternatives through an explicit model of the
-script. It powered
-[Tasmeem](https://decotype.com/pdfs/Tasmeem_Manual.pdf), an InDesign extension
-that kept text editable while giving designers control over word forms,
-spacing, and letter positions. Tasmeem was a proprietary product built for a
-specialist publishing workflow.
-
-Graphite and ACE can express behavior beyond standard OpenType Layout, but
-neither replaced OpenType. OpenType fonts also depend on shaping software, but
-that support is already built into major platforms. Graphite and ACE require
-additional engines and application support. Neural fonts face the same adoption
-problem, but take a different approach and can learn from these earlier
-attempts. My long-term ambition is much larger. I think a format like this could
-replace OpenType. It could support applications in marketing, branding,
-advertising, and cultural production that make adopting a new format
-economically viable. The gains must be large enough to justify the switch.
+Neural fonts also need engine support. Their advantage is that a learned model
+can produce behavior that would be impractical to encode by hand. My long-term
+goal is a format that could replace OpenType, not another specialist extension.
+It could support new kinds of type for branding, advertising, and cultural
+production. Those applications could make adoption economically viable. The
+gains must be large enough to justify the switch.
 
 ### Measuring Gulzar
 
