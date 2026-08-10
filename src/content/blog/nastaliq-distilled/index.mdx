@@ -23,8 +23,7 @@ predefined glyph shapes. The first .ntf font was
 [square Kufic](https://en.wikipedia.org/wiki/Kufic#Square_Kufic), a
 style that resembles low-resolution pixel art. That font was a simple test of
 the concept and was easy to dismiss as a toy tech demo. This post tests whether
-a neural-network-based font can serve as a practical alternative to OpenType
-fonts.
+a neural-network-based font can serve as a practical alternative to OpenType.
 
 I distilled [Gulzar](https://github.com/googlefonts/Gulzar), an OpenType
 Nasta’liq font, into a .ntf. The result is in the interactive demo below. Type,
@@ -33,11 +32,9 @@ joined letters. Click and drag to select several letters at once.
 
 <NeuralTypeDemo {...nastaliqDemo} />
 
-In a conventional font pipeline, shaping turns Unicode text into positioned
-glyphs. Rendering draws those glyphs. The demo uses the NeuralType model and
-engine to perform both steps entirely in the browser. The model has 1.36
-million parameters. With 8-bit weights, the .ntf file is 1.38 MB. The
-NeuralType engine is written in Rust, compiled to WASM, and built with
+The model above has 1.36 million parameters. With 8-bit weights,
+the .ntf file is 1.38 MB.
+The NeuralType engine is written in Rust, compiled to WASM, and built with
 [Linebender](https://linebender.org/) libraries. The demo does not perform
 OpenType shaping at runtime. During training on an inexpensive local GPU, the
 model learned to reproduce the shaped output produced by Gulzar and
