@@ -83,17 +83,18 @@ model does not do this.
 <p class="img-credit">“Bahram Gur in the Red Palace on Tuesday,” folio 220 from Nizami’s <em>Khamsa</em>. Calligraphy by Sultan Muhammad Nur (ca. 1472–ca. 1536) and Mahmud Muzahib (ca. 1500–1560); painting by Shaikh Zada (active 1510–1550). Herat, 1524–25. Public domain, The Metropolitan Museum of Art, via <a href="https://commons.wikimedia.org/wiki/File:%22Bahram_Gur_in_the_Red_Palace_on_Tuesday%22,_Folio_220_from_a_Khamsa_(Quintet)_of_Nizami_of_Ganja_MET_DP-22880-001.jpg">Wikimedia Commons</a>.</p>
 
 I used [Gulzar](https://gulzarfont.org/) because it is the best open-source
-OpenType option I found. It is a contemporary Urdu Nasta’liq typeface, not a exact match for these historical examples. [Noto
+OpenType option I found. It is a contemporary Urdu Nasta’liq typeface, not an exact match for these historical examples. [Noto
 Nastaliq](https://notofonts.github.io/noto-docs/specimen/NotoNastaliqUrdu/) is
 similar and, in my view, slightly worse. [Awami
-Nastaliq](https://software.sil.org/awami/resources/) is more capable, but it uses
+Nastaliq](https://software.sil.org/awami/resources/) uses
 Graphite rather than OpenType. I found no other usable Nasta’liq font under the
-OFL license.
+OFL license. The lack of fonts in this style relative to it's historical and cultural signifigance is I think and indication that something is wrong here.
 
 [Graphite](https://en.wikipedia.org/wiki/Graphite_%28smart_font_technology%29)
-was developed by [SIL International](https://www.sil.org/), a nonprofit that
-develops fonts and language software for languages with limited digital
-support. Like OpenType, Graphite separates the font from the shaping engine. An
+was developed by [SIL International](https://www.sil.org/), a Christian
+nonprofit that develops fonts and language software for literacy, language
+development, and Bible translation. Like OpenType, Graphite separates the font
+from the shaping engine. An
 OpenType shaper such as
 [HarfBuzz](https://harfbuzz.github.io/what-does-harfbuzz-do.html) reads the
 font’s substitution and positioning tables and applies a built-in model for the
@@ -113,8 +114,10 @@ hand-written rules to fixed glyphs. A neural font could generate forms for the
 exact context, compose a line to fit a given space, or reproduce lettering
 styles that would be impractical to encode as glyphs and rules. These abilities
 could support commercially useful display type, branding, and advertising, as
-well as scripts such as Nasta’liq. That range of uses could give applications a
-reason to support the format. This distilled Gulzar model does not have these
+well as scripts such as Nasta’liq. That range of uses could give industry a
+reason to support the format.
+
+This distilled Gulzar model does not have these
 abilities. It is a first test of the underlying approach. New fonts need to be designed and before that new font editing software needs to be designed from the ground up for easily training neural network based fonts. I plan to have a prototype of this software and the first Nasta’liq designed from the ground up to take advantage of this new format done by ATypI 2026 Sharjah and will be there to demo it, raise seed funding, or accept job offers at big tech companies to continue this work. 
 
 ### Measuring Gulzar
@@ -144,45 +147,22 @@ origins in writing order. The model must learn the offset from one to the next.
 
 ### Building the Dataset
 
-Gulzar is the teacher. HarfBuzz applies Gulzar’s OpenType rules to each input
-string and returns glyphs and positions. The new model learns to copy that
-output. With this teacher, the same text always produces the same result. That is a
-property of Gulzar’s OpenType rules, not a limit of neural fonts. 
+Gulzar is the teacher. For each input string, HarfBuzz applies Gulzar’s OpenType
+rules and returns glyphs and positions. The new model learns to copy this
+output. Gulzar’s shaping is deterministic, so each input has one target. That
+is a property of the teacher, not a limit of neural fonts.
 
 The
 [`crates/neuraltype-distill`](https://github.com/eliheuer/post-opentype/tree/main/crates/neuraltype-distill)
-extraction tool shapes every possible one, two, and three-letter sequence, for
-a total of 30,783. Three-letter sequences are the shortest strings in which a
-letter has a neighbor on both sides. These contexts produce medial forms. The
-corpus also includes 24 real words from the bismillah, the surahs Al-Fatiha and
-Al-Ikhlas, and the word نستعليق.
+tool shapes every possible string of one, two, or three letters, for a total of
+30,783 strings. Three-letter strings include cases where the middle letter
+joins on both sides. The corpus also includes 24 real words from the bismillah,
+the surahs Al-Fatiha and Al-Ikhlas, and the word نستعليق.
 
-The corpus also explains the demo’s limits. Longer words can contain letter
-contexts absent from the training data, so the model must guess and often
-renders them poorly. A larger corpus of real Urdu and Persian text should
-reduce these failures without making the font much larger. The .ntf file stores
-the trained weights, not the training examples. New words made from the current
-letters and ligatures add no parameters. A new ligature or cluster token adds
-24 8-bit weights and a short name, about 30 bytes. Even 100 new tokens would add
-only about 3 KB. The file would grow substantially only if the model itself
-needed more capacity. Each additional million 8-bit parameters would add about
-1 MB.
-
-OpenType handles new strings by applying the same rules to any sequence. A
-neural font must learn behavior that transfers to sequences it did not see in
-training. For this fixed-window model, brute-force coverage would require about
-28.6 million five-letter contexts, and it still could not represent effects
-beyond two neighboring letters. A better approach is to combine a large real
-corpus with generated test strings, compare the results with Gulzar, and add
-the failures back to the training set. A variable-length model could then read
-the whole word or line. Deterministic checks for broken joins, misplaced marks,
-and collisions could detect bad output and trigger a simpler rule-based
-fallback when the model encounters an unfamiliar sequence.
-
-During extraction, each output cluster is stored with its composed shape and
-position. The first cluster keeps its position relative to the word origin.
-Each later cluster keeps its offset from the previous one. These offsets are
-the red steps in the figure above.
+The tool writes one record for each output cluster. A record contains the
+cluster’s text context, composed shape, and position. The first cluster keeps
+its position relative to the word origin. Each later cluster keeps its offset
+from the previous one. These offsets are the red steps in the figure above.
 
 The corpus contains 91,390 cluster records and **1,150 distinct composed
 shapes**. The letter خ uses 108 of them.
@@ -190,6 +170,29 @@ shapes**. The letter خ uses 108 of them.
 The figure below shows all 108 shapes used for خ.
 
 ![All 108 shapes of خ in the dataset, in a grid.](./kha-shapes.png)
+
+The corpus covers short strings exhaustively, but contains only 24 longer
+words. A longer word can contain a context absent from the training data. The
+model must then guess, and its output is often poor. More real Urdu and Persian
+text should reduce these failures.
+
+More training text would barely change the font’s file size. The .ntf stores
+the trained weights, not the training examples. New words made from the current
+letters and ligatures add no parameters. A new ligature or cluster token adds
+24 8-bit weights and a short name, about 30 bytes. Even 100 new tokens would add
+only about 3 KB. If the current network can learn the new examples, the font
+stays almost the same size. If it cannot, we would need a larger network. Each
+additional million 8-bit parameters would add about 1 MB.
+
+OpenType handles new strings by applying the same rules to any sequence. A
+neural font must learn behavior that transfers to sequences absent from its
+training data. Brute-force coverage for this model would require about 28.6
+million five-letter contexts, and it would still miss effects beyond two
+neighboring letters. A better method is to train on a large real corpus, test
+generated strings against Gulzar, and add the failures to the training set. A
+variable-length model could use the whole word or line as context. A production
+renderer could also enforce basic rules for joins and mark attachment, then use
+simpler forms when the model produces invalid output.
 
 ### Signed-Distance Fields
 
@@ -212,17 +215,16 @@ A [2007 paper from Valve](https://steamcdn-a.akamaihd.net/apps/valve/2007/SIGGRA
 used this representation to render sharp vector graphics from low-resolution
 textures in the Source game engine.
 
-The figure follows one horizontal row through خ. The red line in the left panel
+The figure below follows one horizontal row through خ. The red line in the left panel
 marks the row. The middle panel plots its values. Each red dot marks a zero
 crossing where the row passes through an edge of the letter.
+
+![Three panels: the خ distance field with a red slice line, the slice’s values as a curve crossing zero at each stroke edge, and one crossing magnified to show the edge landing between two cells.](./sdf-slice.png)
 
 The right panel enlarges one crossing. It falls between two cells, and its
 position is calculated from their values. The outline is therefore not limited
 to the grid. A small prediction error moves the nearby edge. It does not break
-the rest of the outline. The renderer follows the zero crossings to recover the
-Bézier curves.
-
-![Three panels: the خ distance field with a red slice line, the slice’s values as a curve crossing zero at each stroke edge, and one crossing magnified to show the edge landing between two cells.](./sdf-slice.png)
+the rest of the outline like outline prediction would. The renderer follows the zero crossings to recover the Bézier curves.
 
 The next figure shows a small patch of the field cell by cell. Each cell lists
 its distance in pixels: negative outside and positive inside. The red outline
@@ -237,27 +239,26 @@ cluster’s origin.
 
 ### How the Neural Network Works
 
-The network learns to copy Gulzar. It takes letters and their context as input,
-then predicts the shapes and positions that Gulzar would use.
+The current network is feed-forward: information passes through its layers once,
+from input to output. It does not loop or refine the result in repeated steps.
 
-The current model reads the target letter and up to two letters on either side.
-This limit belongs to this distilled model, not to NeuralType. A lookup table
-turns each letter into 24 numbers learned during training. The network combines
-these numbers into a 256-number description of the target shape.
+To draw a letter or ligature, the model looks at it and up to two letters on
+each side. It combines what it learned about those letters into a description
+of the shape it needs to draw.
 
-This description feeds two outputs. A small branch predicts the shape’s
-position relative to the previous shape. For the first shape in a word, it
-predicts the starting position. The main branch expands the description into
-128 small 7×5 maps. Five upscaling layers combine and enlarge them until they
-form one 155×219 signed-distance field.
+From this description, the model predicts the shape and where it belongs. The
+first position is measured from the start of the word. Each later position is
+measured from the shape before it. To draw the shape, five layers turn a small
+set of grids into the final 155×219 signed-distance field.
 
-![The current model in four steps: read the target and nearby letters, combine their learned values into a shape description, enlarge that description through five layers, then output a distance field and an x/y position.](./model-architecture.png)
+This simple model works because it copies one existing font. The same strokes,
+curves, and dots appear in many shapes, so the model can learn them once and
+reuse them. It does not need to understand the language or invent a new design.
 
-The model is simple because the task is closer to compression than invention.
-It only has to reproduce the output of a fixed teacher. The decoder can reuse
-what it learns about strokes, curves, and dots across the target shapes. It
-does not use attention, diffusion, or a language model. One pass through a few
-ordinary layers produces each shape and position.
+A future model could look at a whole word, line, or page instead of only nearby
+letters. It could also calculate the field only where the renderer needs it.
+That would allow more detail around thin strokes and sharp edges without making
+the whole grid larger.
 
 ### Training
 
@@ -267,8 +268,6 @@ compares every field cell with Gulzar’s field and compares the two positions.
 It combines these differences into one error score. Candle then adjusts the
 weights to reduce that score. Repeating this process teaches one set of weights
 to produce all of the shapes.
-
-![Training as a loop: compare Gulzar’s target field with the model’s prediction, measure the difference, adjust the network’s weights, and repeat.](./training-loop.png)
 
 We use [Candle](https://github.com/huggingface/candle) to train the model because
 it provides tools in Rust and runs on CPU, Metal, or CUDA.
