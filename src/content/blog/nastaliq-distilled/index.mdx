@@ -262,22 +262,24 @@ the whole grid larger.
 
 ### Training
 
-Training starts with random weights, so the first predictions are wrong. For
-each group of examples, the model predicts a field and a position. Training
-compares every field cell with Gulzar’s field and compares the two positions.
-It combines these differences into one error score. Candle then adjusts the
-weights to reduce that score. Repeating this process teaches one set of weights
-to produce all of the shapes.
+The model begins with random internal values, called weights. For each group of
+examples, it predicts a field and a position. We compare both predictions with
+the targets from Gulzar and combine the differences into one error score. The
+training code changes the weights slightly to lower that score. Repeating this
+process teaches one set of weights to produce every shape and position.
 
 We use [Candle](https://github.com/huggingface/candle) to train the model because
 it provides tools in Rust and runs on CPU, Metal, or CUDA.
 
-Progress is measured with intersection over union (IoU), a standard score for
-shape agreement. It divides the overlapping ink area by the total area covered
-by either shape. Identical shapes score 1.0. Shapes with no overlap score 0.
+After the model learned the main forms, I lowered how much the weights changed
+in each step. These smaller changes improved fine details without disrupting
+the larger shapes.
 
-Training finished at an IoU of 0.945. Fine-tuning at lower learning rates
-refined the remaining details.
+Shape accuracy is measured with intersection over union (IoU). It divides the
+area where the model and Gulzar overlap by the total area covered by either
+shape. Identical shapes score 1.0. Shapes with no overlap score 0. The final
+model scored 0.945 on examples excluded from training. This score measures
+shape only, not position.
 
 ### Rendering the Output
 
