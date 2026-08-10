@@ -11,8 +11,10 @@ draft: false
 
 import { Image } from 'astro:assets'
 import NeuralTypeDemo from '../../../components/NeuralTypeDemoIsland.astro'
+import TraceDemo from '../../../components/TraceDemoIsland.astro'
 import { nastaliqDemo } from '../../../components/demo-presets'
 import BahramGurImage from './bahram-gur-red-palace.jpg'
+import TrainingImage from './train.png'
 
 A previous post introduced the [NeuralType (.ntf)](/blog/neuraltype) font
 format. An .ntf font is a small neural network with a short header, not a system
@@ -20,7 +22,7 @@ that emulates Gutenberg’s movable type with virtual metal rectangles containin
 fixed glyph shapes. The first .ntf font was
 [square Kufic](https://en.wikipedia.org/wiki/Kufic#Square_Kufic), a
 style that resembles low-resolution pixel art. That font was a simple test of
-the concept and was easy to dismiss as a toy tech demo. This post tests whether a neural network based font can serve as a practical alternative to OpenType.
+the concept and was easy to dismiss as a toy tech demo. This post tests whether a neural-network-based font can serve as a practical alternative to OpenType.
 
 I distilled [Gulzar](https://github.com/googlefonts/Gulzar), an OpenType
 Nasta’liq font, into a .ntf. The result is in the interactive demo below. Type,
@@ -50,7 +52,7 @@ to balance black and white space.
 
 The limits of OpenType are easier to see when the same text is shown two ways.
 The next two figures place historical calligraphy beside the same text set in
-Gulzar. You do not need to read Nasta’liq to compare them. Just look at the forms and try to find differences between the two sides. Pay attention the the negative space between the forms.
+Gulzar. You do not need to read Nasta’liq to compare them. Just look at the forms and try to find differences between the two sides. Pay attention to the negative space between the forms.
 
 ![Al-Fatiha in Nasta’liq by Mir Emad Hassani on the left. The same six lines set in Gulzar on the right.](./fatiha-gulzar-comparison.png)
 <p class="img-credit">Left: <em>Al-Fatiha</em> in Nasta’liq by Mir Emad Hassani (1554–1615), National Museum of Iran. Public domain, via <a href="https://commons.wikimedia.org/wiki/File:Nasta%27liq_calligraphy_style_-_Mir_Emad_Hassani_09.png">Wikimedia Commons</a>. Right: the same text set in <a href="https://github.com/googlefonts/Gulzar">Gulzar</a>.</p>
@@ -58,7 +60,7 @@ Gulzar. You do not need to read Nasta’liq to compare them. Just look at the fo
 ![The same seven lines of Persian text. Mir Ali Haravi’s calligraphic album folio is on the left. The same lines set in the Gulzar OpenType font are on the right.](./manuscript-gulzar-comparison.png)
 <p class="img-credit">Left: the opening prose passage of the preface to Saadi’s <em>Golestan</em>. Calligraphy by Mir Ali Haravi (died ca. 1550), ca. 1530–50, from a folio in the Shah Jahan Album. Public domain, The Metropolitan Museum of Art, via <a href="https://commons.wikimedia.org/wiki/File:%22Shah_Jahan_on_Horseback%22,_Folio_from_the_Shah_Jahan_Album_MET_DP235886.jpg">Wikimedia Commons</a>. Right: the same text set in <a href="https://github.com/googlefonts/Gulzar">Gulzar</a>.</p>
 
-One short phrase shows how freeform and non-linear Nasta’liq can be. The calligrapher separates, stacks, and repositions letters that follow one another in the text. This is an extreme example, but the compositions above use the same principle more subtly,
+One short phrase shows how freeform and nonlinear Nasta’liq can be. The calligrapher separates, stacks, and repositions letters that follow one another in the text. This is an extreme example, but the compositions above use the same principle more subtly,
 moving letters and dots away from their expected positions to balance the page.
 
 ![The phrase Yá Bahá’u’l-Abhá as a stacked calligraphic composition by Mishkín-Qalam on the left and as a line of text set in Gulzar on the right. Matching letters use the same colors.](./greatest-name-comparison.png)
@@ -66,7 +68,7 @@ moving letters and dots away from their expected positions to balance the page.
 
 OpenType could reproduce this exact composition with a ligature glyph while
 preserving the underlying text. But the font would contain only one finished
-design for one phrase. It would not learn how to compose other text. A neural network based font could learn a style and use it to make new compositions. A whole
+design for one phrase. It would not learn how to compose other text. A neural-network-based font could learn a style and use it to make new compositions. A whole
 line or page could adjust to the available space. This is a goal for a future
 font designed from the ground up as a neural network. The distilled Gulzar
 model does not do this.
@@ -88,7 +90,8 @@ Nastaliq](https://notofonts.github.io/noto-docs/specimen/NotoNastaliqUrdu/) is
 similar and, in my view, slightly worse. [Awami
 Nastaliq](https://software.sil.org/awami/resources/) uses
 Graphite rather than OpenType. I found no other usable Nasta’liq font under the
-OFL license. The lack of fonts in this style relative to it's historical and cultural signifigance is I think and indication that something is wrong here.
+OFL license. The lack of fonts in this style, relative to its historical and
+cultural significance, is, I think, an indication that something is wrong here.
 
 [Graphite](https://en.wikipedia.org/wiki/Graphite_%28smart_font_technology%29)
 was developed by [SIL International](https://www.sil.org/), a Christian
@@ -117,8 +120,13 @@ could support commercially useful display type, branding, and advertising, as
 well as scripts such as Nasta’liq. That range of uses could give industry a
 reason to support the format.
 
-This distilled Gulzar model does not have these
-abilities. It is a first test of the underlying approach. New fonts need to be designed and before that new font editing software needs to be designed from the ground up for easily training neural network based fonts. I plan to have a prototype of this software and the first Nasta’liq designed from the ground up to take advantage of this new format done by ATypI 2026 Sharjah and will be there to demo it, raise seed funding, or accept job offers at big tech companies to continue this work. 
+This distilled Gulzar model does not have these abilities. It is a first test of
+the underlying approach. New fonts need to be designed for the format. Before
+that, we need font-editing software built for training neural-network-based
+fonts. I plan to have a prototype of this software and the first Nasta’liq font
+designed for the format ready for ATypI 2026 in Sharjah. I will be there to demo
+it, raise seed funding, or accept job offers at big tech companies to continue
+this work.
 
 ### Measuring Gulzar
 
@@ -271,7 +279,23 @@ process teaches one set of weights to produce every shape and position.
 We use [Candle](https://github.com/huggingface/candle) to train the model because
 it provides tools in Rust and runs on CPU, Metal, or CUDA.
 
-After the model learned the main forms, I lowered how much the weights changed
+AI training is often associated with corporate data centers. NeuralType models
+are much smaller and more specialized. I trained this model locally on a Linux
+PC with an NVIDIA RTX 2060 SUPER, an inexpensive consumer graphics card with 8
+GB of memory. One epoch takes about 100 seconds. Inference also runs locally,
+including in the browser demo above. This puts neural font development within
+reach of independent type designers and small foundries. I expect local model
+training to become a common part of font development.
+
+<Image
+  src={TrainingImage}
+  alt="A terminal dashboard showing NeuralType training progress, falling loss, validation IoU, GPU use, and memory use."
+  layout="full-width"
+  class="rounded-md"
+/>
+<p class="img-credit">Training the larger 96 px/em experiment on a local Linux PC. The model uses 2.9 GB of the NVIDIA RTX 2060 SUPER’s 8 GB of memory and takes about 100 seconds per epoch.</p>
+
+After the model learned the main forms, I reduced how much the weights changed
 in each step. These smaller changes improved fine details without disrupting
 the larger shapes.
 
@@ -279,7 +303,10 @@ Shape accuracy is measured with intersection over union (IoU). It divides the
 area where the model and Gulzar overlap by the total area covered by either
 shape. Identical shapes score 1.0. Shapes with no overlap score 0. The final
 model scored 0.945 on examples excluded from training. This score measures
-shape only, not position.
+shape only, not position. It does not reflect a known placement problem: when
+Gulzar places the same local context differently in different words, the
+current training step averages those positions. The result may match none of
+the examples.
 
 ### Rendering the Output
 
@@ -299,6 +326,12 @@ when it is ready.
 For this project, I added direct distance-field input to img2bez. It traces the
 model’s field directly, without first turning it into a raster image.
 
+The demo below shows img2bez tracing a raster glyph. This project gives it the
+model’s distance field instead, but uses the same tracing controls and
+curve-fitting code.
+
+<TraceDemo image="/demos/img2bez/a.png" glyph="a" unicode="0061" />
+
 ### Results
 
 The sheet below compares the teacher with the final model. Gulzar is
@@ -310,6 +343,12 @@ The final model has 1.36 million parameters and takes 1.38 MB, compared with 963
 KB for the Gulzar TTF. It stores the weights as 8-bit values. The same weights
 take 5.4 MB when stored as 32-bit values. The precision controls in the demo let
 you compare the 32-bit, 16-bit, and 8-bit versions.
+
+The two files do not perform exactly the same job. Gulzar stores outlines and
+OpenType rules that a separate shaping engine must interpret. The .ntf stores a
+learned approximation of the shaped result, but it also requires the NeuralType
+engine. The comparison therefore measures font data, not the complete software
+stack.
 
 The 8-bit output is close to the original. Some strokes and letter positions
 shift. Fine-tuning while simulating 8-bit weights may reduce these differences.
@@ -374,47 +413,43 @@ synthesis on signed-distance functions, the representation used here.
 
 ### Beyond This Model
 
-The network above is a baseline, not a limit of the format. The .ntf file names
-its model type and dimensions, so later versions can use different
-architectures.
+The next model should be designed around composition rather than distillation.
+I would test three changes.
 
-The next step is to improve the data. The corpus needs more real Urdu and
-Persian text. It also needs to preserve placement variants. Gulzar can place the
-same local letter context differently in different words. The current training
-step combines these examples and uses their average position, which may not
-match any of them. A future model should keep the variants and use more context
-to choose between them.
+First, it should place a whole line at once. The inputs would include the text
+and the available width and height. A small
+[Transformer](https://arxiv.org/abs/1706.03762) could compare every part of the
+line before assigning positions. Placement would become one decision about the
+complete composition instead of a chain of local offsets.
 
-A native NeuralType font could use a small
-[Transformer](https://arxiv.org/abs/1706.03762) to read a whole line or page at
-once. Its attention layers would let every letter respond to the rest of the
-composition. Page dimensions could also be inputs. The model could then balance
-the line as a whole instead of copying Gulzar one local shape at a time.
+Second, the training data should keep alternative placements as separate
+targets. When Gulzar places the same shape differently in different words, the
+model should choose among those positions using the rest of the line. It should
+not average them into a position that may occur nowhere in the source.
 
-The fixed grid could also be replaced by a continuous field. Instead of
-returning all 33,945 cell values at once, the network would receive an x/y
-location and return the distance there. The renderer could ask for more samples
-around hairlines and tapers. Work on
+Third, the model could calculate a continuous distance field instead of
+returning a fixed 155×219 grid. The renderer would give the model an x/y
+coordinate and receive the distance to the edge at that point. It could sample
+the field coarsely, find the outline, and then take more samples around
+hairlines and tapers. Research on
 [continuous signed-distance functions](https://arxiv.org/abs/1901.05103),
 [SIREN](https://arxiv.org/abs/2006.09661), and
-[Fourier features](https://arxiv.org/abs/2006.10739) shows several ways to build
-this kind of coordinate-based network.
+[Fourier features](https://arxiv.org/abs/2006.10739) provides several methods to
+test.
 
-![The current distilled model uses nearby letters and returns one fixed grid per shape. A possible native model reads a whole line or page and returns the distance at any requested x/y point.](./future-architecture.png)
+These changes do not require every .ntf font to use the same network. The file
+header identifies the model type and its dimensions. A later engine can use
+that information to load a new architecture.
 
-The current model’s size does not predict the size of a font designed for
-NeuralType. This model spends its capacity copying Gulzar’s OpenType-derived
-shapes. A native design could learn a smaller set of rules, but whole-line
-composition could also require a larger model. The native square Kufic
-prototype is 215 KB, but it is much simpler than Nasta’liq. About 1 MB is a
-useful target for a native Nasta’liq font. Even 5–10 MB could be worthwhile
-for a font that can do something other formats cannot.
+The file size is not yet known. Whole-line processing would add weights, while
+removing the fixed-grid output layer could remove most of the current model’s
+weights. These changes pull in opposite directions. The result needs to be
+measured rather than inferred from this distilled model.
 
-A diffusion model is not an obvious fit for a font. It usually needs many
-passes to produce one result. A text editor needs stable output while the user
-types. The next useful experiment is a small whole-line context model with a
-continuous distance-field decoder. This is a proposed direction, not part of
-the current demo.
+I would start with another feed-forward model, not a diffusion model. Diffusion
+usually requires repeated passes to produce one result. A text editor needs the
+same result quickly after every change. The first experiment should therefore
+be a small whole-line model with a continuous distance-field decoder.
 
 ### Project Status
 
