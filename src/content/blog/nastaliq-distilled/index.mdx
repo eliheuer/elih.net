@@ -1,6 +1,6 @@
 ---
 title: 'Nasta’liq Distilled: Post-OpenType Neural Network Fonts'
-description: 'Converting Gulzar, an OpenType Nasta’liq, into a neural font. A build log.'
+description: 'Converting Gulzar, an OpenType Nasta’liq font, into a neural font. A build log.'
 date: 2026-07-30
 dateNote: 'Updated August 9, 2026'
 tags: ['fonts', 'rust', 'ai', 'machine-learning', 'arabic']
@@ -13,57 +13,61 @@ import { Image } from 'astro:assets'
 import NeuralTypeDemo from '../../../components/NeuralTypeDemoIsland.astro'
 import { nastaliqDemo } from '../../../components/demo-presets'
 import BahramGurImage from './bahram-gur-red-palace.jpg'
-import NizamiCoverImage from './nizami-khamsa-cover.jpg'
 
 A previous post introduced the [NeuralType (.ntf)](/blog/neuraltype) font
 format. An .ntf font is a small neural network with a short header, not a system
-that emulates Gutenberg's movable type with virtual metal rectangles containing
+that emulates Gutenberg’s movable type with virtual metal rectangles containing
 fixed glyph shapes. The first .ntf font was
 [square Kufic](https://en.wikipedia.org/wiki/Kufic#Square_Kufic), a
-style that resembles low-resolution pixel art. That font was a simple test just to see if the concept could work.
-This post tests whether a neural font can reproduce a complex OpenType font and
-serve as a practical alternative to OpenType.
+style that resembles low-resolution pixel art. That font was a simple test of
+the concept and was easy to dismiss as a toy tech demo. This post tests whether a neural network based font can serve as a practical alternative to OpenType.
 
-I converted [Gulzar](https://github.com/googlefonts/Gulzar), an OpenType
+I distilled [Gulzar](https://github.com/googlefonts/Gulzar), an OpenType
 Nasta’liq font, into a .ntf. The result is in the interactive demo below. Type,
-copy, paste, move the cursor with the arrow
-keys, and press space to separate joined letters, click and drag to select multiple letters at once.
+copy, paste, or move the cursor with the arrow keys. Press space to separate
+joined letters. Click and drag to select several letters at once.
 
 <NeuralTypeDemo {...nastaliqDemo} />
 
-The demo runs the full pipeline in the browser. The font has 1.36 million
-parameters and takes 1.38 MB with 8-bit weights. The rendering engine is
-written in Rust, compiled to WASM, and built with
-[Linebender](https://linebender.org/) libraries. The demo does not use an OpenType shaping engine. It uses behavior learned by the model to shape the text.
+The demo uses the neural network to shape and render text entirely in the browser. The model has 1.36 million
+parameters. With 8-bit weights, the .ntf file is 1.38 MB. The rendering engine
+is written in Rust, compiled to WASM, and built with
+[Linebender](https://linebender.org/) libraries. The demo does not use an
+OpenType shaping engine. During training on an inexpensive local GPU, the model
+learned to reproduce Gulzar as shaped by
+[HarfRust](https://github.com/harfbuzz/harfrust), a Rust port of HarfBuzz.
 
 ### Why Nasta’liq
 
 ![Nasta’liq calligraphy by Mishkín-Qalam.](./mishkin-qalam-09.jpg)
 <p class="img-credit">Calligraphy by <a href="https://en.wikipedia.org/wiki/Mishk%C3%ADn-Qalam">Mishkín-Qalam</a> (1826–1912). Public domain, via <a href="https://commons.wikimedia.org/wiki/File:Mishkin-Qalam-09.JPG">Wikimedia Commons</a>.</p>
 
-Nasta’liq is a relativly non-linear style of the Perso-Arabic script. In
-traditional calligraphy, composition is relativly freeform. A calligrapher can stack words, extend strokes, and adjust the positions of letters and dots to balance the black and white space.
+Nasta’liq is a relatively nonlinear style of the Perso-Arabic script. Its
+traditional calligraphic compositions allow more freedom than those of many
+other styles. A calligrapher
+can stack words, extend strokes, and adjust the positions of letters and dots
+to balance black and white space.
 
-These images compare Persian calligraphy with Gulzar, a contemporary Urdu
-Nasta’liq typeface. Urdu Nasta’liq grew from the Persian tradition but developed
-its own forms and conventions. This is not an ideal comparison, but I could not
-find a more calligraphic OpenType Nasta’liq font under the OFL. Gulzar is not
-expected to reproduce Mir Emad’s Persian style. The comparison shows a different
-distinction: a calligrapher composes each passage, while a font assembles it from
-forms and rules defined in advance.
-
-The limits of OpenType are clear when the same text is shown as a calligraphic
-composition and set in an OpenType font. You do not need to read Nasta’liq to compare
-them. Spend a minute finding the same forms and notice how they render differently. These images show the difference better than a description of the problem can.
+The limits of OpenType are easier to see when the same text is shown two ways.
+The next two figures place historical calligraphy beside the same text set in
+Gulzar. You do not need to read Nasta’liq to compare them. Just look at the forms and try to find differences between the two sides.
 
 ![Al-Fatiha in Nasta’liq by Mir Emad Hassani on the left. The same six lines set in Gulzar on the right.](./fatiha-gulzar-comparison.png)
 <p class="img-credit">Left: <em>Al-Fatiha</em> in Nasta’liq by Mir Emad Hassani (1554–1615), National Museum of Iran. Public domain, via <a href="https://commons.wikimedia.org/wiki/File:Nasta%27liq_calligraphy_style_-_Mir_Emad_Hassani_09.png">Wikimedia Commons</a>. Right: the same text set in <a href="https://github.com/googlefonts/Gulzar">Gulzar</a>.</p>
 
-![The same seven lines of Persian text. Mir Ali Haravi's calligraphic album folio is on the left. The same lines set in the Gulzar OpenType font are on the right.](./manuscript-gulzar-comparison.png)
-<p class="img-credit">Left: calligraphy by Mir Ali Haravi (1476–1544), ca. 1530–50, from a folio in the Shah Jahan Album. Public domain, The Metropolitan Museum of Art, via <a href="https://commons.wikimedia.org/wiki/File:%22Shah_Jahan_on_Horseback%22,_Folio_from_the_Shah_Jahan_Album_MET_DP235886.jpg">Wikimedia Commons</a>. Right: the same text set in <a href="https://github.com/googlefonts/Gulzar">Gulzar</a>.</p>
+![The same seven lines of Persian text. Mir Ali Haravi’s calligraphic album folio is on the left. The same lines set in the Gulzar OpenType font are on the right.](./manuscript-gulzar-comparison.png)
+<p class="img-credit">Left: the opening prose passage of the preface to Saadi’s <em>Golestan</em>. Calligraphy by Mir Ali Haravi (died ca. 1550), ca. 1530–50, from a folio in the Shah Jahan Album. Public domain, The Metropolitan Museum of Art, via <a href="https://commons.wikimedia.org/wiki/File:%22Shah_Jahan_on_Horseback%22,_Folio_from_the_Shah_Jahan_Album_MET_DP235886.jpg">Wikimedia Commons</a>. Right: the same text set in <a href="https://github.com/googlefonts/Gulzar">Gulzar</a>.</p>
 
-One short phrase shows how far this freedom can go. Letters that
-follow one another in the text are separated, stacked, and aranged to make a non-linear composition. This is an extreame example, but go back and look at the calligraphic examples above and you will find similar behavior where dots are moved far from their imediatly logical positions for the sake over the overall composition.
+[Gulzar](https://gulzarfont.org/) is a contemporary Urdu Nasta’liq typeface
+intended for sustained reading. It is not a perfect match for either
+historical example, but it is the best available open option for this
+comparison. I could not find another usable OpenType Nasta’liq font under the
+OFL license.
+
+One short phrase shows how far this freedom can go. The calligrapher separates,
+stacks, and repositions letters that follow one another in the text. This is an
+extreme example. The compositions above use the same principle more subtly,
+moving letters and dots away from their expected positions to balance the page.
 
 ![The phrase Yá Bahá’u’l-Abhá as a stacked calligraphic composition by Mishkín-Qalam on the left and as a line of text set in Gulzar on the right. Matching letters use the same colors.](./greatest-name-comparison.png)
 <p class="img-credit">Left: <em>Yá Bahá’u’l-Abhá</em>, original calligraphy by <a href="https://en.wikipedia.org/wiki/Mishk%C3%ADn-Qalam">Mishkín-Qalam</a> (1826–1912). Color diagram by Любослов Езыкин, September–October 2015, <a href="https://creativecommons.org/licenses/by-sa/4.0/">CC BY-SA 4.0</a>, via <a href="https://commons.wikimedia.org/wiki/File:Arabic_letters_in_the_Greatest_Name.svg">Wikimedia Commons</a>. Right: the same text set in <a href="https://github.com/googlefonts/Gulzar">Gulzar</a>.</p>
@@ -80,65 +84,63 @@ for a future font designed from the ground up as a neural network, not a feature
 
 <Image
   src={BahramGurImage}
-  alt="A manuscript folio showing Bahram Gur in the Red Palace, with blocks of Nasta’liq above and below the painted scene."
+  alt="A calligraphic folio showing Bahram Gur in the Red Palace, with blocks of Nasta’liq above and below the painted scene."
   layout="full-width"
   class="rounded-md"
 />
-<p class="img-credit">“Bahram Gur in the Red Palace on Tuesday,” folio 220 from Nizami's <em>Khamsa</em>. Calligraphy by Sultan Muhammad Nur (ca. 1472–ca. 1536) and Mahmud Muzahib (ca. 1500–1560); painting by Shaikh Zada (active 1510–1550). Herat, 1524–25. Public domain, The Metropolitan Museum of Art, via <a href="https://commons.wikimedia.org/wiki/File:%22Bahram_Gur_in_the_Red_Palace_on_Tuesday%22,_Folio_220_from_a_Khamsa_(Quintet)_of_Nizami_of_Ganja_MET_DP-22880-001.jpg">Wikimedia Commons</a>.</p>
+<p class="img-credit">“Bahram Gur in the Red Palace on Tuesday,” folio 220 from Nizami’s <em>Khamsa</em>. Calligraphy by Sultan Muhammad Nur (ca. 1472–ca. 1536) and Mahmud Muzahib (ca. 1500–1560); painting by Shaikh Zada (active 1510–1550). Herat, 1524–25. Public domain, The Metropolitan Museum of Art, via <a href="https://commons.wikimedia.org/wiki/File:%22Bahram_Gur_in_the_Red_Palace_on_Tuesday%22,_Folio_220_from_a_Khamsa_(Quintet)_of_Nizami_of_Ganja_MET_DP-22880-001.jpg">Wikimedia Commons</a>.</p>
 
 ### Measuring Gulzar
 
-To distill Gulzar from a OpenType font to a neural network based font, I first measured how much its output changes with context.
+To distill Gulzar into a neural font, I first measured how much its output
+changes with context.
 
-I shaped every two-letter word in Gulzar with
-[harfrust](https://github.com/harfbuzz/harfrust) and counted how
-many glyphs each letter uses at the start of a word. The form varies with the
+I shaped every possible two-letter sequence in Gulzar with HarfBuzz and counted
+how many distinct glyphs it uses for the first letter. The form varies with the
 following letter. Gulzar uses 16 initial forms for ن, 15 for ي, and 14 for م.
 Across all 31 letters, it uses 344 distinct word-initial glyphs. Amiri, a Naskh
 font with rich contextual behavior, uses 150 in the same test.
 
 The figure below shows initial ن in green, with the following
-letter in gray. The follower selects the shape.
+letter in gray. Each following letter produces a different initial form.
 
 ![Fourteen ordered pairs. The green word-initial ن takes a different shape for each gray follower.](./noon-variants.png)
 
-The figure below shows the word نستعليق shaped by Gulzar. Glyphs reach **1.38 em above the baseline**. The word spans more than a full em of vertical travel. The
+The figure below shows the word نستعليق shaped by Gulzar. Glyphs reach **1.38 em above the baseline**. The word spans more than one em vertically. The
 letters alternate between green and gray, and the gray rule marks the baseline.
-Each red dot is an attachment point where Gulzar places one letter relative to
-the previous letter. The red line connects the points in writing order. The
-model must learn the offset between each pair of points.
+Each red dot marks the origin of one letter cluster. The red line connects these
+origins in writing order. The model must learn the offset from one to the next.
 
 ![The word Nasta’liq shaped by Gulzar: letters step down from high above the baseline, and the final swash lands below it.](./cascade.png)
 
 ### Building the Dataset
 
-Gulzar and HarfBuzz together act as the teacher. HarfBuzz reads the text,
-consults Gulzar's rule tables, and returns glyphs and positions. The new model
-learns to copy that output.
+Gulzar is the teacher. HarfBuzz applies Gulzar’s OpenType rules to each input
+string and returns glyphs and positions. The new model learns to copy that
+output.
 
-For this experiment, Gulzar and HarfBuzz produce the same result every time.
-That is a property of the OpenType teacher, not a limit of neural-network
-fonts. Shaping one word takes a fraction of a millisecond, so the extraction
-tool can generate as much training data as needed.
+With this teacher, the same text always produces the same result. That is a
+property of Gulzar’s OpenType rules, not a limit of neural fonts. Shaping one
+string takes a fraction of a millisecond, so the extractor can generate a large
+dataset quickly.
 
 The
 [`crates/neuraltype-distill`](https://github.com/eliheuer/post-opentype/tree/main/crates/neuraltype-distill)
-extraction tool shapes every one-, two-, and three-letter word, for a total of
-30,783.
-Three-letter words are the shortest strings in which a letter has a neighbor on
-both sides. These contexts produce medial forms. A second pass added 24 real
-words from the bismillah, the surahs Al-Fatiha and Al-Ikhlas, and the word
-نستعليق.
+extraction tool shapes every possible one-, two-, and three-letter sequence, for
+a total of 30,783. Three-letter sequences are the shortest strings in which a
+letter has a neighbor on both sides. These contexts produce medial forms. The
+corpus also includes 24 real words from the bismillah, the surahs Al-Fatiha and
+Al-Ikhlas, and the word نستعليق.
 
-The corpus also explains the demo's limits. Longer words can contain letter
+The corpus also explains the demo’s limits. Longer words can contain letter
 contexts absent from the training data, so the model must guess and often
 renders them poorly. A larger corpus of real Urdu and Persian text should
 reduce these failures.
 
-During extraction, each letter cluster is stored with its composed shape and
-position. The first cluster keeps its origin. Each later cluster keeps its
-offset from the previous one. These offsets are the red steps in the figure
-above.
+During extraction, each output cluster is stored with its composed shape and
+position. The first cluster keeps its position relative to the word origin.
+Each later cluster keeps its offset from the previous one. These offsets are
+the red steps in the figure above.
 
 The corpus contains 91,390 cluster records and **1,150 distinct composed
 shapes**. The letter خ uses 108 of them.
@@ -150,14 +152,13 @@ The figure below shows all 108 shapes used for خ.
 ### Signed-Distance Fields
 
 We convert each composed shape into a signed-distance field. This lets the
-model predict a grid of numbers instead of a sequence of bézier drawing
+model predict a grid of numbers instead of a sequence of Bézier drawing
 commands.
 
-A signed-distance field stores the outline more usefully than a grayscale
-image. Instead of recording the coverage of each pixel, it records the distance
-to the nearest edge. Values are positive inside the shape and negative
-outside. The edge is where the values cross zero. These distances let us place
-the edge between grid cells.
+A grayscale image records the coverage of each pixel. A signed-distance field
+instead records each cell’s distance to the nearest edge. Values are positive
+inside the shape and negative outside. The edge is where the values cross zero.
+These distances let us place the edge between grid cells.
 
 The image below shows the isolated خ from the training set. On the left is the
 shape. On the right is its signed-distance field, with the zero contour in red.
@@ -177,9 +178,9 @@ The right panel enlarges one crossing. It falls between two cells, and its
 position is calculated from their values. The outline is therefore not limited
 to the grid. A small prediction error moves the nearby edge. It does not break
 the rest of the outline. The renderer follows the zero crossings to recover the
-bézier curves.
+Bézier curves.
 
-![Three panels: the خ distance field with a red slice line, the slice's values as a curve crossing zero at each stroke edge, and one crossing magnified to show the edge landing between two cells.](./sdf-slice.png)
+![Three panels: the خ distance field with a red slice line, the slice’s values as a curve crossing zero at each stroke edge, and one crossing magnified to show the edge landing between two cells.](./sdf-slice.png)
 
 The next figure shows a small patch of the field cell by cell. Each cell lists
 its distance in pixels: negative outside and positive inside. The red outline
@@ -190,7 +191,7 @@ stroke, so the outline crosses it twice.
 
 Each shape uses a shared 155×219-pixel canvas at 64 pixels per em. Nasta’liq
 needs this large canvas because swash tails and dots extend far from each
-cluster's origin.
+cluster’s origin.
 
 ### How the Neural Network Works
 
@@ -202,8 +203,9 @@ This limit belongs to this distilled model, not to NeuralType. A lookup table
 turns each letter into 24 numbers learned during training. The network combines
 these numbers into a 256-number description of the target shape.
 
-This description feeds two outputs. A small branch predicts the horizontal and
-vertical step to the next shape. The main branch expands the description into
+This description feeds two outputs. A small branch predicts the shape’s
+position relative to the previous shape. For the first shape in a word, it
+predicts the starting position. The main branch expands the description into
 128 small 7×5 maps. Five upscaling layers combine and enlarge them until they
 form one 155×219 signed-distance field.
 
@@ -218,13 +220,13 @@ ordinary layers produces each shape and position.
 ### Training
 
 Training starts with random weights, so the first predictions are wrong. For
-each group of examples, the model predicts a field and a position. Candle
-compares every field cell with Gulzar's field and compares the two positions.
-It combines these differences into one error score, then adjusts the weights to
-reduce that score. Repeating this process teaches one set of weights to produce
-all of the shapes.
+each group of examples, the model predicts a field and a position. Training
+compares every field cell with Gulzar’s field and compares the two positions.
+It combines these differences into one error score. Candle then adjusts the
+weights to reduce that score. Repeating this process teaches one set of weights
+to produce all of the shapes.
 
-![Training as a loop: compare Gulzar's target field with the model's prediction, measure the difference, adjust the network's weights, and repeat.](./training-loop.png)
+![Training as a loop: compare Gulzar’s target field with the model’s prediction, measure the difference, adjust the network’s weights, and repeat.](./training-loop.png)
 
 We use [Candle](https://github.com/huggingface/candle) to train the model because
 it provides tools in Rust and runs on CPU, Metal, or CUDA.
@@ -239,20 +241,20 @@ refined the remaining details.
 ### Rendering the Output
 
 The model outputs a field, but text needs outlines. The demo uses two tracers.
-While you type, a fast sub-pixel tracer draws each word. When input settles,
+While you type, a fast subpixel tracer draws each word. When input settles,
 [img2bez](/blog/img2bez) replaces it with a higher-quality outline. img2bez is a
 Rust crate I built specifically for tracing AI-generated glyph images. It finds
-the edge, fits bézier curves to it, and produces an outline that can be used in
+the edge, fits Bézier curves to it, and produces an outline that can be used in
 a font. Its settings can favor accuracy, smoother curves, or fewer points. The
 demo uses the Clean profile with a tight, faithful fit. It applies light
 smoothing and uses SmoothG2 mode to keep the joins between curves smooth.
 
 The slower tracer runs in a Web Worker, separate from the thread that handles
 typing and drawing. The editor stays responsive, and each new outline appears
-when ready.
+when it is ready.
 
 For this project, I added direct distance-field input to img2bez. It traces the
-model's field directly, without first turning it into a raster image.
+model’s field directly, without first turning it into a raster image.
 
 ### Results
 
@@ -267,7 +269,7 @@ take 5.4 MB when stored as 32-bit values. The precision controls in the demo let
 you compare the 32-bit, 16-bit, and 8-bit versions.
 
 The 8-bit output is close to the original. Some strokes and letter positions
-shift. Quantization-aware fine-tuning may reduce these differences.
+shift. Fine-tuning while simulating 8-bit weights may reduce these differences.
 
 Further file-size reductions are possible. We have not spent much time on
 optimization yet. One part of the model contains 84 percent of its weights. We
@@ -279,9 +281,9 @@ The model card:
 | --- | --- |
 | size | 1,380,371 bytes |
 | parameters | 1,357,995 |
-| output | one 155×219 signed-distance field at 64 px/em, plus one x/y position |
+| output | one 155×219 signed-distance field at 64 px/em, plus a position relative to the previous shape |
 | coverage | 31 Arabic letters, plus the لا and لله ligatures |
-| training data | 30,807 words, 91,390 training records, and 1,150 shapes |
+| training data | 30,807 input strings, 91,390 training records, and 1,150 shapes |
 | teacher | Gulzar Regular shaped by HarfBuzz |
 | compute | about 8 minutes per epoch on an Apple M4 CPU; about 100 seconds on an NVIDIA RTX 2060 SUPER |
 | validation | IoU 0.945 |
@@ -294,18 +296,18 @@ results worse. Training a transformer to draw outlines directly produced
 fragments instead of complete shapes.
 
 The first test rendered the fields at two resolutions. At 64 pixels per em,
-Gulzar's tapers and hairlines survive the threshold. At 96 pixels per em, the
-result looks the same at reading size, but the model must output 2.3 times more
-pixels.
+Gulzar’s tapers and hairlines remain visible in the resulting outline. At 96
+pixels per em, the result looks the same at reading size, but the model must
+output 2.3 times more pixels.
 
-Below is the isolated خ at both resolutions, shown at the same size: 64 on the
-left and 96 on the right.
+Below is the isolated خ at both resolutions, shown at the same size: 64 px/em
+on the left and 96 px/em on the right.
 
-![The isolated خ thresholded at 64 and 96 pixels per em, at the same size. The two are nearly identical.](./res-64-96.png)
+![The isolated خ rendered at 64 and 96 pixels per em, at the same size. The two are nearly identical.](./res-64-96.png)
 
 The direct-outline model failed more visibly.
 
-![Three words. The teacher's outlines on the left, the field model in the middle drawing them almost identically, and the vector model on the right producing only small scattered fragments.](./vector-fragments.png)
+![Three words. The teacher’s outlines on the left, the field model in the middle drawing them almost identically, and the vector model on the right producing only small scattered fragments.](./vector-fragments.png)
 
 | | trainable parameters | f32 export | result |
 | --- | --- | --- | --- |
@@ -315,10 +317,9 @@ The direct-outline model failed more visibly.
 | vector, outline tokens | 12,693,639 | 53.3 MB | accuracy 0.482, fragments |
 
 The smallest model is the one used in the demo, but it is incomplete. At an IoU
-of 0.945, it rounds sharp features and weakens or omits small ones. Exact
-OpenType output is not the goal, and some smoothing is acceptable. The missing
-detail still needs to be recovered. None of the three larger designs addressed
-this problem.
+of 0.945, it rounds sharp features and weakens or omits small ones. Some
+smoothing is acceptable, but the missing detail still needs to be recovered.
+None of the three larger designs addressed this problem.
 
 The vector result is consistent with previous research.
 [DeepVecFont](https://arxiv.org/abs/2110.06688) generated outlines as command
@@ -334,7 +335,7 @@ The network above is a baseline, not a limit of the format. The .ntf file names
 its model type and dimensions, so later versions can use different
 architectures.
 
-The next work will also improve the data. The corpus needs more real Urdu and
+The next step is to improve the data. The corpus needs more real Urdu and
 Persian text. It also needs to preserve placement variants. Gulzar can place the
 same local letter context differently in different words. The current training
 step combines these examples and uses their average position, which may not
@@ -348,8 +349,8 @@ composition. Page dimensions could also be inputs. The model could then balance
 the line as a whole instead of copying Gulzar one local shape at a time.
 
 The fixed grid could also be replaced by a continuous field. Instead of
-returning all 33,945 cell values at once, the network would receive an x/y point
-and return the distance at that point. The renderer could ask for more samples
+returning all 33,945 cell values at once, the network would receive an x/y
+location and return the distance there. The renderer could ask for more samples
 around hairlines and tapers. Work on
 [continuous signed-distance functions](https://arxiv.org/abs/1901.05103),
 [SIREN](https://arxiv.org/abs/2006.09661), and
@@ -358,27 +359,27 @@ this kind of coordinate-based network.
 
 ![The current distilled model uses nearby letters and returns one fixed grid per shape. A possible native model reads a whole line or page and returns the distance at any requested x/y point.](./future-architecture.png)
 
-The current model's size does not predict the size of a font designed for
-NeuralType. This model spends its capacity copying Gulzar's OpenType-derived
+The current model’s size does not predict the size of a font designed for
+NeuralType. This model spends its capacity copying Gulzar’s OpenType-derived
 shapes. A native design could learn a smaller set of rules, but whole-line
 composition could also require a larger model. The native square Kufic
 prototype is 215 KB, but it is much simpler than Nasta’liq. About 1 MB is a
-reasonable target for a native Nasta’liq font. Even 5–10 MB could be worthwhile
+useful target for a native Nasta’liq font. Even 5–10 MB could be worthwhile
 for a font that can do something other formats cannot.
 
-Diffusion is newer, but it is not an obvious fit for a font. It usually needs
-many passes to produce one result. A font needs deterministic output while the
-user types. The next useful experiment is a small whole-line context model with
-a continuous distance-field decoder. This is a proposed direction, not part of
+A diffusion model is not an obvious fit for a font. It usually needs many
+passes to produce one result. A text editor needs stable output while the user
+types. The next useful experiment is a small whole-line context model with a
+continuous distance-field decoder. This is a proposed direction, not part of
 the current demo.
 
 ### Project Status
 
-The current pipeline is complete, and the demo runs it end to end. Work now
-focuses on a larger corpus, model quality, worst-case proof sheets, and tests
-with real Urdu and Persian text. Development happens
+The current distillation pipeline runs end to end. Work now focuses on a larger
+corpus, model quality, worst-case proof sheets, and tests with real Urdu and
+Persian text. Development happens
 in the [post-opentype repo](https://github.com/eliheuer/post-opentype).
 The plan lives in
 [docs/DISTILL.md](https://github.com/eliheuer/post-opentype/blob/main/docs/DISTILL.md).
-The distilled font is licensed under the OFL and retains Gulzar's copyright
+The distilled font is licensed under the OFL and retains Gulzar’s copyright
 notice and credit.
