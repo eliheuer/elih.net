@@ -87,69 +87,37 @@ model does not do this.
 ### Other Approaches
 
 I used [Gulzar](https://gulzarfont.org/) because it is the best open-source
-OpenType option I found. It is a contemporary Urdu Nasta’liq typeface, not an exact match for these historical examples. [Noto
+OpenType option I found. It is a contemporary Urdu Nasta’liq typeface, not an
+exact match for these historical examples. [Noto
 Nastaliq](https://notofonts.github.io/noto-docs/specimen/NotoNastaliqUrdu/) is
 similar and, in my view, slightly worse. [Awami
-Nastaliq](https://software.sil.org/awami/resources/) uses
-Graphite rather than OpenType. I found no other usable Nasta’liq font under the
-OFL license. The lack of fonts in this style, relative to its historical and
-cultural significance, is, I think, an indication that something is wrong here.
+Nastaliq](https://software.sil.org/awami/resources/) uses Graphite instead. I
+found no other usable Nasta’liq font under the OFL. This shortage, relative to
+the style’s historical and cultural importance, suggests that the usual
+technical and economic approach is failing.
 
-[Graphite](https://en.wikipedia.org/wiki/Graphite_%28smart_font_technology%29)
-was developed by [SIL International](https://www.sil.org/), a Christian
-nonprofit that develops fonts and language software for literacy, language
-development, and Bible translation. Like OpenType, Graphite separates the font
-from the shaping engine. An
-OpenType shaper such as
-[HarfBuzz](https://harfbuzz.github.io/what-does-harfbuzz-do.html) reads the
-font’s substitution and positioning tables and applies a built-in model for the
-script. A Graphite font can define the shaping model itself. Its rules can
-respond to the shapes and positions of neighboring glyphs. Awami uses this to
-avoid collisions and fit one sloping cluster beneath another.
-
-Graphite is more flexible than OpenType, but that gain may not be large enough
-to justify adding another shaping engine to every application. HarfBuzz can use
-Graphite only when built with that optional support. Awami implements its
-Nasta’liq shaping in Graphite rather than OpenType, so it renders correctly only
-in software that supports Graphite, such as Firefox, LibreOffice, and XeTeX.
+[Graphite](https://graphite.sil.org/) was developed by
+[SIL International](https://www.sil.org/), a Christian nonprofit that develops
+language software. With OpenType Layout, a shaping engine such as
+[HarfBuzz](https://harfbuzz.github.io/what-does-harfbuzz-do.html) combines its
+own script logic with tables in the font. Graphite lets the font contain a more
+complete shaping program. Awami uses this to avoid collisions and fit one
+sloping cluster beneath another. The tradeoff is limited software support.
 
 [DecoType’s](https://decotype.com/) Advanced Composition Engine (ACE) takes a
-different approach. An ACE typeface contains a small set of functional shapes
-rather than every finished glyph. The engine combines these parts according to
-an explicit model of the script. DecoType used ACE to build its own
-[Nasta’liq typeface](https://decotype.com/pdfs/TDCtdc2010_Nastaliq_v05a.pdf),
-which can form different Arabic-script languages and place their marks from the
-same basic set of parts.
+small set of functional shapes and combines them through an explicit model of
+the script. It powered
+[Tasmeem](https://decotype.com/pdfs/Tasmeem_Manual.pdf), an InDesign extension
+that kept text editable while giving designers control over word forms,
+spacing, and letter positions. ACE was proprietary and tied to a specialist
+publishing workflow.
 
-ACE reached designers through
-[Tasmeem](https://decotype.com/pdfs/Tasmeem_Manual.pdf), an extension for the
-Middle Eastern edition of Adobe InDesign. Tasmeem kept the Unicode text
-searchable and editable while letting the user choose alternate word shapes,
-adjust Arabic spacing, and move letters, dots, and vowel marks. It addressed
-many of the problems shown in the comparisons above without reducing a passage
-to one ligature glyph.
-
-This power came in a proprietary system built for a specialist publishing
-workflow. ACE typefaces require the ACE engine, and Tasmeem did not become a
-general font system supported by browsers and operating systems. Like Graphite,
-it shows that a better composition model can exceed OpenType while still
-struggling to gain broad software support.
-
-Graphite and ACE encode behavior supplied by the font maker. Neural fonts also
-require a new engine, but they learn shape and placement from examples. A
-neural font could generate forms for the exact context, compose a line to fit a
-given space, or reproduce lettering styles that would be impractical to encode
-as glyphs and rules. These abilities could support commercially useful display
-type, branding, and advertising, as well as scripts such as Nasta’liq. That
-range of uses could give industry a reason to support the format.
-
-This distilled Gulzar model does not have these abilities. It is a first test of
-the underlying approach. New fonts need to be designed for the format. Before
-that, we need font-editing software built for training neural-network-based
-fonts. I plan to have a prototype of this software and the first Nasta’liq font
-designed for the format ready for ATypI 2026 in Sharjah. I will be there to demo
-it, raise seed funding, or accept job offers at big tech companies to continue
-this work.
+Graphite and ACE can do more than common OpenType fonts, but neither replaced
+OpenType. Both need special fonts, a separate engine, and support from
+applications. Neural fonts face the same problem. They need to offer a much
+larger gain, such as learned contextual forms or whole-line composition, to
+justify another engine. This distilled Gulzar model is only a test of that
+idea.
 
 ### Measuring Gulzar
 
@@ -478,7 +446,13 @@ be a small whole-line model with a continuous distance-field decoder.
 
 The current distillation pipeline runs end to end. Work now focuses on a larger
 corpus, model quality, worst-case proof sheets, and tests with real Urdu and
-Persian text. Development happens
+Persian text. New fonts also need editing software built for training neural
+networks. I plan to have a prototype of this software and the first Nasta’liq
+font designed for the format ready for ATypI 2026 in Sharjah. I will be there
+to demo it, raise seed funding, or accept job offers at big tech companies to
+continue this work.
+
+Development happens
 in the [post-opentype repo](https://github.com/eliheuer/post-opentype).
 The plan lives in
 [docs/DISTILL.md](https://github.com/eliheuer/post-opentype/blob/main/docs/DISTILL.md).
