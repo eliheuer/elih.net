@@ -22,7 +22,9 @@ that emulates Gutenberg’s movable type with virtual metal rectangles containin
 fixed glyph shapes. The first .ntf font was
 [square Kufic](https://en.wikipedia.org/wiki/Kufic#Square_Kufic), a
 style that resembles low-resolution pixel art. That font was a simple test of
-the concept and was easy to dismiss as a toy tech demo. This post tests whether a neural-network-based font can serve as a practical alternative to OpenType.
+the concept and was easy to dismiss as a toy tech demo. This post tests whether
+a neural-network-based font can serve as a practical alternative to OpenType
+fonts.
 
 I distilled [Gulzar](https://github.com/googlefonts/Gulzar), an OpenType
 Nasta’liq font, into a .ntf. The result is in the interactive demo below. Type,
@@ -31,13 +33,14 @@ joined letters. Click and drag to select several letters at once.
 
 <NeuralTypeDemo {...nastaliqDemo} />
 
-The demo uses the neural network to shape and render text entirely in the browser. The model has 1.36 million
-parameters. With 8-bit weights, the .ntf file is 1.38 MB. The rendering engine
-is written in Rust, compiled to WASM, and built with
-[Linebender](https://linebender.org/) libraries. The demo does not use an
-OpenType shaping engine. During training on an inexpensive local GPU, the model
-learned to reproduce Gulzar as shaped by
-[HarfRust](https://github.com/harfbuzz/harfrust), a Rust port of HarfBuzz.
+The demo uses the NeuralType model and engine to shape and render text entirely
+in the browser. The model has 1.36 million parameters. With 8-bit weights, the
+.ntf file is 1.38 MB. The NeuralType engine is written in Rust, compiled to
+WASM, and built with [Linebender](https://linebender.org/) libraries. The demo
+does not perform OpenType shaping at runtime. During training on an inexpensive
+local GPU, the model learned to reproduce the shaped output produced by Gulzar and
+[HarfRust](https://github.com/harfbuzz/harfrust), a Rust port of the HarfBuzz
+text-shaping engine.
 
 ### Why Nasta’liq
 
@@ -50,7 +53,8 @@ other styles. A calligrapher
 can stack words, extend strokes, and adjust the positions of letters and dots
 to balance black and white space.
 
-The limits of OpenType are easier to see when the same text is shown two ways.
+The limits of OpenType fonts are easier to see when the same text is shown two
+ways.
 The next two figures place historical calligraphy beside the same text set in
 Gulzar. You do not need to read Nasta’liq to compare them. Just look at the forms and try to find differences between the two sides. Pay attention to the negative space between the forms.
 
@@ -66,12 +70,13 @@ moving letters and dots away from their expected positions to balance the page.
 ![The phrase Yá Bahá’u’l-Abhá as a stacked calligraphic composition by Mishkín-Qalam on the left and as a line of text set in Gulzar on the right. Matching letters use the same colors.](./greatest-name-comparison.png)
 <p class="img-credit">Left: <em>Yá Bahá’u’l-Abhá</em>, original calligraphy by <a href="https://en.wikipedia.org/wiki/Mishk%C3%ADn-Qalam">Mishkín-Qalam</a> (1826–1912). Color diagram by Любослов Езыкин, September–October 2015, <a href="https://creativecommons.org/licenses/by-sa/4.0/">CC BY-SA 4.0</a>, via <a href="https://commons.wikimedia.org/wiki/File:Arabic_letters_in_the_Greatest_Name.svg">Wikimedia Commons</a>. Right: the same text set in <a href="https://github.com/googlefonts/Gulzar">Gulzar</a>.</p>
 
-OpenType could reproduce this exact composition with a ligature glyph while
-preserving the underlying text. But the font would contain only one finished
-design for one phrase. It would not learn how to compose other text. A neural-network-based font could learn a style and use it to make new compositions. A whole
-line or page could adjust to the available space. This is a goal for a future
-font designed from the ground up as a neural network. The distilled Gulzar
-model does not do this.
+An OpenType font could reproduce this exact composition with a ligature glyph
+while preserving the underlying text. But the font would contain only one
+finished design for one phrase. It would not learn how to compose other text. A
+neural-network-based font could learn a style and use it to make new
+compositions. A whole line or page could adjust to the available space. This is
+a goal for a future font designed from the ground up as a neural network. The
+distilled Gulzar model does not do this.
 
 ![A calligraphic composition by Mishkín-Qalam.](./mishkin-qalam-48.jpg)
 <p class="img-credit">Calligraphy by <a href="https://en.wikipedia.org/wiki/Mishk%C3%ADn-Qalam">Mishkín-Qalam</a> (1826–1912). Public domain, via <a href="https://commons.wikimedia.org/wiki/File:Mishkin-Qalam-48.JPG">Wikimedia Commons</a>.</p>
@@ -86,38 +91,44 @@ model does not do this.
 
 ### Other Approaches
 
-I used [Gulzar](https://gulzarfont.org/) because it is the best open-source
-OpenType option I found. It is a contemporary Urdu Nasta’liq typeface, not an
+I used [Gulzar](https://gulzarfont.org/) because it is the best OFL-licensed
+OpenType font I found. It is a contemporary Urdu Nasta’liq typeface, not an
 exact match for these historical examples. [Noto
 Nastaliq](https://notofonts.github.io/noto-docs/specimen/NotoNastaliqUrdu/) is
-similar and, in my view, slightly worse. [Awami
-Nastaliq](https://software.sil.org/awami/resources/) uses Graphite instead. I
-found no other usable Nasta’liq font under the OFL. This shortage, relative to
-the style’s historical and cultural importance, suggests that the usual
-technical and economic approach is failing.
+the only comparable OFL-licensed OpenType font I found, and, in my view, is
+slightly worse. [Awami
+Nastaliq](https://software.sil.org/awami/resources/) is also OFL-licensed, but
+implements its shaping in Graphite rather than OpenType Layout. This shortage,
+relative to the style’s historical and cultural importance, suggests that the
+usual technical and economic approach is failing.
 
 [Graphite](https://graphite.sil.org/) was developed by
 [SIL International](https://www.sil.org/), a Christian nonprofit that develops
 language software. With OpenType Layout, a shaping engine such as
-[HarfBuzz](https://harfbuzz.github.io/what-does-harfbuzz-do.html) combines its
-own script logic with tables in the font. Graphite lets the font contain a more
-complete shaping program. Awami uses this to avoid collisions and fit one
-sloping cluster beneath another. The tradeoff is limited software support.
+[HarfBuzz](https://harfbuzz.github.io/what-does-harfbuzz-do.html) uses its own
+script-specific logic to apply substitution and positioning tables stored in
+the font. A Graphite font instead contains the complete rule set for its
+shaping model. Awami uses these rules to avoid
+collisions and fit one sloping cluster beneath another. The tradeoff is limited
+software support.
 
-[DecoType’s](https://decotype.com/) Advanced Composition Engine (ACE) takes a
-small set of functional shapes and combines them through an explicit model of
-the script. It powered
+[DecoType’s](https://decotype.com/) Advanced Composition Engine (ACE)
+synthesizes contextual forms and alternatives through an explicit model of the
+script. It powered
 [Tasmeem](https://decotype.com/pdfs/Tasmeem_Manual.pdf), an InDesign extension
 that kept text editable while giving designers control over word forms,
-spacing, and letter positions. ACE was proprietary and tied to a specialist
-publishing workflow.
+spacing, and letter positions. Tasmeem was a proprietary product built for a
+specialist publishing workflow.
 
-Graphite and ACE can do more than common OpenType fonts, but neither replaced
-OpenType. Both need special fonts, a separate engine, and support from
-applications. Neural fonts face the same problem. They need to offer a much
-larger gain, such as learned contextual forms or whole-line composition, to
-justify another engine. This distilled Gulzar model is only a test of that
-idea.
+Graphite and ACE can express behavior beyond standard OpenType Layout, but
+neither replaced OpenType. OpenType also depends on shaping software, but that
+support is already built into major platforms. Graphite and ACE require
+additional engines and application support. Neural fonts face the same adoption
+problem, but take a different approach and can learn from these earlier
+attempts. My long-term ambition is much larger. I think a format like this could
+replace OpenType. It could support applications in marketing, branding,
+advertising, and cultural production that make adopting a new format
+economically viable. The gains must be large enough to justify the switch.
 
 ### Measuring Gulzar
 
@@ -137,19 +148,23 @@ letter in gray. Each following letter produces a different initial form.
 
 ![Fourteen ordered pairs. The green word-initial ن takes a different shape for each gray follower.](./noon-variants.png)
 
-The figure below shows the word نستعليق shaped by Gulzar. Glyphs reach **1.38 em above the baseline**. The word spans more than one em vertically. The
-letters alternate between green and gray, and the gray rule marks the baseline.
-Each red dot marks the origin of one letter cluster. The red line connects these
-origins in writing order. The model must learn the offset from one to the next.
+The figure below shows the word نستعليق shaped with Gulzar and HarfBuzz. Glyphs
+reach **1.38 em above the baseline**. The word spans more than one em vertically.
+The letters alternate between green and gray, and the gray rule marks the
+baseline. Each red dot marks the origin of one letter cluster. The red line
+connects these origins in writing order. The model must learn the offset from
+one to the next.
 
-![The word Nasta’liq shaped by Gulzar: letters step down from high above the baseline, and the final swash lands below it.](./cascade.png)
+![The word Nasta’liq shaped with Gulzar and HarfBuzz: letters step down from high above the baseline, and the final swash lands below it.](./cascade.png)
 
 ### Building the Dataset
 
-Gulzar is the teacher. For each input string, HarfBuzz applies Gulzar’s OpenType
-rules and returns glyphs and positions. The new model learns to copy this
-output. Gulzar’s shaping is deterministic, so each input has one target. That
-is a property of the teacher, not a limit of neural fonts.
+The teacher is Gulzar shaped by HarfBuzz. For each input string, HarfBuzz uses
+its Arabic shaping logic to apply Gulzar’s OpenType Layout tables. It returns
+the selected glyphs and their positions. The new model learns to copy this
+output. With the shaping settings fixed, the pipeline is deterministic, so
+each input has one target. That is a property of the teacher, not a limit of
+neural fonts.
 
 The
 [`crates/neuraltype-distill`](https://github.com/eliheuer/post-opentype/tree/main/crates/neuraltype-distill)
@@ -158,10 +173,12 @@ tool shapes every possible string of one, two, or three letters, for a total of
 joins on both sides. The corpus also includes 24 real words from the bismillah,
 the surahs Al-Fatiha and Al-Ikhlas, and the word نستعليق.
 
-The tool writes one record for each output cluster. A record contains the
-cluster’s text context, composed shape, and position. The first cluster keeps
-its position relative to the word origin. Each later cluster keeps its offset
-from the previous one. These offsets are the red steps in the figure above.
+The tool groups the output by HarfBuzz cluster. A cluster links one or more
+input characters to the glyphs that represent them. The tool writes one record
+for each cluster. A record contains the cluster’s text context, composed shape,
+and origin. The first cluster keeps its origin relative to the word origin.
+Each later cluster keeps its offset from the previous cluster’s origin. These
+offsets are the red steps in the figure above.
 
 The corpus contains 91,390 cluster records and **1,150 distinct composed
 shapes**. The letter خ uses 108 of them.
@@ -183,15 +200,16 @@ only about 3 KB. If the current network can learn the new examples, the font
 stays almost the same size. If it cannot, we would need a larger network. Each
 additional million 8-bit parameters would add about 1 MB.
 
-OpenType handles new strings by applying the same rules to any sequence. A
-neural font must learn behavior that transfers to sequences absent from its
-training data. Brute-force coverage for this model would require about 28.6
-million five-letter contexts, and it would still miss effects beyond two
+An OpenType shaper applies the same script logic and font tables to new input
+strings. A neural font must learn behavior that transfers to sequences absent
+from its training data. Brute-force coverage for this model would require about
+28.6 million five-letter contexts, and it would still miss effects beyond two
 neighboring letters. A better method is to train on a large real corpus, test
-generated strings against Gulzar, and add the failures to the training set. A
-variable-length model could use the whole word or line as context. A production
-renderer could also enforce basic rules for joins and mark attachment, then use
-simpler forms when the model produces invalid output.
+generated strings against Gulzar and HarfBuzz, and add the failures to the
+training set. A variable-length model could use the whole word or line as
+context. A production NeuralType engine could also enforce basic rules for
+joins and mark attachment, then use simpler forms when the model produces
+invalid output.
 
 ### Signed-Distance Fields
 
@@ -199,10 +217,11 @@ We convert each composed shape into a signed-distance field. This lets the
 model predict a grid of numbers instead of a sequence of Bézier drawing
 commands.
 
-A grayscale image records the coverage of each pixel. A signed-distance field
-instead records each cell’s distance to the nearest edge. Values are positive
-inside the shape and negative outside. The edge is where the values cross zero.
-These distances let us place the edge between grid cells.
+A grayscale rasterization records the coverage of each pixel. A signed-distance
+field instead records each cell’s distance to the nearest edge.
+Values are positive inside the shape and negative outside. The edge is where
+the values cross zero. These distances let us place the edge between grid
+cells.
 
 The image below shows the isolated خ from the training set. On the left is the
 shape. On the right is its signed-distance field, with the zero contour in red.
@@ -223,7 +242,8 @@ crossing where the row passes through an edge of the letter.
 The right panel enlarges one crossing. It falls between two cells, and its
 position is calculated from their values. The outline is therefore not limited
 to the grid. A small prediction error moves the nearby edge. It does not break
-the rest of the outline like outline prediction would. The renderer follows the zero crossings to recover the Bézier curves.
+the rest of the outline like outline prediction would. The tracer follows the
+zero crossings to construct a new Bézier outline.
 
 The next figure shows a small patch of the field cell by cell. Each cell lists
 its distance in pixels: negative outside and positive inside. The red outline
@@ -246,9 +266,9 @@ each side. It combines what it learned about those letters into a description
 of the shape it needs to draw.
 
 From this description, the model predicts the shape and where it belongs. The
-first position is measured from the start of the word. Each later position is
-measured from the shape before it. To draw the shape, five layers turn a small
-set of grids into the final 155×219 signed-distance field.
+first cluster origin is measured from the start of the word. Each later origin
+is measured from the previous cluster origin. To draw the shape, five layers
+turn a small set of grids into the final 155×219 signed-distance field.
 
 This simple model works because it copies one existing font. The same strokes,
 curves, and dots appear in many shapes, so the model can learn them once and
@@ -263,7 +283,7 @@ the whole grid larger.
 
 The model begins with random internal values, called weights. For each group of
 examples, it predicts a field and a position. We compare both predictions with
-the targets from Gulzar and combine the differences into one error score. The
+the teacher targets and combine the differences into one error score. The
 training code changes the weights slightly to lower that score. Repeating this
 process teaches one set of weights to produce every shape and position.
 
@@ -291,18 +311,19 @@ in each step. These smaller changes improved fine details without disrupting
 the larger shapes.
 
 Shape accuracy is measured with intersection over union (IoU). It divides the
-area where the model and Gulzar overlap by the total area covered by either
-shape. Identical shapes score 1.0. Shapes with no overlap score 0. The final
+area where the model output and target shape overlap by the total area covered
+by either shape. Identical shapes score 1.0. Shapes with no overlap score 0. The final
 model scored 0.945 on examples excluded from training. This score measures
 shape only, not position. It does not reflect a known placement problem: when
-Gulzar places the same local context differently in different words, the
-current training step averages those positions. The result may match none of
-the examples.
+the same local context has different positions in different teacher examples,
+the current training step averages those positions. The result may match none
+of the examples.
 
 ### Rendering the Output
 
-The model outputs a field, but text needs outlines. The demo uses two tracers.
-While you type, a fast subpixel tracer draws each word. When input settles,
+The model outputs a field. The demo converts it to a Bézier outline before
+drawing it. It uses two tracers. While you type, a fast subpixel tracer draws
+each word. When input settles,
 [img2bez](/blog/img2bez) replaces it with a higher-quality outline. img2bez is a
 Rust crate I built specifically for tracing AI-generated glyph images. It finds
 the edge, fits Bézier curves to it, and produces an outline that can be used in
@@ -315,7 +336,8 @@ typing and drawing. The editor stays responsive, and each new outline appears
 when it is ready.
 
 For this project, I added direct distance-field input to img2bez. It traces the
-model’s field directly, without first turning it into a raster image.
+model’s field directly, without first converting it to a conventional grayscale
+image.
 
 The demo below shows img2bez tracing a raster glyph. This project gives it the
 model’s distance field instead, but uses the same tracing controls and
@@ -335,11 +357,12 @@ KB for the Gulzar TTF. It stores the weights as 8-bit values. The same weights
 take 5.4 MB when stored as 32-bit values. The precision controls in the demo let
 you compare the 32-bit, 16-bit, and 8-bit versions.
 
-The two files do not perform exactly the same job. Gulzar stores outlines and
-OpenType rules that a separate shaping engine must interpret. The .ntf stores a
-learned approximation of the shaped result, but it also requires the NeuralType
-engine. The comparison therefore measures font data, not the complete software
-stack.
+The two files do not perform exactly the same job. Gulzar stores glyph outlines
+and OpenType Layout substitution and positioning tables. A shaping engine such
+as HarfBuzz applies those tables using its Arabic shaping model. The .ntf stores
+a learned approximation of the resulting shapes and positions, but it also
+requires the NeuralType engine. The comparison therefore measures font data,
+not the complete software stack.
 
 The 8-bit output is close to the original. Some strokes and letter positions
 shift. Fine-tuning while simulating 8-bit weights may reduce these differences.
@@ -354,10 +377,10 @@ The model card:
 | --- | --- |
 | size | 1,380,371 bytes |
 | parameters | 1,357,995 |
-| output | one 155×219 signed-distance field at 64 px/em, plus a position relative to the previous shape |
+| output | one 155×219 signed-distance field at 64 px/em, plus the cluster’s position relative to the word origin or previous cluster |
 | coverage | 31 Arabic letters, plus the لا and لله ligatures |
 | training data | 30,807 input strings, 91,390 training records, and 1,150 shapes |
-| teacher | Gulzar Regular shaped by HarfBuzz |
+| teacher | Gulzar Regular shaped with HarfRust, the Rust port of HarfBuzz |
 | compute | about 8 minutes per epoch on an Apple M4 CPU; about 100 seconds on an NVIDIA RTX 2060 SUPER |
 | validation | IoU 0.945 |
 
@@ -414,9 +437,10 @@ line before assigning positions. Placement would become one decision about the
 complete composition instead of a chain of local offsets.
 
 Second, the training data should keep alternative placements as separate
-targets. When Gulzar places the same shape differently in different words, the
-model should choose among those positions using the rest of the line. It should
-not average them into a position that may occur nowhere in the source.
+targets. When the same shape has different positions in different teacher
+examples, the model should choose among those positions using the rest of the
+line. It should not average them into a position that may occur nowhere in the
+source.
 
 Third, the model could calculate a continuous distance field instead of
 returning a fixed 155×219 grid. The renderer would give the model an x/y
