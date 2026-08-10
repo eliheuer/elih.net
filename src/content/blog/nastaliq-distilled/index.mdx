@@ -84,6 +84,8 @@ model does not do this.
 />
 <p class="img-credit">“Bahram Gur in the Red Palace on Tuesday,” folio 220 from Nizami’s <em>Khamsa</em>. Calligraphy by Sultan Muhammad Nur (ca. 1472–ca. 1536) and Mahmud Muzahib (ca. 1500–1560); painting by Shaikh Zada (active 1510–1550). Herat, 1524–25. Public domain, The Metropolitan Museum of Art, via <a href="https://commons.wikimedia.org/wiki/File:%22Bahram_Gur_in_the_Red_Palace_on_Tuesday%22,_Folio_220_from_a_Khamsa_(Quintet)_of_Nizami_of_Ganja_MET_DP-22880-001.jpg">Wikimedia Commons</a>.</p>
 
+### Other Approaches
+
 I used [Gulzar](https://gulzarfont.org/) because it is the best open-source
 OpenType option I found. It is a contemporary Urdu Nasta’liq typeface, not an exact match for these historical examples. [Noto
 Nastaliq](https://notofonts.github.io/noto-docs/specimen/NotoNastaliqUrdu/) is
@@ -111,14 +113,35 @@ Graphite only when built with that optional support. Awami implements its
 Nasta’liq shaping in Graphite rather than OpenType, so it renders correctly only
 in software that supports Graphite, such as Firefox, LibreOffice, and XeTeX.
 
-Neural fonts also require a new engine, but they could offer a much larger
-change. They learn shape and placement from examples instead of applying
-hand-written rules to fixed glyphs. A neural font could generate forms for the
-exact context, compose a line to fit a given space, or reproduce lettering
-styles that would be impractical to encode as glyphs and rules. These abilities
-could support commercially useful display type, branding, and advertising, as
-well as scripts such as Nasta’liq. That range of uses could give industry a
-reason to support the format.
+[DecoType’s](https://decotype.com/) Advanced Composition Engine (ACE) takes a
+different approach. An ACE typeface contains a small set of functional shapes
+rather than every finished glyph. The engine combines these parts according to
+an explicit model of the script. DecoType used ACE to build its own
+[Nasta’liq typeface](https://decotype.com/pdfs/TDCtdc2010_Nastaliq_v05a.pdf),
+which can form different Arabic-script languages and place their marks from the
+same basic set of parts.
+
+ACE reached designers through
+[Tasmeem](https://decotype.com/pdfs/Tasmeem_Manual.pdf), an extension for the
+Middle Eastern edition of Adobe InDesign. Tasmeem kept the Unicode text
+searchable and editable while letting the user choose alternate word shapes,
+adjust Arabic spacing, and move letters, dots, and vowel marks. It addressed
+many of the problems shown in the comparisons above without reducing a passage
+to one ligature glyph.
+
+This power came in a proprietary system built for a specialist publishing
+workflow. ACE typefaces require the ACE engine, and Tasmeem did not become a
+general font system supported by browsers and operating systems. Like Graphite,
+it shows that a better composition model can exceed OpenType while still
+struggling to gain broad software support.
+
+Graphite and ACE encode behavior supplied by the font maker. Neural fonts also
+require a new engine, but they learn shape and placement from examples. A
+neural font could generate forms for the exact context, compose a line to fit a
+given space, or reproduce lettering styles that would be impractical to encode
+as glyphs and rules. These abilities could support commercially useful display
+type, branding, and advertising, as well as scripts such as Nasta’liq. That
+range of uses could give industry a reason to support the format.
 
 This distilled Gulzar model does not have these abilities. It is a first test of
 the underlying approach. New fonts need to be designed for the format. Before
