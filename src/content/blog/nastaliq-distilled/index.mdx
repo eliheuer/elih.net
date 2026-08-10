@@ -12,7 +12,7 @@ draft: false
 import { Image } from 'astro:assets'
 import NeuralTypeDemo from '../../../components/NeuralTypeDemoIsland.astro'
 import { nastaliqDemo } from '../../../components/demo-presets'
-import BahramGurImage from './bahram-gur-turquoise-pavilion.jpg'
+import BahramGurImage from './bahram-gur-red-palace.jpg'
 import NizamiCoverImage from './nizami-khamsa-cover.jpg'
 
 A previous post introduced the [NeuralType (.ntf)](/blog/neuraltype) font
@@ -42,72 +42,45 @@ written in Rust, compiled to WASM, and built with
 <p class="img-credit">Calligraphy by <a href="https://en.wikipedia.org/wiki/Mishk%C3%ADn-Qalam">Mishkín-Qalam</a> (1826–1912). Public domain, via <a href="https://commons.wikimedia.org/wiki/File:Mishkin-Qalam-09.JPG">Wikimedia Commons</a>.</p>
 
 Nasta’liq is a relativly non-linear style of the Perso-Arabic script. In
-calligraphy form, composition is relativly freeform. A calligrapher can stack words, extend strokes, and adjust the positions of letters and dots to balance the black and white space.
+traditional calligraphy, composition is relativly freeform. A calligrapher can stack words, extend strokes, and adjust the positions of letters and dots to balance the black and white space.
 
-The limits of OpenType are clear when the same text is shown in manuscript
-form and set in an OpenType font. You do not need to read Nasta’liq to compare
+The limits of OpenType are clear when the same text is shown as a calligraphic
+composition and set in an OpenType font. You do not need to read Nasta’liq to compare
 them. Spend a minute finding the same forms and notice how they render differently. These images show the difference better than a description of the problem can.
 
 ![Al-Fatiha in Nasta’liq by Mir Emad Hassani on the left. The same six lines set in Gulzar on the right.](./fatiha-gulzar-comparison.png)
 <p class="img-credit">Left: <em>Al-Fatiha</em> in Nasta’liq by Mir Emad Hassani (1554–1615), National Museum of Iran. Public domain, via <a href="https://commons.wikimedia.org/wiki/File:Nasta%27liq_calligraphy_style_-_Mir_Emad_Hassani_09.png">Wikimedia Commons</a>. Right: the same text set in <a href="https://github.com/googlefonts/Gulzar">Gulzar</a>.</p>
 
-![The same seven lines of Persian text. Mir Ali Haravi's manuscript composition is on the left. The same lines set in the Gulzar OpenType font are on the right.](./manuscript-gulzar-comparison.png)
+![The same seven lines of Persian text. Mir Ali Haravi's calligraphic album folio is on the left. The same lines set in the Gulzar OpenType font are on the right.](./manuscript-gulzar-comparison.png)
 <p class="img-credit">Left: calligraphy by Mir Ali Haravi (1476–1544), ca. 1530–50, from a folio in the Shah Jahan Album. Public domain, The Metropolitan Museum of Art, via <a href="https://commons.wikimedia.org/wiki/File:%22Shah_Jahan_on_Horseback%22,_Folio_from_the_Shah_Jahan_Album_MET_DP235886.jpg">Wikimedia Commons</a>. Right: the same text set in <a href="https://github.com/googlefonts/Gulzar">Gulzar</a>.</p>
 
 One short phrase shows how far this freedom can go. Letters that
-follow one another in the text are separated, stacked, and aranged to make a non-linear composition. This is an extreame example, but go back and look at the manuscripts above and you will find similar behavior where dots are moved far from their imediatly logical positions for the sake over the overall composition. 
+follow one another in the text are separated, stacked, and aranged to make a non-linear composition. This is an extreame example, but go back and look at the calligraphic examples above and you will find similar behavior where dots are moved far from their imediatly logical positions for the sake over the overall composition.
 
 ![The phrase Yá Bahá’u’l-Abhá as a stacked calligraphic composition by Mishkín-Qalam on the left and as a line of text set in Gulzar on the right. Matching letters use the same colors.](./greatest-name-comparison.png)
 <p class="img-credit">Left: <em>Yá Bahá’u’l-Abhá</em>, original calligraphy by <a href="https://en.wikipedia.org/wiki/Mishk%C3%ADn-Qalam">Mishkín-Qalam</a> (1826–1912). Color diagram by Любослов Езыкин, September–October 2015, <a href="https://creativecommons.org/licenses/by-sa/4.0/">CC BY-SA 4.0</a>, via <a href="https://commons.wikimedia.org/wiki/File:Arabic_letters_in_the_Greatest_Name.svg">Wikimedia Commons</a>. Right: the same text set in <a href="https://github.com/googlefonts/Gulzar">Gulzar</a>.</p>
 
-An OpenType font could store this exact design as one glyph. It cannot create a
-new arrangement like this from the text itself.
-
-An OpenType Nasta’liq font turns these choices into predefined glyphs and
-shaping rules. OpenType can select contextual forms and move each glyph in both
-axes, so it can reproduce the descending connections. But OpenType shaping does
-not make new compositional decisions from the outlines or the available page
-space. The font designer must anticipate contexts and encode the alternatives,
-positioning, and collision fixes.
-
-The same compositional freedom extends from a phrase to a full manuscript page.
+OpenType could reproduce this exact composition with a ligature glyph while
+preserving the underlying text. But that would store one finished design for
+one phrase. It would not teach the font how to compose other text. A Nasta’liq
+font designed as a neural network could instead use the whole passage and the
+available space to generate an arrangement in a learned style. That is a goal
+for a future font designed from the ground up as a neural network, not a feature of this distilled Gulzar model.
 
 ![A calligraphic composition by Mishkín-Qalam.](./mishkin-qalam-48.jpg)
 <p class="img-credit">Calligraphy by <a href="https://en.wikipedia.org/wiki/Mishk%C3%ADn-Qalam">Mishkín-Qalam</a> (1826–1912). Public domain, via <a href="https://commons.wikimedia.org/wiki/File:Mishkin-Qalam-48.JPG">Wikimedia Commons</a>.</p>
 
-The page below comes from a 1548 manuscript of Nizami's _Khamsa_. Small blocks
-of Nasta’liq sit above and below the scene. The writing, architecture,
-illustration, and empty space form one page.
-
 <Image
   src={BahramGurImage}
-  alt="A manuscript page showing Bahram Gur in the turquoise pavilion, with blocks of Nasta’liq above and below the painted scene."
-  width={560}
-  height={794}
-  class="mx-auto h-auto max-w-full rounded-md"
+  alt="A manuscript folio showing Bahram Gur in the Red Palace, with blocks of Nasta’liq above and below the painted scene."
+  layout="full-width"
+  class="rounded-md"
 />
-<p class="img-credit">“Bahram Gur in the Turquoise-Blue Pavilion,” from Nizami's <em>Khamsa</em>. Calligraphy by Murshid al-Shirazi, Shiraz, 1548. Public domain, Freer Gallery of Art, via <a href="https://commons.wikimedia.org/wiki/File:Bahram_Gur_in_the_turquoise-blue_pavilion_(Khamsa).jpg">Wikimedia Commons</a>.</p>
-
-The inside cover below frames two columns of Nasta’liq with layers of painted
-and gilded ornament. The text occupies only a small part of the page.
-
-<Image
-  src={NizamiCoverImage}
-  alt="The inside cover of a Nizami Khamsa, with two columns of Nasta’liq surrounded by blue and gold ornament."
-  width={560}
-  height={772}
-  class="mx-auto h-auto max-w-full rounded-md"
-/>
-<p class="img-credit">Inside cover of Nizami's <em>Khamsa</em>. Calligraphy by Sultan Muhammad Nur (ca. 1472–ca. 1536) and Mahmud Muzahib (ca. 1500–1560); painting by Shaikh Zada (active 1510–1550). Herat, 1524–25. Public domain, The Metropolitan Museum of Art, via <a href="https://commons.wikimedia.org/wiki/File:Overflap_and_Inside_Cover_of_a_Khamsa_(Quintet)_of_Nizami_MET_DP251276.jpg">Wikimedia Commons</a>.</p>
-
-This distilled model copies Gulzar, including these limits. Distilling an
-existing OpenType font tests the pipeline and gives an early estimate of the
-required model size. The longer-term goal is to design fonts for NeuralType
-that can make broader compositional decisions.
+<p class="img-credit">“Bahram Gur in the Red Palace on Tuesday,” folio 220 from Nizami's <em>Khamsa</em>. Calligraphy by Sultan Muhammad Nur (ca. 1472–ca. 1536) and Mahmud Muzahib (ca. 1500–1560); painting by Shaikh Zada (active 1510–1550). Herat, 1524–25. Public domain, The Metropolitan Museum of Art, via <a href="https://commons.wikimedia.org/wiki/File:%22Bahram_Gur_in_the_Red_Palace_on_Tuesday%22,_Folio_220_from_a_Khamsa_(Quintet)_of_Nizami_of_Ganja_MET_DP-22880-001.jpg">Wikimedia Commons</a>.</p>
 
 ### Measuring Gulzar
 
-To copy Gulzar, I first measured how much its output changes with context.
+To distill Gulzar from a OpenType font to a neural network based font, I first measured how much its output changes with context.
 
 I shaped every two-letter word in Gulzar with
 [harfrust](https://github.com/harfbuzz/harfrust) and counted how
@@ -135,9 +108,10 @@ Gulzar and HarfBuzz together act as the teacher. HarfBuzz reads the text,
 consults Gulzar's rule tables, and returns glyphs and positions. The new model
 learns to copy that output.
 
-The same text always produces the same result, and shaping one word takes a
-fraction of a millisecond. The extraction tool can therefore generate as much
-training data as needed.
+For this experiment, Gulzar and HarfBuzz produce the same result every time.
+That is a property of the OpenType teacher, not a limit of neural-network
+fonts. Shaping one word takes a fraction of a millisecond, so the extraction
+tool can generate as much training data as needed.
 
 The
 [`crates/neuraltype-distill`](https://github.com/eliheuer/post-opentype/tree/main/crates/neuraltype-distill)
@@ -146,18 +120,17 @@ extraction tool shapes every one-, two-, and three-letter word, for a total of
 Three-letter words are the shortest strings in which a letter has a neighbor on
 both sides. These contexts produce medial forms. A second pass added 24 real
 words from the bismillah, the surahs Al-Fatiha and Al-Ikhlas, and the word
-نستعليق. The full corpus contains 30,807 words.
-
-These real words also supply the longer contexts used by the current model.
+نستعليق.
 
 The corpus also explains the demo's limits. Longer words can contain letter
 contexts absent from the training data, so the model must guess and often
 renders them poorly. A larger corpus of real Urdu and Persian text should
 reduce these failures.
 
-For each letter cluster, the tool records its composed shape and its position.
-It records the first cluster's origin, then each later cluster's offset from the
-previous one. These offsets are the red steps in the figure above.
+During extraction, each letter cluster is stored with its composed shape and
+position. The first cluster keeps its origin. Each later cluster keeps its
+offset from the previous one. These offsets are the red steps in the figure
+above.
 
 The corpus contains 91,390 cluster records and **1,150 distinct composed
 shapes**. The letter خ uses 108 of them.

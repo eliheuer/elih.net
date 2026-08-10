@@ -29,9 +29,9 @@
     'Helvetica Neue', Helvetica, Arial, -apple-system, BlinkMacSystemFont,
     ui-sans-serif, system-ui, sans-serif;
   /* Arabic-range face declared below: Arabic codepoints in body text
-     render in Hasubi Mono (the sans faces have no Arabic); everything
-     else falls through to the active sans. */
-  --font-sans: 'Hasubi Mono Arabic', var(--font-sans-active);
+     render in Virtua Grotesk; everything else falls through to the
+     active sans. */
+  --font-sans: 'Virtua Grotesk Arabic', var(--font-sans-active);
   --font-mono:
     'Hasubi Mono', ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas,
     'Liberation Mono', 'Courier New', monospace;
@@ -81,8 +81,10 @@
 }
 
 @font-face {
-  font-family: 'Hasubi Mono Arabic';
-  src: url('/fonts/HasubiMono-Regular.woff2') format('woff2');
+  font-family: 'Virtua Grotesk Arabic';
+  src: url('/fonts/VirtuaGroteskVF.woff2') format('woff2-variations');
+  font-weight: 400 700;
+  font-style: normal;
   unicode-range: U+0600-06FF, U+0750-077F, U+08A0-08FF, U+FB50-FDFF,
     U+FE70-FEFF;
   font-display: swap;
