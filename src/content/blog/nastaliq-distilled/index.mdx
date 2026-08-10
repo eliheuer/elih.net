@@ -65,9 +65,11 @@ moving letters and dots away from their expected positions to balance the page.
 <p class="img-credit">Left: <em>Yá Bahá’u’l-Abhá</em>, original calligraphy by <a href="https://en.wikipedia.org/wiki/Mishk%C3%ADn-Qalam">Mishkín-Qalam</a> (1826–1912). Color diagram by Любослов Езыкин, September–October 2015, <a href="https://creativecommons.org/licenses/by-sa/4.0/">CC BY-SA 4.0</a>, via <a href="https://commons.wikimedia.org/wiki/File:Arabic_letters_in_the_Greatest_Name.svg">Wikimedia Commons</a>. Right: the same text set in <a href="https://github.com/googlefonts/Gulzar">Gulzar</a>.</p>
 
 OpenType could reproduce this exact composition with a ligature glyph while
-preserving the underlying text. But that would store one finished design for
-one phrase. It would not teach the font how to compose other text. A Nasta’liq
-font designed as a neural network could instead make new compositions based on a learned style. The whole line or even the whole page could adjust to fill space in a pleasing way. That is a goal for a future font designed from the ground up as a neural network, not a feature of this distilled Gulzar model.
+preserving the underlying text. But the font would contain only one finished
+design for one phrase. It would not learn how to compose other text. A neural network based font could learn a style and use it to make new compositions. A whole
+line or page could adjust to the available space. This is a goal for a future
+font designed from the ground up as a neural network. The distilled Gulzar
+model does not do this.
 
 ![A calligraphic composition by Mishkín-Qalam.](./mishkin-qalam-48.jpg)
 <p class="img-credit">Calligraphy by <a href="https://en.wikipedia.org/wiki/Mishk%C3%ADn-Qalam">Mishkín-Qalam</a> (1826–1912). Public domain, via <a href="https://commons.wikimedia.org/wiki/File:Mishkin-Qalam-48.JPG">Wikimedia Commons</a>.</p>
@@ -80,25 +82,40 @@ font designed as a neural network could instead make new compositions based on a
 />
 <p class="img-credit">“Bahram Gur in the Red Palace on Tuesday,” folio 220 from Nizami’s <em>Khamsa</em>. Calligraphy by Sultan Muhammad Nur (ca. 1472–ca. 1536) and Mahmud Muzahib (ca. 1500–1560); painting by Shaikh Zada (active 1510–1550). Herat, 1524–25. Public domain, The Metropolitan Museum of Art, via <a href="https://commons.wikimedia.org/wiki/File:%22Bahram_Gur_in_the_Red_Palace_on_Tuesday%22,_Folio_220_from_a_Khamsa_(Quintet)_of_Nizami_of_Ganja_MET_DP-22880-001.jpg">Wikimedia Commons</a>.</p>
 
-[Gulzar](https://gulzarfont.org/) is a contemporary Urdu Nasta’liq typeface
-intended for sustained reading. It is not a perfect match for the historical
-examples, but it is the best available open-source option. I could not find
-another usable OpenType Nasta’liq font under the OFL. [Noto
-Nastaliq](https://notofonts.github.io/noto-docs/specimen/NotoNastaliqUrdu/) is a
-poor-quality Nasta’liq design. [Awami
+I used [Gulzar](https://gulzarfont.org/) because it is the best open-source
+OpenType option I found. It is a contemporary Urdu Nasta’liq typeface, not a exact match for these historical examples. [Noto
+Nastaliq](https://notofonts.github.io/noto-docs/specimen/NotoNastaliqUrdu/) is
+similar and, in my view, slightly worse. [Awami
 Nastaliq](https://software.sil.org/awami/resources/) is more capable, but it uses
-Graphite rather than OpenType.
+Graphite rather than OpenType. I found no other usable Nasta’liq font under the
+OFL license.
 
 [Graphite](https://en.wikipedia.org/wiki/Graphite_%28smart_font_technology%29)
-is a programmable font-shaping system developed by SIL. It stores fixed glyphs
-and shaping rules in the font, and an application needs the Graphite engine to
-run those rules. Awami does not support OpenType rendering.
+was developed by [SIL International](https://www.sil.org/), a nonprofit that
+develops fonts and language software for languages with limited digital
+support. Like OpenType, Graphite separates the font from the shaping engine. An
+OpenType shaper such as
+[HarfBuzz](https://harfbuzz.github.io/what-does-harfbuzz-do.html) reads the
+font’s substitution and positioning tables and applies a built-in model for the
+script. A Graphite font can define the shaping model itself. Its rules can
+respond to the shapes and positions of neighboring glyphs. Awami uses this to
+avoid collisions and fit one sloping cluster beneath another.
 
-NeuralType takes a different approach. Instead of requiring a font engineer to
-describe the design with substitution and positioning rules, it learns shape
-and placement from examples. NeuralType also requires its own engine today, but
-a learned model could eventually respond to a whole line or page without
-reducing the design to fixed glyphs and hand-written rules.
+Graphite is more flexible than OpenType, but that gain may not be large enough
+to justify adding another shaping engine to every application. HarfBuzz can use
+Graphite only when built with that optional support. Awami implements its
+Nasta’liq shaping in Graphite rather than OpenType, so it renders correctly only
+in software that supports Graphite, such as Firefox, LibreOffice, and XeTeX.
+
+Neural fonts also require a new engine, but they could offer a much larger
+change. They learn shape and placement from examples instead of applying
+hand-written rules to fixed glyphs. A neural font could generate forms for the
+exact context, compose a line to fit a given space, or reproduce lettering
+styles that would be impractical to encode as glyphs and rules. These abilities
+could support commercially useful display type, branding, and advertising, as
+well as scripts such as Nasta’liq. That range of uses could give applications a
+reason to support the format. This distilled Gulzar model does not have these
+abilities. It is a first test of the underlying approach. New fonts need to be designed and before that new font editing software needs to be designed from the ground up for easily training neural network based fonts. I plan to have a prototype of this software and the first Nasta’liq designed from the ground up to take advantage of this new format done by ATypI 2026 Sharjah and will be there to demo it, raise seed funding, or accept job offers at big tech companies to continue this work. 
 
 ### Measuring Gulzar
 
@@ -107,7 +124,9 @@ changes with context.
 
 I shaped every possible two-letter sequence in Gulzar with HarfBuzz and counted
 how many distinct glyphs it uses for the first letter. The form varies with the
-following letter. Gulzar uses 16 initial forms for ن, 15 for ي, and 14 for م.
+following letter. For example, Gulzar draws word-initial noon (ن) in 16
+different ways, depending on the next letter. It has 15 versions of yeh (ي) and
+14 of meem (م).
 Across all 31 letters, it uses 344 distinct word-initial glyphs. Amiri, a Naskh
 font with rich contextual behavior, uses 150 in the same test.
 
@@ -127,16 +146,12 @@ origins in writing order. The model must learn the offset from one to the next.
 
 Gulzar is the teacher. HarfBuzz applies Gulzar’s OpenType rules to each input
 string and returns glyphs and positions. The new model learns to copy that
-output.
-
-With this teacher, the same text always produces the same result. That is a
-property of Gulzar’s OpenType rules, not a limit of neural fonts. Shaping one
-string takes a fraction of a millisecond, so the extractor can generate a large
-dataset quickly.
+output. With this teacher, the same text always produces the same result. That is a
+property of Gulzar’s OpenType rules, not a limit of neural fonts. 
 
 The
 [`crates/neuraltype-distill`](https://github.com/eliheuer/post-opentype/tree/main/crates/neuraltype-distill)
-extraction tool shapes every possible one-, two-, and three-letter sequence, for
+extraction tool shapes every possible one, two, and three-letter sequence, for
 a total of 30,783. Three-letter sequences are the shortest strings in which a
 letter has a neighbor on both sides. These contexts produce medial forms. The
 corpus also includes 24 real words from the bismillah, the surahs Al-Fatiha and
@@ -145,7 +160,24 @@ Al-Ikhlas, and the word نستعليق.
 The corpus also explains the demo’s limits. Longer words can contain letter
 contexts absent from the training data, so the model must guess and often
 renders them poorly. A larger corpus of real Urdu and Persian text should
-reduce these failures.
+reduce these failures without making the font much larger. The .ntf file stores
+the trained weights, not the training examples. New words made from the current
+letters and ligatures add no parameters. A new ligature or cluster token adds
+24 8-bit weights and a short name, about 30 bytes. Even 100 new tokens would add
+only about 3 KB. The file would grow substantially only if the model itself
+needed more capacity. Each additional million 8-bit parameters would add about
+1 MB.
+
+OpenType handles new strings by applying the same rules to any sequence. A
+neural font must learn behavior that transfers to sequences it did not see in
+training. For this fixed-window model, brute-force coverage would require about
+28.6 million five-letter contexts, and it still could not represent effects
+beyond two neighboring letters. A better approach is to combine a large real
+corpus with generated test strings, compare the results with Gulzar, and add
+the failures back to the training set. A variable-length model could then read
+the whole word or line. Deterministic checks for broken joins, misplaced marks,
+and collisions could detect bad output and trigger a simpler rule-based
+fallback when the model encounters an unfamiliar sequence.
 
 During extraction, each output cluster is stored with its composed shape and
 position. The first cluster keeps its position relative to the word origin.
