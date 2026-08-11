@@ -21,6 +21,9 @@ import { pluginLineNumbers } from '@expressive-code/plugin-line-numbers'
 import tailwindcss from '@tailwindcss/vite'
 
 export default defineConfig({
+  redirects: {
+    '/blog/garden-and-fire': '/blog/golshan',
+  },
   site: 'https://elih.net',
   base: "/",
   integrations: [
