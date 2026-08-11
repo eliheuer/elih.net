@@ -10,12 +10,16 @@ from pathlib import Path
 WORD = "نستعليق"
 WIDTH = 572
 HEIGHT = 508
+RASTER_SCALE = 4
 MARGIN = 28
 BACKGROUND = "#0c0c0c"
 GREEN = "#2aa35f"
 GRAY = "#6e6e6e"
 RED = "#ef4444"
 METRIC_GUIDE = "#66ee88"
+HASUBI_FONT_URL = (
+    Path(__file__).resolve().parents[2] / "public/fonts/HasubiMono-Regular.woff2"
+).as_uri()
 
 # Gulzar's master metrics from sources/Gulzar.glyphs. The compiled font uses
 # separate hhea and typo overrides for line spacing.
@@ -126,7 +130,7 @@ def render(glyph_paths, clusters):
         elements.append(
             f'<text x="{label_x}" y="{y - 4:.3f}" '
             f'fill="{METRIC_GUIDE}" fill-opacity="0.7" '
-            f'font-family="sans-serif" font-size="7" text-anchor="{anchor}">'
+            f'font-family="Hasubi Mono" font-size="8" text-anchor="{anchor}">'
             f'{label}</text>'
         )
 
@@ -160,8 +164,10 @@ def render(glyph_paths, clusters):
         elements.append(f'<circle cx="{x:.3f}" cy="{y:.3f}" r="3.5" fill="{RED}"/>')
 
     return (
-        f'<svg xmlns="http://www.w3.org/2000/svg" width="{WIDTH}" height="{HEIGHT}" '
+        f'<svg xmlns="http://www.w3.org/2000/svg" '
+        f'width="{WIDTH * RASTER_SCALE}" height="{HEIGHT * RASTER_SCALE}" '
         f'viewBox="0 0 {WIDTH} {HEIGHT}" shape-rendering="crispEdges">\n'
+        f'<style>@font-face {{ font-family: "Hasubi Mono"; src: url("{HASUBI_FONT_URL}") format("woff2"); }}</style>\n'
         + "\n".join(elements)
         + "\n</svg>\n"
     )
