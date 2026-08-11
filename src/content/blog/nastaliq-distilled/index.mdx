@@ -122,23 +122,20 @@ To distill Gulzar into a neural font, I first measured how much its output
 changes with context.
 
 I shaped every possible two-letter sequence with Gulzar and HarfBuzz. For each
-first letter, I counted the distinct glyph IDs in the shaped output. Gulzar’s
-per-letter counts add up to 344 across the 31 letters. The same test gives 150
-for Amiri, a Naskh font with rich contextual behavior. Gulzar often represents
-dots with separate glyphs, so its count includes both main forms and dots. This
-measures contextual glyph inventory, not the number of complete letterforms.
+first letter, I counted the distinct glyph IDs in the shaped output. Across the
+31 letters, these contextual-variant counts total 344, or about 11 glyph IDs
+per letter on average. The same test gives 150
+for Amiri, a Naskh font with rich contextual behavior.
 
 The figure below shows initial ن in green, with the following
 letter in gray. Each following letter produces a different initial form.
 
 ![Fourteen ordered pairs. The green word-initial ن takes a different shape for each gray follower.](./noon-variants.png)
 
-The figure below shows the word نستعليق shaped with Gulzar and HarfBuzz. Glyphs
-receive vertical offsets as large as **1.38 em above the baseline**. The offsets
-span more than one em vertically. The letters alternate between green and gray,
-and the gray rule marks the baseline. Each red dot marks the origin of one
-letter cluster. The red line connects these origins in writing order. The model
-must learn the offset from one to the next.
+The figure below shows the vertical cascade in نستعليق. The letters alternate
+between green and gray. The red points mark the origins of the main letterforms,
+which span 0.95 em vertically. The guides show Gulzar’s actual font metrics.
+The source defines an ascender of +800 and a descender of −800.
 
 ![The word Nasta’liq shaped with Gulzar and HarfBuzz: letters step down from high above the baseline, and the final swash lands below it.](./cascade.png)
 
@@ -160,11 +157,10 @@ the surahs Al-Fatiha and Al-Ikhlas, and the word نستعليق.
 
 The tool groups the output by HarfBuzz cluster. A cluster links one or more
 input characters to the glyphs that represent them. The tool writes one record
-for each cluster and uses the position of its first glyph as the cluster origin.
-A record contains the cluster’s text context, composed shape, and origin. The
-first cluster keeps its origin relative to the word origin. Each later cluster
-keeps its offset from the previous cluster’s origin. These offsets are the red
-steps in the figure above.
+for each cluster. A record contains the cluster’s text context, composed shape,
+and position. The first cluster keeps its position relative to the word origin.
+Each later cluster keeps its offset from the previous cluster. These offsets
+place the predicted shapes along Gulzar’s cascade.
 
 The corpus contains 91,390 cluster records and **1,150 distinct composed
 shapes**. The letter خ uses 108 of them.
