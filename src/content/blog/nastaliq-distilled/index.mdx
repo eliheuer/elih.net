@@ -35,7 +35,7 @@ joined letters. Click and drag to select several letters at once.
 The model above has 1.36 million parameters. With 8-bit weights,
 the .ntf file is 1.38 MB.
 The NeuralType engine is written in Rust, compiled to WASM, and built with
-[Linebender](https://linebender.org/) libraries. The demo does not perform
+[Linebender](https://linebender.org/) libraries. The demo does not use
 OpenType shaping at runtime. During training on an inexpensive local GPU, the
 model learned to reproduce the shaped output produced by Gulzar and
 [HarfRust](https://github.com/harfbuzz/harfrust), a Rust port of the HarfBuzz

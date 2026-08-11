@@ -112,9 +112,9 @@ def render(glyph_paths, clusters):
     # Draw the five master metrics shown in Gulzar's Glyphs source.
     metrics = (
         (UNITS_PER_EM, "UPM  1000", "start"),
-        (ASCENDER, "ascender  +800", "start"),
-        (CAP_HEIGHT, "cap height  +700", "start"),
-        (X_HEIGHT, "x-height  +500", "start"),
+        (ASCENDER, "ascender  800", "start"),
+        (CAP_HEIGHT, "cap height  700", "start"),
+        (X_HEIGHT, "x-height  500", "start"),
         (0, "baseline  0", "end"),
         (DESCENDER, "descender  -800", "end"),
     )
