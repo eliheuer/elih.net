@@ -1,0 +1,148 @@
+---
+title: 'The Garden & The Fire: Design & Engineering for OpenType Nasta’liq'
+description: 'Golshan, a fork of Gulzar for Bahá’í children’s books. A build log.'
+date: 2026-08-10
+tags: ['fonts', 'arabic', 'nastaliq', 'opentype', 'rust']
+image: './bismillah.png'
+authors: ['elih']
+draft: true
+---
+
+import { Image } from 'astro:assets'
+import Bismillah from './bismillah.png'
+import AlifBefore from './alif_test_before.png'
+import AlifAfter from './alif_test.png'
+
+[Golshan](https://github.com/eliheuer/golshan) is a fork of
+[Gulzar](https://github.com/googlefonts/Gulzar), Simon Cozens’s OpenType
+Nasta’liq font. The fork has one purpose: children’s books that teach
+Bahá’í children to read Nasta’liq. Gulzar means rose garden. Golshan
+means flower garden. The name keeps the garden and starts a new bed in
+it.
+
+This post is a build log. I will update it as the work continues. Each
+section records what we did and why we chose it.
+
+<Image src={Bismillah} alt="The bismillah set in Golshan, light gray Nasta’liq on a dark gray ground" />
+
+## 1. The first specimen
+
+The first target was a single image: the bismillah, light gray on dark
+gray, and nothing else. One image is enough to force the whole pipeline
+to exist. To render it, the font must build. To build the font, the 2022
+toolchain must run on a 2026 machine. The specimen is the test that the
+project is alive.
+
+The specimen renders with [DesignBot](https://github.com/eliheuer/designbot),
+my Rust 2D graphics tool. A small script in the repo,
+`harness/designbot/bismillah.rs`, loads the built TTF, shapes the text,
+and writes the PNG. The same setup drives the proof sheets for
+[Virtua Grotesk](/blog/virtua-grotesk).
+
+## 2. A faster build with fontc
+
+Gulzar builds in two stages. First, fontmake compiles the Glyphs source
+into a TTF with no layout. Second, `fontTools.feaLib` merges a large
+generated feature file into that TTF. The feature file comes from FEZ
+sources through `fez2fea`, and this generation step is the slow part.
+
+Golshan keeps the second stage and replaces the first.
+[fontc](https://github.com/googlefonts/fontc), the Rust compiler from
+Google Fonts, compiles the outlines with `--skip-features` and
+`--no-production-names`. The build script caches the generated feature
+file, so an outline edit does not regenerate the layout. The full build
+runs in about 70 seconds on my machine. The quick path
+(`./build.sh --quick`) reuses the cached features and takes a few
+seconds.
+
+The hard part was the Python toolchain. The fez/karakul stack froze in
+2022, and 2026 packages break it in six different places. The venv now
+pins one consistent era: Python 3.10 (the last version with a
+`kerndeterminer` wheel), `fontFeatures==1.7.4`, `fez-language==1.3.4`,
+`babelfont==3.0.1`, `kurbopy<0.10`, `numpy<2`, `setuptools<81`, and the
+`variable-arithmetic` fork of fonttools that karakul expects. Each pin
+fixed a real crash. The lesson is old but worth repeating: a font with a
+custom build system is a software project, and software rots.
+
+## 3. The renderer was the bug
+
+The first specimen render came out wrong. The letters sat flat on the
+baseline and most of the dots were gone. The font was innocent:
+HarfBuzz shaped the same TTF correctly, with full cascades and attached
+dots.
+
+The bug was in DesignBot. Its glyph loop advanced the pen with
+`glyph.advance` and ignored `glyph.x` and `glyph.y`, the per-glyph
+placement offsets from the shaper. Those offsets carry all of GPOS mark
+attachment and all cursive rises. Flat Latin text hides this bug almost
+completely. Nasta’liq is the worst case: in Gulzar, the whole word image
+hangs from cursive attachment, so every letter above the baseline needs
+its offset. One two-line fix in the renderer, and the bismillah came out
+right.
+
+This is a recurring pattern with complex-script text. A renderer can
+look correct for years because Latin never exercises the code path.
+Nasta’liq is a free stress test. If your text stack renders Gulzar
+correctly, it probably renders everything correctly.
+
+## 4. Raising the unconnected alif
+
+Now the first change to the font itself. Gulzar’s engineering notes
+describe an open problem. An unconnected alif (and in Nasta’liq there
+are many, because alif joins only on its right) sits on the baseline,
+while the letter group after it starts high and cascades down toward
+the baseline. Calligraphers raise that alif so its foot meets the entry
+of the next stroke. OpenType cursive attachment seems unable to express
+this: if you put an entry anchor on initial letters, every letter with
+an exit anchor connects to them, which is wrong everywhere else. The
+notes suggest a contextual cursive lookup as a theory, untried.
+
+We found a simpler answer: a second cursive lookup with its own anchor
+pair. The anchor names do the scoping, so no contextual machinery is
+needed:
+
+- `cursive_exit` exists only on the isolated alif glyphs, at the foot of
+  the stroke.
+- `cursive_entry` exists only on initial and isolated forms, at the
+  pen-entry point of the glyph.
+
+Only one pairing is possible, so only one connection can form. The
+lookup sits next to the main cursive routine in the FEZ source:
+
+```
+Routine AlifRaise { Attach &cursive_entry &cursive_exit cursive; } IgnoreMarks RightToLeft;
+```
+
+The best part is free: HarfBuzz merges cursive attachments from all
+lookups into one attachment tree. The alif attaches to the initial
+letter, and the initial letter already rides the word’s cascade. So the
+alif does not rise to a fixed height. It rises to the entry height of
+the following group, wherever the cascade puts it. In «ابجد» the alif
+rises 551 units: the rise of the BE group plus its own entry offset.
+
+A build script computes the anchors, so no manual anchor work is
+needed. For each of the 341 target glyphs, it resolves components and
+takes the highest outline point in the right part of the glyph as the
+pen entry. Isolated forms get entry anchors too, so an alif before a
+non-joining letter («اب», «او») also rises to that letter’s start
+height. Alif before alif stays on the baseline.
+
+Before:
+
+<Image src={AlifBefore} alt="Test words with the alif sitting on the baseline before every letter group" />
+
+After:
+
+<Image src={AlifAfter} alt="The same words with each unconnected alif raised to the entry height of the following group" />
+
+The heuristic anchor positions are a first pass. Some alifs now sit a
+touch high, and the automatic kerning still assumes a baseline alif. The
+next pass will tune the `TUCK` constant and re-run the collision checks.
+
+## Next
+
+- Rename the family from Gulzar to Golshan and update the metadata.
+- Review the raised alif against manuscript models and tune the anchor
+  heights.
+- Design the first reading-primer specimens: large letters, short words,
+  full vocalization.
