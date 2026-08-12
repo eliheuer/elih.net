@@ -23,14 +23,15 @@ predefined glyph shapes. The first .ntf font was
 [square Kufic](https://en.wikipedia.org/wiki/Kufic#Square_Kufic), a
 style that resembles low-resolution pixel art. That font was a simple test of
 the concept and was easy to dismiss as a toy tech demo. This post is the next
-step. It tries to prove that neural fonts can be a viable alternative to
-OpenType.
+step. It tries to prove that neural-network-based fonts can be a viable
+alternative to OpenType.
 
 I distilled [Gulzar](https://github.com/googlefonts/Gulzar), an OpenType
 Nasta’liq font, into a .ntf. The resulting 1.36-million-parameter neural font
-can reproduce much of Gulzar’s output. It still fails on many unseen words and
-does not treat a whole line as one composition. Try it in the interactive demo
-below. Type, copy, paste, or move the cursor with the arrow keys. Press space to
+can reproduce much of Gulzar’s output, though it still fails on many unseen
+words. Unlike a font designed from the ground up for this format, it cannot yet
+treat a whole line as one composition. Try it in the interactive demo below.
+Type, copy, paste, or move the cursor with the arrow keys. Press space to
 separate joined letters. Click and drag to select several letters at once.
 
 <NeuralTypeDemo {...nastaliqDemo} />
