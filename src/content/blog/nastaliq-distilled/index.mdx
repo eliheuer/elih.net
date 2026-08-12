@@ -299,6 +299,8 @@ Shape accuracy is measured with intersection over union (IoU). It divides the
 area where the model output and target shape overlap by the total area covered
 by either shape. Identical shapes score 1.0. Shapes with no overlap score 0.
 The final model scored 0.945 on examples excluded from training. This score
+does not measure how the model handles new words: the held-out examples come
+from the same mostly short-string corpus as the training examples. It also
 measures shape only, not position. It does not reflect a known placement
 problem: when the same local context has different positions in different
 teacher examples, the current training step averages those positions. The
@@ -371,10 +373,12 @@ The model card:
 
 ### Failed Scaling Attempts
 
-I tested three ways to improve the model. Increasing the field resolution made
-the model larger but did not improve the letters. Widening the network made the
-results worse. Training a transformer to draw outlines directly produced
-fragments instead of complete shapes.
+I tested three quick changes. These were exploratory runs, not controlled
+scaling tests, and I did not retune the training settings for each model.
+Increasing the field resolution made the model larger but did not improve the
+letters. A wider network performed worse with the reused settings. Training a
+transformer to draw outlines directly produced fragments instead of complete
+shapes.
 
 The first test rendered the fields at two resolutions. At 64 pixels per em,
 Gulzar’s tapers and hairlines remain visible in the resulting outline. At 96
@@ -402,7 +406,8 @@ of 0.945, it rounds sharp features and weakens or omits small ones. Some
 smoothing is acceptable, but the missing detail still needs to be recovered.
 None of the three larger designs addressed this problem.
 
-The vector result is consistent with previous research.
+This vector run rules out the simple implementation tested here, not direct
+outline prediction itself.
 [DeepVecFont](https://arxiv.org/abs/2110.06688) generated outlines as command
 sequences but needed image-guided refinement to produce usable curves.
 [DeepVecFont-v2](https://arxiv.org/abs/2303.14585) redesigned the outline
