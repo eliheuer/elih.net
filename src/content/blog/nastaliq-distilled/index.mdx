@@ -22,8 +22,10 @@ that emulates Gutenberg’s movable type with virtual metal rectangles containin
 predefined glyph shapes. The first .ntf font was
 [square Kufic](https://en.wikipedia.org/wiki/Kufic#Square_Kufic), a
 style that resembles low-resolution pixel art. That font was a simple test of
-the concept and was easy to dismiss as a toy tech demo. This post tests whether
-a neural-network-based font can serve as a practical alternative to OpenType.
+the concept and was easy to dismiss as a toy tech demo. This post shows that a
+1.36-million-parameter neural font can reproduce much of Gulzar’s output. It
+still fails on many unseen words and does not treat a whole line as one
+composition.
 
 I distilled [Gulzar](https://github.com/googlefonts/Gulzar), an OpenType
 Nasta’liq font, into a .ntf. The result is in the interactive demo below. Type,
