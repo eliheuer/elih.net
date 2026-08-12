@@ -17,23 +17,6 @@ export async function getRecentPosts(
   return posts.slice(0, count)
 }
 
-export async function getAdjacentPosts(currentId: string): Promise<{
-  prev: CollectionEntry<'blog'> | null
-  next: CollectionEntry<'blog'> | null
-}> {
-  const posts = await getAllPosts()
-  const currentIndex = posts.findIndex((post) => post.id === currentId)
-
-  if (currentIndex === -1) {
-    return { prev: null, next: null }
-  }
-
-  return {
-    next: currentIndex > 0 ? posts[currentIndex - 1] : null,
-    prev: currentIndex < posts.length - 1 ? posts[currentIndex + 1] : null,
-  }
-}
-
 export async function getAllAuthors(): Promise<CollectionEntry<'authors'>[]> {
   return await getCollection('authors')
 }
