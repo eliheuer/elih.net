@@ -22,15 +22,14 @@ that emulates Gutenberg’s movable type with virtual metal rectangles containin
 predefined glyph shapes. The first .ntf font was
 [square Kufic](https://en.wikipedia.org/wiki/Kufic#Square_Kufic), a
 style that resembles low-resolution pixel art. That font was a simple test of
-the concept and was easy to dismiss as a toy tech demo. This post shows that a
-1.36-million-parameter neural font can reproduce much of Gulzar’s output. It
-still fails on many unseen words and does not treat a whole line as one
-composition.
+the concept and was easy to dismiss as a toy tech demo.
 
 I distilled [Gulzar](https://github.com/googlefonts/Gulzar), an OpenType
-Nasta’liq font, into a .ntf. The result is in the interactive demo below. Type,
-copy, paste, or move the cursor with the arrow keys. Press space to separate
-joined letters. Click and drag to select several letters at once.
+Nasta’liq font, into a .ntf. The resulting 1.36-million-parameter neural font
+can reproduce much of Gulzar’s output. It still fails on many unseen words and
+does not treat a whole line as one composition. Try it in the interactive demo
+below. Type, copy, paste, or move the cursor with the arrow keys. Press space to
+separate joined letters. Click and drag to select several letters at once.
 
 <NeuralTypeDemo {...nastaliqDemo} />
 
@@ -253,7 +252,8 @@ of the shape it needs to draw.
 
 From this description, the model predicts the shape and where it belongs. The
 first cluster origin is measured from the start of the word. Each later origin
-is measured from the previous cluster origin. To draw the shape, five layers
+is measured from the previous cluster origin. To draw the shape,
+[five layers](https://github.com/eliheuer/post-opentype/blob/main/crates/neuraltype-train/src/main.rs#L177-L216)
 turn a small set of grids into the final 155×219 signed-distance field.
 
 This simple model works because it copies one existing font. The same strokes,
@@ -464,9 +464,10 @@ The current distillation pipeline runs end to end. Work now focuses on a larger
 corpus, model quality, worst-case proof sheets, and tests with real Urdu and
 Persian text. New fonts also need editing software built for training neural
 networks. I plan to have a prototype of this software and the first Nasta’liq
-font designed for the format ready for ATypI 2026 in Sharjah. I will be there
-to demo it, raise seed funding, or accept job offers at big tech companies to
-continue this work.
+font designed for the format ready for ATypI 2026 in Sharjah, where I will be
+available to demo the work and answer questions from companies, independent
+designers, and engineers interested in exploring this approach. [Get in
+touch](mailto:eli@elih.net) if you want to discuss the project.
 
 Development happens
 in the [post-opentype repo](https://github.com/eliheuer/post-opentype).
