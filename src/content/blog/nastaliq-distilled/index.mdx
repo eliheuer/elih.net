@@ -2,7 +2,7 @@
 title: 'Nasta’liq Distilled: Post-OpenType Neural Network Fonts'
 description: 'Converting Gulzar, an OpenType Nasta’liq font, into a neural font. A build log.'
 date: 2026-07-30
-dateNote: 'Updated August 9, 2026'
+dateNote: 'Updated August 12'
 tags: ['fonts', 'rust', 'ai', 'machine-learning', 'arabic']
 image: './share-card.png'
 authors: ['elih']
@@ -170,10 +170,11 @@ The figure below shows all 108 shapes used for خ.
 
 ![All 108 shapes of خ in the dataset, in a grid.](./kha-shapes.png)
 
-The corpus covers short strings exhaustively, but contains only 24 longer
-words. A longer word can contain a context absent from the training data. The
-model must then guess, and its output is often poor. More real Urdu and Persian
-text should reduce these failures.
+The corpus covers short strings exhaustively but only 24 longer words. The
+three unseen words below use only supported letters, yet the model breaks their
+shapes and placement. Gulzar is gray; the model is green.
+
+![Three unseen words rendered with Gulzar in gray above and by the model in green below. The model separates forms and misplaces letters and marks.](./unseen-words.png)
 
 More training text would barely change the font’s file size. The .ntf stores
 the trained weights, not the training examples. New words made from the current

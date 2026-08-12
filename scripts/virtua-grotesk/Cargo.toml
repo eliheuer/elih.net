@@ -13,6 +13,9 @@ designbot = { git = "https://github.com/eliheuer/designbot", package = "designbo
 designbot-render = { git = "https://github.com/eliheuer/designbot", package = "designbot-render" }
 kurbo = "0.12"
 norad = "0.18"
+harfrust = "0.12.0"
+serde_json = "1"
+ttf-parser = "0.25"
 
 [[bin]]
 name = "card"
@@ -57,3 +60,7 @@ path = "src/bin/interp.rs"
 [[bin]]
 name = "interpn"
 path = "src/bin/interpn.rs"
+
+[[bin]]
+name = "nastaliq-failures"
+path = "src/bin/nastaliq_failures.rs"

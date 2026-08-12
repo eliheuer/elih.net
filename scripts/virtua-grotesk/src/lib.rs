@@ -164,12 +164,17 @@ impl OutputPaths {
     }
 
     pub fn blog(&self, filename: &str) -> PathBuf {
+        self.blog_post("virtua-grotesk", filename)
+    }
+
+    pub fn blog_post(&self, slug: &str, filename: &str) -> PathBuf {
         if !self.scratch {
             self.repo_root
-                .join("src/content/blog/virtua-grotesk")
+                .join("src/content/blog")
+                .join(slug)
                 .join(filename)
         } else {
-            self.preview_root.join("blog").join(filename)
+            self.preview_root.join("blog").join(slug).join(filename)
         }
     }
 
