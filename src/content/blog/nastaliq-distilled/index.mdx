@@ -154,19 +154,19 @@ which extracts those shapes and positions from Gulzar. In model distillation,
 the existing system that a new model learns to imitate is called the teacher.
 Here, Gulzar and HarfRust together serve as the teacher.
 
-The tool shapes every possible one-, two-, and three-letter string, 30,783 in
-all. Three-letter strings are the shortest that can contain initial, medial,
+The tool shapes every possible one, two, and three-letter string, 30,783 in
+all because three-letter strings are the shortest that can contain initial, medial,
 and final forms. The tool also shapes 24 longer words from the bismillah, the
 surahs Al-Fatiha and Al-Ikhlas, and the word نستعليق.
 
 Exhaustive coverage stops at three letters for now. Four-letter strings alone
 would add 31⁴ = 923,521 inputs, about 30 times the complete one-to-three-letter
 set. Five-letter strings would add another 28.6 million and still miss
-longer-range effects. A production model must instead generalize beyond its
-training examples. It should train on representative text and add cases where
-its output differs from the teacher. A variable-length model could use a whole
-word or line as context. Basic joining and mark-attachment rules, plus simpler
-fallback forms, could handle invalid output.
+longer-range effects. Instead, a production model should train on representative
+text and add cases where its output differs from the teacher. Basic joining and
+mark-attachment rules, plus simpler fallback forms, could handle invalid output.
+Producing valid output for text the model has not seen is probably the hardest
+technical problem facing neural fonts.
 
 For each string, HarfRust uses its Arabic shaping logic and Gulzar’s OpenType
 Layout tables to select and position glyphs. It returns glyph IDs, horizontal
