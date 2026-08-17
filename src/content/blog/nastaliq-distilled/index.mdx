@@ -105,18 +105,16 @@ only comparable option I could verify and, in my view, is slightly worse.
 Navees](https://scripts.sil.org/cms/scripts/page.php?id=nastaliq_download&site_id=nrsi)
 relies on the obsolete QuickDraw GX system.
 
-Other systems have tried to move beyond OpenType Layout. Graphite lets a font
-supply more complex shaping rules. [DecoType’s](https://decotype.com/) Advanced
-Composition Engine powered
-[Tasmeem](https://decotype.com/pdfs/Tasmeem_Manual.pdf), a proprietary InDesign
-extension with greater control over Arabic composition. Both approaches are
-procedural: designers define the behavior through rules rather than training a
-model from examples. Both depend on support outside the usual OpenType shaping
-path, which limits where they can be used.
+Graphite and [DecoType’s](https://decotype.com/) Advanced Composition Engine go
+beyond OpenType Layout. Graphite supports more complex shaping rules. DecoType’s
+engine powered [Tasmeem](https://decotype.com/pdfs/Tasmeem_Manual.pdf), a
+proprietary InDesign extension for advanced Arabic composition. Both define
+behavior through rules and require specialized software, which limits where
+they can be used.
 
-Neural fonts also need engine support. Unlike rule-based font systems, they
-learn from examples. This could let them reproduce behavior that is too complex
-to describe with rules.
+Neural fonts also need engine support, but they learn from examples instead of
+following rules. This could let them reproduce behavior that is too complex to
+specify as rules.
 
 My long-term goal is a format that could replace OpenType, not another
 specialist extension. It could support new kinds of typography for branding,
