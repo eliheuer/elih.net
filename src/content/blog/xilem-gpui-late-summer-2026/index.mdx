@@ -228,6 +228,42 @@ screenshots, and all 72 tests still pass. Total time from "the
 compositor is broken" to fixed: one evening, most of it spent
 proving the compositor was fine.
 
+### 2026-08-17: one feature into each editor
+
+With the blocker gone, parity work proper started, one feature
+per editor.
+
+Xilem got the editor left sidebar from runebender-web: a search
+input and a windowed four-column mini glyph grid, so switching
+glyphs no longer requires leaving the editor. Almost everything
+was assembled from parts the app already had: the glyph preview
+widget, the scroll-handler widget from the main grid, and the
+`button` view, which accepts any child view. Two notes. The
+windowing pattern (only visible rows get outlines built) matters
+because Xilem rebuilds the view tree on every state change, and
+building 799 outlines per keystroke would be felt. And the
+`button` widget's default padding had to be stripped with
+`.padding(0)` to fit four cells in a 220px tile.
+
+GPUI got its first real editing: drag a control point to move it
+(rounded to integer units), wheel pans, Cmd+wheel zooms about the
+cursor, Cmd+S saves the UFO through norad. The interesting
+plumbing problem was coordinates. Mouse events arrive in window
+space, and the design-space transform depends on the canvas
+element's bounds, which only exist during paint. The workaround
+is an `Arc<Mutex<Bounds>>` the paint closure writes and the event
+handlers read. Xilem's custom-widget model hands the widget its
+own bounds in both paint and event contexts, so this problem does
+not exist there; GPUI's div-plus-canvas model makes you carry the
+bounds yourself. A unit test covers the edit-save loop: copy the
+demo UFO to a temp dir, move a point, save, reload, check the
+numbers.
+
+The two editors now overlap on: glyph grid, glyph switching
+without leaving the editor (sidebar in Xilem, Esc + double-click
+in GPUI), and point editing (Xilem has the full tool set; GPUI
+has bare point dragging).
+
 ## Running comparison
 
 Updated as the log grows. Empty cells mean no data yet.

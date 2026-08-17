@@ -148,10 +148,11 @@ which span 0.95 em vertically.
 ### Building the Dataset
 
 The measurements above show what the dataset must capture: how Gulzar changes
-shapes and positions with context. I started building it with
-[`crates/neuraltype-distill`](https://github.com/eliheuer/post-opentype/tree/main/crates/neuraltype-distill).
-In model distillation, the system a new model learns to imitate is called the
-teacher. Here, Gulzar and HarfRust together serve as the teacher.
+shapes and positions with context. To build that dataset, I wrote
+[`crates/neuraltype-distill`](https://github.com/eliheuer/post-opentype/tree/main/crates/neuraltype-distill),
+which extracts those shapes and positions from Gulzar. In model distillation,
+the existing system that a new model learns to imitate is called the teacher.
+Here, Gulzar and HarfRust together serve as the teacher.
 
 The tool shapes every possible one-, two-, and three-letter string, 30,783 in
 all. Three-letter strings are the shortest that can contain initial, medial,
@@ -161,13 +162,11 @@ surahs Al-Fatiha and Al-Ikhlas, and the word نستعليق.
 Exhaustive coverage stops at three letters for now. Four-letter strings alone
 would add 31⁴ = 923,521 inputs, about 30 times the complete one-to-three-letter
 set. Five-letter strings would add another 28.6 million and still miss
-longer-range effects. An OpenType shaper applies its rules to any input. A
-neural font must generalize beyond its training examples.
-
-A production model should instead train on representative text and add cases
-where its output differs from the teacher. A variable-length model could use a
-whole word or line as context. Basic joining and mark-attachment rules, plus
-simpler fallback forms, could handle invalid output.
+longer-range effects. A production model must instead generalize beyond its
+training examples. It should train on representative text and add cases where
+its output differs from the teacher. A variable-length model could use a whole
+word or line as context. Basic joining and mark-attachment rules, plus simpler
+fallback forms, could handle invalid output.
 
 For each string, HarfRust uses its Arabic shaping logic and Gulzar’s OpenType
 Layout tables to select and position glyphs. It returns glyph IDs, horizontal
@@ -177,12 +176,11 @@ records these values and reads the matching outlines from Gulzar. With the font
 and shaping options fixed, each input has one fixed output for the model to
 learn. That determinism belongs to this teacher, not to neural fonts in general.
 
-The tool groups the glyphs into HarfBuzz clusters. Each cluster links one or
-more input characters to the glyphs that represent them. One record per cluster
-stores its text context, composed shape, and position. The first position is
-measured from the word origin. Each later position is an offset from the
-previous cluster. These offsets place the predicted shapes along Gulzar’s
-cascade.
+The tool groups the result into HarfBuzz clusters, each linking one or more
+input characters to their glyphs. It writes one record per cluster with its
+text context, composed shape, and position. The first position is relative to
+the word origin; later positions are offsets from the previous cluster. These
+offsets place the predicted shapes along Gulzar’s cascade.
 
 The corpus contains 91,390 cluster records and **1,150 distinct composed
 shapes**. The letter خ uses 108 of them, shown below.
@@ -195,13 +193,6 @@ the examples below, it breaks shapes and placement. Gulzar is gray; the model is
 green.
 
 ![Three unseen words rendered with Gulzar in gray above and by the model in green below. The model separates forms and misplaces letters and marks.](./unseen-words.png)
-
-More training text would barely change the font’s file size because the .ntf
-stores weights, not training examples. New words made from the current letters
-and ligatures add no parameters. A new ligature or cluster token adds 24 8-bit
-weights and a short name, about 30 bytes. One hundred new tokens would add about
-3 KB. The file grows substantially only if the network needs more capacity:
-each additional million 8-bit parameters adds about 1 MB.
 
 ### Signed-Distance Fields
 
@@ -362,6 +353,13 @@ measures font data, not the complete software stack.
 
 The 8-bit output is close to the original. Some strokes and letter positions
 shift. Fine-tuning while simulating 8-bit weights may reduce these differences.
+
+More training text would barely change the font’s file size because the .ntf
+stores weights, not training examples. New words made from the current letters
+and ligatures add no parameters. A new ligature or cluster token adds 24 8-bit
+weights and a short name, about 30 bytes. One hundred new tokens would add about
+3 KB. The file grows substantially only if the network needs more capacity:
+each additional million 8-bit parameters adds about 1 MB.
 
 Further file-size reductions are possible. We have not spent much time on
 optimization yet. One part of the model contains 84 percent of its weights. We
