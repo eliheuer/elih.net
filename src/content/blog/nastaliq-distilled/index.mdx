@@ -147,11 +147,9 @@ which span 0.95 em vertically.
 
 ### Building the Dataset
 
-The measurements above show what the training data needs to capture: how Gulzar
-changes each letter’s shape and position in context. I then built the dataset by
-shaping many input strings with Gulzar and HarfRust and saving each result as a
-training target. In machine learning, the system that produces these targets is
-called the teacher. Here, Gulzar and HarfRust form the teacher.
+The measurements above show what the dataset must record: how Gulzar changes
+shapes and positions in different contexts. I started building the dataset by shaping many strings with Gulzar and HarfRust and recording the results. Together, Gulzar and
+HarfRust serve as the teacher: the existing system the model learns to imitate.
 
 For each input string, HarfRust uses its Arabic shaping logic to apply Gulzar’s
 OpenType Layout tables. It returns glyph IDs with advances and offsets. The
