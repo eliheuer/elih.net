@@ -2,7 +2,7 @@
 title: 'Nasta’liq Distilled: Post-OpenType Neural Network Fonts'
 description: 'Converting Gulzar, an OpenType Nasta’liq font, into a neural font. A build log.'
 date: 2026-07-30
-dateNote: 'Updated August 12'
+dateNote: 'Updated August 17'
 tags: ['fonts', 'rust', 'ai', 'machine-learning', 'arabic']
 image: './share-card.png'
 authors: ['elih']
@@ -151,12 +151,14 @@ The measurements above show what the dataset must record: how Gulzar changes
 shapes and positions in different contexts. I started building the dataset by shaping many strings with Gulzar and HarfRust and recording the results. Together, Gulzar and
 HarfRust serve as the teacher: the existing system the model learns to imitate.
 
-For each input string, HarfRust uses its Arabic shaping logic to apply Gulzar’s
-OpenType Layout tables. It returns glyph IDs with advances and offsets. The
+For each input string, HarfRust uses its Arabic shaping logic and Gulzar’s
+OpenType Layout tables to select and position glyphs. It returns glyph IDs,
+horizontal advances, and horizontal and vertical offsets. The
 [extraction code](https://github.com/eliheuer/post-opentype/blob/main/crates/neuraltype-distill/src/main.rs#L306-L437)
-uses these values to place the glyph outlines. Because the shaping settings do
-not change, the same input string always produces the same result. This is a
-property of the teacher, not a limit of neural fonts.
+records those positions and reads the corresponding outlines from Gulzar. With
+the font and shaping options fixed, this pipeline is deterministic: the same
+input string produces the same shaped output. That reflects the teacher used
+for this experiment, not a requirement of neural fonts.
 
 The
 [`crates/neuraltype-distill`](https://github.com/eliheuer/post-opentype/tree/main/crates/neuraltype-distill)
