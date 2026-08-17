@@ -147,32 +147,32 @@ which span 0.95 em vertically.
 
 ### Building the Dataset
 
-The measurements above show what the dataset must record: how Gulzar changes
-shapes and positions in different contexts. I started building the dataset by shaping many strings with Gulzar and HarfRust and recording the results. Together, Gulzar and
-HarfRust serve as the teacher: the existing system the model learns to imitate.
+The measurements above show what the dataset must capture: how Gulzar changes
+shapes and positions with context. I started building it with
+[`crates/neuraltype-distill`](https://github.com/eliheuer/post-opentype/tree/main/crates/neuraltype-distill).
+In model distillation, the existing system a new model learns to imitate is
+called the teacher. Here, Gulzar and HarfRust together serve as the teacher.
 
-For each input string, HarfRust uses its Arabic shaping logic and Gulzar’s
-OpenType Layout tables to select and position glyphs. It returns glyph IDs,
-horizontal advances, and horizontal and vertical offsets. The
+The tool shapes every possible one-, two-, and three-letter string, 30,783 in
+all. Three-letter strings include cases where the middle letter joins on both
+sides. It also shapes 24 real words from the bismillah, the surahs Al-Fatiha and
+Al-Ikhlas, and the word نستعليق.
+
+For each string, HarfRust uses its Arabic shaping logic and Gulzar’s OpenType
+Layout tables to select and position glyphs. It returns glyph IDs, horizontal
+advances, and horizontal and vertical offsets. The
 [extraction code](https://github.com/eliheuer/post-opentype/blob/main/crates/neuraltype-distill/src/main.rs#L306-L437)
-records those positions and reads the corresponding outlines from Gulzar. With
-the font and shaping options fixed, this pipeline is deterministic: the same
-input string produces the same shaped output. That reflects the teacher used
-for this experiment, not a requirement of neural fonts.
+records these values and reads the matching outlines from Gulzar. With the font
+and shaping options fixed, the same input always produces the same shaped
+output. That determinism belongs to the teacher used here, not to neural fonts
+in general.
 
-The
-[`crates/neuraltype-distill`](https://github.com/eliheuer/post-opentype/tree/main/crates/neuraltype-distill)
-tool shapes every possible string of one, two, or three letters, for a total of
-30,783 strings. Three-letter strings include cases where the middle letter
-joins on both sides. The corpus also includes 24 real words from the bismillah,
-the surahs Al-Fatiha and Al-Ikhlas, and the word نستعليق.
-
-The tool groups the output by HarfBuzz cluster. A cluster links one or more
-input characters to the glyphs that represent them. The tool writes one record
-for each cluster. A record contains the cluster’s text context, composed shape,
-and position. The first cluster keeps its position relative to the word origin.
-Each later cluster keeps its offset from the previous cluster. These offsets
-place the predicted shapes along Gulzar’s cascade.
+The tool groups the output into HarfBuzz clusters. Each cluster links one or
+more input characters to the glyphs that represent them. The tool writes one
+record for each cluster, storing its text context, composed shape, and position.
+The first position is relative to the word origin. Each later position is an
+offset from the previous cluster. These offsets place the predicted shapes
+along Gulzar’s cascade.
 
 The corpus contains 91,390 cluster records and **1,150 distinct composed
 shapes**. The letter خ uses 108 of them.

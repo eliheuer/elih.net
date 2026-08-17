@@ -152,11 +152,9 @@ pixel-perfect in Masonry's headless test harness: every custom
 widget, the full grid tab, the full editor tab, and the whole app
 root render correctly to PNG through `masonry_testing`. The same
 build misrenders in a real window: toolbars, panels, and grid
-cells missing. The fault is somewhere in the live
-masonry_winit/wgpu compositing path at the pinned rev; upstream is
-refactoring masonry_winit right now. Next step is to run xilem's
-own examples live at the same rev to decide whether to file an
-upstream issue or pin an older rev.
+cells missing. The initial suspicion was the live
+masonry_winit/wgpu compositing path at the pinned rev. That
+suspicion was wrong; see the next entry.
 
 The headless harness itself is worth noting as a framework
 difference: Masonry ships `masonry_testing` with a `TestHarness`
@@ -164,6 +162,40 @@ that renders any view to an image without a window. That made it
 possible to verify the whole port pixel by pixel before touching
 the live pipeline. I have not found an equivalent in the gpui
 crate.
+
+### 2026-08-17: screenshots find two bugs in one evening
+
+I granted the agent Screen Recording permission, so it can now
+run either editor and read a screenshot of the live window. The
+first screenshot of the GPUI grid found a bug within minutes: the
+window chrome, cell borders, and labels rendered, but every cell
+was empty. GPUI's `canvas()` element has no intrinsic size.
+Without an explicit `.size_full()` it lays out at zero by zero
+and paints nothing, silently. One line fixed it, and the next
+screenshots showed the full Virtua Grotesk grid and the editor
+view rendering correctly.
+
+The same loop then dismantled the Xilem blocker hypothesis.
+Masonry's own `gallery` example renders perfectly live at the
+pinned rev, so the compositing path is fine. Runebender-xilem's
+grid tab mostly renders live too; its right-side panels overflow
+off the window edge. The editor tab is the broken one: file tile
+and canvas background grid only. A one-line paint probe printed
+the editor canvas layout size in the live window: 10000 by 8784
+logical pixels. The 10000 comes from the app itself. The preview
+panel declares a `multi_glyph_view` at 10000 by 10000 and relies
+on a fit-to-bounds transform. The headless harness always passes
+bounded constraints, so it clamps and renders correctly. The
+live measure path asks widgets for min and max content sizes,
+takes the declared 10000 at face value, and the flex layout
+hands out absurd lengths, pushing siblings offscreen. The fix is
+an audit of the custom widgets' `measure` responses.
+
+Two lessons for the comparison table. A headless render harness
+that passes only bounded constraints can hide a whole class of
+layout bugs while proving paint correctness. And screenshot
+access for the agent converts "renders wrong, cannot iterate"
+into a normal debugging loop in both frameworks.
 
 ## Running comparison
 
