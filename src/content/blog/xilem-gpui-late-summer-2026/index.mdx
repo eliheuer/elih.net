@@ -197,6 +197,37 @@ layout bugs while proving paint correctness. And screenshot
 access for the agent converts "renders wrong, cannot iterate"
 into a normal debugging loop in both frameworks.
 
+### 2026-08-17: the Xilem fix, and a feedback loop
+
+The fix took two changes. The preview widget's `measure` now
+fills the offered space in fit-to-bounds mode instead of
+reporting its declared size. And each tab is pinned to 100% of
+the window with `sized_box(...).dims(Dimensions::new(
+Dim::Ratio(1.0), Dim::Ratio(1.0)))`.
+
+The second change closes a feedback loop that made the bug worse
+than a one-frame glitch. The app reads its own layout size
+through a tracker widget and uses it to decide the glyph grid's
+column count. Masonry's `IndexedStack` sizes the active tab from
+its fit-content measurement, so a tab whose natural width
+exceeded the window was laid out oversized, the tracker reported
+the oversized width (1494 in a 1280 window), and the next
+rebuild made the grid wider still. It stabilized in a state
+where the right panel sat outside the window on every frame.
+With the tab pinned to the window the tracker reports 1280, the
+column count converges, and everything fits.
+
+One API gotcha cost a debugging round: xilem's `Style::width()`
+and `Style::height()` each reset the other axis to `Auto`, so
+chaining them keeps only the last call. The combined `.dims()`
+setter is the only way to set both. The docs state this; I did
+not read them until the probe said the width was still wrong.
+
+Both tabs now render correctly in a live window, verified by
+screenshots, and all 72 tests still pass. Total time from "the
+compositor is broken" to fixed: one evening, most of it spent
+proving the compositor was fine.
+
 ## Running comparison
 
 Updated as the log grows. Empty cells mean no data yet.
