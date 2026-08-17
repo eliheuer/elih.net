@@ -96,32 +96,32 @@ does not do this.
 ### Other Approaches
 
 I used [Gulzar](https://gulzarfont.org/) because it is the best current
-OFL licensed Nasta’liq font I found whose shaping is implemented with OpenType
-Layout tables. [Noto Nastaliq
-Urdu](https://notofonts.github.io/noto-docs/specimen/NotoNastaliqUrdu/) is the
-only comparable option I could verify and, in my view, is slightly worse.
-[Awami Nastaliq](https://software.sil.org/awami/resources/) uses
-[Graphite](https://graphite.sil.org/), while SIL’s older [Nastaliq
+OFL-licensed Nasta’liq font I found whose shaping is implemented with OpenType
+Layout tables. The only comparable OpenType option I could verify is [Noto
+Nastaliq Urdu](https://notofonts.github.io/noto-docs/specimen/NotoNastaliqUrdu/),
+which is slightly worse in my view. Building a good Nasta’liq font with OpenType
+is expensive and time-consuming. The shortage of good OpenType Nasta’liq fonts,
+relative to the style’s cultural importance, suggests that this work is often
+uneconomical and out of reach for hobbyists.
+
+Several systems handle Nasta’liq outside OpenType Layout. [Awami
+Nastaliq](https://software.sil.org/awami/resources/) uses
+[Graphite](https://graphite.sil.org/), which supports more complex shaping
+rules. SIL’s older [Nastaliq
 Navees](https://scripts.sil.org/cms/scripts/page.php?id=nastaliq_download&site_id=nrsi)
-relies on the obsolete QuickDraw GX system.
+relies on the obsolete QuickDraw GX system. [DecoType’s](https://decotype.com/)
+Advanced Composition Engine powered
+[Tasmeem](https://decotype.com/pdfs/Tasmeem_Manual.pdf), a proprietary InDesign
+extension for advanced Arabic composition. These systems define behavior
+through rules and require specialized software, which limits where they can be
+used.
 
-Graphite and [DecoType’s](https://decotype.com/) Advanced Composition Engine go
-beyond OpenType Layout. Graphite supports more complex shaping rules. DecoType’s
-engine powered [Tasmeem](https://decotype.com/pdfs/Tasmeem_Manual.pdf), a
-proprietary InDesign extension for advanced Arabic composition. Both define
-behavior through rules and require specialized software, which limits where
-they can be used.
-
-Neural fonts also need engine support for now. The long-term goal is not another
-specialist extension, but a format that could replace OpenType or at least gain
-broad support on the web and in graphics software. Beyond Nasta’liq, it could
-support new kinds of typography for branding, advertising, and cultural
-production. These uses could provide stronger economic incentives for adoption.
-
-OpenType can do a lot, but building a good Nasta’liq font with it is expensive
-and time-consuming. The shortage of good OpenType Nasta’liq fonts, relative to
-the style’s cultural importance, suggests that this work is often uneconomical
-and too difficult for hobbyists.
+Neural fonts take a different approach: they learn from examples. They also
+need engine support for now, but the long-term goal is not another specialist
+extension. It is a format that could replace OpenType, or at least gain broad
+support on the web and in graphics software. Beyond Nasta’liq, neural fonts
+could support new kinds of typography for branding, advertising, and cultural
+production, providing stronger economic incentives for adoption.
 
 ### Measuring Gulzar
 
