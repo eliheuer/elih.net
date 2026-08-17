@@ -1,0 +1,191 @@
+---
+title: 'Xilem and GPUI, Late Summer 2026'
+description: 'Porting the same font editor to two Rust UI frameworks and logging what each one makes easy and hard.'
+date: 2026-08-17
+tags: ['rust', 'tools', 'fonts']
+authors: ['elih']
+draft: true
+---
+
+I maintain a font editor called Runebender. The version I use for
+real work is [runebender-web](https://github.com/eliheuer/runebender-web),
+a Rust core compiled to WebAssembly with a Vue 3 shell. Two native
+ports exist:
+[runebender-xilem](https://github.com/eliheuer/runebender-xilem),
+built on [Xilem](https://xilem.dev/), and
+[runebender-gpui](https://github.com/eliheuer/runebender-gpui),
+built on [GPUI](https://gpui.rs/), the framework extracted from
+[Zed](https://zed.dev/).
+
+Both ports are behind runebender-web. The plan is to bring both up
+to feature parity with it and log what each framework makes easy
+and hard along the way. This post is that log. It will grow until
+the comparison feels done.
+
+The two frameworks take opposite positions on most design
+questions. Xilem is declarative and diff-based: the app rebuilds a
+view tree from single-owner state on every update, and the
+framework diffs it against a retained widget tree (Masonry).
+Callbacks get a direct `&mut` to app state. GPUI is closer to an
+immediate-mode layout DSL over retained entities: views are
+entities with interior state, layout is Tailwind-style method
+chains on `div()`, and state changes call `cx.notify()` to request
+a re-render. Xilem renders with Vello (GPU compute). GPUI renders
+with its own quad and path pipeline over Metal, with lyon for path
+tessellation.
+
+## Where each port stands, 2026-08-17
+
+runebender-xilem has most of the editor: three path types
+(cubic, quadratic, hyperbezier), the full tool set, designspace
+support, Arabic shaping, a multi-glyph text buffer, kerning, and
+undo. It was dormant from spring until August while runebender-web
+moved ahead. The Masonry upgrade (to the kurbo 0.13 stack) landed
+this month, and two phases of a six-phase UI parity plan are done.
+It lacks anchors, components UI, layers, feature-file shaping,
+Glyphs import, and the panels that runebender-web grew this year.
+
+runebender-gpui was created today. It opens a window, loads a UFO
+with [norad](https://crates.io/crates/norad), and renders a glyph
+grid with click selection and a status bar. Nothing else.
+
+That asymmetry is the point of the log format. The Xilem entries
+will mostly be about upgrading and porting into a mature codebase.
+The GPUI entries will mostly be about building from zero. By the
+end both should be at parity with runebender-web, and the notes
+will show what each path cost.
+
+## Log
+
+### 2026-08-17: GPUI from zero to a glyph grid
+
+GPUI publishes to crates.io as `gpui`. `cargo add gpui` works.
+This is recent: for years the only way to use GPUI was a git
+dependency on the Zed monorepo. The crate is at 0.2.2.
+
+First friction: the build failed on my machine with six errors in
+`pathfinder_simd`, a transitive dependency. My default toolchain
+is nightly, and `pathfinder_simd` detects nightly and turns on
+unstable SIMD intrinsics that current nightlies renamed. On stable
+it uses a portable path and builds fine. One `rust-toolchain.toml`
+pinning stable fixed it. Xilem has no equivalent problem; it
+builds on stable with no toolchain opinions.
+
+Build times, measured today on my MacBook, debug profile, no
+sccache. Cold (`cargo clean` first): runebender-gpui 31 seconds,
+run twice with the same result; runebender-xilem, a much larger
+application, also 31 seconds. Incremental after touching
+`main.rs`: about 1 second for the gpui app, 4 seconds for the
+xilem app. The lockfiles are the same order of size: 718 crates
+for the gpui app, 612 for the xilem app. The frameworks cost
+about the same to build; the difference in the incremental
+numbers is the application on top (the gpui app is 500 lines
+right now).
+
+The hello-world to glyph-grid distance was short. The layout DSL
+is Tailwind vocabulary as method chains:
+
+```rust
+div()
+    .flex()
+    .flex_col()
+    .size_full()
+    .bg(theme::window_bg())
+    .child(self.header())
+    .child(grid)
+```
+
+If you have written Tailwind, you already know this API. `.p_4()`,
+`.gap_2()`, `.flex_wrap()`, `.overflow_y_scroll()` all mean what
+you expect. For a font editor the interesting part is custom
+painting, and GPUI's escape hatch is the `canvas()` element: two
+closures, prepaint and paint, with direct access to the window's
+paint API. Glyph outlines go through `PathBuilder` (lyon
+underneath): `move_to`, `line_to`, `curve_to`, `cubic_bezier_to`,
+then `window.paint_path(path, color)`. Mapping kurbo `PathEl`s to
+those five calls is mechanical.
+
+Small annoyances so far: gpui's `rgb()` is not `const`, so a theme
+module is functions instead of constants. `curve_to` takes the end
+point before the control point, the reverse of kurbo's argument
+order, which is easy to get wrong silently. And a `canvas` closure
+captures everything by move, so per-cell paint data (outline,
+advance, metrics) gets cloned into an `Arc` per cell.
+
+State handling: a view is a struct owning its state, render
+borrows it mutably, and event handlers go through
+`cx.listener(|this, event, window, cx| ...)` which hands back
+`&mut Self`. Mutation plus `cx.notify()` triggers re-render. It is
+closer to classic object-oriented UI than Xilem's rebuild-the-tree
+model, and for this first milestone it was frictionless, but the
+grid is one entity. The comparison gets interesting when the
+editor canvas, panels, and tools need to share font state.
+
+Performance note to verify properly later: the grid paints all
+799 glyph cells with no virtualization and scrolling feels smooth
+in a debug build. GPUI has `uniform_list` for virtualized rows if
+this stops holding.
+
+Second milestone, same day: a view-only editor. Double-click a
+cell to open the glyph with metrics lines, a stroked outline over
+a dim fill, and control points; Esc returns to the grid. Two
+framework notes from it. Keyboard input requires a `FocusHandle`:
+an element only receives key events if it tracks a focused
+handle, so shortcuts mean managing focus explicitly from the
+start. And view switching is just an enum match inside `render`,
+the same shape as Xilem's, since both frameworks rebuild the
+element tree from state on every update. The difference is what
+the tree is diffed against: Masonry's retained widgets in Xilem,
+GPUI's own layout tree in GPUI.
+
+### 2026-08-17: Xilem status, and a compositing blocker
+
+The Masonry upgrade in runebender-xilem is done: the repo now
+builds against xilem git main (kurbo 0.13, parley 0.8, peniko
+0.6), which unblocks sharing code with runebender-web's core. The
+port surfaced roughly 300 errors in four buckets (import reorg,
+the new `Length` unit type, context and view renames, and a new
+`measure` requirement on 17 custom widgets).
+
+The current blocker is a live-rendering fault. The app renders
+pixel-perfect in Masonry's headless test harness: every custom
+widget, the full grid tab, the full editor tab, and the whole app
+root render correctly to PNG through `masonry_testing`. The same
+build misrenders in a real window: toolbars, panels, and grid
+cells missing. The fault is somewhere in the live
+masonry_winit/wgpu compositing path at the pinned rev; upstream is
+refactoring masonry_winit right now. Next step is to run xilem's
+own examples live at the same rev to decide whether to file an
+upstream issue or pin an older rev.
+
+The headless harness itself is worth noting as a framework
+difference: Masonry ships `masonry_testing` with a `TestHarness`
+that renders any view to an image without a window. That made it
+possible to verify the whole port pixel by pixel before touching
+the live pipeline. I have not found an equivalent in the gpui
+crate.
+
+## Running comparison
+
+Updated as the log grows. Empty cells mean no data yet.
+
+| | Xilem | GPUI |
+| --- | --- | --- |
+| Install | crates.io, but the editor tracks git main | crates.io (`gpui 0.2.2`) |
+| Toolchain | stable | stable only; breaks on current nightly via `pathfinder_simd` |
+| Layout API | typed view combinators (`flex`, `sized_box`, `portal`) | Tailwind-style method chains on `div()` |
+| Custom painting | custom Masonry widget with Vello scene access | `canvas()` element + `PathBuilder` + `paint_path` |
+| State model | single-owner `AppState`, rebuild + diff | entities with interior state, `cx.notify()` |
+| Headless render testing | `masonry_testing::TestHarness`, pixel-perfect | none found yet |
+| Docs | rustdoc + examples | rustdoc + examples; most real-world reference is the Zed source |
+| Windowing | winit | its own platform layer |
+
+## What parity means
+
+The target is runebender-web's feature set: the seven editing
+tools plus the hyperbezier pen, anchors, components, layers,
+kerning, designspace interpolation with live axis sliders, Arabic
+shaping, feature-file support, Glyphs import, and the panel stack
+(select, curve, layers, anchors, transform). The xilem repo has a
+six-phase checklist for this. The gpui repo will follow the same
+order once it has an editor canvas at all.
