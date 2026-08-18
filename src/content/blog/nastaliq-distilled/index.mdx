@@ -148,25 +148,16 @@ which span 0.95 em vertically.
 ### Building the Dataset
 
 The measurements above show what the dataset must capture: how Gulzar changes
-shapes and positions with context. To build that dataset, I wrote
-[`crates/neuraltype-distill`](https://github.com/eliheuer/post-opentype/tree/main/crates/neuraltype-distill),
-which extracts those shapes and positions from Gulzar. In model distillation,
-the existing system that a new model learns to imitate is called the teacher.
-Here, Gulzar and HarfRust together serve as the teacher.
+shapes and positions with context. I wrote the
+[`crates/neuraltype-distill`](https://github.com/eliheuer/post-opentype/tree/main/crates/neuraltype-distill)
+extraction tool to record this information. In model distillation, the existing
+system that a new model learns to imitate is called the teacher. Here, Gulzar
+and HarfRust together serve as the teacher.
 
-The tool shapes every possible one, two, and three-letter string, 30,783 in
-all because three-letter strings are the shortest that can contain initial, medial,
-and final forms. The tool also shapes 24 longer words from the bismillah, the
-surahs Al-Fatiha and Al-Ikhlas, and the word نستعليق.
-
-Exhaustive coverage stops at three letters for now. Four-letter strings alone
-would add 31⁴ = 923,521 inputs, about 30 times the complete one-to-three-letter
-set. Five-letter strings would add another 28.6 million and still miss
-longer-range effects. Instead, a production model should train on representative
-text and add cases where its output differs from the teacher. Basic joining and
-mark-attachment rules, plus simpler fallback forms, could handle invalid output.
-Producing valid output for text the model has not seen is probably the hardest
-technical problem facing neural fonts.
+The dataset includes every possible one, two, and three-letter string, 30,783
+in all. Three letters are enough to capture initial, medial, and final forms. It
+also includes 24 longer words from the bismillah, the surahs Al-Fatiha and
+Al-Ikhlas, and the word نستعليق.
 
 For each string, HarfRust uses its Arabic shaping logic and Gulzar’s OpenType
 Layout tables to select and position glyphs. It returns glyph IDs, horizontal
@@ -174,25 +165,30 @@ advances, and x and y offsets. The
 [extraction code](https://github.com/eliheuer/post-opentype/blob/main/crates/neuraltype-distill/src/main.rs#L306-L437)
 records these values and reads the matching outlines from Gulzar. With the font
 and shaping options fixed, each input has one fixed output for the model to
-learn. That determinism belongs to this teacher, not to neural fonts in general.
+learn. This is a property of the teacher used here, not of neural fonts in
+general.
 
-The tool groups the result into HarfBuzz clusters, each linking one or more
-input characters to their glyphs. It writes one record per cluster with its
-text context, composed shape, and position. The first position is relative to
-the word origin; later positions are offsets from the previous cluster. These
-offsets place the predicted shapes along Gulzar’s cascade.
+The dataset contains 91,390 training records. After the glyphs in each record
+are assembled, there are **1,150 distinct shapes**. The figure below shows the
+108 shapes associated with خ.
 
-The corpus contains 91,390 cluster records and **1,150 distinct composed
-shapes**. The letter خ uses 108 of them, shown below.
+![The 108 shapes associated with خ, arranged in a grid.](./kha-shapes.png)
 
-![All 108 shapes of خ in the dataset, in a grid.](./kha-shapes.png)
-
-The corpus covers every short string but only 24 longer words. The model
+The dataset covers every short string but only 24 longer words. The model
 therefore fails on some unseen words even when every letter is supported. In
 the examples below, it breaks shapes and placement. Gulzar is gray; the model is
 green.
 
 ![Three unseen words rendered with Gulzar in gray above and by the model in green below. The model separates forms and misplaces letters and marks.](./unseen-words.png)
+
+Exhaustive coverage stops at three letters for now. Four-letter strings alone
+would add 923,521 inputs, about 30 times the complete one-to-three-letter set.
+Five-letter strings would add another 28.6 million and still miss longer-range
+effects. A production model should instead train on representative text and add
+examples where its output differs from the teacher. Basic joining and
+mark-attachment rules, plus simpler fallback forms, could prevent invalid
+output. Producing valid output for unseen text is probably the hardest technical
+problem facing neural fonts.
 
 ### Signed-Distance Fields
 
