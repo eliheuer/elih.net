@@ -459,6 +459,43 @@ one: web and Xilem each still carry their own editable path model
 and edit session. Unifying those is the long project that would
 make the shells truly thin.
 
+### 2026-08-18, late: the GPUI editor runs in a browser
+
+The question was whether runebender-gpui could ever replace
+runebender-web on runebender.org. The answer stopped being
+speculative in one evening.
+
+`cargo check --target wasm32-unknown-unknown` passed on a recent
+nightly with zero dependency changes — gpui, gpui-component,
+norad, linesweeper, glyphslib, and runebender-core all compile
+for wasm, because Zed's `gpui_web` backend (WebGPU rendering,
+embedded fonts, a real text system) ships in the same tree. Four
+web-specific fixes later the editor was rendering in headless
+Chrome: `std::time::Instant` doesn't exist on wasm (`web-time`
+does), the file watcher is native-only, gpui-component's
+`SliderState` needed its builder-order workaround, and on the web
+the browser owns the event loop, so `run_embedded` returns a
+handle that must be kept alive in a thread-local — dropping it
+tears the app down, which reads as a mysteriously blank canvas.
+
+Feeding it a font took one new core module: `font_memory`
+assembles a norad `Font` from (path, bytes) pairs — no
+filesystem — and `Project::from_designspace` now takes a
+master-loader closure, so the filesystem host and the embedded
+host share every line of project assembly. The demo designspace
+compiles into the wasm via `include_dir`, and the browser shows
+the real thing: 799 glyphs of Virtua Grotesk in the grid, both
+masters in the switcher, the axis slider, the kerned preview
+strip. Same codebase as the native app, boot path excepted.
+
+What still separates this from replacing runebender-web in
+production: a host data layer (fetch fonts from the workspace
+server and save over HTTP — the serve protocol already exists on
+the web side), bundle size (the debug wasm is 184MB against
+web's 6.4MB; release measurement pending), COOP/COEP headers on
+GitHub Pages (solvable with the service-worker shim), and input
+polish. Real work, but a list — not a research question.
+
 ## Running comparison
 
 Updated as the log grows. Empty cells mean no data yet.
