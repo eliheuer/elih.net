@@ -589,6 +589,31 @@ buttons in the GPUI editor. Xilem already had its transform
 panel, so both editors now cover it. Each button was verified
 with dispatched clicks against the browser build before commit.
 
+### 2026-08-18: the menu bar, where native should act native
+
+Running the GPUI build on macOS gave an empty menu bar. This is
+not a bug: GPUI does not populate the menu bar at all unless the
+app declares menus with `cx.set_menus`, and Zed itself declares
+its own. The web editor obviously has no native menus, and their
+absence is one of the things I dislike about it, so this is a
+place where the native ports should diverge from the web version
+rather than copy it.
+
+The fix was also the idiomatic-GPUI port of the app's commands.
+Save, open, undo, redo, copy, paste, remove overlap, and
+decompose moved out of a hand-rolled key handler into GPUI
+actions with a keymap. The menus dispatch the same actions, so
+menu items show their key equivalents for free, and a real bug
+died in the move: with the old handler, Cmd+V while typing in
+the search box also pasted contours into the selected glyph.
+Actions dispatch along the focus path, so a focused text input
+now wins.
+
+Xilem has no path to this today: it runs on winit, winit has no
+menu API, and Masonry does not fill the gap. The Xilem editor's
+"system menu" is drawn inside the window. That is now a row in
+the comparison table.
+
 ## Running comparison
 
 Updated as the log grows.
@@ -603,6 +628,7 @@ Updated as the log grows.
 | Component library | none yet | gpui-component (60+ widgets, Apache-2.0) |
 | Headless render testing | `masonry_testing::TestHarness`, pixel-perfect | none found; we drive the wasm build in headless Chrome over CDP instead |
 | Browser target | not yet (Vello and winit support wasm; Masonry's winit shell has no web platform today) | runs today via `gpui_web` over WebGPU |
+| Native macOS menu bar | no (winit has no menu API); in-window menu instead | yes, declared via `cx.set_menus` + actions |
 | Docs | rustdoc + examples | rustdoc + examples; most real-world reference is the Zed source |
 | Windowing | winit | its own platform layer |
 
