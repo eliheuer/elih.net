@@ -168,24 +168,24 @@ and shaping options fixed, each input has one fixed output for the model to
 learn. This is a property of the teacher used here, not of neural fonts in
 general.
 
-The dataset contains 91,390 training records. After the glyphs in each record
-are assembled, there are **1,150 distinct shapes**. The figure below shows the
-108 shapes associated with خ.
+The dataset contains 91,390 examples. Each records a text context, shape, and
+position. Across the dataset there are **1,150 distinct shapes**. The 108 shapes
+associated with خ are shown below.
 
 ![The 108 shapes associated with خ, arranged in a grid.](./kha-shapes.png)
 
 The dataset covers every short string but only 24 longer words. The model
-therefore fails on some unseen words even when every letter is supported. In
-the examples below, it breaks shapes and placement. Gulzar is gray; the model is
-green.
+therefore fails on some unseen words. In the examples below, it breaks shapes
+and placement. Gulzar is gray; the model is green.
 
 ![Three unseen words rendered with Gulzar in gray above and by the model in green below. The model separates forms and misplaces letters and marks.](./unseen-words.png)
 
 Exhaustive coverage stops at three letters for now. Four-letter strings alone
 would add 923,521 inputs, about 30 times the complete one-to-three-letter set.
-Five-letter strings would add another 28.6 million and still miss longer-range
-effects. A production model should instead train on representative text and add
-examples where its output differs from the teacher. Basic joining and
+Five-letter strings would add another 28.6 million. Exhaustively listing longer
+strings quickly becomes impractical. A production model should instead train
+on representative text and add examples where its output differs from the
+teacher. Basic joining and
 mark-attachment rules, plus simpler fallback forms, could prevent invalid
 output. Producing valid output for unseen text is probably the hardest technical
 problem facing neural fonts.
