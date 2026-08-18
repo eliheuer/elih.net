@@ -614,6 +614,25 @@ menu API, and Masonry does not fill the gap. The Xilem editor's
 "system menu" is drawn inside the window. That is now a row in
 the comparison table.
 
+### 2026-08-18: docked panels, and a focus change
+
+Two decisions. First, the log narrows: Xilem work pauses so the
+GPUI editor can reach daily-usable faster. The Xilem entries
+resume when it does. Second, another deliberate divergence from
+the web version: the floating panes are gone. The new layout is
+the Glyphs 4 shape, three docked panes with draggable dividers,
+sidebars made of flat sections separated by hairline rules, no
+floating containers.
+
+gpui-component earns its adoption again here: `h_resizable` with
+`resizable_panel` gave the divider dragging for free, including
+per-panel min and max widths and state that persists across
+re-renders. Tools moved from a floating overlay into the header
+bar; transformations, layers (which switch masters), and mark
+colors became right-sidebar sections. The dispatched-input test
+dragged a divider eighty pixels left and the grid reflowed with
+an extra column.
+
 ## Running comparison
 
 Updated as the log grows.
