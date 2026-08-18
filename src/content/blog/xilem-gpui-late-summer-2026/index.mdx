@@ -294,6 +294,40 @@ shell on the GPUI side. It requires GPUI from Zed's git rather
 than crates.io, so adopting it is a dependency-base switch; that
 gets a dedicated spike.
 
+### 2026-08-18: GPUI adopts gpui-component; editing grows up
+
+The gpui-component spike took under an hour and ended in adoption.
+Switching from crates.io GPUI to the Zed git repo cost exactly two
+API changes (`window.focus` gained a context argument;
+`Application::new` became `gpui_platform::application()`) plus the
+library's `Root`/`init`/theme bootstrap. The first component in
+use is a themed search input above the glyph grid, wired through
+the library's entity-and-subscription pattern. Numbers for the
+table: cold build went from 31 to 40 seconds, the debug binary
+from 29MB to 82MB. For a maintained 60-component shell that
+seems a fair trade.
+
+Two Zed-side discoveries from reading the new dependency tree.
+`gpui_platform` exists because the platform layer was split out of
+GPUI, and it exposes `application_with_web_backend(...)`: the
+experimental wasm backend is a selectable option, not a fork. The
+browser story for GPUI is closer than its reputation says.
+
+On top of the new base, the editor gained its editing
+infrastructure: selection is a set (click, shift-click toggle,
+marquee over empty space), dragging any selected point moves the
+whole selection with positions computed from gesture-start
+originals so rounding never drifts, arrows nudge by 1 or 10, and
+per-glyph undo/redo works as contour snapshots pushed at gesture
+start. The snapshot model is crude next to runebender-web's
+grouped undo, but it is correct, and it took twenty lines.
+
+An accidental usability test: the QA launch stole focus while I
+was doing real font work in the web editor, and my in-flight drag
+landed in the new window, marquee-selecting 45 points. The
+feature worked. The agent now checks system idle time before
+opening windows.
+
 ## Running comparison
 
 Updated as the log grows. Empty cells mean no data yet.
