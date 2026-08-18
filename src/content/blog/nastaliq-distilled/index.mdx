@@ -248,26 +248,20 @@ description of the required shape. A decoder, the part of the network that
 turns this description into an image, expands it through [five
 layers](https://github.com/eliheuer/post-opentype/blob/main/crates/neuraltype-train/src/main.rs#L177-L216)
 to produce the signed-distance field. A second output predicts the shape’s x
-and y position. The renderer traces the field into a Bézier outline.
+and y offset. The renderer uses that offset to position the shape and traces
+the field into a Bézier outline.
 
 The same decoder produces every shape. This allows it to reuse what it learns
 about strokes, curves, and dots that appear throughout Gulzar. The model can
 remain simple because it only has to reproduce one existing design. It does not
 need to understand the language or invent new forms.
 
-A future model could look at a whole word, line, or page instead of only nearby
-letters. It could also calculate the field only where the renderer needs it.
-That would allow more detail around thin strokes and sharp edges without making
-the whole grid larger.
-
 ### Training
 
-The model begins with random internal values, called weights. For each group of
-examples, it predicts a field and an origin displacement. We compare both
-predictions with the teacher targets and combine the differences into one error
-score. The training code changes the weights slightly to lower that score.
-Repeating this process teaches one set of weights to produce every field and
-displacement.
+Training starts with random weights. For each example, the training code
+compares the model’s prediction with the recorded target and adjusts the
+weights to reduce the difference. Repeating this across the dataset gradually
+improves both shape and placement.
 
 We use [Candle](https://github.com/huggingface/candle) to train the model because
 it provides tools in Rust and runs on CPU, Metal, or CUDA.
@@ -275,10 +269,12 @@ it provides tools in Rust and runs on CPU, Metal, or CUDA.
 AI training is often associated with corporate data centers. NeuralType models
 are much smaller and more specialized. I trained this model locally on a Linux
 PC with an NVIDIA RTX 2060 SUPER, an inexpensive consumer graphics card with 8
-GB of memory. One epoch takes about 100 seconds. Inference also runs locally,
+GB of memory. One epoch takes about 100 seconds. After training, the finished
+model can generate shapes and positions locally (a process called inference),
 including in the browser demo above. This puts neural font development within
-reach of independent type designers and small foundries. I expect local model
-training to become a common part of font development.
+reach of independent type designers and small foundries, with almost no
+compromises and full control over their data and workflows. I expect local
+model training to become a common part of font development.
 
 <Image
   src={TrainingImage}
@@ -298,10 +294,7 @@ by either shape. Identical shapes score 1.0. Shapes with no overlap score 0.
 The final model scored 0.945 on examples excluded from training. This score
 does not measure how the model handles new words: the held-out examples come
 from the same mostly short-string corpus as the training examples. It also
-measures shape only, not position. It does not reflect a known placement
-problem: when the same local context has different positions in different
-teacher examples, the current training step averages those positions. The
-result may match none of the examples.
+measures shape only, not position.
 
 ### Rendering the Output
 
@@ -348,8 +341,10 @@ model. The .ntf stores a learned approximation of the resulting shapes and
 positions, but it also requires the NeuralType engine. The comparison therefore
 measures font data, not the complete software stack.
 
-The 8-bit output is close to the original. Some strokes and letter positions
-shift. Fine-tuning while simulating 8-bit weights may reduce these differences.
+The 8-bit output is close to the original, but rounding the weights after
+training shifts some strokes and letter positions. Applying the same rounding
+during the last stages of training would allow the training process to
+compensate for these changes.
 
 More training text would barely change the font’s file size because the .ntf
 stores weights, not training examples. New words made from the current letters
@@ -377,8 +372,9 @@ The model card:
 
 ### Failed Scaling Attempts
 
-I tested three quick changes. These were exploratory runs, not controlled
-scaling tests, and I did not retune the training settings for each model.
+I tested three quick changes without adjusting the training settings for each
+model. The results show what happened in these runs, not what each approach
+could achieve with more work.
 Increasing the field resolution made the model larger but did not improve the
 letters. A wider network performed worse with the reused settings. Training a
 transformer to draw outlines directly produced fragments instead of complete
