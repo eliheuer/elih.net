@@ -328,6 +328,39 @@ landed in the new window, marquee-selecting 45 points. The
 feature worked. The agent now checks system idle time before
 opening windows.
 
+### 2026-08-18, continued: the GPUI grind
+
+One sitting, nine features, each committed with tests. The stated
+goal shifted from "compare the frameworks" to "make the GPUI
+editor usable for real work," so the day went to the daily-work
+list: designspace loading with a master switcher (open glyph
+follows by name across masters, Cmd+S saves every dirty master),
+a pen tool (click for lines, click-drag pulls symmetric handles,
+click the start point to close), point deletion with proper
+segment surgery, smooth/corner toggling, the smooth-point handle
+constraint (dragging one handle rotates its sibling around the
+shared point), a Width/LSB/RSB metrics bar, Cmd+O through GPUI's
+native path prompt, a text preview strip, anchors (drag, add,
+delete), and kerning: group-fallback lookup, applied in the
+preview, click a gap to select the pair, comma/period to adjust.
+
+Two observations that belong in the comparison. First, almost none
+of this was framework code. The day's work was font-domain logic
+on norad types plus thin event wiring; the framework surface it
+touched (mouse handlers, one more Input, paint calls) was learned
+on day one. That matches the Xilem experience and suggests the
+real cost in both frameworks is the first two days, not the next
+twenty features. Second, curve operations arrived nearly free:
+harmonize, balance, and optimize came from `runebender-core` and
+needed only a norad-side adapter, the third consumer of geometry
+written once.
+
+Undo went from per-glyph contour snapshots to full glyph
+snapshots (contours, anchors, advance) when metric and anchor
+edits joined. The snapshot model keeps absorbing new state kinds
+without new code, which is the argument for it over command-based
+undo at this stage.
+
 ## Running comparison
 
 Updated as the log grows. Empty cells mean no data yet.
