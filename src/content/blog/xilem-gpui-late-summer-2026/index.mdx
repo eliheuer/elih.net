@@ -531,6 +531,39 @@ now tested end to end: one engine, four hosts — native Xilem,
 native GPUI, Vue+wasm, and GPUI-in-browser — and the newest host
 edits real files on disk.
 
+### 2026-08-19, continued: one theme file, three editors
+
+The GPUI port looked nothing like runebender-web. Same data, same
+tools, different application. The fix was not a restyle in GPUI
+code. It was moving the design system into the engine.
+
+runebender-web generates its colors from one JSON file: hues and
+steps in OKLCH, resolved to sRGB at build time with Björn
+Ottosson's Oklab matrices and chroma-reducing gamut mapping. That
+file now lives in runebender-core, with the resolver ported to
+Rust. The port is pinned by tests against the web generator's
+output, byte for byte: `#0b0b0b` app surface, `#4fb772` accent,
+`#8a6fe1` off-curve points, thirteen values in all. A theme
+change edits one JSON file and every editor follows.
+
+With the tokens shared, the GPUI restyle was mechanical: stroked
+outlines instead of filled shapes in the editor, hollow points
+with colored rings (circles for smooth, squares for corners),
+handle lines, the bento panel layout, the yellow save status.
+Screenshots of the two apps now read as the same product.
+
+Mark colors came through the same door. A glyph's mark is stored
+twice in the UFO: `public.markColor` (the "r,g,b,a" string other
+editors read) and `com.runebender.markLabel` (the palette name it
+means). Core now owns both: resolving the palette from the theme
+file, reading label-first with hue-snapping for unlabelled colors
+from older palettes, and writing the two keys together. GPUI
+gained mark-colored grid cells and a Colors panel; Xilem dropped
+its private hardcoded palette (which wrote different rgba strings
+than the web — a real interop bug) for the shared one. The
+dispatched-input test: click a swatch in the browser build, the
+cell border turns red, the file is marked dirty.
+
 ## Running comparison
 
 Updated as the log grows. Empty cells mean no data yet.
