@@ -496,6 +496,41 @@ web's 6.4MB; release measurement pending), COOP/COEP headers on
 GitHub Pages (solvable with the service-worker shim), and input
 polish. Real work, but a list — not a research question.
 
+### 2026-08-19: from demo to editor, the honest version
+
+The first browser build deserved the criticism it got: it
+rendered, and I called that "running." Rendering is not a port.
+An editor that cannot open your fonts or save your work is a
+screenshot that compiles.
+
+Two things fixed the discipline problem. First, real input
+testing: a small Chrome DevTools Protocol driver now dispatches
+actual clicks, drags, and keystrokes at the web build and
+screenshots each step, which immediately found what static
+screenshots never could (double-click is timing-sensitive under
+dispatched events; the grid had no keyboard way to open a glyph —
+Xilem had Enter, GPUI didn't, it does now).
+
+Second, the host data layer, which is the actual port: the web
+build speaks the same workspace-server protocol as
+runebender-web. Open the page with `?server=http://…` and it
+fetches the whole workspace — designspace, every UFO file, each
+file's ETag — assembles the project through `font_memory`, and
+Cmd+S writes back exactly the modified glifs with `If-Match`
+guards. The round-trip test is the proof: dispatched input opened
+A, marquee-selected its points, nudged twice, saved — and the
+glif on disk changed by exactly two units, one file written,
+nothing else touched. Release bundle: 27MB wasm, 7.4MB gzipped,
+against web's 6.4MB core.
+
+Still missing before this could genuinely replace runebender-web:
+SSE live reload in the browser, conflict recovery UI on 409s,
+clipboard and shortcut polish, and the long feature tail the
+native grind is already walking. But the architecture claim is
+now tested end to end: one engine, four hosts — native Xilem,
+native GPUI, Vue+wasm, and GPUI-in-browser — and the newest host
+edits real files on disk.
+
 ## Running comparison
 
 Updated as the log grows. Empty cells mean no data yet.
