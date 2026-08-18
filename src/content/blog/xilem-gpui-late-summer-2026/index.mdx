@@ -421,6 +421,44 @@ editor at an interpolated location with metrics, axes, and kerned
 preview all rendering. Xilem finished the day with its system
 menu: New, Open, five recents, Save, Save As, Close.
 
+### 2026-08-18, night: the engine drops out of the shells
+
+The stated goal became explicit: the UIs should be swappable.
+That means `runebender-core` is the editor engine and the three
+frontends are adapters. One session moved most of the way there.
+
+Everything the GPUI editor's model layer did turned out to be
+UI-free, so it moved down wholesale: `glyph_ops` now holds point
+moves, deletion with segment surgery, the smooth-handle
+constraint, pen primitives, shape contours, recursive component
+resolution, remove overlap with the BezPath-to-UFO converter,
+metrics shifts, kerning with group fallback, undo snapshots, and
+compatibility signatures — all on plain norad types, unit-tested
+on synthetic glyphs. The GPUI app kept its exact public surface
+and all sixteen integration tests while shedding five hundred
+lines; every editing method is now a one-line delegation through
+a single `edit_glyph` helper.
+
+The viewport followed. Xilem and web carried the same
+design-to-screen transform (web's was a port of Xilem's); it now
+lives once in core, grew the fit and cursor-anchored-zoom helpers
+each editor had reimplemented, and all three consume it — GPUI
+replaced its private zoom/pan math, the other two re-export.
+
+Then the payoff move: web's `.glyphs` importer (Glyphs 3 →
+UFO + designspace, via glyphslib) moved into core, and both
+native editors gained "open a .glyphs file" the same hour — the
+converter writes the masters into a sibling directory and the
+project opens from there, end-to-end tested. Porting cost per
+editor: one function. That is what the shared-engine architecture
+is for: the fourth, fifth, and sixth consumers of a feature are
+nearly free.
+
+Core is at fifty unit tests. The remaining duplication is the big
+one: web and Xilem each still carry their own editable path model
+and edit session. Unifying those is the long project that would
+make the shells truly thin.
+
 ## Running comparison
 
 Updated as the log grows. Empty cells mean no data yet.
