@@ -361,6 +361,32 @@ edits joined. The snapshot model keeps absorbing new state kinds
 without new code, which is the argument for it over command-based
 undo at this stage.
 
+### 2026-08-18, later: interpolation and the second batch
+
+`var_model` (the fontTools VariationModel port) became the fourth
+module in `runebender-core`, moved verbatim with its tests; the
+web editor's copy is now a one-line re-export. The GPUI editor
+consumed it within the hour: designspace projects normalize their
+source locations, build the model, and an axes bar with
+gpui-component sliders drives a live interpolated ghost outline on
+the editor canvas. Point-incompatible glyphs simply produce no
+ghost, and a compatibility map (contour point-type signatures
+compared across masters) puts a red dot on incompatible glyphs in
+the grid.
+
+The rest of the batch: shapes tool (rectangles and ellipses with
+on-grid extremes), measure tool (dx/dy/length/angle readout),
+components rendered as a distinct translucent fill with
+Cmd+Shift+D decompose (recursive, affine-resolved, undoable),
+contour copy/paste across glyphs and masters, and remove overlap
+through linesweeper with a BezPath-to-UFO converter that restores
+smooth flags on points that kept their positions.
+
+Undo snapshots absorbed components without ceremony, the same way
+they absorbed anchors and metrics. Sixteen unit tests now cover
+the model layer; the union test checks the merged area of two
+overlapping squares against arithmetic.
+
 ## Running comparison
 
 Updated as the log grows. Empty cells mean no data yet.
