@@ -242,19 +242,18 @@ each cluster’s origin.
 The current network is feed-forward: information passes through its layers once,
 from input to output. It does not loop or refine the result in repeated steps.
 
-To draw a letter or ligature, the model looks at it and up to two letters on
-each side. It combines what it learned about those letters into a description
-of the shape it needs to draw.
+The network represents each input symbol with a short list of numbers learned
+during training. It combines the lists for nearby symbols into one compact
+description of the required shape. A decoder, the part of the network that
+turns this description into an image, expands it through [five
+layers](https://github.com/eliheuer/post-opentype/blob/main/crates/neuraltype-train/src/main.rs#L177-L216)
+to produce the signed-distance field. A second output predicts the shape’s x
+and y position. The renderer traces the field into a Bézier outline.
 
-From this description, the model predicts the shape and where it belongs. The
-first cluster origin is measured from the start of the word. Each later origin
-is measured from the previous cluster origin. To draw the shape,
-[five layers](https://github.com/eliheuer/post-opentype/blob/main/crates/neuraltype-train/src/main.rs#L177-L216)
-turn a small set of grids into the final 155×219 signed-distance field.
-
-This simple model works because it copies one existing font. The same strokes,
-curves, and dots appear in many shapes, so the model can learn them once and
-reuse them. It does not need to understand the language or invent a new design.
+The same decoder produces every shape. This allows it to reuse what it learns
+about strokes, curves, and dots that appear throughout Gulzar. The model can
+remain simple because it only has to reproduce one existing design. It does not
+need to understand the language or invent new forms.
 
 A future model could look at a whole word, line, or page instead of only nearby
 letters. It could also calculate the field only where the renderer needs it.
