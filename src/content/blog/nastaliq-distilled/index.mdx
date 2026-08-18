@@ -208,9 +208,11 @@ The model learns to reproduce this field.
 
 ![The isolated خ from Gulzar, and the same shape as a signed-distance field with the zero contour marked in red.](./sdf-kha.png)
 
-A [2007 paper from Valve](https://steamcdn-a.akamaihd.net/apps/valve/2007/SIGGRAPH2007_AlphaTestedMagnification.pdf)
-used this representation to render sharp vector graphics from low-resolution
-textures in the Source game engine.
+This ability to preserve sharp edges at low resolution also made signed-distance
+fields useful in real-time graphics. A
+[2007 paper from Valve](https://steamcdn-a.akamaihd.net/apps/valve/2007/SIGGRAPH2007_AlphaTestedMagnification.pdf)
+used them to render sharp vector graphics from low-resolution textures in the
+Source game engine.
 
 The figure below follows one horizontal row through خ. The red line in the left panel
 marks the row. The middle panel plots its values. Each red dot marks a zero
@@ -231,9 +233,9 @@ stroke, so the outline crosses it twice.
 
 ![A patch of the distance field enlarged to a grid of numbered cells. Values rise from negative to positive and back, and the red zero contour passes between the cells at interpolated positions.](./sdf-cells.png)
 
-Each shape uses a shared 155×219-pixel canvas at 64 pixels per em. Nasta’liq
-needs this large canvas because swash tails and dots extend far from each
-cluster’s origin.
+Each signed-distance field uses the same 155×219 grid at 64 pixels per em.
+Nasta’liq needs this large canvas because swash tails and dots extend far from
+each cluster’s origin.
 
 ### How the Neural Network Works
 
