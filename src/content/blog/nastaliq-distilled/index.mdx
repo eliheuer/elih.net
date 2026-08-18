@@ -396,44 +396,19 @@ prediction cannot work.
 
 ### Beyond This Model
 
-The next model should be designed around composition rather than distillation.
-I would test three changes.
+The next model should be designed for NeuralType instead of copied from an
+OpenType font, and this will require a new kind of font editor for training
+neural-network-based fonts. The goal is a model that uses nearby text and
+available space to make compositional decisions about letterforms, placement,
+and negative space, as a calligrapher would.
 
-First, it should place a whole line at once. The inputs would include the text
-and the available width and height. A small
-[Transformer](https://arxiv.org/abs/1706.03762) could compare every part of the
-line before assigning positions. Placement would become one decision about the
-complete composition instead of a chain of local offsets.
+I would also replace the fixed 155×219 grid with a continuous distance field
+that the renderer can sample wherever it needs more detail. This could preserve
+hairlines while removing the largest layer in the current model.
 
-Second, the training data should keep alternative placements as separate
-targets. When the same shape has different positions in different teacher
-examples, the model should choose among those positions using the rest of the
-line. It should not average them into a position that may occur nowhere in the
-source.
-
-Third, the model could calculate a continuous distance field instead of
-returning a fixed 155×219 grid. The renderer would give the model an x/y
-coordinate and receive the distance to the edge at that point. It could sample
-the field coarsely, find the outline, and then take more samples around
-hairlines and tapers. Research on
-[continuous signed-distance functions](https://arxiv.org/abs/1901.05103),
-[SIREN](https://arxiv.org/abs/2006.09661), and
-[Fourier features](https://arxiv.org/abs/2006.10739) provides several methods to
-test.
-
-These changes do not require every .ntf font to use the same network. The file
-header identifies the model type and its dimensions. A later engine can use
-that information to load a new architecture.
-
-The file size is not yet known. Whole-line processing would add weights, while
-removing the fixed-grid output layer could remove most of the current model’s
-weights. These changes pull in opposite directions. The result needs to be
-measured rather than inferred from this distilled model.
-
-I would start with another feed-forward model, not a diffusion model. Diffusion
-usually requires repeated passes to produce one result. A text editor needs the
-same result quickly after every change. The first experiment should therefore
-be a small whole-line model with a continuous distance-field decoder.
+I would begin with a small feed-forward network so the text updates in one
+pass. The .ntf format can support different network designs, so future fonts do
+not have to use this model. Their speed and file size will need to be measured.
 
 ### Project Status
 
