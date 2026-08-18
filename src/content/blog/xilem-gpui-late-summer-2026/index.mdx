@@ -4,7 +4,7 @@ description: 'Porting the same font editor to two Rust UI frameworks and logging
 date: 2026-08-17
 tags: ['rust', 'tools', 'fonts']
 authors: ['elih']
-draft: true
+draft: false
 ---
 
 I maintain a font editor called Runebender. The version I use for
@@ -21,6 +21,12 @@ Both ports are behind runebender-web. The plan is to bring both up
 to feature parity with it and log what each framework makes easy
 and hard along the way. This post is that log. It will grow until
 the comparison feels done.
+
+![The runebender-gpui glyph grid running in a browser: Virtua Grotesk's 799 glyphs with mark colors, category counts, and the shared OKLCH theme](./gpui-browser-grid.png)
+
+The GPUI editor above is running in Chrome over WebGPU, on the
+same theme file and mark colors as runebender-web. How it got
+there is most of the log below.
 
 The two frameworks take opposite positions on most design
 questions. Xilem is declarative and diff-based: the app rebuilds a
@@ -285,7 +291,7 @@ Xilem's Masonry pinned kurbo 0.12 while the web editor needed
 Two web-platform notes from the same day. Zed's repository has
 grown an experimental `gpui_web` crate, a wasm platform backend
 with a hello-web example, so "GPUI is native-only" is now
-"GPUI's web support is embryonic" — both frameworks have early
+"GPUI's web support is embryonic". Both frameworks have early
 paths to the browser. And
 [gpui-component](https://longbridge.github.io/gpui-component/)
 (Apache-2.0, 60+ components: dock panels, inputs, virtualized
@@ -433,7 +439,7 @@ moves, deletion with segment surgery, the smooth-handle
 constraint, pen primitives, shape contours, recursive component
 resolution, remove overlap with the BezPath-to-UFO converter,
 metrics shifts, kerning with group fallback, undo snapshots, and
-compatibility signatures — all on plain norad types, unit-tested
+compatibility signatures, all on plain norad types, unit-tested
 on synthetic glyphs. The GPUI app kept its exact public surface
 and all sixteen integration tests while shedding five hundred
 lines; every editing method is now a one-line delegation through
@@ -442,12 +448,12 @@ a single `edit_glyph` helper.
 The viewport followed. Xilem and web carried the same
 design-to-screen transform (web's was a port of Xilem's); it now
 lives once in core, grew the fit and cursor-anchored-zoom helpers
-each editor had reimplemented, and all three consume it — GPUI
+each editor had reimplemented, and all three consume it: GPUI
 replaced its private zoom/pan math, the other two re-export.
 
 Then the payoff move: web's `.glyphs` importer (Glyphs 3 →
 UFO + designspace, via glyphslib) moved into core, and both
-native editors gained "open a .glyphs file" the same hour — the
+native editors gained "open a .glyphs file" the same hour: the
 converter writes the masters into a sibling directory and the
 project opens from there, end-to-end tested. Porting cost per
 editor: one function. That is what the shared-engine architecture
@@ -466,7 +472,7 @@ runebender-web on runebender.org. The answer stopped being
 speculative in one evening.
 
 `cargo check --target wasm32-unknown-unknown` passed on a recent
-nightly with zero dependency changes — gpui, gpui-component,
+nightly with zero dependency changes: gpui, gpui-component,
 norad, linesweeper, glyphslib, and runebender-core all compile
 for wasm, because Zed's `gpui_web` backend (WebGPU rendering,
 embedded fonts, a real text system) ships in the same tree. Four
@@ -475,12 +481,12 @@ Chrome: `std::time::Instant` doesn't exist on wasm (`web-time`
 does), the file watcher is native-only, gpui-component's
 `SliderState` needed its builder-order workaround, and on the web
 the browser owns the event loop, so `run_embedded` returns a
-handle that must be kept alive in a thread-local — dropping it
-tears the app down, which reads as a mysteriously blank canvas.
+handle that must be kept alive in a thread-local (dropping it
+tears the app down, which reads as a mysteriously blank canvas).
 
 Feeding it a font took one new core module: `font_memory`
-assembles a norad `Font` from (path, bytes) pairs — no
-filesystem — and `Project::from_designspace` now takes a
+assembles a norad `Font` from (path, bytes) pairs, no filesystem
+involved, and `Project::from_designspace` now takes a
 master-loader closure, so the filesystem host and the embedded
 host share every line of project assembly. The demo designspace
 compiles into the wasm via `include_dir`, and the browser shows
@@ -490,13 +496,13 @@ strip. Same codebase as the native app, boot path excepted.
 
 What still separates this from replacing runebender-web in
 production: a host data layer (fetch fonts from the workspace
-server and save over HTTP — the serve protocol already exists on
+server and save over HTTP; the serve protocol already exists on
 the web side), bundle size (the debug wasm is 184MB against
 web's 6.4MB; release measurement pending), COOP/COEP headers on
 GitHub Pages (solvable with the service-worker shim), and input
-polish. Real work, but a list — not a research question.
+polish. Real work, but a list, not a research question.
 
-### 2026-08-19: from demo to editor, the honest version
+### 2026-08-18: from demo to editor, the honest version
 
 The first browser build deserved the criticism it got: it
 rendered, and I called that "running." Rendering is not a port.
@@ -508,17 +514,17 @@ testing: a small Chrome DevTools Protocol driver now dispatches
 actual clicks, drags, and keystrokes at the web build and
 screenshots each step, which immediately found what static
 screenshots never could (double-click is timing-sensitive under
-dispatched events; the grid had no keyboard way to open a glyph —
+dispatched events; the grid had no keyboard way to open a glyph,
 Xilem had Enter, GPUI didn't, it does now).
 
 Second, the host data layer, which is the actual port: the web
 build speaks the same workspace-server protocol as
 runebender-web. Open the page with `?server=http://…` and it
-fetches the whole workspace — designspace, every UFO file, each
-file's ETag — assembles the project through `font_memory`, and
+fetches the whole workspace (designspace, every UFO file, each
+file's ETag), assembles the project through `font_memory`, and
 Cmd+S writes back exactly the modified glifs with `If-Match`
 guards. The round-trip test is the proof: dispatched input opened
-A, marquee-selected its points, nudged twice, saved — and the
+A, marquee-selected its points, nudged twice, saved, and the
 glif on disk changed by exactly two units, one file written,
 nothing else touched. Release bundle: 27MB wasm, 7.4MB gzipped,
 against web's 6.4MB core.
@@ -527,11 +533,11 @@ Still missing before this could genuinely replace runebender-web:
 SSE live reload in the browser, conflict recovery UI on 409s,
 clipboard and shortcut polish, and the long feature tail the
 native grind is already walking. But the architecture claim is
-now tested end to end: one engine, four hosts — native Xilem,
-native GPUI, Vue+wasm, and GPUI-in-browser — and the newest host
+now tested end to end: one engine, four hosts (native Xilem,
+native GPUI, Vue+wasm, and GPUI-in-browser), and the newest host
 edits real files on disk.
 
-### 2026-08-19, continued: one theme file, three editors
+### 2026-08-18: one theme file, three editors
 
 The GPUI port looked nothing like runebender-web. Same data, same
 tools, different application. The fix was not a restyle in GPUI
@@ -560,22 +566,35 @@ file, reading label-first with hue-snapping for unlabelled colors
 from older palettes, and writing the two keys together. GPUI
 gained mark-colored grid cells and a Colors panel; Xilem dropped
 its private hardcoded palette (which wrote different rgba strings
-than the web — a real interop bug) for the shared one. The
+than the web, a real interop bug) for the shared one. The
 dispatched-input test: click a swatch in the browser build, the
 cell border turns red, the file is marked dirty.
 
+The toolbar icons followed the same path as the colors. The web
+toolbar's icons are generated from a UFO of icon glyphs; the
+generated outlines now sit in core as JSON, parsed with kurbo's
+SVG path parser, and the GPUI toolbar paints them as tiles. Same
+session: flip, rotate, and reverse-contour landed as core ops
+(`transform_selection` about the selection's bounding-box center,
+`reverse_contours` through kurbo's `reverse_subpaths`) with
+buttons in the GPUI editor. Xilem already had its transform
+panel, so both editors now cover it. Each button was verified
+with dispatched clicks against the browser build before commit.
+
 ## Running comparison
 
-Updated as the log grows. Empty cells mean no data yet.
+Updated as the log grows.
 
 | | Xilem | GPUI |
 | --- | --- | --- |
-| Install | crates.io, but the editor tracks git main | crates.io (`gpui 0.2.2`) |
-| Toolchain | stable | stable only; breaks on current nightly via `pathfinder_simd` |
+| Install | crates.io, but the editor tracks git main | Zed git repo (needed for gpui-component); started on crates.io `gpui 0.2.2` |
+| Toolchain | stable | stable for native (current nightlies break `pathfinder_simd`); pinned nightly plus build-std for the wasm target |
 | Layout API | typed view combinators (`flex`, `sized_box`, `portal`) | Tailwind-style method chains on `div()` |
 | Custom painting | custom Masonry widget with Vello scene access | `canvas()` element + `PathBuilder` + `paint_path` |
 | State model | single-owner `AppState`, rebuild + diff | entities with interior state, `cx.notify()` |
-| Headless render testing | `masonry_testing::TestHarness`, pixel-perfect | none found yet |
+| Component library | none yet | gpui-component (60+ widgets, Apache-2.0) |
+| Headless render testing | `masonry_testing::TestHarness`, pixel-perfect | none found; we drive the wasm build in headless Chrome over CDP instead |
+| Browser target | not yet (Vello and winit support wasm; Masonry's winit shell has no web platform today) | runs today via `gpui_web` over WebGPU |
 | Docs | rustdoc + examples | rustdoc + examples; most real-world reference is the Zed source |
 | Windowing | winit | its own platform layer |
 
@@ -586,5 +605,6 @@ tools plus the hyperbezier pen, anchors, components, layers,
 kerning, designspace interpolation with live axis sliders, Arabic
 shaping, feature-file support, Glyphs import, and the panel stack
 (select, curve, layers, anchors, transform). The xilem repo has a
-six-phase checklist for this. The gpui repo will follow the same
-order once it has an editor canvas at all.
+six-phase checklist for this. The gpui editor covers most of the
+tool set already; its remaining tail is the hyperbezier pen,
+knife, layers, background images, and shaping.
