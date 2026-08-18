@@ -372,25 +372,14 @@ The model card:
 
 ### Failed Scaling Attempts
 
-I tested three quick changes without adjusting the training settings for each
-model. The results show what happened in these runs, not what each approach
-could achieve with more work.
-Increasing the field resolution made the model larger but did not improve the
-letters. A wider network performed worse with the reused settings. Training a
-transformer to draw outlines directly produced fragments instead of complete
-shapes.
-
-The first test rendered the fields at two resolutions. At 64 pixels per em,
-Gulzar’s tapers and hairlines remain visible in the resulting outline. At 96
-pixels per em, the result looks the same at reading size, but the model must
-output 2.3 times more pixels.
-
-Below is the isolated خ at both resolutions, shown at the same size: 64 px/em
-on the left and 96 px/em on the right.
+I ran three quick tests without adjusting the training settings for each model.
+Raising the field resolution from 64 to 96 px/em made the model 2.3 times
+larger but produced no visible improvement. Doubling the width of its layers
+made the model four times larger, but strokes became too heavy and joined where
+they should remain separate. A transformer trained to predict outlines
+produced fragments.
 
 ![The isolated خ rendered at 64 and 96 pixels per em, at the same size. The two are nearly identical.](./res-64-96.png)
-
-The direct-outline model failed more visibly.
 
 ![Three words. The teacher’s outlines on the left, the field model in the middle drawing them almost identically, and the vector model on the right producing only small scattered fragments.](./vector-fragments.png)
 
@@ -401,19 +390,9 @@ The direct-outline model failed more visibly.
 | field, 64 px/em, wide | 5,357,091 | 21.4 MB | IoU 0.809, strokes merge |
 | vector, outline tokens | 12,693,639 | 53.3 MB | accuracy 0.482, fragments |
 
-The smallest model is the one used in the demo, but it is incomplete. At an IoU
-of 0.945, it rounds sharp features and weakens or omits small ones. Some
-smoothing is acceptable, but the missing detail still needs to be recovered.
-None of the three larger designs addressed this problem.
-
-This vector run rules out the simple implementation tested here, not direct
-outline prediction itself.
-[DeepVecFont](https://arxiv.org/abs/2110.06688) generated outlines as command
-sequences but needed image-guided refinement to produce usable curves.
-[DeepVecFont-v2](https://arxiv.org/abs/2303.14585) redesigned the outline
-representation to make the sequences learnable.
-[VecFontSDF](https://arxiv.org/abs/2303.12675) instead based vector font
-synthesis on signed-distance functions, the representation used here.
+These results apply only to these runs. They show that none of these simple
+changes improved this model, not that larger networks or direct outline
+prediction cannot work.
 
 ### Beyond This Model
 
