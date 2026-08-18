@@ -387,6 +387,40 @@ they absorbed anchors and metrics. Sixteen unit tests now cover
 the model layer; the union test checks the merged area of two
 overlapping squares against arithmetic.
 
+### 2026-08-18, evening: what a QA window buys
+
+A two-minute idle gap opened and the screenshot loop ran over
+everything the day's grind had produced. It caught four bugs the
+sixteen unit tests could not see, all in one pass.
+
+On the GPUI side: gpui-component's `SliderState` starts life with
+max 100, and every builder setter clamps the current value, so
+`.min(400)` before `.max(700)` panicked inside `f32::clamp` and
+took the app down on any designspace load. And flex children
+default to content min-height, so the editor sidebar's unbounded
+mini grid quietly pushed the canvas, metrics bar, axes bar,
+preview, and status bar below the window; `min_h(0)` clamps on the
+scroll containers fixed it, the same disease the Xilem editor had
+with its 10000-unit measurement, wearing different clothes.
+
+On the Xilem side: the new curve panel's stock buttons measured
+enormously wide under the overlay zstack's max-content sizing and
+stretched across the whole window (an explicit width pins it), and
+the comb and continuity rings never painted at all because every
+editor session carries a text buffer, so the single-glyph paint
+branch they hooked into never runs. They now paint in buffer mode
+at the active sort's offset. One real limitation surfaced:
+hyperbezier contours convert to straight chords (their curvature
+lives in the spline solver), so the comb only shows on cubics.
+
+The pattern across all four: layout and lifecycle bugs live where
+unit tests don't reach, and a screenshot loop finds them in
+minutes. Also verified end to end: the GPUI live-reload loop (edit
+a `.glif` on disk, watch "Reloaded from disk" appear) and the full
+editor at an interpolated location with metrics, axes, and kerned
+preview all rendering. Xilem finished the day with its system
+menu: New, Open, five recents, Save, Save As, Close.
+
 ## Running comparison
 
 Updated as the log grows. Empty cells mean no data yet.
