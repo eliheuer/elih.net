@@ -264,6 +264,36 @@ without leaving the editor (sidebar in Xilem, Esc + double-click
 in GPUI), and point editing (Xilem has the full tool set; GPUI
 has bare point dragging).
 
+### 2026-08-18: one geometry, three editors
+
+The port-everything-twice problem now has a fix: `runebender-core`,
+the shared crate both native editors already depend on, took its
+first real geometry module. The web editor's curve mathematics
+(cubic continuity classification, the curvature comb,
+SuperTool-style harmonize, Tunni balance, and the popcount-aware
+contour optimizer) moved there with its tests. The web editor's
+`curve.rs` went from 824 lines to a 106-line adapter that converts
+its path type to cubic segments. The Xilem editor consumed it the
+same day: a new Curve panel applies harmonize, balance, and
+optimize to the selection through the shared functions, ported
+with their unit tests.
+
+The core crate was kurbo-free until now, a rule from the era when
+Xilem's Masonry pinned kurbo 0.12 while the web editor needed
+0.13. Every consumer is on 0.13 now, so the rule retired.
+
+Two web-platform notes from the same day. Zed's repository has
+grown an experimental `gpui_web` crate, a wasm platform backend
+with a hello-web example, so "GPUI is native-only" is now
+"GPUI's web support is embryonic" — both frameworks have early
+paths to the browser. And
+[gpui-component](https://longbridge.github.io/gpui-component/)
+(Apache-2.0, 60+ components: dock panels, inputs, virtualized
+lists and tables) looks like the fastest route to a full editor
+shell on the GPUI side. It requires GPUI from Zed's git rather
+than crates.io, so adopting it is a dependency-base switch; that
+gets a dedicated spike.
+
 ## Running comparison
 
 Updated as the log grows. Empty cells mean no data yet.
