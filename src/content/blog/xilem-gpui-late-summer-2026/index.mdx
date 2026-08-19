@@ -661,6 +661,32 @@ of it was visible in screenshots either. Only dispatched input
 against the real build distinguishes "renders correctly" from
 "works."
 
+### 2026-08-19: one theme file for the widgets too, and menus everywhere
+
+Two convergence items and one divergence item. Convergence: the
+gpui-component widgets (inputs, sliders, popovers) were still on
+the library's default light theme, the last surfaces in the app
+not resolved from the shared OKLCH file. A `ThemeConfig` generated
+from the tokens at startup fixed that; every pixel now traces back
+to one JSON file, web and native alike.
+
+Divergence, continued: the menu bar grew from three entries to a
+full application menu (Glyph operations, curve operations, view
+and master switching), and it now works on every platform from
+one definition. macOS gets the native bar via `cx.set_menus`. On
+Windows and Linux GPUI only stores the menus, so apps draw their
+own; gpui-component ships an `AppMenuBar` for exactly this, and
+Runebender renders it in the header on any platform without a
+native bar, the browser included. The browser build shows
+Runebender / File / Edit / Glyph / View with per-platform key
+equivalents in the dropdowns.
+
+Still open in the wasm build only: the same focus-transfer bug
+that keeps editor-mode text inputs from taking clicks also keeps
+the in-window menu items from activating. Hover states work,
+dropdowns open, actions never fire. Native menus are unaffected.
+This needs a minimal reproduction against `gpui_web` upstream.
+
 ## Running comparison
 
 Updated as the log grows.
