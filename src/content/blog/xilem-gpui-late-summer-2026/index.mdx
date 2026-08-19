@@ -785,6 +785,33 @@ inside the modes is refinement, not structure - the web Select
 tool's segment hover, click-to-insert-point, and line-to-curve
 conversion are the notable gaps.
 
+### 2026-08-19: text mode, the faithful version
+
+The first GPUI text mode was structurally wrong in ways a feature
+list would not have caught, so this round started with a deep dive
+into runebender-web's renderer and editor state instead of a diff
+of features. The differences were the point: line height is the
+sort metric box (max of UPM and ascender down to descender), not a
+multiplier; a single click only places the caret; activating a sort
+is a double-click and works with every tool; the active sort draws
+as a plain fill while the text tool is up, and only turns back into
+points and handles when you switch to select; Escape stays in text
+mode; typing the active sort's own character reuses its live,
+possibly just-edited advance width.
+
+The rendering came over exactly: quiet metric boxes on every sort
+with inward corner ticks sized off the sort's on-screen height,
+the orange caret with its inward triangles, kern-colored marks
+during a manual kern drag. Shift-dragging a sort kerns it against
+its neighbor through the engine's kerning session and writes back
+into the font's kerning on release. A LTR/RTL/Auto toolbar appears
+with the text tool. An engine regression test now pins the layout
+positions when typing around a seeded active sort - the class of
+bug that made the first version overlap glyphs.
+
+The lesson repeats from earlier entries: the web editor is the
+spec, and the spec lives in its code, not in screenshots of it.
+
 ## Running comparison
 
 Updated as the log grows.
