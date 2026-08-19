@@ -687,6 +687,24 @@ the in-window menu items from activating. Hover states work,
 dropdowns open, actions never fire. Native menus are unaffected.
 This needs a minimal reproduction against `gpui_web` upstream.
 
+### 2026-08-19: the sidebar learns Glyphs tricks
+
+The docked panels grew the interactions that make the Glyphs 4
+sidebar pleasant. Section headers fold, with a disclosure triangle
+painted as a four-line canvas path because the UI font turned out
+to lack every triangle codepoint (the tofu boxes in the first
+screenshot were a fun surprise). A Navigate section steps through
+masters. Layer rows gained visibility eyes: toggling one draws
+that master as a dim reference underlay in the editor, resolved
+through the theme's reference role. And the header has a sidebar
+toggle that collapses the left panel entirely, the grid reflowing
+to full width - `ResizablePanel::visible` made that a one-liner.
+
+Every one of these was verified with dispatched input against the
+browser build before its commit: fold, unfold, eye on (Bold's
+wider exclam ghosting behind Regular), master step, collapse,
+reflow.
+
 ## Running comparison
 
 Updated as the log grows.
