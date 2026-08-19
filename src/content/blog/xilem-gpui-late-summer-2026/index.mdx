@@ -633,6 +633,34 @@ colors became right-sidebar sections. The dispatched-input test
 dragged a divider eighty pixels left and the grid reflowed with
 an extra column.
 
+### 2026-08-18, late: what dispatched-input testing is worth
+
+The docked layout got a follow-up feature: a Selection section in
+the right sidebar with editable X and Y fields for a single
+selected point, committing through the shared engine with undo.
+Verifying it in the browser build turned into a long debugging
+session, and the session is worth logging for what it says about
+the test method.
+
+Two separate problems fell out. First, a test-harness artifact:
+after a headless Chrome page sits idle for about 25 seconds, the
+first dispatched click or two vanish while the rendering loop
+wakes up. Every "dead button" that reproduced only on a cold page
+was this. The driver now sends sacrificial clicks after long
+waits. Second, a real bug that is still open: in the wasm build,
+text inputs cannot take focus by click while the editor view is
+open. The same widgets focus and type correctly in the grid view
+(typing in search live-filters 799 glyphs), and non-input clicks
+in editor mode all work. A status-bar probe showed gpui's
+focus-on-click never fires for the inputs in that mode. The cause
+is not yet found; the native build needs checking before blaming
+the web backend.
+
+The method note: none of this is visible in unit tests, and none
+of it was visible in screenshots either. Only dispatched input
+against the real build distinguishes "renders correctly" from
+"works."
+
 ## Running comparison
 
 Updated as the log grows.
