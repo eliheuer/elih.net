@@ -736,6 +736,33 @@ an irony: because the buffer takes keys from the app's own handler
 rather than a focused widget, text entry works perfectly in the
 wasm build where widget focus is still broken.
 
+### 2026-08-19: the path model comes home, and two more tools
+
+The project's longest-standing duplication is gone. Web and xilem
+each carried a copy of the editable path model (cubic, quadratic,
+and hyperbezier paths with entity ids for selection); the copies
+had drifted by a few hundred lines of refactoring. The web copy,
+being the daily driver, moved into runebender-core with its tests,
+along with the slim glyph data model it converts through. Core is
+at 176 tests, and the hyperbezier type being in core is what will
+make the HyperPen tool portable next.
+
+On top of it, the knife tool's slicing moved over: multi-hit
+recursion along the cut line, per-type slicing that keeps
+quadratics quadratic, hyperbeziers converting to explicit cubics
+when actually cut, and the nested single-hit join that turns a
+sliced O into two Cs. Nine tests came along, plus a fixture test
+cutting the real Virtua Grotesk zero into four contours, and a
+norad bridge so norad-based editors cut glyphs directly.
+
+GPUI gained the last two missing edit modes short of HyperPen:
+Knife (drag a line, crossing dots preview the cut, release slices
+with undo - verified live splitting the slash), and Preview (hold
+space for the filled outline with all editing chrome hidden,
+release returns to the previous tool). The web editor's tool set
+is now Select, Pen, HyperPen, Knife, Measure, Shapes, Sketch,
+Preview, Text; GPUI has all of them except HyperPen and Sketch.
+
 ## Running comparison
 
 Updated as the log grows.
