@@ -763,6 +763,28 @@ release returns to the previous tool). The web editor's tool set
 is now Select, Pen, HyperPen, Knife, Measure, Shapes, Sketch,
 Preview, Text; GPUI has all of them except HyperPen and Sketch.
 
+### 2026-08-19: HyperPen, and the tool set is complete
+
+The last edit mode landed. Hyperbezier contours follow the
+convention the other editors share - a contour identifier marks
+them, every point is on-curve, curve means smooth and line means
+corner - so the norad layer in core learned that convention once
+and three things fell out of it: the glyph renderer draws hyper
+contours through the spline solver instead of connecting the dots,
+the knife slices them with correct solver geometry, and the new
+pen primitives (start, append, close) are three small functions.
+GPUI's HyperPen is a thin shell over them: click for smooth,
+shift-click for corner, click the start to close, with the
+solver-drawn curve updating live and hyper points in their own
+color from the shared palette.
+
+With that, GPUI has every edit mode the web editor has except
+Sketch (deliberately parked): Select, Pen, HyperPen, Knife,
+Measure, Shapes, Preview, and Text. The remaining parity work
+inside the modes is refinement, not structure - the web Select
+tool's segment hover, click-to-insert-point, and line-to-curve
+conversion are the notable gaps.
+
 ## Running comparison
 
 Updated as the log grows.
