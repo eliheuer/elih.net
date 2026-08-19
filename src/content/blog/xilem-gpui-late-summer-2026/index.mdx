@@ -705,6 +705,37 @@ browser build before its commit: fold, unfold, eye on (Bold's
 wider exclam ghosting behind Regular), master step, collapse,
 reflow.
 
+### 2026-08-19: the text engine moves into core, and GPUI plugs in
+
+The biggest single move of the project so far. runebender-web's
+text system - the sort buffer, cursor and bidi runs, kerning with
+group fallback, manual kern drags, layout, hit testing, and real
+OpenType shaping through a minimal font compiled on the fly from
+the UFO's own features.fea - turned out to be UI-free already. It
+moved into runebender-core nearly verbatim, 88 tests included, plus
+new `from_font` constructors so native hosts build the font models
+straight from norad instead of JSON. Core is at 151 tests.
+
+Then GPUI plugged in, twice. The preview strip dropped its
+placeholder input widget: it now renders the engine buffer
+directly - click places the caret through engine hit testing,
+typing inserts with kerning and shaping applied, comma and period
+kern the pair at the caret straight into the font. And the editor
+gained the text tool: the open glyph is the buffer's active sort,
+typing composes text around it, and clicking another sort switches
+the editor to that glyph with points, metrics, and panels
+following. One glyph-space offset in the editor transform keeps
+every existing tool working on the active glyph at its layout
+position.
+
+Two notes for the comparison. First, the port cost: the engine
+moved in an afternoon because it never referenced a UI type - the
+discipline of keeping web's core wasm-API-shaped paid off exactly
+as hoped, and the same plug-in seam is waiting for Xilem. Second,
+an irony: because the buffer takes keys from the app's own handler
+rather than a focused widget, text entry works perfectly in the
+wasm build where widget focus is still broken.
+
 ## Running comparison
 
 Updated as the log grows.
