@@ -812,6 +812,27 @@ bug that made the first version overlap glyphs.
 The lesson repeats from earlier entries: the web editor is the
 spec, and the spec lives in its code, not in screenshots of it.
 
+### 2026-08-19: the select and pen tools get the same treatment
+
+Same method as the text mode: read the web tool's code end to end,
+port the behaviors, not an approximation of them. Core gained a
+segment_ops module - nearest-segment hit testing, insert point on
+segment with exact curve subdivision, line-to-curve conversion with
+thirds handles (wrap-around closing segments included), and
+delete-last-pen-point, six tests.
+
+On top of it, the select tool learned the web moves: alt-click
+converts a line to a curve and leaves the new handles selected,
+alt-drag pans, alt-hover highlights the nearest segment, clicking a
+segment selects its points as a draggable group, and double-click
+toggles a point's type or selects the whole contour before falling
+through to activating a text sort. The pen learned its counterparts:
+click a segment to insert a point, alt-click to convert, Backspace
+to walk back the path being drawn, and a rubber band from the last
+point with a close indicator on the start. Arrow nudges now use the
+web's grid steps - 2 units, 8 with shift, 32 with ctrl - instead of
+the 1 and 10 I had guessed.
+
 ## Running comparison
 
 Updated as the log grows.
