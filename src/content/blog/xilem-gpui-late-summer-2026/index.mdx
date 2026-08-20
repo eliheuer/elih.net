@@ -993,6 +993,29 @@ library's default paints a translucent ring outside a tinted
 border, which read as two outlines, so the ring is off and the
 border carries the accent.
 
+### 2026-08-20: accents follow their base, and glyph data opens up
+
+Two parity items from the top of the priority list. First,
+component anchor alignment: core gained a composites module porting
+the web's realign logic - marks with `_top` anchors snap to the
+most recent `top` in front of them, outgoing anchors accumulate so
+marks stack, and the Glyphs lib key opts a component out. Every
+glyph edit now realigns the edited glyph's own components and every
+composite that places it, so dragging an A's outline carries the
+grave in Agrave live. Anchor-locked components refuse drags (the
+Glyphs contract: unlock first), with a Locked/Free toggle in the
+Selection panel. Verified in the browser: unlock, drag the A, the
+grave rides along; undo restores both the drag and the lock.
+
+Second, the Glyph panel's data rows became editable: rename (which
+follows through components in other glyphs, kerning group
+memberships, direct kerning keys, and the open text session),
+unicode assignment, and kerning groups on both sides, committing to
+every master on Enter. Testing this surfaced a sharper statement of
+the browser input bug: no input except the left-panel search can
+take focus in the wasm build, grid mode included. The data editing
+is native-only until that upstream bug is fixed.
+
 ## Running comparison
 
 Updated as the log grows.
