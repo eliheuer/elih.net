@@ -1028,6 +1028,22 @@ square or circular, knife and measure lines lock to an axis. Point
 drags stay free, which is also what the web does - shift is the
 selection modifier there.
 
+### 2026-08-20: the right-click menu
+
+The editor canvas grew the web's contour context menu as an
+in-canvas overlay: lock or unlock the component under the cursor,
+decompose one or all, add a component by name, set the start point,
+reverse the contour, round corners, move the contour in draw order,
+and add or delete anchors. Items appear conditionally the way the
+web's do. One gpui lesson from it: the menu must swallow its own
+mouse-downs, or the canvas underneath dismisses the menu before the
+item's click event ever fires - and starts a marquee for good
+measure.
+
+Round corners came along too: line-line corners become cubic
+fillets whose size and handle ratio are inferred from the glyph's
+existing rounded corners, so new fillets match the drawing.
+
 ## Running comparison
 
 Updated as the log grows.
