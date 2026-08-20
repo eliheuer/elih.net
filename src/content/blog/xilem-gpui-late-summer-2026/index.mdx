@@ -1044,6 +1044,19 @@ Round corners came along too: line-line corners become cubic
 fillets whose size and handle ratio are inferred from the glyph's
 existing rounded corners, so new fillets match the drawing.
 
+### 2026-08-20: the grind continues
+
+Six more checklist items in one sitting. The Selection panel became
+the web's coordinate panel: a 9-point reference picker with X/Y
+(move the selection so the reference lands there) and W/H (scale
+about it), working on points, components, and anchors. Hyperbezier
+contours convert to cubics through the solver from the Glyph menu.
+Anchors rename from a field in the Selection panel. And the Curves
+section arrived with the Speedpunk-style curvature comb and G-level
+continuity rings, both riding on the shared analyses in
+runebender-core - the comb's sample strips paint as filled quads
+along the same teal-to-amber ramp the web uses.
+
 ## Running comparison
 
 Updated as the log grows.
