@@ -1057,6 +1057,20 @@ continuity rings, both riding on the shared analyses in
 runebender-core - the comb's sample strips paint as filled quads
 along the same teal-to-amber ramp the web uses.
 
+### 2026-08-20: backgrounds
+
+The Background section from the web editor: send the outline to the
+UFO background layer, show it as a quiet outline behind the
+drawing, swap the two, clear it. Where the web build shuffles glif
+bytes and layer contents.plist files by hand, norad just owns the
+layer set - public.background is one get_or_create_layer call and
+the background rides the normal font save. A Reference field ghosts
+any other glyph behind the drawing for comparison.
+
+One checklist correction along the way: font-info editing came off
+the parity list, because the web editor cannot edit fontinfo either
+- its setFontInfo only feeds the renderer's metrics.
+
 ## Running comparison
 
 Updated as the log grows.
