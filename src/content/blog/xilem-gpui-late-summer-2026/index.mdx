@@ -1016,6 +1016,18 @@ the browser input bug: no input except the left-panel search can
 take focus in the wasm build, grid mode included. The data editing
 is native-only until that upstream bug is fixed.
 
+### 2026-08-20: drawing-op muscle memory
+
+Three more checklist items. Cmd+D duplicates the selection the web
+way (contours holding selected points clone at a 20-unit offset,
+clones selected; components and anchors duplicate when one is
+active), and Cmd+Shift+T repeats the duplicate with the last
+flip/rotate re-applied - the rotated-repeat workflow. Rotate 180
+joined the menu. And shift now constrains drags: shapes come out
+square or circular, knife and measure lines lock to an axis. Point
+drags stay free, which is also what the web does - shift is the
+selection modifier there.
+
 ## Running comparison
 
 Updated as the log grows.
