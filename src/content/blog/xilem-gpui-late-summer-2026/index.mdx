@@ -906,6 +906,36 @@ section in the sidebar - left pane under Categories in grid mode,
 right pane in the editor - the way the web editor and Glyphs treat
 axis controls: a pane item, not a layout row.
 
+### 2026-08-19: the sidebar becomes the web sidebar
+
+The glyph-grid sidebar was a search box and eight category rows.
+The web editor's is a browsing tool: script groups with per-glyphset
+coverage, filters, subcategories, and a sort toggle. Porting it
+followed the house rule - data and matching logic into
+runebender-core first, UI second.
+
+Core gained a sidebar module: the script groups (Arabic's two
+name-list filters with their positional forms, Hebrew's target
+lists, each script's Unicode blocks), the 27 Google Fonts glyphsets
+as JSON parsed once, the builtin filters, and the category
+subfilter classifier. Tests pin the fixture font's coverage to what
+the web sidebar displays: Basic Shapes 79, Basic 152, GF Arabic
+Core 360/383, GF Latin Core 322/324.
+
+The GPUI panel consumes it: Languages and Filters sections with
+counts and n/m coverage, expandable category subfilters, and a
+Name/Unicode sort toggle above the search. Counts are computed once
+per font state and cached; the active filter keeps a hash set of
+matching names so grid filtering stays a lookup. Verified in the
+browser build: clicking Arabic filters the grid to the Arabic
+glyphs and expands to the same four rows with the same numbers the
+web shows.
+
+One wasm-only blemish: the script icons (Arabic, Hebrew) are tofu
+in the browser build because the bundled UI font has no Arabic and
+there is no system-font fallback there. Native macOS falls back
+fine.
+
 ## Running comparison
 
 Updated as the log grows.
