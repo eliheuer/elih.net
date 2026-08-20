@@ -948,6 +948,17 @@ it; removing deletes it from every master. The Name/Unicode toggle
 also got honest: the font order was already unicode order, so
 Unicode is the default and Name now actually sorts by name.
 
+### 2026-08-20: the preview strip stops being a second text editor
+
+The bottom preview strip was visible in the glyph grid and had its
+own typeable buffer, seeded with "hamburgevons" at launch. Neither
+matches the web editor or Glyphs: there the preview belongs to the
+edit view and just shows what the text tool composed. The strip now
+mounts only in editor mode and renders the edit buffer read-only,
+kerning and shaping included. The separate preview buffer and its
+input plumbing (click-to-caret, typing, kern-pair status) are gone,
+and the grid gets the recovered height.
+
 ## Running comparison
 
 Updated as the log grows.
