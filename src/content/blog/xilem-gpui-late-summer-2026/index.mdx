@@ -833,6 +833,47 @@ point with a close indicator on the start. Arrow nudges now use the
 web's grid steps - 2 units, 8 with shift, 32 with ctrl - instead of
 the 1 and 10 I had guessed.
 
+### 2026-08-19: sidebearings, components, booleans, and a wasm landmine
+
+Core gained the remaining glyph ops: `boolean_contours` (union
+merges every contour; subtract, intersect, and exclude apply the
+first contour against the rest combined, through linesweeper),
+`set_contour_start`, and component hit-testing, translation, and
+deletion. Core is at 187 tests.
+
+The editor wired them up the web way. Sidebearing edges drag: the
+right edge snaps its landing position to the zoom-matched grid step
+and adjusts the width; the left edge snaps the applied delta, shifts
+the ink, and offsets the viewport in the same motion so the outline
+holds still on screen. Components click-select with a distinct fill,
+drag by their transform offset, delete with Backspace, and
+double-click opens the base glyph beside the sort being edited, the
+same move the web calls openTextGlyphBesideActive. Four boolean
+tiles joined the Transformations panel, with menu commands to match,
+plus Set Start Point. Tab and shift-Tab cycle the point selection in
+contour order.
+
+Tab is where the day went sideways. Pressing it in the wasm build
+killed the app with "time not implemented on this platform" - and so,
+it turned out, did cmd-z, and every other bound shortcut. The chain:
+gpui-component force-enables gpui's `profiler` feature, the profiler
+stamps every action dispatch with `std::time::Instant::now()`, and
+std's Instant has no wasm implementation. Native apps never notice
+because dispatch works fine there; on the web every menu item and
+keyboard shortcut is a panic. The workaround is
+`cx.intercept_keystrokes`, which runs before any binding: the
+interceptor handles Tab everywhere (parity wants it for point
+cycling anyway) and, on wasm only, every cmd shortcut, so nothing
+reaches the action dispatcher that would panic. The real fix belongs
+upstream - the profiler should use `web_time`, or gpui-component
+should stop enabling the feature unconditionally.
+
+Everything above was verified with dispatched input in headless
+Chrome: edge drags moving width and LSB with the ink pinned,
+intersect collapsing a zero to its counter and undo restoring both
+contours, a component dragged, deleted, restored, and its base
+opened beside it with a double click.
+
 ## Running comparison
 
 Updated as the log grows.
