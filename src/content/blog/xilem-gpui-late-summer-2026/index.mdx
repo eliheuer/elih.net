@@ -1141,6 +1141,31 @@ What remains on the list is the parked Sketch tool, font info
 editing (which web cannot do either), and the browser blockers
 that live upstream in gpui_web.
 
+### 2026-08-20: switching the daily driver
+
+With the checklist done, the question became practical: can the
+GPUI editor replace the web one for real work on Virtua Grotesk?
+The blocker to check was save fidelity. The web editor patches
+individual .glif files over HTTP; the native editor saves the
+whole UFO through norad. On a font whose UFOs came out of Glyphs,
+that first whole-font save reformats every file the web editor
+never touched.
+
+Measured on a scratch copy under git: the first save is a one-time
+normalization (sorted plist keys, no redundant zero advance), and
+a second save changes zero files. So the sources got a deliberate
+cleanup commit: strip every com.schriftgestaltung key the Glyphs
+export left behind - keeping the ufo2ft propagateAnchors filter,
+the component-alignment key, and runebender's own mark labels -
+and rewrite everything in norad's canonical form. fontc builds of
+the sources before and after are byte-identical in every table
+except the head timestamp, which is as close to proof as a font
+cleanup gets.
+
+From here, git diffs after an editing session show exactly the
+glyphs that changed. The editor installs with cargo install and a
+one-line launcher script sits beside the web one in the font repo.
+
 ## Running comparison
 
 Updated as the log grows.
