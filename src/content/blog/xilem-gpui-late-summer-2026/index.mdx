@@ -1114,6 +1114,33 @@ search cannot take focus, menu items do not activate, no paste -
 all upstream gpui_web issues. It is a toy for now, and that is the
 point.
 
+### 2026-08-20: the checklist runs out of easy items
+
+Three items closed the editing side of the parity list. The
+measure HUD came over almost for free: the web module that finds
+handle lengths, segment lengths, and stem/counter spans was
+written render-free on the shared path type, so it moved into
+runebender-core verbatim. The GPUI canvas draws the rest -
+popcount-tiered colors, dimension lines with outward arrowheads,
+and text labels that dodge each other. GPUI shapes the labels as
+real text lines inside the paint closure, which beat the plan of
+absolutely-positioned overlay divs.
+
+Image trace landed as Glyph → Trace Image: pick a file, img2bez
+vectorizes it into the current glyph, undoable. Same tracer crate
+and defaults as the web editor, so a trace is byte-identical.
+
+Multiple edit tabs turned out to be beyond-web work: the web
+TopBar component with its tab strip is an unmounted orphan - the
+live Vue UI has exactly one session. The GPUI editor now does it
+the Glyphs way: + spawns a tab, x closes, and each tab parks its
+own buffer, tool, selection, viewport, and undo stack. Tabs track
+their glyph by name, so they survive renames and master switches.
+
+What remains on the list is the parked Sketch tool, font info
+editing (which web cannot do either), and the browser blockers
+that live upstream in gpui_web.
+
 ## Running comparison
 
 Updated as the log grows.
