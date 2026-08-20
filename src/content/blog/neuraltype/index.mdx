@@ -1,6 +1,6 @@
 ---
 title: 'NeuralType: A Post-OpenType Font Format'
-description: 'A font format where the font is a small neural model that generates outlines in context, with a live WASM demo.'
+description: 'A font format that uses a small neural model to generate outlines in context, with a live WASM demo.'
 date: 2026-07-29
 tags: ['fonts', 'rust', 'ai', 'design', 'arabic']
 image: './share-card.png'
@@ -11,33 +11,38 @@ draft: false
 import NeuralTypeDemo from '../../../components/NeuralTypeDemoIsland.astro'
 import { nastaliqDemo } from '../../../components/demo-presets'
 
-The NeuralType font format (.ntf) is an experiment in what comes after OpenType: a font
-format where the font file is a small neural network that draws each letterform
-in context, instead of the fixed rectangles every format since
-Gutenberg's metal type has used.
+The NeuralType font format (.ntf) is an experiment in what comes after
+OpenType. An .ntf font file is a small neural network that draws letterforms in
+context instead of storing fixed shapes in the rectangles inherited from metal
+type.
 The spec, research notes, and Rust engine are on GitHub at
 [github.com/eliheuer/post-opentype](https://github.com/eliheuer/post-opentype),
-dual-licensed under Apache-2.0 or MIT.
+dual-licensed under the Apache License 2.0 or MIT License.
 
-The .ntf font in the demo below is one small file: a short header that
-names the alphabet, then the weights of the neural network.
-Every letterform on the canvas is generated at the moment you type it: the
-letter, its joining form, and the elongation setting go into the neural network,
-the letterform comes out, and the engine traces it into vector outlines
-and fills it. It is still real text: click the canvas, place the
-cursor, type in Arabic or Latin capitals, select, copy, and paste.
+The demo below loads one small .ntf file: a header describing the font and
+model, followed by the network’s weights. When you type, the engine determines
+each letter’s joining form. The network uses the letter, its joining form, and
+the elongation setting to generate a small bitmap. The engine assembles these
+letterforms into a line and traces the result into vector outlines, which the
+browser draws on the canvas. A hidden native text input handles cursor movement,
+selection, copying, and pasting. Click the canvas, then type in Arabic or Latin
+capitals.
 
 <NeuralTypeDemo />
 
-The pixel-art Kufic above may not convince you that a neural font can
-replace OpenType, so here is a trickier style. The demo below shows
-Nasta’liq, one of the Perso-Arabic styles OpenType handles worst. No
-OpenType Nasta’liq font has ever matched the calligraphy it comes from
-and the people who made OpenType never thought it would be a suitable format for styles like this.
+Square Kufic may not convince you that a neural font can replace OpenType. The
+next demo uses Nasta’liq, a more difficult Perso-Arabic style that exposes the
+limits of OpenType Layout. Its letters and marks can shift and stack in ways
+that are difficult and expensive to encode as predefined glyphs and rules. [John
+Hudson](https://typedrawers.com/discussion/5652/neuraltype-a-post-opentype-font-format)
+reports that Eliyezer Kohen, one of the original inventors of OpenType Layout,
+did not expect it to handle cascading Arabic and considered that work outside
+the technology’s scope.
 
-This font was distilled from Gulzar, an OFL Nasta’liq, into a model of
-1.36 million parameters. A separate post covers how it
-works: [Nasta’liq Distilled](/blog/nastaliq-distilled).
+This font was distilled from Gulzar, an OFL-licensed Nasta’liq font, into a
+model of 1.36 million parameters. With 8-bit weights, the .ntf file is 1.38 MB.
+A separate post covers how it works:
+[Nasta’liq Distilled](/blog/nastaliq-distilled).
 
 <NeuralTypeDemo {...nastaliqDemo} />
 
@@ -46,53 +51,42 @@ works: [Nasta’liq Distilled](/blog/nastaliq-distilled).
 <nav class="section-index" aria-label="Contents">
 <ol>
 <li><a href="#01-a-font-that-is-a-neural-network"><span class="n">01</span>A Font That Is a Neural Network</a></li>
-<li><a href="#02-how-it-works-teacher-student-tracer"><span class="n">02</span>How It Works: Teacher, Student, Tracer</a></li>
+<li><a href="#02-how-the-first-model-works"><span class="n">02</span>How the First Model Works</a></li>
 <li><a href="#03-the-ntf-file"><span class="n">03</span>The .ntf File</a></li>
 </ol>
 </nav>
 
 ### 01. A Font That Is a Neural Network
 
-An OpenType font is a compression scheme for the Latin letter: one fixed
-outline per glyph, reused everywhere, in per-glyph cells that digital type
-inherited from metal sorts. Arabic in its manuscript forms, naskh and
-above all Nasta’liq, is one continuous, context-dependent stroke, and it
-has never fit this system well. The OpenType workaround is thousands of
-glyphs and substitution rules approximating what a hand does in one
-motion.
+OpenType stores predefined glyph outlines and tables that describe how a
+shaping engine should select and position them. This works well for many kinds
+of type, but the approach has well-known limitations. Every form and behavior
+must be represented in the font ahead of time.
 
-Any font can be described as a function. Rendering evaluates it once
-per character: the character and its context go in, a shape comes out,
-and a line of text is the function applied across the string.
+Any font system can be described as a function. Text and context go in. Shapes
+and positions come out.
 
 ```
-glyph = f(character, context, parameters)
+shapes, positions = f(text, context, parameters)
 ```
 
-The difference between the two formats is how that function is computed.
-An OpenType font computes it by lookup: the shapes were drawn ahead of
-time and stored in tables, and the layout rules (cmap, GSUB, GPOS)
-select among them and position them. Variable fonts add interpolation
-between drawn masters, but the principle holds: the font can only
-produce shapes a person drew, or blends of them.
-If a script needs a form the tables do not contain,
-a person has to draw the glyph and write the rule, so contextual behavior
-costs one glyph and one rule per case, and the number of cases is limited
-by what a type designer can enumerate by hand. Many new AI tools help with
-this work, but it is still a massive amount of labor, and the result is
-still incapable of reproducing the best naskh and Nasta’liq manuscripts on
-the web.
+The difference between the two formats is how they produce that result. In an
+OpenType font, the `cmap` table maps Unicode characters to nominal glyphs. A
+shaping engine such as HarfBuzz then applies GSUB substitutions and GPOS
+positioning to produce the shaped glyph sequence.
+Variable fonts add interpolation between drawn masters, but the principle
+holds: the font can only produce stored shapes or blends of them.
 
-Arabic fonts reduce each letter to four forms (isolated, initial, medial, final). The
-four positional categories are real, they come from the script itself,
-but written Arabic also varies each form by its neighbors and by
-elongation, and in OpenType every one of those variants costs another
-glyph and another rule.
+If a font needs a form its tables do not contain, a designer must add it and
+define when it appears. More contextual behavior requires more glyphs, rules,
+and testing. AI tools can help draw the glyphs, but the result remains a finite
+system of predefined forms and procedures.
 
-A .ntf font replaces the lookup with a computation. The file stores the
-weights of a small neural network, and rendering runs the neural network once
-per glyph, per keystroke (a "forward pass"), followed by outline
-extraction. Here is the glyph function in the engine:
+A .ntf font replaces predefined glyph selection with a learned computation.
+The file stores the weights of a small neural network. Rendering runs the model
+to generate shapes and positions, followed by outline extraction. The square
+Kufic demo makes one forward pass per letter whenever the text changes. Here is
+the glyph function used by that model:
 
 ```rust
 impl GlyphSource for NeuralFont {
@@ -108,54 +102,49 @@ impl GlyphSource for NeuralFont {
 }
 ```
 
-The character, its joining form, and the elongation value go in; the
-letterform comes out. The function does contain one lookup: the font's
-header lists the characters it supports, and the code finds the typed
-character's position in that list. That position only tells the neural
-network which letter it is working with; the joining form and the
-elongation come in as separate inputs, and the neural network draws the
-letterform for all three together.
+In this first model, the character, its joining form, and the elongation value
+go in. The letterform comes out. The font’s header lists the supported
+characters, and the code finds the typed character’s position in that list.
+This identifies the letter. The network then draws the letterform from that
+identity, its joining form, and its elongation value.
 
-Computing the function instead of storing its outputs matters because
-computed outputs do not need to be enumerated. In practice this means:
+Because the model computes forms instead of choosing from stored results, the
+font does not have to enumerate every possible output. In practice this means:
 
 - **Continuous parameters.** Justification by elongation is a number,
-  not a substituted glyph. Any learned axis (weight, slope,
-  formality) works the same way: variable fonts without masters.
-- **Open-ended context.** Today the neural network sees the letter, its joining
-  form, and the elongation. More context can be added as new inputs: the
-  neighboring letters, the position in the word, the space left on the
-  line.
-- **A small, uniform file.** No table graph, no rule bytecode: a JSON
-  header and a weight blob. The font in the first demo is 215 KB of f32
-  weights, before any quantization. The Nasta’liq font is bigger, 5.4 MB,
-  which is a lot for a font. This is early work and the format is not
-  optimized yet; quantizing the weights alone would cut it to about a
-  quarter of that.
+  not a substituted glyph. Weight, slope, formality, or another learned axis
+  could work the same way without storing separate masters.
+- **Context as input.** The square Kufic model sees the letter, its joining
+  form, and its elongation. The distilled Nasta’liq model also uses nearby text
+  and predicts placement. Future models could consider more of the text and the
+  available space.
+- **A small, uniform file.** The file contains a header and network weights
+  instead of glyph tables and shaping rules. The font in the first demo is
+  215 KB with 32-bit weights. The Nasta’liq model takes 5.4 MB with 32-bit
+  weights and 1.38 MB with the 8-bit weights used by the demo.
 
-"Generative" here does not mean random. The same text at the same
-settings produces identical outlines every time, on every machine. The
-shapes are computed, not retrieved. Variation could be added on purpose
-later, a seed input that lets letterforms vary the way handwriting does,
-but it would be a choice, and reproducible.
+"Generative" here does not mean random. The current demos are deterministic:
+the same text and settings produce the same output in the current engine. This
+is a choice made by these models, not a requirement of the format. A future
+font could accept a seed that produces controlled, reproducible variation.
 
-### 02. How It Works: Teacher, Student, Tracer
+### 02. How the First Model Works
 
-The engine is Rust on the [Linebender](https://linebender.org/) stack,
-compiled to WASM for the demo above. The pipeline has four stages:
+The first demo uses a small square Kufic model. Its engine is written in Rust,
+uses [Linebender](https://linebender.org/) libraries, and is compiled to WASM.
+The pipeline has four stages:
 
-1. **Shape.** Unicode text becomes joining forms.
-2. **Generate.** One forward pass per glyph.
-3. **Layout.** Composite every generated form.
-4. **Trace.** The composited line becomes vector outlines.
+1. **Shape.** Assign a joining form to each Unicode character.
+2. **Generate.** Run one model pass for each form.
+3. **Layout.** Assemble the generated forms into a line.
+4. **Trace.** Convert the composed line into vector outlines.
 
-The model learns its letterforms from a teacher program: hand-written
-code that draws each form as an ASCII-art grid in the Rust source. The
-neural network is trained until it reproduces the teacher's output exactly.
-Each grid
-holds only the letter's skeleton (the *rasm*); dots are added in a
-separate step, which is why the art below has none. ب, ت, and ث all
-share this skeleton. Two of beh's four forms:
+The square Kufic model learns its letterforms from handwritten Rust code that
+draws each form as an ASCII art grid. During training, this program supplies the
+examples that the network learns to copy, so it serves as the teacher. Each grid
+contains only the letter’s skeleton (the *rasm*). A separate step adds the dots,
+which is why the examples below have none. ب, ت, and ث all share this skeleton.
+Here are two forms of Beh:
 
 ```rust
 // Beh body (ب ت ث teeth family): open bowl; tooth when joined.
@@ -171,18 +160,17 @@ share this skeleton. Two of beh's four forms:
 ]),
 ```
 
-In the trained model, dots are generated, not input. The training set is
-every supported (letter, form, elongation) context, 437 samples. A small
-multilayer perceptron (an MLP, the simplest kind of neural network:
-layers of learned weights, each feeding the next) trains on it in a few
-minutes on CPU and reproduces all 437 exactly.
-The teacher program is only used for training and is not part of the
-.ntf file. The file holds only the trained weights: the weights are the
+The trained model generates the complete form, including its dots. The training
+set contains all 437 supported combinations of letter, form, and elongation. A
+small multilayer perceptron (MLP), a simple neural network made of sequential
+layers, learns the set in a few minutes on a CPU and reproduces every sample
+exactly. The teacher program is used only for training and is not part of the
+.ntf file. The file contains only the trained weights. Those weights are the
 font.
 
 ### 03. The .ntf File
 
-The whole format is four things in order:
+The original square Kufic file contains four parts:
 
 ```
 magic bytes "NTF0"
@@ -191,11 +179,15 @@ JSON header (format, script, style, alphabet, layer sizes)
 f32 weights, layer by layer
 ```
 
-The full byte-level spec is in
+The original v0 byte-level spec is in
 [SPEC.md](https://github.com/eliheuer/post-opentype/blob/main/docs/SPEC.md)
 in the repo.
 
-Like OpenType, one format serves every script. Everything specific to a
-font, its letters, its inputs, its output, is declared in the header.
-The weights are stored so a renderer can use them straight out of the
-file, with no unpacking step: loading a font is just reading it.
+The Nasta’liq model uses the same general structure, but stores the weights as
+8-bit values with the information needed to recover their scale. The header
+identifies the model and describes its inputs, outputs, and weight tensors. An
+engine reads the header and loads the weights in the appropriate format.
+
+The .ntf format is intended to support different scripts and network designs.
+A font does not have to use either the square Kufic model or the distilled
+Nasta’liq model.
