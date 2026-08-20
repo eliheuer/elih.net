@@ -396,34 +396,23 @@ prediction cannot work.
 
 ### Beyond This Model
 
-The next model should be designed for NeuralType instead of copied from an
-OpenType font, and this will require a new kind of font editor for training
-neural-network-based fonts. The goal is a model that uses nearby text and
-available space to make compositional decisions about letterforms, placement,
-and negative space, as a calligrapher would.
-
-I would also replace the fixed 155×219 grid with a continuous distance field
-that the renderer can sample wherever it needs more detail. This could preserve
-hairlines while removing the largest layer in the current model.
-
-I would begin with a small feed-forward network so the text updates in one
-pass. The .ntf format can support different network designs, so future fonts do
-not have to use this model. Their speed and file size will need to be measured.
+The next step is a Nasta’liq font designed for NeuralType from the start. Its
+model should use nearby text and available space to make compositional decisions
+about letterforms, placement, and negative space, as a calligrapher would.
+Creating it will require a font editor built for designing and training
+neural-network-based fonts.
 
 ### Project Status
 
-The current distillation pipeline runs end to end. Work now focuses on a larger
-corpus, model quality, worst-case proof sheets, and tests with real Urdu and
-Persian text. New fonts also need editing software built for training neural
-networks. I plan to have a prototype of this software and the first Nasta’liq
-font designed for the format ready for ATypI 2026 in Sharjah, where I will be
-available to demo the work and answer questions from companies, independent
-designers, and engineers interested in exploring this approach. [Get in
-touch](mailto:eli@elih.net) if you want to discuss the project.
+I plan to demo a prototype of the editor and the first Nasta’liq font designed
+for NeuralType at ATypI 2026 in Sharjah. I will be available to answer questions
+from companies, independent designers, and engineers interested in exploring
+this approach. [Get in touch](mailto:eli@elih.net) if you want to discuss the
+project.
 
-Development happens
-in the [post-opentype repo](https://github.com/eliheuer/post-opentype).
-The plan lives in
+Development happens in the
+[post-opentype repo](https://github.com/eliheuer/post-opentype), with the current
+plan in
 [docs/DISTILL.md](https://github.com/eliheuer/post-opentype/blob/main/docs/DISTILL.md).
 The distilled font is licensed under the OFL and retains Gulzar’s copyright
 notice and credit.
