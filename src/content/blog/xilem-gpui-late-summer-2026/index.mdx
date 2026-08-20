@@ -936,6 +936,18 @@ in the browser build because the bundled UI font has no Arabic and
 there is no system-font fallback there. Native macOS falls back
 fine.
 
+### 2026-08-20: the bottom bar earns its keep
+
+The grid's bottom bar was a static hint line. It now does what the
+Glyphs bar does: add and remove glyph buttons on the left, the
+selection count in the center ("1 selected, 320/799 glyphs",
+tracking the active sidebar filter and search), and a cell-size
+zoom slider on the right. Adding a glyph inserts an empty one into
+every master, rechecks interpolation compatibility, and selects
+it; removing deletes it from every master. The Name/Unicode toggle
+also got honest: the font order was already unicode order, so
+Unicode is the default and Name now actually sorts by name.
+
 ## Running comparison
 
 Updated as the log grows.
