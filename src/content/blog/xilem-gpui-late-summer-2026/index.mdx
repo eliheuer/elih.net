@@ -898,6 +898,14 @@ found on the way: gpui_web's read_from_clipboard is a stub (browsers
 only expose an async clipboard read), so text paste works natively
 but not in the wasm build yet.
 
+### 2026-08-19: UI cleanup begins
+
+First feedback from real testing: the wght slider had a full-width
+strip to itself between the grid and the preview. It is now an Axes
+section in the sidebar - left pane under Categories in grid mode,
+right pane in the editor - the way the web editor and Glyphs treat
+axis controls: a pane item, not a layout row.
+
 ## Running comparison
 
 Updated as the log grows.
