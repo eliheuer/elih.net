@@ -1097,6 +1097,23 @@ std::env::temp_dir panics on wasm, and swapping a designspace for a
 single UFO left the axis sliders indexing an axis that no longer
 existed. Both fixed.
 
+### 2026-08-20: live at runebender.org/gpui
+
+Two findings closed the day. First, the browser lag that made the
+wasm build feel unusable was nothing but a missing --release flag -
+every browser session so far had served debug wasm, and bezier math
+at opt-level 0 is 10-50x slower. The release build feels fine.
+
+Second, with performance solved, the GPUI editor went live at
+runebender.org/gpui as an experimental preview beside the main
+editor. GitHub Pages cannot send the COOP/COEP headers wasm atomics
+need, so a vendored coi-serviceworker adds them client-side (the
+first visit reloads once). The 30MB wasm travels as 8.7MB gzipped.
+The known browser limitations still stand - inputs other than
+search cannot take focus, menu items do not activate, no paste -
+all upstream gpui_web issues. It is a toy for now, and that is the
+point.
+
 ## Running comparison
 
 Updated as the log grows.
