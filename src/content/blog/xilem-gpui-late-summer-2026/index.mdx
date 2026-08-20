@@ -1081,6 +1081,22 @@ went 30/33 to 33/33 in one click during verification. The search
 box gained the web's scope, regex, and match-case toggles, and the
 header now stamps the save time.
 
+### 2026-08-20: multi-select, thumbnails, and File → New Font
+
+The grid selects like the web now - cmd-click toggles, shift-click
+ranges through the visible order, marks apply to the whole
+selection, and the sidebar footer copies the selection as text.
+Master rows show the current glyph rendered in each master. And
+Cmd+N builds a new font: an Untitled UFO with GF metrics and the
+Latin Core set as 324 empty encoded glyphs, assembled through norad
+where the web hand-writes plists, with Save As picking where it
+lands on disk.
+
+The new-font path also surfaced two wasm crashes worth recording:
+std::env::temp_dir panics on wasm, and swapping a designspace for a
+single UFO left the axis sliders indexing an axis that no longer
+existed. Both fixed.
+
 ## Running comparison
 
 Updated as the log grows.
