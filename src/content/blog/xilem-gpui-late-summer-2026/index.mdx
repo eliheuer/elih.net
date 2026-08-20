@@ -874,6 +874,30 @@ intersect collapsing a zero to its counter and undo restoring both
 contours, a component dragged, deleted, restored, and its base
 opened beside it with a double click.
 
+### 2026-08-19: the design grid, and what neighbours look like up close
+
+One more pass before a testing break. The zoom-dependent design
+grid came over from the web renderer: an 8-unit lattice fades in
+past 0.8x zoom, and past 8x a 2-unit fine grid joins underneath,
+skipping every fourth line so the 8s read as one grid at every
+level. It anchors to the active sort's origin, so the baseline
+always lands on a gridline.
+
+The grid marks a mode change - at that zoom you are drawing, not
+reading - and the neighbours follow suit: inactive sorts thin from
+a solid fill to a third strength, gain a hairline outline, and show
+their points greyed out, the same read-only treatment an
+interpolated instance gets. The glyph being edited keeps a ghost
+fill at a tenth strength underneath its outline so counters read
+as counters.
+
+Cmd+V also routes like the web now: copied contours paste when the
+outline clipboard holds something, otherwise the system clipboard's
+text types itself into the buffer, line breaks included. One catch
+found on the way: gpui_web's read_from_clipboard is a stub (browsers
+only expose an async clipboard read), so text paste works natively
+but not in the wasm build yet.
+
 ## Running comparison
 
 Updated as the log grows.
