@@ -959,6 +959,16 @@ kerning and shaping included. The separate preview buffer and its
 input plumbing (click-to-caret, typing, kern-pair status) are gone,
 and the grid gets the recovered height.
 
+### 2026-08-20: a Font tab, the Glyphs way
+
+The only way back to the glyph overview from the editor was
+Escape. A tab strip now sits under the header, following Glyphs: a
+Font tab that returns to the grid, and a tab for the edit session
+titled with its text (codepoints as themselves, unencoded glyphs
+as /name). Switching tabs keeps the session intact - the same
+buffer, tool, and undo stack are there when you come back, and
+Escape parks the session in the strip instead of abandoning it.
+
 ## Running comparison
 
 Updated as the log grows.
