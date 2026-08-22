@@ -1,0 +1,283 @@
+---
+title: 'Xix: A Design Engineer’s Fork of Xilem'
+description: 'Why I am forking the Xilem UI framework, what the alternatives do, and why Xix does it differently.'
+date: 2026-08-22
+tags: ['rust', 'tools', 'design']
+authors: ['elih']
+draft: true
+---
+
+import Callout from '../../../components/Callout.astro'
+
+<Callout variant="warning" title="Work in progress">
+This post is a live design log for a project that has no code yet.
+Parts of it are drafted with AI assistance and may contain unedited AI
+slop. Details will change as the work continues.
+</Callout>
+
+Xix is a fork of [Xilem](https://github.com/linebender/xilem), the
+Rust UI framework from the Linebender ecosystem. It is for two kinds
+of work: professional graphics software (font editors, node-based
+editors, video editors, trading terminals) and the internal tools and
+products that a design engineer builds fast, mostly through AI
+agents. The repository is
+[github.com/eliheuer/xix](https://github.com/eliheuer/xix). It holds
+two documents, `PLAN.md` (the evidence) and `DESIGN.md` (the
+architecture). This post is the short version, and it will grow as
+the design settles.
+
+The one-line idea: in Xix, design is a type.
+
+```rust
+stack_v((
+    heading("Metrics"),
+    form((
+        field("Ascender", number(&m.ascender)),
+        field("Descender", number(&m.descender)),
+    )),
+    button("Apply", Emphasis::Primary, on_apply),
+))
+.gap(Space::M)
+.inset(Space::L)
+```
+
+There is no number in that code. `Space::M` is a step on a scale the
+theme owns. `Emphasis::Primary` is a role the theme paints. The
+compiler rejects `padding(13.0)`. An agent that writes this code
+cannot produce a layout with wrong spacing, because the API has no
+way to say wrong spacing.
+
+## 1. Why fork
+
+I have ported the same font editor to three UI stacks: a Vue shell
+over a Rust core, [Xilem](/blog/xilem-gpui-late-summer-2026), and
+[GPUI](https://gpui.rs/). The Xilem port has 13,257 lines of custom
+Masonry widgets and 2,316 lines of Xilem views. Everything with real
+graphics-app character (the canvas, gestures, undo, scrolling, focus,
+shortcuts, panels) was written below the view layer. The view layer
+rebuilds everything on every state change, so point drags are
+throttled to every third pointer move. Xilem has no menus, no context
+menus, no window-level shortcuts, no drag-and-drop, and no browser
+target.
+
+In August 2026 a Xilem maintainer published
+[a critical review](https://hackmd.io/@s_haMSbyTAOWfoXc1aYNUg/Hka74gCwZg)
+that says the same thing from the inside: "the current architecture
+isn't remotely close to working", "we still don't benchmark Xilem",
+and "at least half its problems come from baking two-way bindings
+into its API". The proposed fix is a type-erased `Component` with
+runtime keys, and "some type checking will move from compile time to
+runtime".
+
+I agree with the diagnosis and not with the cure. Masonry, the widget
+engine under Xilem, is sound: an arena of widgets addressed by id, a
+typed property system, a pass system, a test harness that renders
+headless, and a rendering abstraction that runs on Vello GPU, Vello
+Hybrid, or Vello CPU. The reactive layer on top is the part that
+failed. So the fork keeps Masonry, stays close to it, and replaces
+the layer above.
+
+## 2. Who it is for
+
+The core user is a design engineer: a hybrid designer and programmer
+who ships internal tools and SaaS products and does most of the
+building through agents. They know what good looks like. They should
+not spend an afternoon telling an agent the padding is wrong again.
+
+The second user is the graphics application. A font editor, a node
+editor in the ComfyUI class, a video timeline, a chart terminal. Same
+framework, heavier canvas.
+
+The test for every decision: an agent, given only the framework and
+a one-paragraph brief, produces a screen a designer would ship without
+touching spacing, type, or color. If it cannot, the framework is
+missing a constraint.
+
+## 3. Why agent-built UI looks bad
+
+Agent output drifts because the frameworks it targets accept any
+value. `padding: 13px`, `#3b3f44`, `font-size: 15px`, a margin on a
+child here and a gap on a parent there. Every value is a free number,
+so every value is a decision, and a thousand independent decisions do
+not add up to a system.
+
+The current fixes put the constraint outside the framework. MCP
+servers that hand the agent design tokens and review checklists.
+Prompt skills that ban generic fonts by name. Registries of themed
+components. They help. They do not work by construction, because the
+framework underneath still takes any number.
+
+Xix puts the constraint in the type system:
+
+- Spacing, radius, elevation, text style, color role, and motion are
+  enums. Widget APIs take the enum and nothing else. `Space::raw(px)`
+  exists for the one percent of cases, and a lint lists every use.
+- Elements never have outer margins. Containers own gap and inset.
+  The margin conversation is deleted, not won.
+- Spacing is relational. A stack resolves its gap from its region
+  (toolbar tight, panel medium, dialog generous), its density, and
+  how deep its groups nest. Outer gaps are always at least inner
+  gaps. An agent writes structure; spacing is a consequence.
+- Typography uses real metrics from Parley. An icon next to a label
+  centers on the cap height. Stacks of text measure their gap from
+  ink to ink. Line heights sit on a 4 pt rhythm.
+- Color is by role, generated in OKLCH from a few seeds, contrast
+  checked when the theme is built. The build fails on a failing
+  pair.
+- Nested corners compute their own radius. Hit targets grow to the
+  minimum. A second primary button in one region is a lint warning.
+
+Rust is the right medium because the checks are static and free.
+`Space::M` is one `match` away from a float. No stylesheet, no
+runtime, no second language.
+
+## 4. The alternatives, and the difference
+
+**Upstream Xilem.** Views carry a `State` generic so callbacks can
+mutate app state directly. That one decision produces the generics
+explosion, the error messages, and the higher-order component
+signatures the maintainer calls "not an acceptable public API". The
+proposed fix erases the types. Xix keeps them and removes the
+`State` parameter instead: views build from `&State`, handlers return
+typed messages, and the heavy surfaces (a canvas, a timeline) are
+retained islands that own their state and emit messages outward.
+Both of my ports converged on islands by force. Xix makes it the
+documented pattern.
+
+**GPUI.** The framework from Zed. My GPUI port reached near parity in
+one 13,809-line file with one entity and one render function, because
+handlers get `&mut self` and one action list drives the keymap and
+the menu bar. It is the best application layer in Rust today. It is
+also a runtime-borrow-checked object graph, it tracks Zed main, it
+is not on the Linebender stack, its renderer ends a render pass at
+every run of paths (3 to 6 fps on a screen of glyph outlines before
+batching), it indexes vertices with a `u16`, and it has no transform
+groups, so node editors on GPUI draw everything with primitives. Xix
+takes GPUI's application layer ideas (actions as plain structs bound
+by data, a focus chain that dispatches them, a headless component
+base under a styled set) on top of Masonry and Vello.
+
+**Floem and signals.** Floem builds the view tree once and updates it
+through signals. The update precision is right. The runtime is not:
+signals live in thread-local storage, which breaks embedding in a
+host that owns the threads (an audio plugin, a browser frame
+callback), and the benchmark case for signals ("small state produces
+a large tree") is the opposite of a graphics app. Xix gets the same
+precision from tick-based change detection, the mechanism Bevy uses:
+writes stamp a tick, reads filter on it, no tracker, no thread-locals.
+
+**Makepad.** The closest project in spirit. Makepad 2.0 is "an
+AI-accelerated application development environment for Rust" with
+Splash, "a live readable UI DSL" that "models can generate, stream,
+inspect, and revise". Its `counter` example in August 2026 puts state
+in a script VM:
+
+```rust
+script_mod! {
+    let state = { counter: 0 }
+    mod.state = state
+    // ...
+    main_view := View{
+        width: Fill
+        height: Fill
+        flow: Down
+        spacing: 12
+        align: Center
+        on_render: ||{
+            counter_label := Label{
+                text: "Count: " + state.counter
+            }
+        }
+    }
+}
+```
+
+and the Rust side evaluates script to change it:
+
+```rust
+script_eval!(cx, {
+    mod.state.counter += 1
+    ui.main_view.render()
+});
+```
+
+Makepad's answer to agent-generated UI is a second language with a
+live runtime, its own shader language, and its own renderer. That buys
+live editing without recompiling, and a Figma-like studio. It costs
+the thing I want most: the compiler checking the UI. `spacing: 12` is
+a free number again. Xix bets the other way. The agent already writes
+Rust. The compiler is the reviewer that never gets tired, and its
+diagnostics are the feedback loop. Live editing in Xix is for data
+(themes, keymaps, layouts), not for code.
+
+**Bevy.** Not a UI framework, but the one large Rust project that
+solved the object-graph problem with the grain of the language: ids
+instead of pointers, typed components, systems that declare their
+access, change detection by ticks. Bevy Scene Notation (0.19, June
+2026) composes UI as patches over defaults and attaches callbacks as
+observers with declared access. Xix takes the ticks and the idea that
+a theme is a patch. It does not take the ECS world or the game loop.
+
+**The web.** Tailwind and shadcn are the lingua franca of agent UI
+because the tokens are short and the defaults are good. They are
+also strings. Xix keeps the short vocabulary and makes it a type.
+
+## 5. The architecture in short
+
+- **Engine.** The Masonry fork. Widget arena, properties, passes,
+  layers, headless test harness, rendering through `imaging`.
+- **Design kernel.** Tokens as enums, scales with density, relational
+  spacing, metric-aware text, OKLCH roles with contrast checks.
+- **Layout.** One model, taken from Figma auto layout: stacks with
+  gap and inset, per-child hug, fill, or fixed on each axis, grid,
+  overlay, and `adaptive` for width classes. A Figma frame maps to a
+  stack one to one.
+- **Parts.** Shell (toolbar, sidebar, content, inspector, status,
+  dock), panel, section, form, field, table, tabs, tree, menus,
+  command palette, dialog, toast, inputs. Each is a headless behavior
+  on the Understory crates plus a styled layer that uses only tokens.
+- **Canvas kit.** Viewport, gesture recognizer with a tool delegate,
+  retained scene with damage regions, spatial hit testing, snapping,
+  and transform groups that host ordinary widgets under an affine.
+- **Application layer.** Actions, keymaps as data, one menu model for
+  in-window and native, undo with coalescing, background work as
+  request and response, imperative windows, persisted layouts.
+- **Agent loop.** `xix render` to PNG with no window, `xix dump` of
+  the tree with resolved tokens, `xix lint`, snapshot tests, one
+  `LLMS.md` that holds the whole vocabulary.
+
+Principles, in one line each: maximally adapted to Rust; built for
+real applications; canvas first; keep the Linebender stack;
+customizable by the user of the app; builds on another machine; a
+library, not a framework (the host owns the loop and the threads, no
+thread-locals); defaults are the product.
+
+## 6. The two proving applications
+
+Runebender on Xix should be under 5,000 lines at feature parity with
+the web editor. Most of the GPUI port's 13,809 lines are gesture,
+hit testing, cache, and theme plumbing. On Xix that is framework.
+
+A node editor in the ComfyUI class is the second test. ComfyUI moved
+node bodies from canvas drawing to Vue components in 2025 because
+canvas widgets were "a development bottleneck", and now runs two
+rendering systems with zoom, hit testing, and z-order seams between
+them. In Xix the graph is a transform group inside the canvas and
+node bodies are ordinary widget subtrees: forms, sliders, previews,
+laid out by the same stack and inset model. Below a zoom threshold a
+node mounts a card instead of a subtree. Only nodes in the viewport
+mount at all. The document is `understory_node_graph`, with a
+ComfyUI workflow importer so existing graphs load.
+
+## 7. Status
+
+No code. Two documents, a list of measurements to run before the
+reactive layer is chosen, and a list of prototypes: the token cascade
+on Masonry properties, a headless render of three text styles with
+correct rhythm, a static view with compile-time tree shape, and
+driving Masonry from a caller-owned loop. The first acceptance test
+is a settings page built by an agent from a one-paragraph brief, with
+zero spacing, type, or color corrections from a designer.
+
+Sources for every claim here are listed at the end of `PLAN.md` in
+the repository.
