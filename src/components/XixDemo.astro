@@ -1,0 +1,59 @@
+---
+/**
+ * A live xix example, mounted into a canvas when it scrolls into view.
+ *
+ * The bundle for `name` lives at `/xix/<name>/<name>_web.js` plus its
+ * `_bg.wasm`, produced by `tools/web-build.sh <name>` in the xix repo
+ * and copied into `public/xix/<name>/`.
+ */
+interface Props {
+  name: string
+  width?: number
+  height?: number
+  caption?: string
+}
+const { name, width = 320, height = 480, caption } = Astro.props
+const id = `xix-${name}-${Math.random().toString(36).slice(2, 8)}`
+---
+
+<figure class="xix-demo" data-xix={name} data-id={id}>
+  <canvas
+    id={id}
+    width={width}
+    height={height}
+    style={`width:${width}px;height:${height}px;max-width:100%;display:block;border-radius:12px;background:#151517;outline:none;`}
+    aria-label={caption ?? `${name} example`}
+    tabindex="0"></canvas>
+  {caption && <figcaption>{caption}</figcaption>}
+</figure>
+
+<script>
+  const seen = new WeakSet<Element>()
+  const mount = async (figure: HTMLElement) => {
+    if (seen.has(figure)) return
+    seen.add(figure)
+    const name = figure.dataset.xix!
+    const canvas = figure.querySelector('canvas') as HTMLCanvasElement
+    try {
+      const mod = await import(/* @vite-ignore */ `/xix/${name}/${name}_web.js`)
+      await mod.default()
+      mod.mount(canvas)
+      figure.dataset.state = 'ready'
+    } catch (err) {
+      console.error(`[xix] failed to mount ${name}`, err)
+      figure.dataset.state = 'failed'
+    }
+  }
+  const observer = new IntersectionObserver(
+    (entries) => {
+      for (const entry of entries) {
+        if (entry.isIntersecting) {
+          observer.unobserve(entry.target)
+          mount(entry.target as HTMLElement)
+        }
+      }
+    },
+    { rootMargin: '200px' },
+  )
+  document.querySelectorAll<HTMLElement>('figure.xix-demo').forEach((el) => observer.observe(el))
+</script>

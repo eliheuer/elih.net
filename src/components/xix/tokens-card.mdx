@@ -1,0 +1,26 @@
+```rust
+fn card(app: &App) -> impl WidgetView<App> + use<> {
+    let t = &app.theme;
+    flex_col((
+        label("New account").text_size(20.0).color(t.color(Role::Text)),
+        field("Name", &app.name, t, |app: &mut App, v| app.name = v),
+        field("Email", &app.email, t, |app: &mut App, v| app.email = v),
+        flex_row((
+            button(label("Cancel").color(t.color(Role::Text)), |_: &mut App| {})
+                .background_color(t.color(Role::Field))
+                .corner_radius(t.radius())
+                .padding(t.space(Space::M)),
+            button(label("Create").color(t.color(Role::Text)), |_: &mut App| {})
+                .background_color(t.color(Role::Accent))
+                .corner_radius(t.radius())
+                .padding(t.space(Space::M)),
+        ))
+        .gap(t.space(Space::S)),
+    ))
+    .cross_axis_alignment(CrossAxisAlignment::Start)
+    .gap(t.space(Space::M))
+    .padding(t.space(Space::L))
+    .background_color(t.color(Role::Surface))
+    .corner_radius(t.radius())
+}
+```

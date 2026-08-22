@@ -8,12 +8,16 @@ draft: false
 ---
 
 import Callout from '../../../components/Callout.astro'
+import XixDemo from '../../../components/XixDemo.astro'
+import TokensCard from '../../../components/xix/tokens-card.mdx'
+import TokensTheme from '../../../components/xix/tokens-theme.mdx'
 
 <Callout variant="warning" title="Work in progress draft">
 This post is an unfinished draft, published early for feedback. The
-project has no code yet. Parts of the text are drafted with AI
-assistance and may contain unedited AI slop. Details will change as
-the work continues. Comments and corrections are welcome.
+code is a fresh fork with two reworked examples. Parts of the text
+are drafted with AI assistance and may contain unedited AI slop.
+Details will change as the work continues. Comments and corrections
+are welcome.
 </Callout>
 
 Xix is a fork of [Xilem](https://github.com/linebender/xilem), the
@@ -29,24 +33,34 @@ the design settles.
 
 The one-line idea: in Xix, design is a type.
 
-```rust
-stack_v((
-    heading("Metrics"),
-    form((
-        field("Ascender", number(&m.ascender)),
-        field("Descender", number(&m.descender)),
-    )),
-    button("Apply", Emphasis::Primary, on_apply),
-))
-.gap(Space::M)
-.inset(Space::L)
-```
+The demo below is a Xix program running in this page. It is not a
+video and not a web component: it is Masonry widgets, compiled to
+WebAssembly, rendered by Vello on the CPU into a canvas. Move the
+sliders. The form restyles because every visible value in its code is
+a token that resolves against the theme the sliders edit.
 
-There is no number in that code. `Space::M` is a step on a scale the
-theme owns. `Emphasis::Primary` is a role the theme paints. The
-compiler rejects `padding(13.0)`. An agent that writes this code
-cannot produce a layout with wrong spacing, because the API has no
-way to say wrong spacing.
+<XixDemo name="tokens" width={360} height={420} caption="Density, radius, and hue are the theme. The form names tokens, never numbers." />
+
+This is the form. There is no pixel value and no color in it:
+
+<TokensCard />
+
+And this is the theme the tokens resolve against. The sliders change
+these three numbers; nothing else in the program changes:
+
+<TokensTheme />
+
+`Space::M` is a step on a scale the theme owns. `Role::Accent` is a
+color the theme derives in OKLCH. The compiler rejects
+`padding(13.0)`. An agent that writes this code cannot produce a
+layout with wrong spacing, because the API has no way to say wrong
+spacing. The whole example is 178 lines in
+[`xilem/examples/tokens.rs`](https://github.com/eliheuer/xix/blob/main/xilem/examples/tokens.rs).
+
+The upstream Xilem calculator example, reworked the same way, also
+runs here:
+
+<XixDemo name="calc" caption="The Xilem calculator example, reworked with tokens and key roles. Click the keys." />
 
 ## 1. Why fork
 
@@ -272,8 +286,10 @@ ComfyUI workflow importer so existing graphs load.
 
 ## 7. Status
 
-No code. Two documents, a list of measurements to run before the
-reactive layer is chosen, and a list of prototypes: the token cascade
+A fork of upstream Xilem at `ce7b04d2` that builds on stable, a
+headless screenshot tool, a browser driver (the demos above), and two
+reworked examples. Two documents, a list of measurements to run
+before the reactive layer is chosen, and a list of prototypes: the token cascade
 on Masonry properties, a headless render of three text styles with
 correct rhythm, a static view with compile-time tree shape, and
 driving Masonry from a caller-owned loop. The first acceptance test
