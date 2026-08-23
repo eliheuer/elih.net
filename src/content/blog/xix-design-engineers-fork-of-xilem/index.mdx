@@ -270,7 +270,62 @@ customizable by the user of the app; builds on another machine; a
 library, not a framework (the host owns the loop and the threads, no
 thread-locals); defaults are the product.
 
-## 6. The two proving applications
+## 6. What building a real editor taught
+
+The best way to design a framework is to build a hard application on
+it and watch where it fights back. So I ported Runebender, my font
+editor, onto Xix slice by slice: a glyph grid, a glyph editor with
+seven tools (select, pen, hyperbezier pen, rectangle, ellipse, knife,
+measure), point editing, undo, save, boolean operations, a sidebar,
+and an inspector panel. It is a real editor now, close to the GPUI
+version in look and feel. The code and a build log of what each slice
+forced into the framework are in
+[runebender-xix](https://github.com/eliheuer/runebender-xix).
+
+Three things came out of it, and they changed the plan.
+
+First, the reactive layer barely matters. I expected the hard question
+to be how views update. It was not. Across the whole port the reactive
+layer was almost invisible. The work was widgets, painting, gestures,
+and moving the document around. So Xix stops treating the reactive
+model as its identity. It picks the smallest static one that fits Rust
+and moves on.
+
+Second, the real primitive is the canvas island, and it should be
+built in. A font editor is a shell of panels around a few retained,
+GPU-drawn surfaces: the grid, the editor, later a kerning view and a
+node graph. Each one owns its own tools and paints a scene. In Xix
+today each such surface costs about 150 lines of identical
+scaffolding before any real drawing. That repetition is the clearest
+signal in the project: the canvas island has to be a first-class part
+of the framework, where you write only how it paints, how it responds
+to gestures, and the typed messages it sends, and the framework
+supplies the rest.
+
+Third, the hardest question is who owns the document. I first made the
+editor island own its edit session. Painting and dragging were easy,
+but the app could not read the edits back (a real bug: it saved a
+stale glyph) and the panels could not edit a point. GPUI avoids this
+by putting everything in one shared object, at the cost of
+re-rendering on every keystroke. Xix will split it: the document lives
+in app state and is edited by typed commands, the island holds only
+the throwaway view state (the viewport, the in-progress gesture), and
+a tick marks what changed so only the affected surface repaints. That
+gives the shared-state feel without the shared-state cost.
+
+There was also a plainer lesson: the framework is missing menus. Xilem
+is built on winit, which has no menu support, and Masonry routes
+keyboard events only to the widget that has focus, so there is no
+place to put a real Cmd+S or a menu accelerator. GPUI has native menus
+on macOS and Linux and a global shortcut system; Xix has neither yet.
+The fix is a window-level action layer feeding both a keymap and a
+native menu bar. It is the single most-hit gap in the port, and the
+clearest case of the application teaching the framework what it needs.
+
+The full architecture review, written after the port, is in
+[DESIGN.md](https://github.com/eliheuer/xix/blob/main/DESIGN.md).
+
+## 7. The two proving applications
 
 Runebender on Xix should be under 5,000 lines at feature parity with
 the web editor. Most of the GPUI port's 13,809 lines are gesture,
@@ -287,17 +342,17 @@ node mounts a card instead of a subtree. Only nodes in the viewport
 mount at all. The document is `understory_node_graph`, with a
 ComfyUI workflow importer so existing graphs load.
 
-## 7. Status
+## 8. Status
 
-A fork of upstream Xilem at `ce7b04d2` that builds on stable, a
-headless screenshot tool, a browser driver (the demos above), and two
-reworked examples. Two documents, a list of measurements to run
-before the reactive layer is chosen, and a list of prototypes: the token cascade
-on Masonry properties, a headless render of three text styles with
-correct rhythm, a static view with compile-time tree shape, and
-driving Masonry from a caller-owned loop. The first acceptance test
-is a settings page built by an agent from a one-paragraph brief, with
-zero spacing, type, or color corrections from a designer.
-
-Sources for every claim here are listed at the end of `PLAN.md` in
-the repository.
+Xix is a fork of upstream Xilem that builds on stable Rust, with a
+headless screenshot tool, a browser driver (the demos above), and
+reworked examples. On top of it, Runebender has been ported far enough
+to be a working single-master editor: the grid, seven tools, point
+editing, undo, save, boolean operations, and an inspector, at roughly
+60 percent of the GPUI version. The
+[DESIGN.md](https://github.com/eliheuer/xix/blob/main/DESIGN.md)
+review turned the port's findings into firm decisions: a Scene Island
+primitive, a document that lives in app state and is edited by typed
+commands, tick-based repaint, and a window-level action and menu
+layer. Those are the next things to build in the framework itself.
+This post will grow as that work happens.
