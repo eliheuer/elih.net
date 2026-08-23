@@ -13,87 +13,100 @@ import TokensCard from '../../../components/xix/tokens-card.mdx'
 import TokensTheme from '../../../components/xix/tokens-theme.mdx'
 
 <Callout variant="warning" title="Work in progress draft">
-This post is an unfinished draft, published early for feedback. The
-code is a fresh fork with two reworked examples. Parts of the text
-are drafted with AI assistance and may contain unedited AI slop.
-Details will change as the work continues. Comments and corrections
-are welcome.
+This post is an unfinished draft, published early for feedback. Parts
+of the text are drafted with AI assistance and may contain unedited AI
+slop. Details will change as the work continues. Comments and
+corrections are welcome.
 </Callout>
 
-Xix is a fork of [Xilem](https://github.com/linebender/xilem), the
-Rust UI framework from the Linebender ecosystem. It is pronounced
-"zy-eks": the "xi" as in Xilem, then "x" as in Unix. Written in
-capitals it is XIX, the Roman numeral for nineteen, a number with
-meaning in the Bahá'í Faith and in Islam, and a palindrome. It is for two kinds
-of work: professional graphics software (font editors, node-based
-editors, video editors, trading terminals) and the internal tools and
-products that a design engineer builds fast, mostly through AI
-agents. The repository is
+[Xix](https://github.com/eliheuer/xix) is a fork of
+[Xilem](https://github.com/linebender/xilem), a Rust GUI framework
+from the Linebender ecosystem. It is pronounced "zy-eks": the "xi" as
+in Xilem, then "x" as in Unix. It is still very early, and I am mainly
+using it as a replacement for GPUI in my
+[Runebender](https://runebender.org/gpui) fork. I never really wanted
+to work on this. I wanted to focus on user-facing, cross-platform
+desktop applications in pure Rust. I hoped Xilem and/or GPUI would
+become what I wanted to use. The best outcome for me would be for
+Xilem to adopt some of these ideas so I could focus my energy on
+user-facing desktop applications.
+
+In my time observing the Rust GUI ecosystem, I think I understand a
+core problem facing the space. It is a simple division-of-labor
+problem. Many technical people working on these systems are completely
+removed from aesthetic and visual design concerns. On the other side
+of the software industry, people concerned only with surface-level
+aesthetics can end up building software on a mountain of complexity
+and bad engineering because they care only about the surface.
+
+What the Rust programming language promised, and what is now possible
+thanks to LLMs, is for designers and more product-focused,
+semi-technical people to move down the stack and end this
+counterproductive division of labor. This Xilem fork is built by and
+designed for that kind of user. A design engineer can design and
+prototype in code, removing the inefficiency of throwing designs over
+a wall from a non-technical designer using Figma to a non-aesthetic
+front-end engineer using completely different tools. The same applies
+to a solo developer doing everything in a project, or someone building
+internal tools with LLMs who will never look at the code.
+
+The repository is
 [github.com/eliheuer/xix](https://github.com/eliheuer/xix). It holds
 two documents, `PLAN.md` (the evidence) and `DESIGN.md` (the
-architecture). This post is the short version, and it will grow as
-the design settles.
-
-The one-line idea: in Xix, design is a type.
-
-The demo below is a Xix program running in this page. It is not a
-video and not a web component: it is Masonry widgets, compiled to
-WebAssembly, rendered by Vello on the CPU into a canvas. Move the
-sliders. The form restyles because every visible value in its code is
-a token that resolves against the theme the sliders edit.
-
-<XixDemo name="tokens" width={360} height={420} caption="Density, radius, and hue are the theme. The form names tokens, never numbers." />
-
-This is the form. There is no pixel value and no color in it:
-
-<TokensCard />
-
-And this is the theme the tokens resolve against. The sliders change
-these three numbers; nothing else in the program changes:
-
-<TokensTheme />
-
-`Space::M` is a step on a scale the theme owns. `Role::Accent` is a
-color the theme derives in OKLCH. The compiler rejects
-`padding(13.0)`. An agent that writes this code cannot produce a
-layout with wrong spacing, because the API has no way to say wrong
-spacing. The whole example is 178 lines in
-[`xilem/examples/tokens.rs`](https://github.com/eliheuer/xix/blob/main/xilem/examples/tokens.rs).
-
-The upstream Xilem calculator example, reworked the same way, also
-runs here:
-
-<XixDemo name="calc" caption="The Xilem calculator example, reworked with tokens and key roles. Click the keys." />
+architecture), both mostly generated from conversations with multiple
+LLMs about problems in the Rust GUI space. This post is a basic
+introduction to the architecture and rationale of the project. It will
+grow and change as the design settles. I am looking for early feedback,
+and nothing is set in stone.
 
 ## 1. Why fork
 
-I have ported the same font editor to three UI stacks: a Vue shell
-over a Rust core, [Xilem](/blog/xilem-gpui-late-summer-2026), and
-[GPUI](https://gpui.rs/). The Xilem port has 13,257 lines of custom
-Masonry widgets and 2,316 lines of Xilem views. Everything with real
-graphics-app character (the canvas, gestures, undo, scrolling, focus,
-shortcuts, panels) was written below the view layer. The view layer
-rebuilds everything on every state change, so point drags are
-throttled to every third pointer move. Xilem has no menus, no context
-menus, no window-level shortcuts, no drag-and-drop, and no browser
-target.
+Fear not the man who has built five desktop applications. Fear the man
+who has built the same desktop application five times.
+
+I have worked on forks of the original Druid version of the Runebender
+font editor in many GUI systems. The struggle to find the right GUI
+system for this kind of software finally pushed me to make a Xilem
+fork:
+
+1. First I worked on a font editor with the Bevy game engine:
+   [github.com/eliheuer/bezy](https://github.com/eliheuer/bezy)
+2. Then a Xilem port of Runebender:
+   [github.com/eliheuer/runebender-xilem](https://github.com/eliheuer/runebender-xilem)
+3. Then a Vue shell over a WASM/WebGPU Rust core:
+   [github.com/eliheuer/runebender-web](https://github.com/eliheuer/runebender-web)
+4. Then a GPUI fork that combined parts of the Xilem and Vue versions:
+   [github.com/eliheuer/runebender-gpui](https://github.com/eliheuer/runebender-gpui)
+5. Now I am working on Xix for the Xilem and GPUI versions:
+   [github.com/eliheuer/runebender-xix](https://github.com/eliheuer/runebender-xix)
 
 In August 2026 a Xilem maintainer published
 [a critical review](https://hackmd.io/@s_haMSbyTAOWfoXc1aYNUg/Hka74gCwZg)
-that says the same thing from the inside: "the current architecture
-isn't remotely close to working", "we still don't benchmark Xilem",
-and "at least half its problems come from baking two-way bindings
-into its API". The proposed fix is a type-erased `Component` with
-runtime keys, and "some type checking will move from compile time to
-runtime".
+that helps illustrate why I stopped working on my Runebender-Xilem fork
+and worked on alternatives with GPUI and WASM/WebGPU with a thin Vue
+frontend for the web: "the current architecture isn't remotely close
+to working", "we still don't benchmark Xilem", and "at least half its
+problems come from baking two-way bindings into its API". The proposed
+fix is a type-erased `Component` with runtime keys, and "some type
+checking will move from compile time to runtime".
 
-I agree with the diagnosis and not with the cure. Masonry, the widget
-engine under Xilem, is sound: an arena of widgets addressed by id, a
-typed property system, a pass system, a test harness that renders
-headless, and a rendering abstraction that runs on Vello GPU, Vello
-Hybrid, or Vello CPU. The reactive layer on top is the part that
-failed. So the fork keeps Masonry, stays close to it, and replaces
-the layer above.
+I agree with the diagnosis, but maybe not the cure. My working style is
+to try things, sketch with agents, and see what works. Since Xilem is
+currently in a state of flux, now seems like a good time to put
+something together. Masonry, the widget engine under Xilem, seems
+pretty good to me: an arena of widgets addressed by id, a typed
+property system, a pass system, a test harness that renders headless,
+and a rendering abstraction that runs on Vello GPU, Vello Hybrid, or
+Vello CPU. The reactive layer on top is the part that failed. The fork
+keeps Masonry, stays close to it, and replaces the layer above.
+
+The best possible outcome for this project is that it gets reabsorbed
+into Xilem. Runebender is already a fully working font editor on par
+with Glyphs 4 and the hundreds of other font editor projects that
+exist. I am currently using it to make a complex Latin, Arabic, and
+Hebrew variable font from scratch. It is designed for local AI and the
+Year of the Linux Desktop, which is happening in 2027 for sure this
+time.
 
 ## 2. Who it is for
 
