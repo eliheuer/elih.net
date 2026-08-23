@@ -18,6 +18,8 @@ const post = Astro.props
 const currentPostId = Astro.params.id
 const { Content } = await render(post)
 
+const naturalTitleWrap = currentPostId === 'xix-architecture-and-rationale'
+
 // Break the display title after its first colon (main: subtitle) so long
 // titles wrap on the colon instead of mid-phrase. Meta title stays untouched.
 const [titleMain, titleRest] = post.data.title.split(/:\s+(.*)/s)
@@ -42,7 +44,9 @@ const subtitleBreak = titleRest
         class={`blog-post-title ${currentPostId === 'virtua-grotesk' ? 'leading-[0.95]' : 'leading-[1.05]'} tracking-[-0.025em] text-balance font-semibold`}
       >
         {
-          titleRest ? (
+          naturalTitleWrap ? (
+            post.data.title
+          ) : titleRest ? (
             <>
               {titleMain}:<br />
               {subtitleBreak ? (
