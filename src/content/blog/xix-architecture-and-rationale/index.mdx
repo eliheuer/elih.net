@@ -313,19 +313,63 @@ the throwaway view state (the viewport, the in-progress gesture), and
 a tick marks what changed so only the affected surface repaints. That
 gives the shared-state feel without the shared-state cost.
 
-There was also a plainer lesson: the framework is missing menus. Xilem
-is built on winit, which has no menu support, and Masonry routes
-keyboard events only to the widget that has focus, so there is no
-place to put a real Cmd+S or a menu accelerator. GPUI has native menus
-on macOS and Linux and a global shortcut system; Xix has neither yet.
-The fix is a window-level action layer feeding both a keymap and a
-native menu bar. It is the single most-hit gap in the port, and the
-clearest case of the application teaching the framework what it needs.
+There was also a plainer lesson, the missing menu system, which the
+next section covers on its own.
 
 The full architecture review, written after the port, is in
 [DESIGN.md](https://github.com/eliheuer/xix/blob/main/DESIGN.md).
 
-## 7. The two proving applications
+## 7. The menu problem
+
+The plainest gap deserves its own section, because it is the kind of
+thing that quietly decides whether a framework gets used for real
+applications.
+
+GPUI has native menus. On macOS the menu bar is a real system menu; on
+Linux GPUI provides menus too. It also has a global action system: you
+define actions, bind keys to them in a keymap, and the same action list
+drives both the shortcuts and the menu items. So Cmd+S works from
+anywhere, the menu shows the accelerator next to the command, and the
+whole thing feels like a native desktop app. This is not a small
+detail. It is a large part of why apps built on GPUI feel finished.
+
+Xilem, and so Xix, has neither piece. Xilem is built on winit, which is
+a windowing and input library with no menu support of any kind, so
+Masonry never inherited menus. And Masonry routes keyboard events only
+to the widget that currently has focus, so there is no place to
+register a shortcut that fires regardless of what is focused. There is
+an open tracking issue for an in-window layer system, but there is no
+native menu bar and no global shortcut dispatch today.
+
+You feel this immediately when you build a real application. Porting
+Runebender, I had to hand-roll menus three separate times: a right
+click context menu painted directly into the editor canvas, a set of
+operations hung on bare letter keys because there was nowhere else to
+put them, and a Save button in the toolbar because Cmd+S has no home. A
+font editor with no File menu and no working Cmd+S is not a font editor
+anyone will use.
+
+This is, I think, one of the real reasons Rust UI frameworks struggle
+to get adopted for actual desktop software. A framework can have a
+beautiful architecture and a fast renderer, but if every app has to
+reinvent the menu bar and the shortcut system, and none of them feel
+native on the user's platform, the framework stays a place for demos
+and toys. Menus are boring, and that is exactly why they get skipped,
+and skipping them is disqualifying for professional tools.
+
+So in Xix the menu and action layer is not an afterthought bolted on at
+the end. It is a required part of the framework. The plan is to use
+muda, the cross platform menu crate from the Tauri project, for native
+menu bars on macOS, Windows, and Linux, and to build a window level
+action layer on top: actions are plain values, a keymap binds keys to
+them as data the user can edit, dispatch walks the focus chain, and one
+action list feeds both the keymap and the menu bar. That is the GPUI
+model, on the Linebender stack. It removes every menu and shortcut
+workaround in the Runebender port at once, and it is the single change
+that most moves Xix from "a fork that can draw" to "a fork you can ship
+an application on."
+
+## 8. The two proving applications
 
 Runebender on Xix should be under 5,000 lines at feature parity with
 the web editor. Most of the GPUI port's 13,809 lines are gesture,
@@ -342,7 +386,7 @@ node mounts a card instead of a subtree. Only nodes in the viewport
 mount at all. The document is `understory_node_graph`, with a
 ComfyUI workflow importer so existing graphs load.
 
-## 8. Status
+## 9. Status
 
 Xix is a fork of upstream Xilem that builds on stable Rust, with a
 headless screenshot tool, a browser driver (the demos above), and
