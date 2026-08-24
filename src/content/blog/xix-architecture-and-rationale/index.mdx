@@ -325,6 +325,28 @@ the throwaway view state (the viewport, the in-progress gesture), and
 a tick marks what changed so only the affected surface repaints. That
 gives the shared-state feel without the shared-state cost.
 
+A second pass tested two more things: real variable-font interpolation,
+and whether the editor could match the GPUI version on look. Both
+changed what I think the framework owes the user. Interpolation works
+now. The editor loads every master of a designspace, and moving an axis
+slider computes an instance at that location and shows it read-only over
+the master, the way Glyphs does. It interpolates composite glyphs by
+interpolating each component's base and offset, so accented letters
+interpolate too. The GPUI port never finished this.
+
+Matching the look was mostly defaults, not features. Two one-line
+changes closed most of the gap: fill each grid glyph with its mark color
+instead of gray, and round the cell corners. That is the "defaults are
+the product" claim proved on a real screen. A design engineer judges the
+untouched app, not the part you can tune. Chasing that quality is what
+exposed the missing primitives. The sidebar rows, the color swatches,
+the collapsible sections, and the glyph grid itself are hand-assembled
+from lower-level parts, because the framework has no list row, no
+swatch, no section header, and no collection view. The grid is the
+expensive one: span packing, scroll math, and hit routing by hand, and
+it is the same primitive a node canvas and an asset browser need. These
+are logged as D9 in DESIGN.md.
+
 There was also a plainer lesson, the missing menu system, which the
 next section covers on its own.
 
@@ -403,9 +425,11 @@ ComfyUI workflow importer so existing graphs load.
 Xix is a fork of upstream Xilem that builds on stable Rust, with a
 headless screenshot tool, a browser driver (the demos above), and
 reworked examples. On top of it, Runebender has been ported far enough
-to be a working single-master editor: the grid, seven tools, point
-editing, undo, save, boolean operations, and an inspector, at roughly
-60 percent of the GPUI version. The
+to be a working multi-master editor with real variable-font
+interpolation: the grid, seven tools, point editing, undo, save, boolean
+operations, designspace masters, an inspector, and a category, language,
+and filter sidebar. After a visual pass it tracks the GPUI version
+closely on look. The
 [DESIGN.md](https://github.com/eliheuer/xix/blob/main/DESIGN.md)
 review turned the port's findings into firm decisions: a Scene Island
 primitive, a document that lives in app state and is edited by typed
