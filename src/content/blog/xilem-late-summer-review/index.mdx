@@ -279,6 +279,70 @@ slider, one resizable split, and the native menu bar. Everything else,
 is not where GPUI's advantage comes from. The advantage is that `div()`
 is a styled, clickable box by default, and the scale is closed.
 
+## Why it still does not look the same
+
+I have spent days on this and the two builds still do not look alike.
+That is the most useful thing in this post, so here is the whole
+diagnosis.
+
+**Nothing here is broken in the crash sense.** The widgets work. Layout
+runs. The application does what a font editor does. What is missing is
+the last twenty percent of control over how things look, and that
+twenty percent is the whole difference between an application that
+reads as finished and one that reads as a prototype.
+
+**Every small adjustment costs more, so I make fewer of them.** That is
+the mechanism, and it is worth being concrete. In one working session I
+wanted five ordinary things:
+
+| What I wanted | GPUI | Xilem |
+| --- | --- | --- |
+| A panel floating over the canvas | absolute positioning | `zstack`, which never finished compiling; painted by hand instead |
+| A title that gives way when the bar is full | `flex_1` + `overflow_hidden` | nothing clips; truncate the string by character count |
+| A rule under the header | `border_b_1` | one border width for all four sides; a one pixel box instead |
+| A chip in a toolbar | `px_2` | undo the stock button's padding, border and centring |
+| A collapsing section header | `div()` with a click handler | a button with three properties removed and a stretched row inside |
+
+Not one of those is hard. Each is between one and five extra lines, in
+application code, about nothing. But a person adjusting a screen makes
+twenty of those decisions an hour, and if each costs an afternoon, or
+turns out to be impossible, you ship the six you could afford. Six
+adjustments where twenty were needed is exactly what "unfinished" looks
+like.
+
+**The defaults point the wrong way.** `div()` is a styled, clickable box
+with no padding, no border, no minimum size and no opinion. You compose
+upward from nothing. Masonry's widgets each arrive with an opinion, and
+the opinion is usually "form control". So Xilem work is subtraction, and
+subtraction is more code and is never quite complete. My icon button is
+175 lines because the stock button had to be fought; my section header
+is a button with three things removed.
+
+**The workarounds are design decisions in disguise.** This is the part
+that surprised me. When the title bar ran out of room, the fix
+available to me was to delete the file name from it. That is not a
+layout tweak, it is a change to what the application shows the user,
+forced by the fact that nothing clips. Every missing primitive turns
+into a small design compromise, and the compromises are what you see.
+
+**And I have been matching the wrong thing.** For most of this work I
+was reading the GPUI source and matching it line by line: the same
+header order, the same 24 pixel tiles, the same label block of 4 over, 2
+between, 8 under. I never put the two screenshots side by side, because
+I do not have a way to render the GPUI build headlessly and the tools
+for looking at a Xilem application are ones I wrote myself. Matching
+source is not matching pixels. That gap is mine, and it is also the
+gap pain point 2 is about: an application that cannot see itself is
+built blind, and blind work drifts.
+
+The honest summary is that Xilem can express almost everything the GPUI
+build does. It costs three to five times the lines, some of it is
+unreachable from view code, one of it did not compile, and the total of
+those small costs is a screen that looks like nobody finished it.
+Closing that is not one feature. It is a parts list, a closed scale,
+clipping, per-side borders, a working overlay, and a way to see the
+result. Most of those are small on their own.
+
 ## Where GPUI is worse
 
 To keep this honest, since I ship on both.
@@ -397,5 +461,5 @@ reload, the curve and measure analyses, and a text tool on the shared
 engine.
 
 The GPUI one is further along and, more to the point, it looks better.
-Closing that gap is the work this review came out of, and the next post
-will be about what closing it costs.
+It still looks better after several days of closing the gap on purpose,
+which is the subject of the section above.
