@@ -310,6 +310,36 @@ turns out to be impossible, you ship the six you could afford. Six
 adjustments where twenty were needed is exactly what "unfinished" looks
 like.
 
+**Four things that are hard to design with, specifically.** These came
+out of one session of closing the gap, and each one shows up over and
+over rather than once.
+
+*Nothing clips, and nothing scrolls politely.* There is no
+`overflow: hidden`. A child that is too wide is not cut, it is placed
+past the edge of the window. And a portal draws its scroll bar over its
+own content rather than beside it, so anything flush right sits under
+the bar. Between them, my sidebar counts, my inspector values and my
+filter buttons were all half eaten, and the fix is a fixed spacer at the
+end of every row plus hand-truncating strings by character count. Three
+separate workarounds for one missing idea.
+
+*Borders are one width on all four sides.* A rule under a header is a
+one pixel box with a background colour.
+
+*A new option on a hand-written widget costs five edits.* The widget
+struct, the view struct, `build`, `rebuild`, and the constructor's
+signature. I wanted a boolean for a detail view on my glyph grid and
+smuggled it inside an existing `Copy` struct that was already being
+passed through, because five edits for a bool is the kind of tax that
+stops you trying things.
+
+*Padding compounds silently.* My sidebar is a panel, and the scrolling
+column inside it was also a panel. Two panel insets took 48 pixels out
+of a 200 pixel column, which is where all the counts had gone. Nothing
+warns you; the column just looks wrong and you go hunting. A design
+system with named regions makes this better and does not make it go
+away, because the mistake is nesting two of the same thing.
+
 **The defaults point the wrong way.** `div()` is a styled, clickable box
 with no padding, no border, no minimum size and no opinion. You compose
 upward from nothing. Masonry's widgets each arrive with an opinion, and
