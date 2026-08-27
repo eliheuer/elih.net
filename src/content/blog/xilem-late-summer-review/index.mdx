@@ -225,8 +225,13 @@ None of these are hard once known. All of them cost an afternoon.
 - Writing a reusable container helper fails on a missing bound, and the
   bound is `Seq: Send + Sync`. The error lists unrelated types that
   implement the trait and never says that.
+- A helper that takes children cannot be a closure, because closures
+  cannot be generic and every group of children has its own type. My
+  sidebar has three folding groups holding three different row types, so
+  the helper had to be a named generic function with the bound above.
+  That is two obstacles in front of the smallest possible abstraction.
 
-That last one matters more than it looks. If an application cannot
+Those last two matter more than they look. If an application cannot
 cheaply write its own vocabulary of containers, it will inline the flex
 calls at every site instead, and then the numbers drift, which is
 pain point 4 again.
@@ -250,6 +255,12 @@ on font editing. Mine hand-builds six of them. An icon button, a square
 tile that paints a vector icon and reports clicks, is 175 lines here
 because the stock button brings its own padding and minimum size and
 has to be fought.
+
+Every stock widget also has to be undone before it can be used as a
+part. A collapsing section header, which is a triangle and a word at the
+left edge of a panel, is a button with its padding zeroed, its border
+removed, and a stretched row inside it, because the stock button centres
+its child. None of those three lines is about a font editor.
 
 I want to be careful here, because I checked this rather than assuming.
 The GPUI port imports **four** things from `gpui-component`: text input,
@@ -276,6 +287,62 @@ viewport, screen-to-document conversion and drag state machine, roughly
 150 lines each, which is the largest gap the two frameworks share.
 
 And it is a Zed internal that tracks Zed main.
+
+## Reading this against the project's own review
+
+I wrote most of this before I read Olivier Faure's critical review of
+Xilem in 2026 and the RustWeek notes that go with it. Those say the
+project is on the backburner, that the DX is poor, that the View
+architecture has deep flaws, that scope should be cut, and that the plan
+is a new architecture built on first-class components. From outside, the
+same problems show up as the eight above. Four places where the view
+from an application is worth having.
+
+**On menus.** The notes say adoption is held back by missing features,
+and name menus. I can confirm that from the only angle that counts.
+Menus are the single largest difference between my two builds, and the
+missing piece is not just the menu bar: it is that there is no
+window-level place to put an action at all, so the keymap has to be
+faked too.
+
+**On styling.** The notes say it is unclear how many people know Xilem
+has styling now. I did not know. I found the property system, the
+selectors and the per-widget property cache by reading Masonry's source
+while looking for something else. It is one of the best things in the
+project and it is invisible from outside. Announcing it costs nothing
+and is worth more than a feature.
+
+**On the testing framework.** The plan is a thin wrapper around
+`masonry_testing::TestHarness`. Please make it more than a testing
+framework, or at least do not let it inherit the harness's defaults
+silently. Applications need a headless render for reasons that have
+nothing to do with tests, and the harness's fixed test font is a trap
+when it is used that way. Two named constructors, one that renders like
+the window and one that renders deterministically, would have saved me
+the bug in pain point 2.
+
+**On components.** My compile blowup in pain point 5 is a
+monomorphization failure: the type of a root view is the whole tree
+written out, and one more container was enough to make `rustc` never
+finish. If `Component` is one concrete type, that whole class of failure
+goes away, and so does the linker assertion. That is a benefit of the
+proposal worth stating alongside the DX arguments, and it is a question
+worth answering early: if components keep nesting types, the compile
+cliff comes with them.
+
+**On dogfooding.** Keeping Placehero is right. But Placehero is a feed
+reader, and a feed reader never asks for a menu bar, a canvas, a context
+menu, a tool palette, or a document with a save state. Every pain point
+in this post comes from the parts of an application a feed reader does
+not have. If there is room for a second dogfood, make it a document
+editor of some kind. Failing that, this build is Apache-2.0 and carries
+a `XILEM-GAPS.md` ledger of exactly these blockers, and it is an outside
+data point that costs the project nothing to read.
+
+**On cutting scope.** I cannot tell you what to cut, and I can tell you
+what this application would lose. It leans on the property system and
+its selectors, the layer system, AccessKit, and parley. Everything else
+it uses, it could hand-write, and largely has.
 
 ## What I would ask for
 
@@ -313,9 +380,11 @@ disagreement is and where I have no strong opinion worth publishing yet.
 Both builds share `runebender-core`. The Xilem one has the grid, the
 editor with eight tools, point editing, undo, save, boolean operations,
 anchors, components, designspace masters with live interpolation, marks,
-the sidebar, the inspector, tabs with independent sessions, native menus
-on macOS, `.glyphs` and `.glyphspackage` import, file-watch reload, the
-curve and measure analyses, and a text tool on the shared engine.
+the sidebar with folding groups, the inspector, glyph renaming and
+metrics editing from the overview, tabs with independent sessions,
+native menus on macOS, `.glyphs` and `.glyphspackage` import, file-watch
+reload, the curve and measure analyses, and a text tool on the shared
+engine.
 
 The GPUI one is further along and, more to the point, it looks better.
 Closing that gap is the work this review came out of, and the next post
