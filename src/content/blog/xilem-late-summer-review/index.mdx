@@ -335,6 +335,21 @@ source is not matching pixels. That gap is mine, and it is also the
 gap pain point 2 is about: an application that cannot see itself is
 built blind, and blind work drifts.
 
+Then I got the screenshots and found out how right that was. The single
+most visible difference between the two builds was the window skeleton:
+their title bar runs across the whole width with the three columns under
+it, and mine had the sidebar running full height with the search box
+sitting above where the header ended. Days of matching their source
+never showed me that, and one look at a picture did. It was a twenty
+line change.
+
+The screenshots also produced a new Xilem finding in ten minutes. A
+portal draws its scroll bar over its own content rather than beside it,
+so anything flush with the right edge is cut in half. Every count in my
+sidebar was sitting under the scroll bar. The fix is a fixed spacer at
+the end of each row, which is the third workaround in this post for
+something the layout should handle.
+
 The honest summary is that Xilem can express almost everything the GPUI
 build does. It costs three to five times the lines, some of it is
 unreachable from view code, one of it did not compile, and the total of
