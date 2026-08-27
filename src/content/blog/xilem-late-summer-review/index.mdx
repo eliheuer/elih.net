@@ -230,6 +230,16 @@ None of these are hard once known. All of them cost an afternoon.
   sidebar has three folding groups holding three different row types, so
   the helper had to be a named generic function with the bound above.
   That is two obstacles in front of the smallest possible abstraction.
+- Nothing clips. There is no way to say "shrink below your content and
+  cut what is left over": a `Dim::Stretch` child with a flex factor
+  still refuses to go under the intrinsic width of its own text. So an
+  over-wide file name in my title bar pushed the tab strip off the end
+  of the window instead of being cut, and the application now truncates
+  the string by character count. The GPUI build writes `flex_1` and
+  `overflow_hidden` on the same element.
+- A border is one width on all four sides. There is no bottom-only
+  border, so the rule under my header is a one pixel box with a
+  background colour. GPUI writes `border_b_1`.
 
 Those last two matter more than they look. If an application cannot
 cheaply write its own vocabulary of containers, it will inline the flex
