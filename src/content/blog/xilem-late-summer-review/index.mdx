@@ -333,6 +333,16 @@ smuggled it inside an existing `Copy` struct that was already being
 passed through, because five edits for a bool is the kind of tax that
 stops you trying things.
 
+*A repeated structure cannot be abstracted, so a change to it is N
+edits.* My inspector has ten sections, each a tuple of a header and its
+body. Making them fold means every sibling after the header becomes
+conditional, at all ten sites, because a helper cannot be generic over a
+tuple whose members have different view types. I ended up writing a
+script that parses Rust well enough to split a tuple on its top-level
+commas without tripping over comments, to apply a change that is one
+line in a framework with a component boundary. That script is the
+clearest evidence I have that the abstraction is missing.
+
 *Padding compounds silently.* My sidebar is a panel, and the scrolling
 column inside it was also a panel. Two panel insets took 48 pixels out
 of a 200 pixel column, which is where all the counts had gone. Nothing
@@ -347,6 +357,16 @@ the opinion is usually "form control". So Xilem work is subtraction, and
 subtraction is more code and is never quite complete. My icon button is
 175 lines because the stock button had to be fought; my section header
 is a button with three things removed.
+
+**A missing primitive can cost a feature, not just lines.** The GPUI
+build's floating metrics panel has editable fields: you set the
+sidebearings and the width in the panel, over the drawing. Mine cannot,
+and the reason is a chain. The panel floats, so in view code it wants a
+`zstack`, and the `zstack` never finished compiling. So it is painted
+inside the canvas widget instead. Painted content cannot hold a text
+input, and there is no view for a layer, so the only way back to an
+editable panel is to hand-write text editing inside my widget. One
+missing overlay primitive turned an ordinary feature into a project.
 
 **The workarounds are design decisions in disguise.** This is the part
 that surprised me. When the title bar ran out of room, the fix
