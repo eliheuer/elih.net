@@ -331,7 +331,12 @@ struct, the view struct, `build`, `rebuild`, and the constructor's
 signature. I wanted a boolean for a detail view on my glyph grid and
 smuggled it inside an existing `Copy` struct that was already being
 passed through, because five edits for a bool is the kind of tax that
-stops you trying things.
+stops you trying things. It stops you twice over: the GPUI build's
+floating metrics panel shows the glyph's kerning groups, and mine does
+not, because those two strings live in the font model and I could not
+justify five edits to move them. I added the codepoint instead, which
+was free because the session already carried it. That is the tax
+choosing what the application shows.
 
 *A repeated structure cannot be abstracted, so a change to it is N
 edits.* My inspector has ten sections, each a tuple of a header and its
@@ -519,8 +524,9 @@ disagreement is and where I have no strong opinion worth publishing yet.
 Both builds share `runebender-core`. The Xilem one has the grid, the
 editor with eight tools, point editing, undo, save, boolean operations,
 anchors, components, designspace masters with live interpolation, marks,
-the sidebar with folding groups, the inspector, glyph renaming and
-metrics editing from the overview, tabs with independent sessions,
+the sidebar with folding groups, an inspector whose sections fold, font
+info, a detail view on the grid, glyph renaming and metrics editing from
+the overview, tabs with independent sessions,
 native menus on macOS, `.glyphs` and `.glyphspackage` import, file-watch
 reload, the curve and measure analyses, and a text tool on the shared
 engine.
