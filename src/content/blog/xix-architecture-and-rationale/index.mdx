@@ -4,13 +4,11 @@ description: 'Why I am forking the Xilem UI framework, what the alternatives do,
 date: 2026-08-22
 tags: ['rust', 'tools', 'design']
 authors: ['elih']
-draft: false
+draft: true
 ---
 
 import Callout from '../../../components/Callout.astro'
 import XixDemo from '../../../components/XixDemo.astro'
-import TokensCard from '../../../components/xix/tokens-card.mdx'
-import TokensTheme from '../../../components/xix/tokens-theme.mdx'
 
 <Callout variant="warning" title="Work in progress draft">
 This post is an unfinished draft, published early for feedback. Parts
@@ -21,33 +19,32 @@ Details will change as the work continues. Comments and corrections are welcome.
 [Xix](https://github.com/eliheuer/xix) is a fork of
 [Xilem](https://github.com/linebender/xilem), a Rust GUI framework
 from the Linebender ecosystem. It is pronounced "zy-eks": the "xi" as
-in Xilem, then "x" as in Unix. It is still very early, and I am mainly
-using it as a replacement for GPUI in my
-[Runebender](https://runebender.org/gpui) fork. I never really wanted
-to work on this. I wanted to focus on user-facing, cross-platform
-desktop applications in pure Rust. I hoped Xilem and/or GPUI would
-become what I wanted to use. The best outcome for me would be for
-Xilem to adopt some of these ideas so I could focus my energy on
-user-facing desktop applications.
+in Xilem, then "x" as in Unix. It is still early, and the main usecase
+for me is just to replace GPUI in my GPUI based [Runebender](https://runebender.org/gpui) fork.
 
-In my time observing the Rust GUI ecosystem, I think I understand a
-core problem facing the space. It is a simple division-of-labor
-problem. Many technical people working on these systems are completely
-removed from aesthetic and visual design concerns. On the other side
-of the software industry, people concerned only with surface-level
-aesthetics can end up building software on a mountain of complexity
-and bad engineering because they care only about the surface.
+Ideally any good ideas from this fork will be upstreamed into xilem.
+For me just throwing lots of LLM generated code and agent assisted reserch
+at a real complex graphics application is the best way to figure out the right architecture for this,
+so nothing here is a strong opinion about the right way to do this, just what seems like a good way
+forward knowing what I know today.
 
-What the Rust programming language promised, and what is now possible
-thanks to LLMs, is for designers and more product-focused,
-semi-technical people to move down the stack and end this
-counterproductive division of labor. This Xilem fork is built by and
-designed for that kind of user. A design engineer can design and
-prototype in code, removing the inefficiency of throwing designs over
-a wall from a non-technical designer using Figma to a non-aesthetic
-front-end engineer using completely different tools. The same applies
-to a solo developer doing everything in a project, or someone building
-internal tools with LLMs who will never look at the code.
+I have watched non-web-based desktop GUI ecosystem for a while, and I think I
+understand one core problem in the space. It is a division-of-labor
+problem. Many technical people who work on these systems are removed
+from aesthetic, visual design, and product design concerns. On the other side of the
+software industry are the people who care only about surface
+aesthetics, and just default to the (I am not sure sure how to finish this part, i need help here)
+
+What Rust promised, and what LLMs now make possible, is for designers
+and more product-focused, semi-technical people to move down the
+stack. That ends a counterproductive division of labor. where non-technical
+designers and non-aesthetic engineers throw work over a wall. 
+This Xilem fork is built by and designed for that kind of user. A design engineer
+designs and prototypes in code. Nobody throws a Figma file over a wall
+from a non-technical designer to a non-aesthetic front-end engineer
+with a different set of tools. The same applies to a solo developer
+who does everything in a project, or to someone who builds internal
+tools with LLMs and never looks at the code.
 
 The repository is
 [github.com/eliheuer/xix](https://github.com/eliheuer/xix). It holds
@@ -81,18 +78,19 @@ fork:
 
 In August 2026 a Xilem maintainer published
 [a critical review](https://hackmd.io/@s_haMSbyTAOWfoXc1aYNUg/Hka74gCwZg)
-that helps illustrate why I stopped working on my Runebender-Xilem fork
-and worked on alternatives with GPUI and WASM/WebGPU with a thin Vue
-frontend for the web: "the current architecture isn't remotely close
-to working", "we still don't benchmark Xilem", and "at least half its
-problems come from baking two-way bindings into its API". The proposed
-fix is a type-erased `Component` with runtime keys, and "some type
-checking will move from compile time to runtime".
+of the framework. It helps explain why I stopped work on my
+Runebender-Xilem fork and moved to alternatives: GPUI, and WASM/WebGPU
+with a thin Vue frontend for the web. The review says "the current
+architecture isn't remotely close to working", "we still don't
+benchmark Xilem", and "at least half its problems come from baking
+two-way bindings into its API". The proposed fix is a type-erased
+`Component` with runtime keys, and "some type checking will move from
+compile time to runtime".
 
 I agree with the diagnosis, but maybe not the cure. My working style is
-to try things, sketch with agents, and see what works. Since Xilem is
-currently in a state of flux, now seems like a good time to put
-something together. Masonry, the widget engine under Xilem, seems
+to try things, sketch with agents, and see what works. Xilem is in a
+state of flux, so now is a good time to put something together.
+Masonry, the widget engine under Xilem, seems
 pretty good to me: an arena of widgets addressed by id, a typed
 property system, a pass system, a test harness that renders headless,
 and a rendering abstraction that runs on Vello GPU, Vello Hybrid, or
@@ -100,28 +98,40 @@ Vello CPU. The reactive layer on top is the part that failed. The fork
 keeps Masonry, stays close to it, and replaces the layer above.
 
 The best possible outcome for this project is that it gets reabsorbed
-into Xilem. Runebender is already a fully working font editor on par
-with Glyphs 4 and the hundreds of other font editor projects that
-exist. I am currently using it to make a complex Latin, Arabic, and
-Hebrew variable font from scratch. It is designed for local AI and the
-Year of the Linux Desktop, which is happening in 2027 for sure this
-time.
+into Xilem. The GPUI build of Runebender is already a fully working
+font editor, on par with Glyphs 4 and the hundreds of other font
+editor projects that exist. I use it now to make a complex Latin,
+Arabic, and Hebrew variable font from scratch. Runebender is designed
+for local AI and the Year of the Linux Desktop, which is happening in
+2027 for sure this time.
 
 ## 2. Who it is for
 
 The core user is a design engineer: a hybrid designer and programmer
 who ships internal tools and SaaS products and does most of the
-building through agents. They know what good looks like. They should
-not spend an afternoon telling an agent the padding is wrong again.
+building through agents. They know what good looks like. They do not
+want to spend an afternoon telling an agent that the padding is wrong
+again.
 
 The second user is the graphics application. A font editor, a node
 editor in the ComfyUI class, a video timeline, a chart terminal. Same
 framework, heavier canvas.
 
-The test for every decision: an agent, given only the framework and
-a one-paragraph brief, produces a screen a designer would ship without
-touching spacing, type, or color. If it cannot, the framework is
+The test for every decision: give an agent the framework and a
+one-paragraph brief. It produces a screen a designer ships without a
+change to spacing, type, or color. If it cannot, the framework is
 missing a constraint.
+
+The practical form of that test is what fits in a prompt. The
+instruction to an agent should not be a design system document. It
+should be four lines: containers are regions, colors are roles, sizes
+are steps, and the lint has to pass. Everything the agent cannot state
+in that vocabulary is a thing the framework still lets it get wrong.
+
+The design engineer keeps the other half. Appearance lives in data the
+agent does not edit: a theme file of role seeds and a contrast floor, a
+config file for density and fonts. Changing how the product looks is
+editing those files, not reviewing a diff of padding values.
 
 ## 3. Why agent-built UI looks bad
 
@@ -137,31 +147,117 @@ Prompt skills that ban generic fonts by name. Registries of themed
 components. They help. They do not work by construction, because the
 framework underneath still takes any number.
 
-Xix puts the constraint in the type system:
+Xix puts the constraint in the type system. The rule is: remove the
+decision, do not document it. If a value can be derived from context,
+the API does not accept it.
 
-- Spacing, radius, elevation, text style, color role, and motion are
-  enums. Widget APIs take the enum and nothing else. `Space::raw(px)`
-  exists for the one percent of cases, and a lint lists every use.
-- Elements never have outer margins. Containers own gap and inset.
-  The margin conversation is deleted, not won.
-- Spacing is relational. A stack resolves its gap from its region
-  (toolbar tight, panel medium, dialog generous), its density, and
-  how deep its groups nest. Outer gaps are always at least inner
-  gaps. An agent writes structure; spacing is a consequence.
-- Typography uses real metrics from Parley. An icon next to a label
-  centers on the cap height. Stacks of text measure their gap from
-  ink to ink. Line heights sit on a 4 pt rhythm.
-- Color is by role, generated in OKLCH from a few seeds, contrast
-  checked when the theme is built. The build fails on a failing
-  pair.
-- Nested corners compute their own radius. Hit targets grow to the
-  minimum. A second primary button in one region is a lint warning.
+The first three layers are built.
+
+**The scale.** `Space`, `ControlSize`, `Stroke`, `Radius`, and
+`TextSize` are enums, and the styling APIs take them in place of a
+number. This removes the values between the steps. It does not remove
+the choice of step.
+
+**Regions.** A container states what it is, and the spacing follows:
+
+```rust
+column(Region::Panel, (header, body, status))
+row(Region::Toolbar, (save, undo, redo))
+column(Region::List, rows)
+```
+
+How much space a toolbar puts between its buttons does not vary from
+screen to screen. Asking anyway is what produces drift, because the
+answer is different every time it is asked. Two rules make regions
+compose. A region that paints nothing has no inset, so a form inside a
+panel cannot double the panel's padding. That is the whole of the
+margin question, answered once. And an outer region's gap is never
+smaller than an inner one's, so grouping reads as grouping at every
+depth. Both are unit tests. The second one caught my own first version
+of the table putting a toolbar inside a card.
+
+**The theme.** A theme is a value. It holds the color roles and the
+kernel steps every built-in widget styles itself from, so an
+application states its theme once and the whole widget set follows. I
+found this by putting every control on one screen: the app's accent was
+green and every built-in control was blue, because the widget defaults
+were a few hundred lines of hardcoded color.
+
+Two layers are not built yet: the parts (list row, field, section,
+dialog, menu) and the lint. Typography still needs the Parley metrics
+work described above, and text style does not inherit yet, so built-in
+labels can still be a size off from the body text beside them.
 
 Rust is the right medium because the checks are static and free.
-`Space::M` is one `match` away from a float. No stylesheet, no
+`Space::Md` is one `match` away from a float. No stylesheet, no
 runtime, no second language.
 
+### The same calculator, twice
+
+The calculator example in the repo used to open with its own design
+system:
+
+```rust
+mod tokens {
+    pub(crate) mod space {
+        pub(crate) const XS: Length = Length::const_px(4.);
+        pub(crate) const S: Length = Length::const_px(8.);
+        pub(crate) const M: Length = Length::const_px(12.);
+        pub(crate) const L: Length = Length::const_px(20.);
+    }
+    pub(crate) mod radius { /* ... */ }
+    pub(crate) mod text { /* ... */ }
+    pub(crate) mod role { /* eight colors */ }
+}
+```
+
+A spacing scale, a radius, three text sizes, and eight colors. Every
+line of it is generic. None of it is about arithmetic. Every
+application on a framework without a kernel writes that module, and
+writes it differently.
+
+It is gone now. The window and the keypad name regions, the keys name
+kernel steps, and the palette feeds a theme:
+
+```rust
+column(
+    Region::Window,
+    (display(data).flex(1.), keypad(data).flex(2.5)),
+)
+```
+
+There are zero raw pixel values left in that file.
+
+Here it is, the same example compiled to wasm. It is the native build:
+the same source, the same widget tree, rasterized on the CPU with Vello
+and blitted into a canvas. No WebGPU and no threads, so it needs nothing
+from the server.
+
+<XixDemo name="calc" width={320} height={480} caption="calc.rs, running in the page." />
+
+The same change on a real application: Runebender on Xix had 54 places
+that stated a gap or an inset. It now has four, and all four are
+`Space::None`. Two are seams between panes and two are a zeroed button
+padding, so that a 10 px dot stays a 10 px dot. Nothing in the panels
+says how much space anything gets.
+
 ## 4. The alternatives, and the difference
+
+The short version, for the parts a design engineer touches:
+
+| | Upstream Xilem | GPUI | Xix |
+|---|---|---|---|
+| Sizing vocabulary | free `f64` | closed scale (`px_1`..`px_4`, `text_xs`) | kernel enums |
+| Who picks the gap | the author, at every call | the author, at every call | the container's region |
+| Theme | hardcoded property set | a per-app `ui` crate, or a third-party library | a `Theme` value the widget set reads |
+| Canvas | a paint-only surface | a div plus your own hit testing | an island: viewport and gestures in document coordinates |
+| Menus and shortcuts | none | native menus, one action list | planned, on muda |
+| Styled parts | a small widget set | `gpui-component`, third party | planned, built from the kernel |
+
+The GPUI column is the one to read carefully. Its vocabulary is closed,
+which is why the GPUI port of Runebender does not drift and the first
+Xilem port did. That is not a taste difference. It is an API
+difference, and it is copyable.
 
 **Upstream Xilem.** Views carry a `State` generic so callbacks can
 mutate app state directly. That one decision produces the generics
@@ -175,24 +271,25 @@ Both of my ports converged on islands by force. Xix makes it the
 documented pattern.
 
 **GPUI.** The framework from Zed. My GPUI port reached near parity in
-one 13,809-line file with one entity and one render function, because
-handlers get `&mut self` and one action list drives the keymap and
+one 13,809-line file, with one entity and one render function.
+Handlers get `&mut self`, and one action list drives the keymap and
 the menu bar. It is the best application layer in Rust today. It is
-also a runtime-borrow-checked object graph, it tracks Zed main, it
-is not on the Linebender stack, its renderer ends a render pass at
-every run of paths (3 to 6 fps on a screen of glyph outlines before
-batching), it indexes vertices with a `u16`, and it has no transform
-groups, so node editors on GPUI draw everything with primitives. Xix
-takes GPUI's application layer ideas (actions as plain structs bound
-by data, a focus chain that dispatches them, a headless component
-base under a styled set) on top of Masonry and Vello.
+also a runtime-borrow-checked object graph, and it tracks Zed main. It
+is not on the Linebender stack. Its renderer ends a render pass at
+every run of paths, which gives 3 to 6 fps on a screen of glyph
+outlines before batching. It indexes vertices with a `u16`. It has no
+transform groups, so node editors on GPUI draw everything with
+primitives. Xix takes the application layer ideas of GPUI (actions as
+plain structs bound by data, a focus chain that dispatches them, a
+headless component base under a styled set) on top of Masonry and
+Vello.
 
 **Floem and signals.** Floem builds the view tree once and updates it
-through signals. The update precision is right. The runtime is not:
-signals live in thread-local storage, which breaks embedding in a
+through signals. The update precision is right. The runtime is not.
+Signals live in thread-local storage, which breaks embedding in a
 host that owns the threads (an audio plugin, a browser frame
-callback), and the benchmark case for signals ("small state produces
-a large tree") is the opposite of a graphics app. Xix gets the same
+callback). The benchmark case for signals ("small state produces a
+large tree") is the opposite of a graphics app. Xix gets the same
 precision from tick-based change detection, the mechanism Bevy uses:
 writes stamp a tick, reads filter on it, no tracker, no thread-locals.
 
@@ -303,49 +400,50 @@ and moving the document around. So Xix stops treating the reactive
 model as its identity. It picks the smallest static one that fits Rust
 and moves on.
 
-Second, the real primitive is the canvas island, and it should be
-built in. A font editor is a shell of panels around a few retained,
+Second, the real primitive is the canvas island, and it belongs in the
+framework. A font editor is a shell of panels around a few retained,
 GPU-drawn surfaces: the grid, the editor, later a kerning view and a
 node graph. Each one owns its own tools and paints a scene. In Xix
 today each such surface costs about 150 lines of identical
 scaffolding before any real drawing. That repetition is the clearest
-signal in the project: the canvas island has to be a first-class part
-of the framework, where you write only how it paints, how it responds
-to gestures, and the typed messages it sends, and the framework
-supplies the rest.
+signal in the project. The canvas island has to be a first-class part
+of the framework. You write only how it paints, how it responds to
+gestures, and the typed messages it sends. The framework supplies the
+rest.
 
 Third, the hardest question is who owns the document. I first made the
 editor island own its edit session. Painting and dragging were easy,
-but the app could not read the edits back (a real bug: it saved a
-stale glyph) and the panels could not edit a point. GPUI avoids this
-by putting everything in one shared object, at the cost of
-re-rendering on every keystroke. Xix will split it: the document lives
-in app state and is edited by typed commands, the island holds only
-the throwaway view state (the viewport, the in-progress gesture), and
-a tick marks what changed so only the affected surface repaints. That
-gives the shared-state feel without the shared-state cost.
+but the app could not read the edits back, and it saved a stale glyph.
+The panels could not edit a point either. GPUI avoids this by putting
+everything in one shared object, at the cost of a re-render on every
+keystroke. Xix will split it. The document lives in app state and is
+edited by typed commands. The island holds only the throwaway view
+state: the viewport and the in-progress gesture. A tick marks what
+changed, so only the affected surface repaints. That gives the
+shared-state feel without the shared-state cost.
 
-A second pass tested two more things: real variable-font interpolation,
-and whether the editor could match the GPUI version on look. Both
-changed what I think the framework owes the user. Interpolation works
-now. The editor loads every master of a designspace, and moving an axis
-slider computes an instance at that location and shows it read-only over
-the master, the way Glyphs does. It interpolates composite glyphs by
-interpolating each component's base and offset, so accented letters
-interpolate too. The GPUI port never finished this.
+The second pass added two things: real variable-font interpolation, and
+a visual match to the GPUI version.
 
-Matching the look was mostly defaults, not features. Two one-line
-changes closed most of the gap: fill each grid glyph with its mark color
-instead of gray, and round the cell corners. That is the "defaults are
-the product" claim proved on a real screen. A design engineer judges the
-untouched app, not the part you can tune. Chasing that quality is what
-exposed the missing primitives. The sidebar rows, the color swatches,
-the collapsible sections, and the glyph grid itself are hand-assembled
-from lower-level parts, because the framework has no list row, no
+Interpolation works now. The editor loads every master of a designspace.
+The axis sliders set a location, and the editor computes an instance at
+that location. It shows the instance read-only over the master, the way
+Glyphs does. It also handles composite glyphs. For each component it
+interpolates the base glyph and the offset, so accented letters
+interpolate too. The GPUI port never did this.
+
+The visual match was mostly defaults, not features. Two one-line changes
+closed most of the gap: fill each grid glyph with its mark color instead
+of gray, and round the cell corners. The default is what a design
+engineer sees first, not the parts they can tune.
+
+The visual work also showed the missing primitives. The sidebar rows,
+the color swatches, the collapsible sections, and the glyph grid are
+built by hand from lower-level parts. The framework has no list row, no
 swatch, no section header, and no collection view. The grid is the
-expensive one: span packing, scroll math, and hit routing by hand, and
-it is the same primitive a node canvas and an asset browser need. These
-are logged as D9 in DESIGN.md.
+largest gap. It needs span packing, scroll math, and hit routing, all by
+hand. A node editor and an asset browser need the same primitive.
+DESIGN.md records these as D9.
 
 There was also a plainer lesson, the missing menu system, which the
 next section covers on its own.
@@ -359,24 +457,24 @@ The plainest gap deserves its own section, because it is the kind of
 thing that quietly decides whether a framework gets used for real
 applications.
 
-GPUI has native menus. On macOS the menu bar is a real system menu; on
-Linux GPUI provides menus too. It also has a global action system: you
-define actions, bind keys to them in a keymap, and the same action list
-drives both the shortcuts and the menu items. So Cmd+S works from
-anywhere, the menu shows the accelerator next to the command, and the
-whole thing feels like a native desktop app. This is not a small
-detail. It is a large part of why apps built on GPUI feel finished.
+GPUI has native menus. On macOS the menu bar is a real system menu.
+On Linux GPUI provides menus too. It also has a global action system:
+you define actions, bind keys to them in a keymap, and the same action
+list drives both the shortcuts and the menu items. So Cmd+S works from
+anywhere, and the menu shows the accelerator next to the command. The
+result feels like a native desktop app. This is not a small detail. It
+is a large part of why apps built on GPUI feel finished.
 
-Xilem, and so Xix, has neither piece. Xilem is built on winit, which is
-a windowing and input library with no menu support of any kind, so
-Masonry never inherited menus. And Masonry routes keyboard events only
-to the widget that currently has focus, so there is no place to
-register a shortcut that fires regardless of what is focused. There is
-an open tracking issue for an in-window layer system, but there is no
-native menu bar and no global shortcut dispatch today.
+Xilem, and so Xix, has neither piece. Xilem is built on winit, a
+windowing and input library with no menu support of any kind, so
+Masonry never inherited menus. Masonry also routes keyboard events
+only to the widget that has focus. There is no place to register a
+shortcut that fires regardless of what is focused. There is an open
+tracking issue for an in-window layer system, but there is no native
+menu bar and no global shortcut dispatch today.
 
-You feel this immediately when you build a real application. Porting
-Runebender, I had to hand-roll menus three separate times: a right
+You feel this immediately when you build a real application. In the
+Runebender port I had to hand-roll menus three separate times: a right
 click context menu painted directly into the editor canvas, a set of
 operations hung on bare letter keys because there was nowhere else to
 put them, and a Save button in the toolbar because Cmd+S has no home. A
@@ -385,34 +483,34 @@ anyone will use.
 
 This is, I think, one of the real reasons Rust UI frameworks struggle
 to get adopted for actual desktop software. A framework can have a
-beautiful architecture and a fast renderer, but if every app has to
+beautiful architecture and a fast renderer. But if every app has to
 reinvent the menu bar and the shortcut system, and none of them feel
-native on the user's platform, the framework stays a place for demos
-and toys. Menus are boring, and that is exactly why they get skipped,
-and skipping them is disqualifying for professional tools.
+native on the platform, the framework stays a place for demos and
+toys. Menus are boring, and that is exactly why they get skipped.
+Skipping them is disqualifying for professional tools.
 
 So in Xix the menu and action layer is not an afterthought bolted on at
 the end. It is a required part of the framework. The plan is to use
 muda, the cross platform menu crate from the Tauri project, for native
-menu bars on macOS, Windows, and Linux, and to build a window level
-action layer on top: actions are plain values, a keymap binds keys to
+menu bars on macOS, Windows, and Linux. On top of that goes a window
+level action layer: actions are plain values, a keymap binds keys to
 them as data the user can edit, dispatch walks the focus chain, and one
 action list feeds both the keymap and the menu bar. That is the GPUI
 model, on the Linebender stack. It removes every menu and shortcut
-workaround in the Runebender port at once, and it is the single change
-that most moves Xix from "a fork that can draw" to "a fork you can ship
+workaround in the Runebender port at once. It is the single change that
+most moves Xix from "a fork that can draw" to "a fork you can ship
 an application on."
 
 ## 8. The two proving applications
 
-Runebender on Xix should be under 5,000 lines at feature parity with
+Runebender on Xix will be under 5,000 lines at feature parity with
 the web editor. Most of the GPUI port's 13,809 lines are gesture,
 hit testing, cache, and theme plumbing. On Xix that is framework.
 
 A node editor in the ComfyUI class is the second test. ComfyUI moved
-node bodies from canvas drawing to Vue components in 2025 because
-canvas widgets were "a development bottleneck", and now runs two
-rendering systems with zoom, hit testing, and z-order seams between
+node bodies from canvas drawing to Vue components in 2025, because
+canvas widgets were "a development bottleneck". It now runs two
+rendering systems, with zoom, hit testing, and z-order seams between
 them. In Xix the graph is a transform group inside the canvas and
 node bodies are ordinary widget subtrees: forms, sliders, previews,
 laid out by the same stack and inset model. Below a zoom threshold a
@@ -423,16 +521,34 @@ ComfyUI workflow importer so existing graphs load.
 ## 9. Status
 
 Xix is a fork of upstream Xilem that builds on stable Rust, with a
-headless screenshot tool, a browser driver (the demos above), and
-reworked examples. On top of it, Runebender has been ported far enough
-to be a working multi-master editor with real variable-font
-interpolation: the grid, seven tools, point editing, undo, save, boolean
-operations, designspace masters, an inspector, and a category, language,
-and filter sidebar. After a visual pass it tracks the GPUI version
-closely on look. The
-[DESIGN.md](https://github.com/eliheuer/xix/blob/main/DESIGN.md)
-review turned the port's findings into firm decisions: a Scene Island
-primitive, a document that lives in app state and is edited by typed
-commands, tick-based repaint, and a window-level action and menu
-layer. Those are the next things to build in the framework itself.
+headless screenshot tool, a browser driver, and reworked examples. On
+top of it I ported Runebender far enough to be a working multi-master
+editor with real variable-font interpolation. It has the grid, seven
+tools, point editing, undo, save, boolean operations, designspace
+masters, an inspector, and a category, language, and filter sidebar.
+After a visual pass it tracks the GPUI version closely on look.
+
+Three things are in the framework now, and each one is additive: none
+of them touches the reactive layer, so each could be taken upstream on
+its own.
+
+- `xilem::kernel`: `Space`, `ControlSize`, `Stroke`, `Radius`,
+  `TextSize`, and `Region`. The styling APIs take them in place of a
+  number.
+- `masonry::theme::Theme`: the color roles and kernel steps every
+  built-in widget styles itself from. `default_property_set()` is now
+  `Theme::dark().property_set()`.
+- `island`: a retained, pannable, zoomable surface that owns the
+  viewport and reports gestures already converted into document
+  coordinates. Both Runebender ports had written that by hand, per
+  canvas, about 150 lines each time.
+
+Four examples carry the argument, and each one changed the framework by
+being written: `calc` (a calculator with no raw numbers left in it),
+`app_shell` (a full three-pane screen), `shapes` (a small graphics
+editor on the island), and `widgets` (every control on one screen at
+three densities, which is how the theme problem was found).
+
+Next: the parts (list row, field, section, dialog), the menu and action
+layer, `xix lint`, and inherited text style.
 This post will grow as that work happens.
