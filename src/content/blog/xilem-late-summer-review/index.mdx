@@ -363,15 +363,29 @@ subtraction is more code and is never quite complete. My icon button is
 175 lines because the stock button had to be fought; my section header
 is a button with three things removed.
 
-**A missing primitive can cost a feature, not just lines.** The GPUI
-build's floating metrics panel has editable fields: you set the
-sidebearings and the width in the panel, over the drawing. Mine cannot,
-and the reason is a chain. The panel floats, so in view code it wants a
+**A missing primitive can cost a feature, and then cost it twice.** The
+GPUI build's floating metrics panel has editable fields: you set the
+sidebearings and the width in the panel, over the drawing. Getting that
+in my build was a chain. The panel floats, so in view code it wants a
 `zstack`, and the `zstack` never finished compiling. So it is painted
 inside the canvas widget instead. Painted content cannot hold a text
-input, and there is no view for a layer, so the only way back to an
-editable panel is to hand-write text editing inside my widget. One
-missing overlay primitive turned an ordinary feature into a project.
+input, and there is no view for a layer, so the only route left was to
+hand-write text editing inside the widget.
+
+Which is what I did. The panel now has three boxes you click and type
+in, with Tab between them, Enter to apply and Escape to drop the edit.
+It is about a hundred and thirty lines, and it includes a caret that I
+draw myself, a focus rule, a commit rule, and one set of rectangles
+shared by the painting and the hit testing so the box you click stays
+the box you can see. Xilem has a text input. Masonry has a text area
+with parley behind it, with selection and IME and everything else. None
+of it can be used four pixels above a canvas, so the application ships
+its own, worse one.
+
+That is the shape of the whole problem in a single feature. Nothing was
+impossible. Nothing was even hard. It just cost a hundred and thirty
+lines and a day, and the result is a text field that does less than the
+one already in the framework.
 
 **The workarounds are design decisions in disguise.** This is the part
 that surprised me. When the title bar ran out of room, the fix
