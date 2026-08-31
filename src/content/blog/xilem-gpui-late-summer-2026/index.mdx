@@ -4,7 +4,7 @@ description: 'Porting the same font editor to two Rust UI frameworks and logging
 date: 2026-08-17
 tags: ['rust', 'tools', 'fonts']
 authors: ['elih']
-draft: true
+draft: false
 ---
 
 import Callout from '../../../components/Callout.astro'
@@ -1166,6 +1166,41 @@ From here, git diffs after an editing session show exactly the
 glyphs that changed. The editor installs with cargo install and a
 one-line launcher script sits beside the web one in the font repo.
 
+### 2026-08-30: the BezPath boundary
+
+A question from reading the code this week: the engine does all of
+its geometry in kurbo `BezPath`, font units, Y-up. Which framework
+is better at putting one of those on screen?
+
+Here the two stacks are not close. Masonry paints through Vello,
+and Vello's scene API takes kurbo shapes directly. The Xilem
+editor's paint code is lines like
+`painter.fill(&(affine * sort.path), color)`: the same `BezPath`
+the engine computed, with one affine doing the zoom and the Y
+flip. Core and renderer share one geometry crate, one coordinate
+convention, and `f64` end to end.
+
+GPUI has its own path type: `f32`, pixels, Y-down, built through a
+`PathBuilder` and tessellated with lyon. So the GPUI editor
+carries a conversion layer, `view/paint.rs`, 372 lines, and the
+editing canvas calls it at 31 sites to turn every outline into a
+`gpui::Path` each frame. GPUI paths are also fills only, so
+strokes are widths we expand ourselves before converting.
+
+What does the conversion actually cost? Less than it sounds.
+Outlines are cached as `Arc<BezPath>` per glyph, the mapping is
+linear, and `f32` is plenty at screen scale. The build has been
+fast and stable. The real cost is conceptual: one program, two
+geometry vocabularies, and a seam where a reader must know which
+side of it they are on.
+
+So the honest verdict is split. For the drawing canvas of a curve
+editor, Vello is the better fit, and it is not subtle: the
+renderer speaks the engine's native type. For everything around
+the canvas, panels, text, menus, the log above says GPUI has been
+faster to build. A fair one-line framing: GPUI treats vector paths
+as one more UI primitive; Vello treats them as the point.
+
 ## Running comparison
 
 Updated as the log grows.
@@ -1176,6 +1211,7 @@ Updated as the log grows.
 | Toolchain | stable | stable for native (current nightlies break `pathfinder_simd`); pinned nightly plus build-std for the wasm target |
 | Layout API | typed view combinators (`flex`, `sized_box`, `portal`) | Tailwind-style method chains on `div()` |
 | Custom painting | custom Masonry widget with Vello scene access | `canvas()` element + `PathBuilder` + `paint_path` |
+| Geometry at the paint boundary | kurbo end to end: Vello fills a `BezPath` directly | own path type (`f32`, Y-down); every outline converted per frame |
 | State model | single-owner `AppState`, rebuild + diff | entities with interior state, `cx.notify()` |
 | Component library | none yet | gpui-component (60+ widgets, Apache-2.0) |
 | Headless render testing | `masonry_testing::TestHarness`, pixel-perfect | none found; we drive the wasm build in headless Chrome over CDP instead |
