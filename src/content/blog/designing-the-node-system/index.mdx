@@ -38,7 +38,8 @@ for fonts, and about what building it twice showed.
 <li><a href="#06-a-grid-of-rings"><span class="n">06</span>A Grid of Rings</a></li>
 <li><a href="#07-the-jaggies-and-where-they-come-from"><span class="n">07</span>The Jaggies, and Where They Come From</a></li>
 <li><a href="#08-the-same-canvas-in-vello"><span class="n">08</span>The Same Canvas in Vello</a></li>
-<li><a href="#09-what-the-split-bought"><span class="n">09</span>What the Split Bought</a></li>
+<li><a href="#09-squares-not-circles"><span class="n">09</span>Squares, Not Circles</a></li>
+<li><a href="#10-what-the-split-bought"><span class="n">10</span>What the Split Bought</a></li>
 </ol>
 </nav>
 
@@ -239,7 +240,30 @@ a menu is a Masonry layer and a view tree cannot close one cleanly,
 so node types to add are a row of chips. And there is no file dialog,
 because that shell has none yet.
 
-### 09. What the Split Bought
+### 09. Squares, Not Circles
+
+The glyph editor got a dot grid this week: a dot at each 8-unit
+intersection, and the lines are left to the eye. The dots are
+squares. That was not a design choice. A circle from kurbo is twelve
+or more segments after flattening, and a square is four vertices. A
+grid at 1x has about twenty thousand dots on a laptop screen. GPUI
+caps the vertices in one path, so the dots go out in runs of two
+thousand. GPUI has no anti-aliasing either, so a 2 px circle is a
+ragged blob and a 2 px square is crisp. Squares were the shape that
+looked right under that renderer.
+
+In Vello none of this comes up. A circle is a circle in the scene,
+the rasterizer covers its edge, and twenty thousand of them are one
+fill pass. The renderer decided what the grid can look like. In a
+tool for drawing curves, that call belongs to the designer.
+
+The split that suggests itself is Vello for every canvas and GPUI for
+the chrome: the panels, the menus, the fields. Section 07 says how,
+with `vello_cpu` into an image that GPUI paints. The cost is a full
+raster and a texture upload on each frame of a drag. That is a trade
+to measure, not to guess, and it is the next thing to measure.
+
+### 10. What the Split Bought
 
 The rule under all of this is the one that made the second shell
 cheap: no drawing logic in a shell that is not drawing. The file
