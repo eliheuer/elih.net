@@ -1,0 +1,123 @@
+---
+title: 'Areal and the Limits of Restrictive Font Licenses'
+description: 'Areal, Arial, screenshot tracing, and the legal questions behind an AI-assisted open-font revival.'
+date: 2026-09-16
+tags: ['fonts', 'licensing', 'open-source', 'ai']
+authors: ['elih']
+draft: true
+---
+
+Dinamo released [ABC Areal as a free download](https://abcdinamo.com/newsletter/areal-is-now-available-free-for-everyone). It began as a replacement for Arial on Are.na. I wanted a version under the SIL Open Font License, with editable sources that anyone could use, modify, and redistribute under that license.
+
+My question was simple: why not render Areal with Designbot, trace the images with img2bez, and build a new font? We would be doing the same kind of thing Dinamo describes doing with Arial.
+
+That comparison is the starting point of this investigation. I want to find a process that complies with U.S. and German law, including any enforceable license obligations. I have not established that process yet. This is a research draft, not a legal opinion or an announcement of a cleared font release.
+
+## The screenshot comparison
+
+In [Are.na's interview with Dinamo](https://buttondown.com/are.na-editorial/archive/introducing-areal-arenas-new-typeface/), Johannes Breyer describes collecting older versions of Arial, displaying them under Windows, and taking screenshots at different sizes. Those images became references for tracing new outlines. The interview identifies Arial 2.82 as a starting point and describes Areal as a complete redraw and rebuild.
+
+My proposed workflow substitutes an autotracer for part of that drawing work:
+
+1. Render glyphs into raster images with [Designbot](https://github.com/eliheuer/designbot).
+2. Fit new Bézier outlines to those images with [img2bez](https://github.com/eliheuer/img2bez).
+3. Store the outlines in UFO sources, with a designspace for compatible masters.
+4. Build, proof, and review the resulting font.
+
+img2bez reads pixels and constructs outlines. It does not need the source font's control-point tables. This can avoid directly extracting those tables, but does not prove that the resulting outlines will differ from them. It also does not settle the rights in the reference images or their use.
+
+The technical comparison is close. The agreements and applicable rights still need to be compared. Dinamo's interview does not establish which licenses governed its copies, whether it had additional permission, or what legal analysis supported its process. I cannot infer either infringement or clearance from the interview.
+
+## The restriction
+
+The PDF supplied with my Areal download is Dinamo's EULA version 2.51. Section 10 includes this prohibition:
+
+> Make new fonts based on the design that's in the fonts
+
+The [published licensing terms](https://abcdinamo.com/licenses) contain the same restriction. Section 10 also restricts modification, format conversion, reverse engineering, and AI training. Section 9.12 describes the free-font license as revocable. Section 12.5 selects German law and Berlin jurisdiction, allows invoice terms to take precedence, and requires written agreement to amendments.
+
+On its ordinary reading, the design-based restriction reaches the proposed render-and-trace workflow. Producing new control points would not, by itself, answer that clause.
+
+But reading a prohibition is only the first step. We also need to know whether the terms became part of a contract, how the clause should be interpreted, and whether the applicable law allows it to be enforced. A license can state a restriction that a court would not uphold.
+
+## Arial's terms
+
+Arial has been distributed through different products and agreements. There is no single license that can be assumed to govern every historical copy.
+
+The [historical Microsoft Core Fonts for the Web EULA](https://corefonts.sourceforge.net/eula.htm), reproduced by the distribution project, prohibits renaming, editing, and creating derivative works from the software product, with an exception for document subsetting. It also restricts reverse engineering, subject to applicable-law exceptions. It does not separately use Dinamo's wording about making a new font based on the design.
+
+That is a material textual difference. It is not an express permission to construct a replacement font from screenshots. Nor have I established that this was the agreement governing Dinamo's reference copies.
+
+[Microsoft's current Windows font guidance](https://learn.microsoft.com/en-us/typography/fonts/font-faq) permits ordinary printed and graphic output but prohibits font modification and conversion. It specifically distinguishes ordinary images of text from individually addressable bitmap fonts. Permission to make a poster is not an explicit grant to turn its alphabet into another font.
+
+## U.S. copyright and contract
+
+The U.S. Copyright Office says ordinary typeface designs and lettering are generally outside copyright protection. That is an important basis for investigating a new implementation of an existing typeface. It does not mean every component of a digital font is unprotected. [Circular 33, page 3](https://www.copyright.gov/circs/circ33.pdf) describes the distinction and its limited exceptions.
+
+In [Adobe Systems v. Southern Software](https://typographyforlawyers.com/pdf/adobe-ssi-summary-judgment.pdf), a federal district court found protectable expression in the font programs at issue, including choices about control points. Extracting those points and applying mechanical changes did not avoid infringement. The decision concerns copying particular program material. It does not establish that every new drawing of a similar letter infringes.
+
+Retracing a bitmap therefore changes an important part of the copyright analysis. It still leaves the contract question.
+
+In [ProCD v. Zeidenberg](https://openjurist.org/86/f3d/1447/incorporated-v-zeidenberg), the Seventh Circuit enforced restrictions on use of a database even though the underlying information was not protected in the way the purchaser argued it would need to be. Contractual obligations and copyright are not interchangeable. The decision is not a ruling on Dinamo's agreement, and it does not make every restriction enforceable.
+
+A more direct warning comes from the U.S. litigation in [SAS Institute v. World Programming](https://law.justia.com/cases/federal/appellate-courts/ca4/16-1808/16-1808-2017-10-24.html). In 2017, the Fourth Circuit upheld a breach-of-contract finding under North Carolina law. World Programming had studied software to reproduce its functionality without accessing its source code. The court read the agreement's reverse-engineering prohibition broadly enough to cover that conduct.
+
+The absence of source-code extraction was not sufficient to defeat that contract claim. Whether an Areal trace would produce the same result depends on a different agreement, facts, and applicable law.
+
+## German limits on license terms
+
+German law supplies reasons to examine the restriction rather than simply accept it as conclusive.
+
+Section 69d(3) of the German Copyright Act permits a person entitled to use a program to observe, study, or test its functioning to determine underlying ideas and principles, while performing acts they are entitled to perform. Section 69g(2) makes contractual provisions contrary to that exception void. These are limited statutory rights, not rights a licensor can remove merely by writing a prohibition. See [UrhG §69d](https://www.gesetze-im-internet.de/urhg/__69d.html) and [§69g](https://www.gesetze-im-internet.de/urhg/__69g.html).
+
+The Court of Justice of the European Union addressed this principle in its 2012 judgment in [SAS Institute v. World Programming, C-406/10](https://eur-lex.europa.eu/legal-content/EN/TXT/?uri=CELEX:62010CJ0406). It held that program functionality, programming languages, and relevant data-file formats were not forms of expression protected by copyright in computer programs. It also explained that a license cannot remove the specified right to determine a program's underlying ideas and principles through lawful observation and testing. Paragraphs 39 and 47–62 are particularly relevant.
+
+This gives us a serious question to investigate: does the proposed use of a font fall within protected study of a program, or does it reproduce material governed by other rights? A typeface's visual appearance is not automatically equivalent to software functionality. The judgment does not grant permission to reproduce every visual output of a program.
+
+German standard-contract law is another possible limit. [BGB §307](https://www.gesetze-im-internet.de/bgb/__307.html) subjects qualifying standard terms to review for unreasonable disadvantage, including transparency concerns. Sections 305 and 305c address incorporation, surprising provisions, and ambiguity. Section 310 changes how these rules apply in business transactions. A business user should not assume that every consumer rule applies, but neither should we assume that business terms escape review altogether.
+
+These provisions identify arguments for examination. They do not establish that Dinamo's particular clause is invalid. That would require analysis of the actual transaction, the term's scope, and relevant decisions.
+
+## Rights in the appearance
+
+Even if a contractual argument succeeds, German protection of the design itself still needs examination. The U.S. treatment of ordinary typefaces cannot simply be applied in Germany.
+
+[UrhG §2](https://www.gesetze-im-internet.de/urhg/__2.html) includes applied art among potentially protected works and requires a personal intellectual creation. [Section 23](https://www.gesetze-im-internet.de/urhg/__23.html) addresses adaptations and whether a new work maintains sufficient distance from the work used. Those provisions do not tell us, without more, whether particular Arial or Areal forms qualify or what their protection would cover.
+
+German design law expressly includes typographic characters in its definition of products. Registered design rights can reach appearance, rather than just the underlying font program. See [DesignG §§1 and 38](https://www.gesetze-im-internet.de/geschmmg_2004/BJNR039010004.html). Relevant German and EU design rights, including any applicable unregistered rights, would need to be checked. I have not completed that investigation or established that either font has a currently enforceable design right.
+
+The applicable law also needs analysis for the specific activity and claim. A German-law contract clause does not, by itself, resolve every U.S. copyright issue or every consequence of distributing a font internationally.
+
+## The role of AI
+
+An AI agent could coordinate rendering, run the tracer, prepare UFO sources, build proofs, and record revisions. That would make the work easier to repeat and inspect. It would not supply permission for the inputs.
+
+img2bez's default tracing path is procedural. Its optional learned components are distinct from training a model on the supplied images. Asking an AI agent to operate a tracer is also different from training on Areal. The [project documentation](https://github.com/eliheuer/img2bez) describes these technical distinctions.
+
+That matters when interpreting an AI-training restriction. It does not dispose of the separate restriction on making a design-based font. Replacing a human tracer with software changes the implementation process, not automatically the rights needed to perform it.
+
+I am using the Codex desktop app for the research and project planning. No Areal font has been traced or released in this investigation. The proposed automation remains a plan.
+
+## A compliant route
+
+There are several routes to examine, and they lead to different projects.
+
+**Written permission for an Areal derivative.** A sufficient grant from the relevant rights holders could authorize the workflow and OFL distribution. It would need to address downstream modification and redistribution, not just permission for a private experiment.
+
+**An Areal reconstruction supported by existing law.** This requires resolving contract formation and enforceability, the scope of software-study rights, and any independent protection of the design. The legal arguments above are research leads. I have not established that they authorize the proposed font.
+
+**A separate revival of Arial.** This would start from independently selected, lawfully usable Arial reference material. Its exact acquisition terms and relevant rights would need review. Avoiding Areal does not automatically make an Arial trace lawful, but it changes the question we are asking.
+
+**An OFL source project.** A licensed source such as Liberation Sans offers a more direct route to an open font. It would be a different design project, not Areal under a different license. The [Liberation project](https://github.com/liberationfonts/liberation-fonts) describes its compatibility goals and provides its license.
+
+The [SIL Open Font License](https://openfontlicense.org/open-font-license-official-text/) permits modification and redistribution subject to its conditions, including preservation of notices and respect for reserved font names. Attaching it to a file cannot create rights we did not have in the material used to make that file. The name needs separate review too. My working name, Arail, is close to Arial; a letter swap is not trademark clearance.
+
+## The remaining question
+
+The concern that started this project remains: Dinamo describes reconstructing an existing typeface from screenshots, then distributes its reconstruction under terms that seek to prevent new fonts based on its design. I want to understand how far that restriction can lawfully extend.
+
+The next step is to put the exact acquisition terms and proposed render-and-trace process in front of counsel familiar with German and U.S. software and type-design rights. That review should identify which obligations actually bind this project, which statutory freedoms remain, and what rights an OFL release could grant its users.
+
+I want an open font with a documented legal basis. If the research supports that result, the sources, process, and evidence should be public. If it does not, the unresolved obstacle belongs in the account too.
+
+*Research checked on September 16, 2026, including the official German text of §§69d and 69g. The supplied Dinamo PDF is EULA v2.51. Its SHA-256 is `0aa1e71402c9a7ec4074ec3c3ae12f58259645a02b66f359b5aeb227644b04a7`. No legal clearance is claimed.*
