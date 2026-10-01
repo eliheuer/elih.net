@@ -1,6 +1,6 @@
 ---
-// One slide in a SlidesLayout deck. The running title, author, and slide
-// number are filled in by the layout's script. Speaker notes go in the
+// One slide in a SlidesLayout deck. The running footer (title, author, slide
+// number) is filled in by the layout's script. Speaker notes go in the
 // "notes" slot and only appear in the presenter window.
 interface Props {
   // Section name shown in the running head.
@@ -13,14 +13,14 @@ const { section = '', label } = Astro.props
 ---
 
 <section class="slide" data-label={label}>
-  <header class="slide-head">
+  <div class="slide-body">
+    <slot />
+  </div>
+  <footer class="slide-head">
     <span class="h-running"></span>
     <span class="h-section">{section}</span>
     <span class="h-author"></span>
     <span class="h-num"></span>
-  </header>
-  <div class="slide-body">
-    <slot />
-  </div>
+  </footer>
   <div class="notes"><slot name="notes" /></div>
 </section>

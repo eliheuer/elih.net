@@ -249,7 +249,7 @@ const { title, description, running, author } = Astro.props
     padding: var(--m);
     display: grid;
     grid-template-columns: repeat(12, minmax(0, 1fr));
-    grid-template-rows: auto minmax(0, 1fr);
+    grid-template-rows: minmax(0, 1fr) auto;
     column-gap: var(--g);
     row-gap: 2.5cqw;
     visibility: hidden;
@@ -261,6 +261,7 @@ const { title, description, running, author } = Astro.props
 
   .slide-head {
     grid-column: 1 / -1;
+    grid-row: 2;
     display: grid;
     grid-template-columns: subgrid;
     padding-top: 0.6cqw;
@@ -287,6 +288,7 @@ const { title, description, running, author } = Astro.props
 
   .slide-body {
     grid-column: 1 / -1;
+    grid-row: 1;
     display: grid;
     grid-template-columns: subgrid;
     grid-template-rows: minmax(0, 1fr);
