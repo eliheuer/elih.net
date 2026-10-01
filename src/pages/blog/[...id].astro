@@ -69,6 +69,16 @@ const subtitleBreak = titleRest
           {formatDate(post.data.date)}
         </time>
         {post.data.dateNote && <span> · {post.data.dateNote}</span>}
+        {
+          post.data.slides && (
+            <span>
+              {' · '}
+              <a href={post.data.slides} data-astro-reload class="underline">
+                Slides
+              </a>
+            </span>
+          )
+        }
       </p>
     </header>
 

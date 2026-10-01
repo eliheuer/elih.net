@@ -1,0 +1,515 @@
+---
+// Full-screen 16:9 slide deck. Shares the site's fonts, color tokens, and
+// theme with the blog, but none of its chrome. Each <Slide> is stacked in
+// one stage; the script below shows one at a time.
+//
+// Keys: → ↓ PageDown next · ← ↑ PageUp previous · Home/End · F fullscreen
+// · T theme · P presenter window · Esc leaves a focused demo.
+// Inside a demo, arrows and typing go to the demo; PageUp/PageDown (what
+// presentation clickers send) always change slides.
+import '@/styles/global.css'
+import '@/styles/typography.css'
+
+import Head from '@/components/Head.astro'
+import PageHead from '@/components/PageHead.astro'
+import { SITE } from '@/consts'
+
+interface Props {
+  title: string
+  description: string
+  // Short label for the running head, e.g. the talk title.
+  running: string
+  author: string
+}
+
+const { title, description, running, author } = Astro.props
+---
+
+<!doctype html>
+<html lang={SITE.locale} class="use-virtua-font dark">
+  <Head>
+    <PageHead title={title} description={description} />
+    <meta name="robots" content="noindex" />
+    <script is:inline>
+      try {
+        if (localStorage.getItem('theme') === 'light')
+          document.documentElement.classList.remove('dark')
+      } catch (e) {}
+      if (new URLSearchParams(location.search).has('presenter'))
+        document.documentElement.classList.add('presenter')
+    </script>
+  </Head>
+  <body>
+    <div class="deck" data-running={running} data-author={author}>
+      <div class="stage">
+        <slot />
+      </div>
+    </div>
+
+    <div class="presenter-view">
+      <div class="pv-top">
+        <span class="pv-count"></span>
+        <span class="pv-timer">0:00</span>
+      </div>
+      <div class="pv-label"></div>
+      <div class="pv-notes"></div>
+      <div class="pv-next"></div>
+      <div class="pv-help">
+        → next · ← previous · R reset timer · keys here drive the deck
+      </div>
+    </div>
+  </body>
+</html>
+
+<script>
+  const slides = [...document.querySelectorAll<HTMLElement>('.slide')]
+  const deck = document.querySelector<HTMLElement>('.deck')!
+  const running = deck.dataset.running ?? ''
+  const author = deck.dataset.author ?? ''
+  const presenter = document.documentElement.classList.contains('presenter')
+  const channel = new BroadcastChannel('elih-slides:' + location.pathname)
+  const total = slides.length
+  const pad = (n: number) => String(n).padStart(2, '0')
+
+  // Fill the running head of every slide once.
+  slides.forEach((s, i) => {
+    const head = s.querySelector('.slide-head')
+    if (!head) return
+    head.querySelector('.h-running')!.textContent = running
+    head.querySelector('.h-author')!.textContent = author
+    head.querySelector('.h-num')!.textContent = `${pad(i + 1)} / ${pad(total)}`
+  })
+
+  const fromHash = () => {
+    const n = parseInt(location.hash.slice(1), 10)
+    return Number.isFinite(n) ? Math.min(Math.max(n, 1), total) - 1 : 0
+  }
+
+  let current = -1
+  let timerStart: number | null = null
+
+  function show(i: number, broadcast = true) {
+    i = Math.min(Math.max(i, 0), total - 1)
+    if (i === current) return
+    slides[current]?.removeAttribute('data-active')
+    slides[i].setAttribute('data-active', '')
+    // Blur a demo on the slide we are leaving so its keys stop capturing.
+    if (document.activeElement instanceof HTMLElement)
+      document.activeElement.blur()
+    current = i
+    history.replaceState(null, '', `#${i + 1}`)
+    if (broadcast) channel.postMessage({ type: 'show', index: i })
+    if (timerStart === null && i > 0) timerStart = Date.now()
+    renderPresenter()
+  }
+
+  function renderPresenter() {
+    if (!presenter) return
+    const s = slides[current]
+    const next = slides[current + 1]
+    document.querySelector('.pv-count')!.textContent =
+      `${pad(current + 1)} / ${pad(total)}`
+    document.querySelector('.pv-label')!.textContent = s.dataset.label ?? ''
+    document.querySelector('.pv-notes')!.innerHTML =
+      s.querySelector('.notes')?.innerHTML ?? ''
+    document.querySelector('.pv-next')!.textContent = next
+      ? `Next: ${next.dataset.label ?? ''}`
+      : 'End'
+  }
+
+  function tick() {
+    const el = document.querySelector('.pv-timer')
+    if (el) {
+      const s = timerStart ? Math.floor((Date.now() - timerStart) / 1000) : 0
+      el.textContent = `${Math.floor(s / 60)}:${pad(s % 60)}`
+    }
+  }
+  if (presenter) setInterval(tick, 500)
+
+  channel.onmessage = (e) => {
+    if (e.data?.type === 'show') show(e.data.index, false)
+    if (e.data?.type === 'hello' && !presenter)
+      channel.postMessage({ type: 'show', index: current })
+  }
+
+  // True when keystrokes belong to a demo or a form field.
+  function typingTarget(t: EventTarget | null) {
+    if (!(t instanceof HTMLElement)) return false
+    return (
+      !!t.closest('.slide-demo') ||
+      t.isContentEditable ||
+      ['INPUT', 'TEXTAREA', 'SELECT'].includes(t.tagName)
+    )
+  }
+
+  window.addEventListener('keydown', (e) => {
+    if (e.metaKey || e.ctrlKey || e.altKey) return
+    if (e.key === 'PageDown') return e.preventDefault(), show(current + 1)
+    if (e.key === 'PageUp') return e.preventDefault(), show(current - 1)
+    if (typingTarget(e.target)) {
+      if (e.key === 'Escape') (e.target as HTMLElement).blur()
+      return
+    }
+    switch (e.key) {
+      case 'ArrowRight':
+      case 'ArrowDown':
+        e.preventDefault()
+        show(current + 1)
+        break
+      case 'ArrowLeft':
+      case 'ArrowUp':
+        e.preventDefault()
+        show(current - 1)
+        break
+      case 'Home':
+        show(0)
+        break
+      case 'End':
+        show(total - 1)
+        break
+      case 'f':
+        if (document.fullscreenElement) document.exitFullscreen()
+        else document.documentElement.requestFullscreen()
+        break
+      case 't': {
+        const dark = document.documentElement.classList.toggle('dark')
+        try {
+          localStorage.setItem('theme', dark ? 'dark' : 'light')
+        } catch {}
+        break
+      }
+      case 'p':
+        if (!presenter)
+          window.open(
+            location.pathname + '?presenter' + location.hash,
+            'presenter',
+            'width=900,height=700',
+          )
+        break
+      case 'r':
+        if (presenter) timerStart = Date.now()
+        break
+    }
+  })
+
+  window.addEventListener('hashchange', () => show(fromHash()))
+
+  // Hide the pointer after two idle seconds.
+  let idle: number | undefined
+  window.addEventListener('mousemove', () => {
+    document.body.classList.remove('idle')
+    clearTimeout(idle)
+    idle = window.setTimeout(() => document.body.classList.add('idle'), 2000)
+  })
+
+  show(fromHash(), false)
+  if (presenter) channel.postMessage({ type: 'hello' })
+</script>
+
+<style is:global>
+  /* ── Stage ── */
+
+  html,
+  body {
+    height: 100%;
+    overflow: hidden;
+  }
+
+  body.idle {
+    cursor: none;
+  }
+
+  .deck {
+    position: fixed;
+    inset: 0;
+    display: grid;
+    place-items: center;
+    background: var(--background);
+  }
+
+  .stage {
+    position: relative;
+    width: min(100vw, calc(100vh * 16 / 9));
+    aspect-ratio: 16 / 9;
+    container-type: size;
+    /* 1cqw is 19.2px at 1920 wide. Every size below is in cqw so the
+       slide scales as one picture. */
+    font-size: 1.875cqw;
+    line-height: calc(4 / 3);
+    color: var(--foreground);
+  }
+
+  /* ── Slide grid: 12 columns, running head, body ── */
+
+  .slide {
+    --m: 3.75cqw; /* outer margin */
+    --g: 1.25cqw; /* gutter */
+    position: absolute;
+    inset: 0;
+    padding: var(--m);
+    display: grid;
+    grid-template-columns: repeat(12, minmax(0, 1fr));
+    grid-template-rows: auto minmax(0, 1fr);
+    column-gap: var(--g);
+    row-gap: 2.5cqw;
+    visibility: hidden;
+  }
+
+  .slide[data-active] {
+    visibility: visible;
+  }
+
+  .slide-head {
+    grid-column: 1 / -1;
+    display: grid;
+    grid-template-columns: subgrid;
+    padding-top: 0.6cqw;
+    border-top: 1px solid var(--foreground);
+    font-size: 0.9375cqw;
+    line-height: 1.4;
+  }
+
+  .slide-head .h-running {
+    grid-column: 1 / 4;
+  }
+  .slide-head .h-section {
+    grid-column: 4 / 10;
+  }
+  .slide-head .h-author {
+    grid-column: 10 / 12;
+  }
+  .slide-head .h-num {
+    grid-column: 12 / 13;
+    text-align: right;
+    font-family: var(--font-mono);
+    font-variant-numeric: tabular-nums;
+  }
+
+  .slide-body {
+    grid-column: 1 / -1;
+    display: grid;
+    grid-template-columns: subgrid;
+    grid-template-rows: minmax(0, 1fr);
+    min-height: 0;
+  }
+
+  .slide .notes {
+    display: none;
+  }
+
+  /* ── Type ── */
+
+  .slide :is(h1, h2, h3, p) {
+    margin: 0;
+    text-wrap: pretty;
+  }
+
+  .t-display {
+    font-size: 6cqw;
+    line-height: 1;
+    letter-spacing: -0.03em;
+    text-wrap: balance;
+  }
+
+  .t-head {
+    font-size: 3.75cqw;
+    line-height: 1.05;
+    letter-spacing: -0.025em;
+    text-wrap: balance;
+  }
+
+  .t-body {
+    font-size: 1.875cqw;
+    line-height: calc(4 / 3);
+  }
+
+  .t-small {
+    font-size: 1.4cqw;
+    line-height: 1.4;
+  }
+
+  .t-credit {
+    font-family: var(--font-mono);
+    font-size: 0.78cqw;
+    line-height: 1.45;
+    color: oklch(0.55 0 0);
+  }
+
+  .t-credit a {
+    color: inherit;
+  }
+
+  .t-num {
+    font-size: 9cqw;
+    line-height: 0.9;
+    letter-spacing: -0.04em;
+    font-variant-numeric: tabular-nums;
+  }
+
+  .muted {
+    color: color-mix(in oklab, var(--foreground) 55%, var(--background));
+  }
+
+  .stack > * + * {
+    margin-top: 1.25cqw !important;
+  }
+  .stack-lg > * + * {
+    margin-top: 2.5cqw !important;
+  }
+
+  /* ── Column spans ── */
+
+  .c-1-4 { grid-column: 1 / 5; }
+  .c-1-5 { grid-column: 1 / 6; }
+  .c-1-6 { grid-column: 1 / 7; }
+  .c-1-8 { grid-column: 1 / 9; }
+  .c-1-10 { grid-column: 1 / 11; }
+  .c-1-12 { grid-column: 1 / 13; }
+  .c-5-12 { grid-column: 5 / 13; }
+  .c-6-12 { grid-column: 6 / 13; }
+  .c-7-12 { grid-column: 7 / 13; }
+  .c-4-12 { grid-column: 4 / 13; }
+
+  .row-end {
+    align-self: end;
+  }
+
+  /* ── Figures ── */
+
+  .fig {
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 0.6cqw;
+  }
+
+  .fig img {
+    display: block;
+    min-height: 0;
+    flex: 1 1 auto;
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+    object-position: left top;
+  }
+
+  .fig.fig-right img {
+    object-position: right top;
+  }
+
+  .fig.fig-right figcaption {
+    text-align: right;
+  }
+
+  /* ── Tables ── */
+
+  .slide table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 1.4cqw;
+    line-height: 1.3;
+  }
+
+  .slide th {
+    text-align: left;
+    font-weight: 400;
+    color: color-mix(in oklab, var(--foreground) 55%, var(--background));
+    padding: 0 1cqw 0.6cqw 0;
+    border-bottom: 1px solid var(--foreground);
+  }
+
+  .slide td {
+    padding: 0.7cqw 1cqw 0.7cqw 0;
+    border-bottom: 1px solid var(--border);
+    vertical-align: top;
+  }
+
+  .slide td.num,
+  .slide th.num {
+    font-variant-numeric: tabular-nums;
+    text-align: right;
+  }
+
+  /* ── Demos: the React islands keep their own 3:2 / 6:5 shape, so the
+     wrapper caps width by the height available on the slide. ── */
+
+  .slide-demo {
+    min-height: 0;
+    font-size: 16px;
+    line-height: 1.5;
+  }
+
+  .slide-demo.ratio-3-2 {
+    width: min(100%, calc((100cqh - 3.75cqw * 2 - 5cqw) * 1.5));
+  }
+
+  .slide-demo.ratio-6-5 {
+    width: min(100%, calc((100cqh - 3.75cqw * 2 - 5cqw) * 1.2));
+  }
+
+  /* ── Presenter window ── */
+
+  .presenter-view {
+    display: none;
+  }
+
+  html.presenter .deck {
+    display: none;
+  }
+
+  html.presenter .presenter-view {
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+    height: 100%;
+    padding: 1.5rem 2rem;
+    background: var(--background);
+    color: var(--foreground);
+    overflow: auto;
+  }
+
+  .pv-top {
+    display: flex;
+    justify-content: space-between;
+    font-family: var(--font-mono);
+    font-variant-numeric: tabular-nums;
+    border-top: 1px solid var(--foreground);
+    padding-top: 0.5rem;
+  }
+
+  .pv-timer {
+    font-size: 2rem;
+    line-height: 1;
+  }
+
+  .pv-label {
+    font-size: 1.5rem;
+    line-height: 1.1;
+  }
+
+  .pv-notes {
+    flex: 1;
+    font-size: 1.25rem;
+    line-height: 1.4;
+  }
+
+  .pv-notes p + p,
+  .pv-notes ul {
+    margin-top: 0.75rem;
+  }
+
+  .pv-notes ul {
+    list-style: disc;
+    padding-left: 1.25rem;
+  }
+
+  .pv-next,
+  .pv-help {
+    color: color-mix(in oklab, var(--foreground) 55%, var(--background));
+  }
+
+  .pv-help {
+    font-size: 0.75rem;
+    font-family: var(--font-mono);
+  }
+</style>

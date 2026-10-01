@@ -13,6 +13,8 @@ const blog = defineCollection({
       tags: z.array(z.string()).optional(),
       authors: z.array(z.string()).optional(),
       draft: z.boolean().optional(),
+      // Path to a slide version of the post, linked under the title.
+      slides: z.string().optional(),
     }),
 })
 
