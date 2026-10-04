@@ -22,3 +22,14 @@ export const nastaliqDemo = {
   // fine in a static render but broke in the live demo).
   samples: 'بسم الله,بسم الله الرحمن الرحيم,نور على نور,طلب,درد عشق,قلم ورق',
 }
+
+// The first font trained from drawings alone: no teacher font and no
+// starting weights. Its source is a .nufo with three labeled samples,
+// so it types exactly these three texts. The file is a numbered
+// version from post-opentype (models/ba-basic/004); it has no reduced
+// precision files.
+export const baBasicDemo = {
+  font: '/demos/neuraltype/ba-basic-004.ntf',
+  text: 'با',
+  samples: 'ب,با,بب',
+}

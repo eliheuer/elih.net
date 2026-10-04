@@ -3,11 +3,15 @@
 // slides, then a live Runebender demo. Images and demos are the post's own.
 import NeuralTypeDemo from '@/components/NeuralTypeDemoIsland.astro'
 import TraceDemo from '@/components/TraceDemoIsland.astro'
-import { nastaliqDemo } from '@/components/demo-presets'
+import { baBasicDemo, nastaliqDemo } from '@/components/demo-presets'
 import Fig from '@/components/slides/Fig.astro'
 import Slide from '@/components/slides/Slide.astro'
 import SlidesLayout from '@/layouts/SlidesLayout.astro'
 
+import baBasicTyped from '@/assets/slides/nastaliq-distilled/ba-basic-typed.png'
+import editorCanvas from '@/assets/slides/nastaliq-distilled/editor-canvas.png'
+import editorGrid from '@/assets/slides/nastaliq-distilled/editor-grid.png'
+import editorLabel from '@/assets/slides/nastaliq-distilled/editor-label.png'
 import bahramGur from '@/content/blog/nastaliq-distilled/bahram-gur-red-palace.jpg'
 import cascade from '@/content/blog/nastaliq-distilled/cascade.png'
 import fatiha from '@/content/blog/nastaliq-distilled/fatiha-gulzar-comparison.png'
@@ -509,6 +513,147 @@ const PD = 'Public domain, via Wikimedia Commons.'
     <Fragment slot="notes">
       <p>Type design and font editing have to be rethought, not only the file format. Next: a prototype in Runebender.</p>
     </Fragment>
+  </Slide>
+
+  <!-- ── A font from drawings (the editor and the first native model) ── -->
+
+  <Slide section="A font from drawings" label="No teacher">
+    <div class="c-1-10 stack-lg">
+      <p class="t-display">A font from drawings.</p>
+      <p class="t-display muted">No OpenType font. No starting weights.</p>
+    </div>
+    <Fragment slot="notes">
+      <p>The distilled model proved the format. This part is the next question: can a font be made without an OpenType font, from drawings alone?</p>
+    </Fragment>
+  </Slide>
+
+  <Slide section="A font from drawings" label="Canvases, not glyphs">
+    <div class="c-1-4 stack">
+      <h2 class="t-head">Canvases, not glyphs</h2>
+      <p class="t-small">
+        The source is a .nufo: a UFO directory that Runebender opens in a
+        neural mode. An item is a canvas of related writing, not one glyph
+        in a box.
+      </p>
+      <p class="t-small muted">
+        No advance width. No metrics box. One baseline at y = 0.
+      </p>
+    </div>
+    <Fig
+      class="c-5-12 fig-right"
+      src={editorGrid}
+      alt="Runebender showing a neural source as a grid of canvases. The first canvas holds three pieces of writing; the others are empty."
+    />
+  </Slide>
+
+  <Slide section="A font from drawings" label="Draw the writing">
+    <div class="c-1-4 stack">
+      <h2 class="t-head">Draw the writing</h2>
+      <p class="t-small">
+        The ink is Bézier outlines. Draw it with the pen, or trace a
+        photograph of calligraphy with img2bez and correct the result.
+      </p>
+      <p class="t-small muted">
+        This canvas holds <bdi>ب</bdi> alone, <bdi>با</bdi>, and <bdi>بب</bdi>.
+      </p>
+    </div>
+    <Fig
+      class="c-5-12 fig-right"
+      src={editorCanvas}
+      alt="One canvas in the Runebender edit view: three pieces of writing drawn as outlines on a single baseline."
+    />
+  </Slide>
+
+  <Slide section="A font from drawings" label="Say which ink is which letter">
+    <div class="c-1-4 stack">
+      <h2 class="t-head">Say which ink is which letter</h2>
+      <p class="t-small">
+        Type the text of a sample. Draw a polygon around the ink of each
+        code point. Polygons of joined letters overlap at the join.
+      </p>
+      <p class="t-small muted">
+        The editor does not guess from position. A calligrapher moves
+        letters and dots.
+      </p>
+    </div>
+    <Fig
+      class="c-5-12 fig-right"
+      src={editorLabel}
+      alt="The label tool: each letter's ink is tinted and tagged with its Unicode code point."
+    />
+  </Slide>
+
+  <Slide section="A font from drawings" label="Train">
+    <div class="c-1-4 stack">
+      <h2 class="t-head">Train on a laptop</h2>
+      <p class="t-small muted">
+        One script turns the source into a font. Each run is a numbered
+        version with a record of its source, code, and settings.
+      </p>
+      <Fig
+        src={baBasicTyped}
+        alt="The three texts as drawn by the trained font."
+        credit="Output of the trained font for <bdi>بب</bdi>, <bdi>با</bdi>, and <bdi>ب</bdi>."
+      />
+    </div>
+    <div class="c-5-12 row-end">
+      <table>
+        <tbody>
+          <tr><td>Teacher font</td><td>None</td></tr>
+          <tr><td>Starting weights</td><td>Random</td></tr>
+          <tr><td>Letters</td><td>2: <bdi>ب</bdi> and <bdi>ا</bdi></td></tr>
+          <tr><td>Samples</td><td>3: <bdi>ب</bdi>, <bdi>با</bdi>, <bdi>بب</bdi></td></tr>
+          <tr><td>Shapes</td><td>5</td></tr>
+          <tr><td>Training</td><td>800 epochs, about 25 minutes, CPU</td></tr>
+          <tr><td>Shape accuracy</td><td>IoU 0.99</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <Fragment slot="notes">
+      <p>The model is the same small network as the distilled font. The data is the difference: five shapes from three drawings.</p>
+      <p>IoU here is measured on the training shapes. The font has no held-out text yet.</p>
+    </Fragment>
+  </Slide>
+
+  <Slide section="A font from drawings" label="Live demo: the new font">
+    <div class="c-1-4 stack">
+      <h2 class="t-head">Type it. Pull it.</h2>
+      <p class="t-small">
+        The font types <bdi>ب</bdi>, <bdi>با</bdi>, and <bdi>بب</bdi>.
+      </p>
+      <p class="t-small muted">
+        Drag the orange node of a letter to stretch its join. OpenType
+        needs a tatweel character for this.
+      </p>
+    </div>
+    <div class="c-5-12 slide-demo ratio-3-2">
+      <NeuralTypeDemo {...baBasicDemo} />
+    </div>
+    <Fragment slot="notes">
+      <ul>
+        <li>Pick each sample: ب, با, بب.</li>
+        <li>In با, drag the node of ا to the left. The join stretches.</li>
+        <li>The stretch is done by the engine on the model's field. It is not learned yet.</li>
+        <li>Esc to leave the demo, then → to continue.</li>
+      </ul>
+    </Fragment>
+  </Slide>
+
+  <Slide section="A font from drawings" label="Limits">
+    <div class="c-1-8 stack">
+      <h2 class="t-head">What it cannot do yet</h2>
+      <p class="t-small">
+        It types three texts. Other text has no shapes.
+      </p>
+      <p class="t-small">
+        Each text has one composition. The trainer keeps one drawing for
+        each letter in each context.
+      </p>
+      <p class="t-small muted">
+        Next: more canvases, several drawings of the same text, and a model
+        that reads the whole line.
+      </p>
+    </div>
   </Slide>
 
   <Slide section="Live" label="Runebender">
