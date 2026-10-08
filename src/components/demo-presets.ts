@@ -29,7 +29,7 @@ export const nastaliqDemo = {
 // version from post-opentype (models/ba-basic/004); it has no reduced
 // precision files.
 export const baBasicDemo = {
-  font: '/demos/neuraltype/ba-basic-004.ntf',
-  text: 'با',
+  font: '/demos/neuraltype/ba-basic-005.ntf',
+  text: 'بب',
   samples: 'ب,با,بب',
 }
