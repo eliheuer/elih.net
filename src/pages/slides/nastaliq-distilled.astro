@@ -13,7 +13,7 @@ import editorCanvas from '@/assets/slides/nastaliq-distilled/editor-canvas.png'
 import editorGrid from '@/assets/slides/nastaliq-distilled/editor-grid.png'
 import editorLabel from '@/assets/slides/nastaliq-distilled/editor-label.png'
 import fatihaLinesCalligraphy from '@/assets/slides/nastaliq-distilled/fatiha-lines-calligraphy.png'
-import fatihaLinesGulzar from '@/assets/slides/nastaliq-distilled/fatiha-lines-gulzar.png'
+import fatihaLinesGulzar from '@/assets/slides/nastaliq-distilled/fatiha-lines-gulzar-clear.png'
 import gulzarInUse from '@/assets/slides/nastaliq-distilled/gulzar-in-use.jpg'
 import shapeSorter from '@/assets/slides/nastaliq-distilled/shape-sorter.jpg'
 import titleRunebender from '@/assets/slides/nastaliq-distilled/title-runebender.jpg'
@@ -56,7 +56,7 @@ const PD = 'Public domain, via Wikimedia Commons.'
       <p class="t-head">Post-OpenType<br />Neural Network Fonts</p>
     </div>
     <div class="c-1-6 over-bleed at-bottom">
-      <p class="t-body">Eli Heuer, 2026</p>
+      <p class="t-body">Eli Heuer 2026</p>
     </div>
     <Fragment slot="notes">
       <p>I make font tools. This talk is about a font that is a neural network.</p>
@@ -97,54 +97,7 @@ const PD = 'Public domain, via Wikimedia Commons.'
     </Fragment>
   </Slide>
 
-  <Slide section="Demo" label="Live demo: the neural font">
-    <div class="c-1-4 stack">
-      <h2 class="t-head">This font is a neural network</h2>
-      <p class="t-small muted">
-        1.36 million parameters<br />
-        1.38 MB with 8-bit weights<br />
-        No OpenType shaping at runtime<br />
-        Rust, WASM, Linebender
-      </p>
-    </div>
-    <div class="c-5-12 slide-demo ratio-3-2">
-      <NeuralTypeDemo {...nastaliqDemo} />
-    </div>
-    <Fragment slot="notes">
-      <ul>
-        <li>Click in the demo. Type. Space separates joined letters.</li>
-        <li>Try the sample list: نور على نور, درد عشق.</li>
-        <li>Switch precision 32 / 16 / 8 bit.</li>
-        <li>Esc to leave the demo, then → to continue.</li>
-      </ul>
-    </Fragment>
-  </Slide>
 
-  <Slide section="The format" label="OpenType vs NeuralType">
-    <div class="c-1-4 stack">
-      <h2 class="t-head">Two models of a font</h2>
-      <p class="t-small muted">
-        The first .ntf font was square Kufic: easy to dismiss as a toy. This
-        one tests whether neural fonts can be an alternative to OpenType.
-      </p>
-    </div>
-    <div class="c-5-12 row-end">
-      <table>
-        <thead>
-          <tr><th></th><th>OpenType</th><th>NeuralType (.ntf)</th></tr>
-        </thead>
-        <tbody>
-          <tr><td class="muted">Unit</td><td>Glyph in a box: a virtual metal sort</td><td>Shape predicted from context</td></tr>
-          <tr><td class="muted">Behavior</td><td>GSUB and GPOS rules</td><td>Learned from examples</td></tr>
-          <tr><td class="muted">File</td><td>Outlines and layout tables</td><td>Network weights and a short header</td></tr>
-          <tr><td class="muted">Engine</td><td>HarfBuzz and others</td><td>NeuralType engine</td></tr>
-        </tbody>
-      </table>
-    </div>
-    <Fragment slot="notes">
-      <p>OpenType still emulates Gutenberg’s movable type. An .ntf is a small network with a header.</p>
-    </Fragment>
-  </Slide>
 
   <!-- ── Why Nasta’liq ── -->
 
@@ -152,9 +105,12 @@ const PD = 'Public domain, via Wikimedia Commons.'
     <div class="c-1-4 stack">
       <h2 class="t-head">Why Nasta’liq</h2>
       <p class="t-small">
-        A nonlinear style of the Perso-Arabic script. A calligrapher can stack
-        words, extend strokes, and move letters and dots to balance black and
-        white space.
+        A relatively nonlinear and freeform style of the Perso-Arabic script.
+        A calligrapher can stack words, extend strokes, and move letters and
+        dots to balance black and white space.
+      </p>
+      <p class="t-small">
+        Of all the major styles it is the one worst served by OpenType.
       </p>
     </div>
     <Fig
@@ -166,14 +122,8 @@ const PD = 'Public domain, via Wikimedia Commons.'
   </Slide>
 
   <Slide section="Why Nasta’liq" label="Al-Fatiha: calligraphy vs Gulzar">
-    <div class="c-1-4 stack">
-      <h2 class="t-head">Calligraphy and Gulzar</h2>
-      <p class="t-small muted">
-        Compare the forms. Look at the negative space.
-      </p>
-    </div>
     <Fig
-      class="c-5-12 fig-right"
+      class="c-1-12 fig-center"
       src={fatiha}
       alt="Al-Fatiha by Mir Emad Hassani on the left, the same lines set in Gulzar on the right."
       credit={`Left: Al-Fatiha by Mir Emad Hassani (1554–1615), National Museum of Iran. ${PD} Right: Gulzar.`}
@@ -185,15 +135,13 @@ const PD = 'Public domain, via Wikimedia Commons.'
 
   <Slide section="Why Nasta’liq" label="Al-Fatiha: the first two lines">
     <div class="c-1-12 zoom-pair">
-      <p class="t-body muted">Gulzar</p>
       <Fig
-        class="fig-right"
+        class="fig-center"
         src={fatihaLinesGulzar}
         alt="The first two lines of Al-Fatiha set in Gulzar."
       />
-      <p class="t-body muted">Mir Emad Hassani</p>
       <Fig
-        class="fig-right"
+        class="fig-center"
         src={fatihaLinesCalligraphy}
         alt="The same two lines in Mir Emad Hassani’s calligraphy."
       />
@@ -289,6 +237,55 @@ const PD = 'Public domain, via Wikimedia Commons.'
     </div>
     <Fragment slot="notes">
       <p>Neural fonts learn from examples. They also need an engine for now. The long-term goal is a format with broad support, not another extension.</p>
+    </Fragment>
+  </Slide>
+
+  <Slide section="The format" label="OpenType vs NeuralType">
+    <div class="c-1-4 stack">
+      <h2 class="t-head">Two models of a font</h2>
+      <p class="t-small muted">
+        The first .ntf font was square Kufic: easy to dismiss as a toy. This
+        one tests whether neural fonts can be an alternative to OpenType.
+      </p>
+    </div>
+    <div class="c-5-12 row-end">
+      <table>
+        <thead>
+          <tr><th></th><th>OpenType</th><th>NeuralType (.ntf)</th></tr>
+        </thead>
+        <tbody>
+          <tr><td class="muted">Unit</td><td>Glyph in a box: a virtual metal sort</td><td>Shape predicted from context</td></tr>
+          <tr><td class="muted">Behavior</td><td>GSUB and GPOS rules</td><td>Learned from examples</td></tr>
+          <tr><td class="muted">File</td><td>Outlines and layout tables</td><td>Network weights and a short header</td></tr>
+          <tr><td class="muted">Engine</td><td>HarfBuzz and others</td><td>NeuralType engine</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <Fragment slot="notes">
+      <p>OpenType still emulates Gutenberg’s movable type. An .ntf is a small network with a header.</p>
+    </Fragment>
+  </Slide>
+
+  <Slide section="Demo" label="Live demo: the neural font">
+    <div class="c-1-4 stack">
+      <h2 class="t-head">This font is a neural network</h2>
+      <p class="t-small muted">
+        1.36 million parameters<br />
+        1.38 MB with 8-bit weights<br />
+        No OpenType shaping at runtime<br />
+        Rust, WASM, Linebender
+      </p>
+    </div>
+    <div class="c-5-12 slide-demo ratio-3-2">
+      <NeuralTypeDemo {...nastaliqDemo} />
+    </div>
+    <Fragment slot="notes">
+      <ul>
+        <li>Click in the demo. Type. Space separates joined letters.</li>
+        <li>Try the sample list: نور على نور, درد عشق.</li>
+        <li>Switch precision 32 / 16 / 8 bit.</li>
+        <li>Esc to leave the demo, then → to continue.</li>
+      </ul>
     </Fragment>
   </Slide>
 
