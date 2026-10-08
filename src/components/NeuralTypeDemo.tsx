@@ -73,6 +73,10 @@ type Line = {
   /// Field fonts: one 2D point per caret index, on the displacement
   /// chain. The cursor lives on these nodes, not between boxes.
   nodes?: { i: number; x: number; y: number }[]
+  /// Field fonts: the strand as the pen moved, in line units, and for
+  /// each node the index of its point on it (neuraltype-core field_line).
+  strand?: [number, number][]
+  strand_nodes?: number[]
 }
 
 /// Caret x (in line units) for every logical caret index 0..=n.
@@ -173,6 +177,32 @@ function buildStrand(pts: { x: number; y: number }[]) {
     sample,
     tOf: (i: number) => t[tOfIndex[Math.max(0, Math.min(i, pts.length - 1))]],
     tEnd: n ? t[n - 1] : 0,
+  }
+}
+
+/// The strand the engine traced along the ink, with the interface of
+/// buildStrand: sample(u) along its length, tOf(i) for node i, tEnd.
+function polyStrand(pts: { x: number; y: number }[], nodeAt: number[]) {
+  const t: number[] = [0]
+  for (let k = 1; k < pts.length; k++) {
+    t.push(t[k - 1] + Math.hypot(pts[k].x - pts[k - 1].x, pts[k].y - pts[k - 1].y))
+  }
+  const sample = (u: number) => {
+    if (pts.length === 1) return pts[0]
+    const uu = Math.max(0, Math.min(t[t.length - 1], u))
+    let k = 0
+    while (k < t.length - 2 && t[k + 1] < uu) k++
+    const span = t[k + 1] - t[k] || 1
+    const f = (uu - t[k]) / span
+    return {
+      x: pts[k].x + (pts[k + 1].x - pts[k].x) * f,
+      y: pts[k].y + (pts[k + 1].y - pts[k].y) * f,
+    }
+  }
+  return {
+    sample,
+    tOf: (i: number) => t[nodeAt[Math.max(0, Math.min(i, nodeAt.length - 1))]] ?? 0,
+    tEnd: t[t.length - 1] ?? 0,
   }
 }
 
@@ -583,42 +613,16 @@ export default function NeuralTypeDemo({
           ctx.fill()
         }
       }
-      // insertion hint: outline the cluster the caret sits after, so
-      // an edit's landing place is visible even inside ligatures
-      if (
-        a === b &&
-        focusI > 0 &&
-        focusI <= chars.length &&
-        chars[focusI - 1] !== ' '
-      ) {
-        const hkey = `${text}\u0000${focusI}`
-        if (hintCache.current?.key !== hkey) {
-          const svg = (fontRef.current as any)?.selection_path?.(
-            text,
-            focusI - 1,
-            focusI,
-          ) as string | undefined
-          hintCache.current = {
-            key: hkey,
-            path: svg && svg.trim() ? new Path2D(svg) : null,
-          }
-        }
-        const hint = hintCache.current.path
-        if (hint) {
-          ctx.save()
-          ctx.translate(ox, oy)
-          ctx.scale(cell, cell)
-          ctx.lineWidth = 4.5 / cell
-          ctx.strokeStyle = BG
-          ctx.stroke(hint)
-          ctx.lineWidth = 2.5 / cell
-          ctx.strokeStyle = NODE_ACTIVE
-          ctx.stroke(hint)
-          ctx.restore()
-        }
-      }
       ctx.lineCap = 'round'
-      const strand = buildStrand(nodes.map((_, i) => P(i)))
+      // the strand as the engine traced it along the ink; the old spline
+      // through the nodes when the engine sends none
+      const strand =
+        line.strand && line.strand_nodes && line.strand_nodes.length === nodes.length
+          ? polyStrand(
+              line.strand.map(([x, y]) => ({ x: ox + x * cell, y: oy + y * cell })),
+              line.strand_nodes,
+            )
+          : buildStrand(nodes.map((_, i) => P(i)))
       const strokeStrand = (
         u0: number,
         u1: number,
@@ -645,30 +649,6 @@ export default function NeuralTypeDemo({
         for (let i = 0; i < nodes.length; i++) {
           const q = P(i)
           drawNode(q.x, q.y, 5.5, isGap(i))
-        }
-      }
-      ctx.strokeStyle = CARET
-      ctx.fillStyle = CARET
-      for (const dir of [-1, 1]) {
-        for (let step = 1; step <= 3; step++) {
-          const i0 = focusI + dir * (step - 1)
-          const i1 = focusI + dir * step
-          if (i1 < 0 || i1 >= nodes.length || i0 < 0 || i0 >= nodes.length)
-            break
-          const q1 = P(i1)
-          // strand segment along the shared spline, with a halo; the
-          // incoming segment is orange, flowing out of the hinted
-          // letter into the active node
-          const incoming = dir === -1 && step === 1 && a === b
-          strokeStrand(
-            strand.tOf(i0),
-            strand.tOf(i1),
-            2.5,
-            incoming ? RING : CARET,
-          )
-          // node, one visible notch smaller per step: 5.5 -> 4.5 -> 3.5;
-          // hollow when the slot touches a word boundary
-          drawNode(q1.x, q1.y, 9.5 - 1.5 * step, isGap(i1))
         }
       }
       // the active node, orange on a 1px background rim
@@ -861,29 +841,39 @@ export default function NeuralTypeDemo({
     (e: React.PointerEvent<HTMLCanvasElement>) => {
       e.preventDefault()
       const el = hiddenRef.current
-      // grabbing the active node starts a chain edit instead of a
-      // caret move
+      // a press on any node makes it the cursor and drags it in one
+      // motion: the active node by its whole node-and-ring target, the
+      // others by their own dot
       const view = viewRef.current
       const canvas = canvasRef.current
       if (view?.nodes && canvas) {
         const rect = canvas.getBoundingClientRect()
+        const px = e.clientX - rect.left
+        const py = e.clientY - rect.top
         const fi = Math.max(0, Math.min(sel.end, view.nodes.length - 1))
-        const nx = view.ox + view.nodes[fi].x * view.cell
-        const ny = view.oy + view.nodes[fi].y * view.cell
-        const dx = e.clientX - rect.left - nx
-        const dy = e.clientY - rect.top - ny
-        // Hit radius covers the whole visible target: the 10px node
-        // plus the 15px rotating ring, with a little slack. Anything
-        // tighter makes ring-edge grabs fall through to a caret move,
-        // which teleports the cursor mid-gesture.
-        if (dx * dx + dy * dy < 24 * 24) {
-          const base = nodeOffsets.current.get(fi) ?? { dx: 0, dy: 0 }
+        let hit: number | null = null
+        let best = Infinity
+        view.nodes.forEach((pt, i) => {
+          const d = Math.hypot(px - (view.ox + pt.x * view.cell), py - (view.oy + pt.y * view.cell))
+          const reach = i === fi ? 24 : 12
+          if (d < reach && d < best) {
+            best = d
+            hit = i
+          }
+        })
+        if (hit !== null) {
+          const i: number = hit
+          const base = nodeOffsets.current.get(i) ?? { dx: 0, dy: 0 }
           nodeDrag.current = {
-            i: fi,
+            i,
             startX: e.clientX,
             startY: e.clientY,
             baseDx: base.dx,
             baseDy: base.dy,
+          }
+          if (el && i !== fi) {
+            el.setSelectionRange(i, i)
+            setSel({ start: i, end: i })
           }
           e.currentTarget.setPointerCapture(e.pointerId)
           el?.focus()
@@ -1303,7 +1293,7 @@ export default function NeuralTypeDemo({
                 <p style={{ margin: '0 0 8px' }}>
                   click and type: real text. select, copy, and paste as in any
                   text field. arrow keys move the cursor, a node on the strand,
-                  the curve through the text. drag the orange node to move a
+                  the curve through the text. drag any node to move a
                   letter. space breaks the join between letters.
                 </p>
               ) : (
