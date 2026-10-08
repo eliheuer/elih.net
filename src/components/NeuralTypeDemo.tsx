@@ -316,6 +316,10 @@ export default function NeuralTypeDemo({
     startY: number
     baseDx: number
     baseDy: number
+    /// Where the pointer is now, in canvas pixels: the dragged node is
+    /// drawn here, so it stays under the hand while the ink follows.
+    atX: number
+    atY: number
   } | null>(null)
   const nodeOffsets = useRef<Map<number, { dx: number; dy: number }>>(new Map())
   const refineWorker = useRef<Worker | null>(null)
@@ -585,10 +589,11 @@ export default function NeuralTypeDemo({
     // cursor is geometry, not a glow.
     if (isFieldLine && nodes && nodes.length && !hideCursor) {
       const focusI = Math.max(0, Math.min(sel.end, nodes.length - 1))
-      const P = (i: number) => ({
-        x: ox + nodes[i].x * cell,
-        y: oy + nodes[i].y * cell,
-      })
+      const dragged = nodeDrag.current
+      const P = (i: number) =>
+        dragged && dragged.i === i
+          ? { x: dragged.atX, y: dragged.atY }
+          : { x: ox + nodes[i].x * cell, y: oy + nodes[i].y * cell }
       const p0 = P(focusI)
       const chars = [...text]
       // a node is a "gap slot" when an edit there touches a word
@@ -619,7 +624,12 @@ export default function NeuralTypeDemo({
       const strand =
         line.strand && line.strand_nodes && line.strand_nodes.length === nodes.length
           ? polyStrand(
-              line.strand.map(([x, y]) => ({ x: ox + x * cell, y: oy + y * cell })),
+              line.strand.map(([x, y], k) =>
+                // the dragged node's point follows the hand too
+                dragged && line.strand_nodes![dragged.i] === k
+                  ? { x: dragged.atX, y: dragged.atY }
+                  : { x: ox + x * cell, y: oy + y * cell },
+              ),
               line.strand_nodes,
             )
           : buildStrand(nodes.map((_, i) => P(i)))
@@ -870,6 +880,8 @@ export default function NeuralTypeDemo({
             startY: e.clientY,
             baseDx: base.dx,
             baseDy: base.dy,
+            atX: px,
+            atY: py,
           }
           if (el && i !== fi) {
             el.setSelectionRange(i, i)
@@ -897,6 +909,11 @@ export default function NeuralTypeDemo({
         const view = viewRef.current
         const font = fontRef.current as any
         if (!view || !font?.set_node_offset) return
+        const rect = canvasRef.current?.getBoundingClientRect()
+        if (rect) {
+          nd.atX = e.clientX - rect.left
+          nd.atY = e.clientY - rect.top
+        }
         const dx = nd.baseDx + (e.clientX - nd.startX) / view.cell
         const dy = nd.baseDy + (e.clientY - nd.startY) / view.cell
         nodeOffsets.current.set(nd.i, { dx, dy })
