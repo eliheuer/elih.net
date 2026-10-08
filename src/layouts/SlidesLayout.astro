@@ -530,6 +530,39 @@ const { title, description, running, author } = Astro.props
     align-self: end;
   }
 
+  /* a left column that runs the full height, its last item at the bottom */
+  .demo-side {
+    display: flex;
+    flex-direction: column;
+  }
+  .demo-side > .mono-table {
+    margin-top: auto !important;
+  }
+
+  /* a compact table in the credit size, mono */
+  .slide table.mono-table {
+    font-family: var(--font-mono);
+    font-size: var(--cr);
+    line-height: var(--cr-lh);
+  }
+  /* each row two units tall: half a unit of air, the text, the rule on
+     the next grid line */
+  .slide table.mono-table :where(td, th) {
+    top: 0;
+    padding-top: calc(0.5 * var(--u) + var(--shift-cr, 0px));
+    height: calc(2 * var(--u));
+    box-sizing: border-box;
+    vertical-align: top;
+    padding-right: var(--u);
+    white-space: nowrap;
+  }
+  .slide table.mono-table td {
+    box-shadow: inset 0 -1px 0 var(--border);
+  }
+  .slide table.mono-table th {
+    color: inherit;
+  }
+
   .quote {
     margin: 0;
   }

@@ -8,29 +8,15 @@ import Fig from '@/components/slides/Fig.astro'
 import Slide from '@/components/slides/Slide.astro'
 import SlidesLayout from '@/layouts/SlidesLayout.astro'
 
-import baBasicTyped from '@/assets/slides/nastaliq-distilled/ba-basic-typed.png'
-import editorCanvas from '@/assets/slides/nastaliq-distilled/editor-canvas.png'
-import editorGrid from '@/assets/slides/nastaliq-distilled/editor-grid.png'
-import editorLabel from '@/assets/slides/nastaliq-distilled/editor-label.png'
 import fatihaLinesCalligraphy from '@/assets/slides/nastaliq-distilled/fatiha-lines-calligraphy-tight.png'
 import fatihaLinesGulzar from '@/assets/slides/nastaliq-distilled/fatiha-lines-gulzar-tight.png'
 import gulzarInUse from '@/assets/slides/nastaliq-distilled/gulzar-in-use.jpg'
 import shapeSorter from '@/assets/slides/nastaliq-distilled/shape-sorter.jpg'
+import endRunebender from '@/assets/slides/nastaliq-distilled/end-runebender.jpg'
 import titleRunebender from '@/assets/slides/nastaliq-distilled/title-runebender.jpg'
-import bahramGur from '@/content/blog/nastaliq-distilled/bahram-gur-red-palace.jpg'
-import cascade from '@/content/blog/nastaliq-distilled/cascade.png'
 import fatiha from '@/content/blog/nastaliq-distilled/fatiha-gulzar-comparison.png'
-import futureArch from '@/content/blog/nastaliq-distilled/future-architecture.png'
-import khaShapes from '@/content/blog/nastaliq-distilled/kha-shapes.png'
 import mishkin09 from '@/content/blog/nastaliq-distilled/mishkin-qalam-09.jpg'
-import modelArch from '@/content/blog/nastaliq-distilled/model-architecture.png'
-import noonVariants from '@/content/blog/nastaliq-distilled/noon-variants.png'
-import sdfKha from '@/content/blog/nastaliq-distilled/sdf-kha.png'
-import sdfSlice from '@/content/blog/nastaliq-distilled/sdf-slice.png'
-import teacherModel from '@/content/blog/nastaliq-distilled/teacher-model.png'
 import train from '@/content/blog/nastaliq-distilled/train.png'
-import unseen from '@/content/blog/nastaliq-distilled/unseen-words.png'
-import vectorFragments from '@/content/blog/nastaliq-distilled/vector-fragments.png'
 
 const PD = 'Public domain, via Wikimedia Commons.'
 ---
@@ -95,8 +81,6 @@ const PD = 'Public domain, via Wikimedia Commons.'
     </Fragment>
   </Slide>
 
-
-
   <!-- ── Why Nasta’liq ── -->
 
   <Slide section="Why Nasta’liq" label="Nasta’liq">
@@ -160,90 +144,29 @@ const PD = 'Public domain, via Wikimedia Commons.'
     </Fragment>
   </Slide>
 
-  <Slide section="Why Nasta’liq" label="Ligature vs learned style">
-    <div class="c-1-4 stack">
-      <h2 class="t-head">A style, not one phrase</h2>
-      <p class="t-small">
-        OpenType can store that composition as one ligature. It cannot learn
-        how to compose other text.
-      </p>
-      <p class="t-small">
-        A neural font could learn the style and compose new text, fitting a
-        line or a page to the space it has.
-      </p>
-    </div>
-    <Fig
-      class="c-5-12 fig-right"
-      src={bahramGur}
-      alt="A folio showing Bahram Gur in the Red Palace, with blocks of Nasta’liq above and below the painting."
-      credit={`“Bahram Gur in the Red Palace on Tuesday,” Nizami’s Khamsa, Herat, 1524–25. Calligraphy by Sultan Muhammad Nur and Mahmud Muzahib. The Metropolitan Museum of Art. ${PD}`}
-    />
-    <Fragment slot="notes">
-      <p>That is the goal for a font designed as a network from the start. The distilled Gulzar model does not do this.</p>
-    </Fragment>
-  </Slide>
-
-  <Slide section="Why Nasta’liq" label="Other approaches">
-    <div class="c-1-4 stack">
-      <h2 class="t-head">Rules, not examples</h2>
-      <p class="t-small muted">
-        Good OpenType Nasta’liq is expensive to build, so few exist. The
-        alternatives need specialist software.
-      </p>
-    </div>
-    <div class="c-5-12 row-end">
-      <table>
-        <thead>
-          <tr><th>Font or product</th><th>System</th><th>Limit</th></tr>
-        </thead>
-        <tbody>
-          <tr><td>Gulzar, Noto Nastaliq Urdu</td><td>OpenType Layout</td><td>Costly to build</td></tr>
-          <tr><td>Awami Nastaliq</td><td>Graphite</td><td>Specialist engine</td></tr>
-          <tr><td>Nastaliq Navees</td><td>QuickDraw GX</td><td>Obsolete</td></tr>
-          <tr><td>Tasmeem</td><td>DecoType ACE</td><td>Proprietary InDesign extension</td></tr>
-        </tbody>
-      </table>
-    </div>
-    <Fragment slot="notes">
-      <p>Neural fonts learn from examples. They also need an engine for now. The long-term goal is a format with broad support, not another extension.</p>
-    </Fragment>
-  </Slide>
-
-  <Slide section="The format" label="OpenType vs NeuralType">
-    <div class="c-1-4 stack">
-      <h2 class="t-head">Two models of a font</h2>
-      <p class="t-small muted">
-        The first .ntf font was square Kufic: easy to dismiss as a toy. This
-        one tests whether neural fonts can be an alternative to OpenType.
-      </p>
-    </div>
-    <div class="c-5-12 row-end">
-      <table>
-        <thead>
-          <tr><th></th><th>OpenType</th><th>NeuralType (.ntf)</th></tr>
-        </thead>
-        <tbody>
-          <tr><td class="muted">Unit</td><td>Glyph in a box: a virtual metal sort</td><td>Shape predicted from context</td></tr>
-          <tr><td class="muted">Behavior</td><td>GSUB and GPOS rules</td><td>Learned from examples</td></tr>
-          <tr><td class="muted">File</td><td>Outlines and layout tables</td><td>Network weights and a short header</td></tr>
-          <tr><td class="muted">Engine</td><td>HarfBuzz and others</td><td>NeuralType engine</td></tr>
-        </tbody>
-      </table>
-    </div>
-    <Fragment slot="notes">
-      <p>OpenType still emulates Gutenberg’s movable type. An .ntf is a small network with a header.</p>
-    </Fragment>
-  </Slide>
-
   <Slide section="Demo" label="Live demo: the neural font">
-    <div class="c-1-4 stack">
+    <div class="c-1-4 stack demo-side">
       <h2 class="t-head">This font is a neural network</h2>
-      <p class="t-small muted">
-        1.36 million parameters<br />
-        1.38 MB with 8-bit weights<br />
-        No OpenType shaping at runtime<br />
-        Rust, WASM, Linebender
+      <p class="t-small">
+        A small feed-forward network: Unicode and neighbors in, a signed
+        distance field out.
       </p>
+      <p class="t-small">
+        1.36 million weights: 5.4 MB at 32 bits, 1.38 MB quantized to 8<br />
+        No OpenType shaping at runtime<br />
+        Rust, WASM, Linebender, img2bez
+      </p>
+      <table class="mono-table">
+        <thead>
+          <tr><th></th><th>OpenType</th><th>NeuralType</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>Unit</td><td>Glyph in a box</td><td>Shape from context</td></tr>
+          <tr><td>Behavior</td><td>GSUB, GPOS</td><td>Learned</td></tr>
+          <tr><td>File</td><td>Outlines, tables</td><td>Weights</td></tr>
+          <tr><td>Engine</td><td>HarfBuzz</td><td>NeuralType</td></tr>
+        </tbody>
+      </table>
     </div>
     <div class="c-5-12 slide-demo ratio-3-2">
       <NeuralTypeDemo {...nastaliqDemo} />
@@ -260,177 +183,24 @@ const PD = 'Public domain, via Wikimedia Commons.'
 
   <!-- ── Measuring the teacher ── -->
 
-  <Slide section="Measuring Gulzar" label="344 vs 150">
-    <div class="c-1-4 stack">
-      <h2 class="t-head">Context changes the shape</h2>
-      <p class="t-small muted">
-        Every two-letter sequence, shaped with HarfRust. Distinct glyph IDs
-        per first letter, summed over 31 letters.
-      </p>
-    </div>
-    <div class="c-5-12" style="display: flex; flex-direction: column; gap: 2.5cqw; min-height: 0">
-      <div style="display: flex; gap: 5cqw">
-        <div>
-          <div class="t-num">344</div>
-          <div class="t-small">Gulzar, Nasta’liq</div>
-        </div>
-        <div class="muted">
-          <div class="t-num">150</div>
-          <div class="t-small">Amiri, Naskh</div>
-        </div>
-      </div>
-      <Fig
-        src={noonVariants}
-        alt="Fourteen pairs. The green initial ن takes a different shape for each gray follower."
-      />
-    </div>
-    <Fragment slot="notes">
-      <p>About 11 glyph IDs per letter. Below: initial ن in green, a different form for each following letter.</p>
-    </Fragment>
-  </Slide>
-
-  <Slide section="Measuring Gulzar" label="Cascade">
-    <div class="c-1-4 stack">
-      <h2 class="t-head">The cascade</h2>
-      <p class="t-small">
-        In نستعليق the letters step down from above the baseline. Their
-        origins span 0.95 em vertically.
-      </p>
-    </div>
-    <Fig
-      class="c-5-12 fig-right"
-      src={cascade}
-      alt="The word Nasta’liq shaped with Gulzar: letters step down and the final swash lands below the baseline."
-    />
-  </Slide>
-
   <!-- ── Dataset ── -->
-
-  <Slide section="Dataset" label="Teacher and dataset">
-    <div class="c-1-4 stack">
-      <h2 class="t-head">Gulzar is the teacher</h2>
-      <p class="t-small">
-        In distillation, the system a model learns to imitate is the teacher.
-        Here it is Gulzar shaped by HarfRust.
-      </p>
-      <p class="t-small muted">
-        Every one-, two-, and three-letter string, plus 24 longer words.
-      </p>
-    </div>
-    <div class="c-5-12 row-end">
-      <table>
-        <tbody>
-          <tr><td class="t-num num">30,783</td><td class="row-end">input strings of 1 to 3 letters</td></tr>
-          <tr><td class="t-num num">91,390</td><td>examples: context, shape, position</td></tr>
-          <tr><td class="t-num num">1,150</td><td>distinct shapes</td></tr>
-        </tbody>
-      </table>
-    </div>
-    <Fragment slot="notes">
-      <p>Fixed font and shaping options, so each input has one output to learn. That is a property of this teacher, not of neural fonts.</p>
-    </Fragment>
-  </Slide>
-
-  <Slide section="Dataset" label="108 shapes of خ">
-    <div class="c-1-4 stack">
-      <h2 class="t-head">108 shapes for خ</h2>
-      <p class="t-small muted">All shapes in the dataset associated with one letter.</p>
-    </div>
-    <Fig
-      class="c-5-12 fig-right"
-      src={khaShapes}
-      alt="The 108 shapes associated with خ, in a grid."
-    />
-  </Slide>
-
-  <Slide section="Dataset" label="Unseen words">
-    <div class="c-1-4 stack">
-      <h2 class="t-head">Unseen words break</h2>
-      <p class="t-small">
-        Four-letter strings would add 923,521 inputs. Five-letter strings
-        would add 28.6 million.
-      </p>
-      <p class="t-small muted">
-        Valid output for unseen text is probably the hardest problem for
-        neural fonts.
-      </p>
-    </div>
-    <Fig
-      class="c-5-12 fig-right"
-      src={unseen}
-      alt="Three unseen words: Gulzar in gray above, the model in green below with separated forms and misplaced marks."
-      credit="Gulzar gray, model green."
-    />
-    <Fragment slot="notes">
-      <p>A production model should train on representative text and add examples where it differs from the teacher. Joining rules and fallback forms could stop invalid output.</p>
-    </Fragment>
-  </Slide>
 
   <!-- ── Signed-distance fields ── -->
 
-  <Slide section="Signed-distance fields" label="SDF of خ">
-    <div class="c-1-4 stack">
-      <h2 class="t-head">A grid of distances</h2>
-      <p class="t-small">
-        The model predicts a signed-distance field, not Bézier commands.
-        Positive inside, negative outside. The edge is at zero.
-      </p>
-      <p class="t-small muted">155 × 219 cells at 64 px/em.</p>
-    </div>
-    <Fig
-      class="c-5-12 fig-right"
-      src={sdfKha}
-      alt="The isolated خ and its signed-distance field with the zero contour in red."
-    />
-  </Slide>
-
-  <Slide section="Signed-distance fields" label="SDF slice">
-    <div class="c-1-4 stack">
-      <h2 class="t-head">The edge falls between cells</h2>
-      <p class="t-small">
-        A small error moves the nearby edge. It does not break the rest of
-        the outline.
-      </p>
-      <p class="t-small muted">
-        Valve used the same idea in 2007 to render sharp vector graphics from
-        small textures.
-      </p>
-    </div>
-    <Fig
-      class="c-5-12 fig-right"
-      src={sdfSlice}
-      alt="One row through the خ field, plotted as a curve that crosses zero at each stroke edge, with one crossing magnified."
-    />
-  </Slide>
-
   <!-- ── Model ── -->
-
-  <Slide section="The network" label="Model architecture">
-    <div class="c-1-4 stack">
-      <h2 class="t-head">One small network</h2>
-      <p class="t-small">
-        Feed-forward. One decoder draws every shape, so it reuses what it
-        learns about strokes, curves, and dots.
-      </p>
-      <p class="t-small muted">
-        It reproduces one design. It does not need to know the language.
-      </p>
-    </div>
-    <Fig
-      class="c-5-12 fig-right"
-      src={modelArch}
-      alt="Read nearby letters, combine them into 256 numbers, grow the field through five layers, draw and place."
-    />
-  </Slide>
 
   <Slide section="Training" label="Training on a local GPU">
     <div class="c-1-4 stack">
       <h2 class="t-head">Trained at home</h2>
       <p class="t-small">
+        Distilled from Gulzar: 91,390 examples from 30,783 strings of one to
+        three letters, 1,150 distinct shapes.
+      </p>
+      <p class="t-small">
         Rust and Candle on an NVIDIA RTX 2060 SUPER with 8 GB. About 100
         seconds per epoch.
       </p>
-      <p class="t-small muted">
+      <p class="t-small">
         Validation IoU 0.945 on held-out short strings.
       </p>
     </div>
@@ -467,55 +237,6 @@ const PD = 'Public domain, via Wikimedia Commons.'
 
   <!-- ── Results ── -->
 
-  <Slide section="Results" label="Teacher vs model">
-    <div class="c-1-4 stack">
-      <h2 class="t-head">Results</h2>
-      <p class="t-small">
-        1.38 MB for the .ntf with 8-bit weights. 963 KB for the Gulzar TTF.
-      </p>
-      <p class="t-small muted">
-        The TTF also needs a shaping engine. The .ntf needs the NeuralType
-        engine. This compares font data only.
-      </p>
-    </div>
-    <Fig
-      class="c-5-12 fig-right"
-      src={teacherModel}
-      alt="Five words: Gulzar in gray above, the model in green below."
-      credit="Gulzar gray, model green."
-    />
-    <Fragment slot="notes">
-      <p>More training text barely changes file size. A new ligature token adds about 30 bytes.</p>
-    </Fragment>
-  </Slide>
-
-  <Slide section="Results" label="Failed scaling">
-    <div class="c-1-4 stack">
-      <h2 class="t-head">Bigger was not better</h2>
-      <p class="t-small muted">
-        Three quick runs, settings not tuned per model. They show these
-        changes did not help, not that larger models cannot.
-      </p>
-      <Fig
-        src={vectorFragments}
-        alt="Teacher outlines, the field model drawing them closely, and the vector model drawing fragments."
-      />
-    </div>
-    <div class="c-5-12 row-end">
-      <table>
-        <thead>
-          <tr><th>Model</th><th class="num">Parameters</th><th>Result</th></tr>
-        </thead>
-        <tbody>
-          <tr><td>Field, 64 px/em</td><td class="num">1,357,995</td><td>IoU 0.945</td></tr>
-          <tr><td>Field, 96 px/em</td><td class="num">3,101,483</td><td>IoU 0.825, no visible gain</td></tr>
-          <tr><td>Field, 64 px/em, wide</td><td class="num">5,357,091</td><td>IoU 0.809, strokes merge</td></tr>
-          <tr><td>Vector, outline tokens</td><td class="num">12,693,639</td><td>Accuracy 0.482, fragments</td></tr>
-        </tbody>
-      </table>
-    </div>
-  </Slide>
-
   <!-- ── Beyond distillation (new for the talk) ── -->
 
   <Slide section="Beyond distillation" label="Possible, not the design">
@@ -528,144 +249,32 @@ const PD = 'Public domain, via Wikimedia Commons.'
     </Fragment>
   </Slide>
 
-  <Slide section="Beyond distillation" label="Native model">
-    <div class="c-1-4 stack">
-      <h2 class="t-head">Design for the network</h2>
-      <p class="t-small">
-        A native Nasta’liq font reads the whole line or page and decides
-        letterforms, placement, and negative space together, as a
-        calligrapher does.
-      </p>
-    </div>
-    <Fig
-      class="c-5-12 fig-right"
-      src={futureArch}
-      alt="Left: the current model, nearby letters to a fixed shape code to one grid per shape. Right: a whole line to a shared composition model queried at any point."
-    />
-  </Slide>
-
-  <Slide section="Beyond distillation" label="A new editor">
-    <div class="c-1-8 stack-lg">
-      <h2 class="t-display">A new font needs a new editor</h2>
-      <p class="t-head muted">
-        Draw compositions, not glyphs in boxes. Train the model in the editor.
-        See its output for any text.
-      </p>
-    </div>
-    <Fragment slot="notes">
-      <p>Type design and font editing have to be rethought, not only the file format. Next: a prototype in Runebender.</p>
-    </Fragment>
-  </Slide>
-
   <!-- ── A font from drawings (the editor and the first native model) ── -->
 
-  <Slide section="A font from drawings" label="No teacher">
-    <div class="c-1-10 stack-lg">
-      <p class="t-display">A font from drawings.</p>
-      <p class="t-display muted">No OpenType font. No starting weights.</p>
+  <Slide section="Live" label="Runebender">
+    <img
+      class="bleed"
+      src={endRunebender.src}
+      alt="Runebender with a labeled bismillah and its preview."
+    />
+    <div class="c-1-9 over-bleed">
+      <p class="t-display">Runebender</p>
     </div>
     <Fragment slot="notes">
-      <p>The distilled model proved the format. This part is the next question: can a font be made without an OpenType font, from drawings alone?</p>
-    </Fragment>
-  </Slide>
-
-  <Slide section="A font from drawings" label="Canvases, not glyphs">
-    <div class="c-1-4 stack">
-      <h2 class="t-head">Canvases, not glyphs</h2>
-      <p class="t-small">
-        The source is a .nufo: a UFO directory that Runebender opens in a
-        neural mode. An item is a canvas of related writing, not one glyph
-        in a box.
-      </p>
-      <p class="t-small muted">
-        No advance width. No metrics box. One baseline at y = 0.
-      </p>
-    </div>
-    <Fig
-      class="c-5-12 fig-right"
-      src={editorGrid}
-      alt="Runebender showing a neural source as a grid of canvases. The first canvas holds three pieces of writing; the others are empty."
-    />
-  </Slide>
-
-  <Slide section="A font from drawings" label="Draw the writing">
-    <div class="c-1-4 stack">
-      <h2 class="t-head">Draw the writing</h2>
-      <p class="t-small">
-        The ink is Bézier outlines. Draw it with the pen, or trace a
-        photograph of calligraphy with img2bez and correct the result.
-      </p>
-      <p class="t-small muted">
-        This canvas holds <bdi>ب</bdi> alone, <bdi>با</bdi>, and <bdi>بب</bdi>.
-      </p>
-    </div>
-    <Fig
-      class="c-5-12 fig-right"
-      src={editorCanvas}
-      alt="One canvas in the Runebender edit view: three pieces of writing drawn as outlines on a single baseline."
-    />
-  </Slide>
-
-  <Slide section="A font from drawings" label="Say which ink is which letter">
-    <div class="c-1-4 stack">
-      <h2 class="t-head">Say which ink is which letter</h2>
-      <p class="t-small">
-        Type the text of a sample. Draw a polygon around the ink of each
-        code point. Polygons of joined letters overlap at the join.
-      </p>
-      <p class="t-small muted">
-        The editor does not guess from position. A calligrapher moves
-        letters and dots.
-      </p>
-    </div>
-    <Fig
-      class="c-5-12 fig-right"
-      src={editorLabel}
-      alt="The label tool: each letter's ink is tinted and tagged with its Unicode code point."
-    />
-  </Slide>
-
-  <Slide section="A font from drawings" label="Train">
-    <div class="c-1-4 stack">
-      <h2 class="t-head">Train on a laptop</h2>
-      <p class="t-small muted">
-        One script turns the source into a font. Each run is a numbered
-        version with a record of its source, code, and settings.
-      </p>
-      <Fig
-        src={baBasicTyped}
-        alt="The three texts as drawn by the trained font."
-        credit="Output of the trained font for <bdi>بب</bdi>, <bdi>با</bdi>, and <bdi>ب</bdi>."
-      />
-    </div>
-    <div class="c-5-12 row-end">
-      <table>
-        <tbody>
-          <tr><td>Teacher font</td><td>None</td></tr>
-          <tr><td>Starting weights</td><td>Random</td></tr>
-          <tr><td>Letters</td><td>2: <bdi>ب</bdi> and <bdi>ا</bdi></td></tr>
-          <tr><td>Samples</td><td>3: <bdi>ب</bdi>, <bdi>با</bdi>, <bdi>بب</bdi></td></tr>
-          <tr><td>Shapes</td><td>5</td></tr>
-          <tr><td>Training</td><td>800 epochs, about 25 minutes, CPU</td></tr>
-          <tr><td>Shape accuracy</td><td>IoU 0.99</td></tr>
-        </tbody>
-      </table>
-    </div>
-    <Fragment slot="notes">
-      <p>The model is the same small network as the distilled font. The data is the difference: five shapes from three drawings.</p>
-      <p>IoU here is measured on the training shapes. The font has no held-out text yet.</p>
+      <p>Switch to Runebender now. About two minutes.</p>
     </Fragment>
   </Slide>
 
   <Slide section="A font from drawings" label="Live demo: the new font">
     <div class="c-1-4 stack">
-      <h2 class="t-head">Type it. Pull it.</h2>
+      <h2 class="t-head">A font from drawings</h2>
       <p class="t-small">
-        The font types <bdi>ب</bdi>, <bdi>با</bdi>, and <bdi>بب</bdi>.
+        Trained from the labeled .nufo alone. No OpenType font, no starting
+        weights.
       </p>
-      <p class="t-small muted">
-        Drag the orange node of a letter to stretch its join. OpenType
-        needs a tatweel character for this.
+      <p class="t-small">
+        Drag the end of <bdi>بب</bdi>. The font draws the <bdi>ب</bdi>
+        between the short and long drawings.
       </p>
     </div>
     <div class="c-5-12 slide-demo ratio-3-2">
@@ -673,38 +282,9 @@ const PD = 'Public domain, via Wikimedia Commons.'
     </div>
     <Fragment slot="notes">
       <ul>
-        <li>Pick each sample: ب, با, بب.</li>
-        <li>In با, drag the node of ا to the left. The join stretches.</li>
-        <li>The stretch is done by the engine on the model's field. It is not learned yet.</li>
+        <li>Drag the end node of بب to the left. The ب stretches.</li>
         <li>Esc to leave the demo, then → to continue.</li>
       </ul>
-    </Fragment>
-  </Slide>
-
-  <Slide section="A font from drawings" label="Limits">
-    <div class="c-1-8 stack">
-      <h2 class="t-head">What it cannot do yet</h2>
-      <p class="t-small">
-        It types three texts. Other text has no shapes.
-      </p>
-      <p class="t-small">
-        Each text has one composition. The trainer keeps one drawing for
-        each letter in each context.
-      </p>
-      <p class="t-small muted">
-        Next: more canvases, several drawings of the same text, and a model
-        that reads the whole line.
-      </p>
-    </div>
-  </Slide>
-
-  <Slide section="Live" label="Runebender">
-    <div class="c-1-10 stack-lg">
-      <p class="t-display">Runebender</p>
-      <p class="t-head muted">Prototype, live</p>
-    </div>
-    <Fragment slot="notes">
-      <p>Switch to Runebender now. About two minutes.</p>
     </Fragment>
   </Slide>
 
@@ -713,12 +293,9 @@ const PD = 'Public domain, via Wikimedia Commons.'
       <p class="t-display">Thank you</p>
       <p class="t-body">
         elih.net/blog/nastaliq-distilled<br />
+        runebender.org<br />
         github.com/eliheuer/post-opentype<br />
         eli@elih.net
-      </p>
-      <p class="t-credit">
-        The distilled font is licensed under the OFL and keeps Gulzar’s
-        copyright notice and credit.
       </p>
     </div>
   </Slide>
