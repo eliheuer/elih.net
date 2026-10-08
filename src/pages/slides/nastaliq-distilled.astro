@@ -12,6 +12,10 @@ import baBasicTyped from '@/assets/slides/nastaliq-distilled/ba-basic-typed.png'
 import editorCanvas from '@/assets/slides/nastaliq-distilled/editor-canvas.png'
 import editorGrid from '@/assets/slides/nastaliq-distilled/editor-grid.png'
 import editorLabel from '@/assets/slides/nastaliq-distilled/editor-label.png'
+import fatihaLinesCalligraphy from '@/assets/slides/nastaliq-distilled/fatiha-lines-calligraphy.png'
+import fatihaLinesGulzar from '@/assets/slides/nastaliq-distilled/fatiha-lines-gulzar.png'
+import gulzarInUse from '@/assets/slides/nastaliq-distilled/gulzar-in-use.jpg'
+import titleRunebender from '@/assets/slides/nastaliq-distilled/title-runebender.jpg'
 import bahramGur from '@/content/blog/nastaliq-distilled/bahram-gur-red-palace.jpg'
 import cascade from '@/content/blog/nastaliq-distilled/cascade.png'
 import fatiha from '@/content/blog/nastaliq-distilled/fatiha-gulzar-comparison.png'
@@ -41,9 +45,16 @@ const PD = 'Public domain, via Wikimedia Commons.'
   <!-- ── Opening ── -->
 
   <Slide label="Title">
-    <div class="c-1-10 stack-lg">
-      <h1 class="t-display">Nasta’liq Distilled</h1>
-      <p class="t-head muted">Post-OpenType Neural Network Fonts</p>
+    <img
+      class="bleed"
+      src={titleRunebender.src}
+      alt="Runebender with a bismillah labeled for training: each letter’s ink inside a colored polygon."
+    />
+    <div class="c-1-9 over-bleed">
+      <h1 class="t-display descends">Nasta’liq Distilled</h1>
+      <p class="t-head">Post-OpenType<br />Neural Network Fonts</p>
+    </div>
+    <div class="c-1-6 over-bleed at-bottom">
       <p class="t-body">Eli Heuer, 2026</p>
     </div>
     <Fragment slot="notes">
@@ -135,6 +146,37 @@ const PD = 'Public domain, via Wikimedia Commons.'
     />
     <Fragment slot="notes">
       <p>You do not need to read Nasta’liq. Look for the differences between the two sides.</p>
+    </Fragment>
+  </Slide>
+
+  <Slide section="Why Nasta’liq" label="Al-Fatiha: the first two lines">
+    <div class="c-1-12 zoom-pair">
+      <p class="t-body muted">Gulzar</p>
+      <Fig
+        class="fig-right"
+        src={fatihaLinesGulzar}
+        alt="The first two lines of Al-Fatiha set in Gulzar."
+      />
+      <p class="t-body muted">Mir Emad Hassani</p>
+      <Fig
+        class="fig-right"
+        src={fatihaLinesCalligraphy}
+        alt="The same two lines in Mir Emad Hassani’s calligraphy."
+      />
+    </div>
+    <Fragment slot="notes">
+      <p>The same two lines, closer. Look at how the calligrapher stacks, stretches and spaces them.</p>
+    </Fragment>
+  </Slide>
+
+  <Slide section="Why Nasta’liq" label="Gulzar in use">
+    <img
+      class="bleed"
+      src={gulzarInUse.src}
+      alt="A framed print of the bismillah set in Gulzar, hanging above a dresser."
+    />
+    <Fragment slot="notes">
+      <p>This is what people buy and hang on the wall. The same line as the calligraphy, set as type.</p>
     </Fragment>
   </Slide>
 
