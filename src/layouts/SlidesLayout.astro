@@ -43,6 +43,11 @@ const { title, description, running, author } = Astro.props
     <div class="deck" data-running={running} data-author={author}>
       <div class="stage">
         <slot />
+        <!-- Layout aid: press G. The 12 columns, the margins and the
+             2.5cqw line rhythm, drawn over every slide. -->
+        <div class="grid-overlay" aria-hidden="true">
+          {Array.from({ length: 12 }, (_, i) => <span>{i + 1}</span>)}
+        </div>
       </div>
     </div>
 
@@ -142,6 +147,48 @@ const { title, description, running, author } = Astro.props
     )
   }
 
+  // Baselines on the grid. For each text size, measure where its
+  // baseline falls in its line box and how tall its capitals are, and
+  // move the text so the first baseline lands on the first grid line
+  // below the cap height. Line heights are whole rows, so every later
+  // baseline lands on a line too. Shifts are kept in cqw.
+  {
+    const stage = document.querySelector('.stage') as HTMLElement
+    const width = () => stage.getBoundingClientRect().width
+    const css = getComputedStyle(stage)
+    const cqw = (name: string) => (parseFloat(css.getPropertyValue(name)) * width()) / 100
+    const row = cqw('--mm-lh')
+    const ctx = document.createElement('canvas').getContext('2d')!
+    const shift = (size: string, lh: string) => {
+      const box = document.createElement('div')
+      box.style.cssText =
+        'position:absolute;left:0;top:0;visibility:hidden;white-space:nowrap;' +
+        `font-size:var(${size});line-height:var(${lh})`
+      const mark = document.createElement('span')
+      mark.style.cssText = 'display:inline-block;width:0;height:0;vertical-align:baseline'
+      box.append('H', mark)
+      stage.append(box)
+      const baseline = mark.getBoundingClientRect().top - box.getBoundingClientRect().top
+      ctx.font = `${cqw(size)}px ${getComputedStyle(box).fontFamily}`
+      const cap = ctx.measureText('H').actualBoundingBoxAscent
+      box.remove()
+      const first = Math.max(1, Math.ceil(cap / row - 0.05)) * row
+      return ((first - baseline) / width()) * 100
+    }
+    for (const [name, size, lh] of [
+      ['--shift-mm', '--mm', '--mm-lh'],
+      ['--shift-l', '--l', '--l-lh'],
+      ['--shift-xl', '--xl', '--xl-lh'],
+    ]) {
+      stage.style.setProperty(name, `${shift(size, lh).toFixed(4)}cqw`)
+    }
+  }
+
+  // Layout aid: ?grid in the address shows the grid from the start.
+  if (new URLSearchParams(location.search).has('grid')) {
+    document.body.classList.add('show-grid')
+  }
+
   window.addEventListener('keydown', (e) => {
     if (e.metaKey || e.ctrlKey || e.altKey) return
     if (e.key === 'PageDown') return e.preventDefault(), show(current + 1)
@@ -189,6 +236,10 @@ const { title, description, running, author } = Astro.props
       case 'r':
         if (presenter) timerStart = Date.now()
         break
+      case 'g':
+      case 'G':
+        document.body.classList.toggle('show-grid')
+        break
     }
   })
 
@@ -234,24 +285,36 @@ const { title, description, running, author } = Astro.props
     container-type: size;
     /* 1cqw is 19.2px at 1920 wide. Every size below is in cqw so the
        slide scales as one picture. */
-    font-size: 1.875cqw;
-    line-height: calc(4 / 3);
+    /* Three text sizes, each on the 2.5cqw line rhythm (48px at 1920):
+       XL on three rows, L on two, M on one. */
+    --xl: 6cqw;
+    --xl-lh: 7.5cqw;
+    --l: 3.75cqw;
+    --l-lh: 5cqw;
+    --mm: 1.875cqw;
+    --mm-lh: 2.5cqw;
+    font-size: var(--mm);
+    line-height: var(--mm-lh);
     color: var(--foreground);
   }
 
   /* ── Slide grid: 12 columns, running head, body ── */
 
   .slide {
-    --m: 3.75cqw; /* outer margin */
+    --m: 3.125cqw; /* outer margin, all four sides: 60px at 1920 */
     --g: 1.25cqw; /* gutter */
     position: absolute;
     inset: 0;
     padding: var(--m);
     display: grid;
     grid-template-columns: repeat(12, minmax(0, 1fr));
-    grid-template-rows: minmax(0, 1fr) auto;
+    /* Vertical rhythm: rows of 2.5cqw (48px at 1920). Inside the
+       margins there are exactly 20: the body takes 18, one row of
+       space, and the footer the last, so its baseline is the bottom
+       margin. */
+    grid-template-rows: calc(18 * var(--mm-lh)) var(--mm-lh);
+    row-gap: var(--mm-lh);
     column-gap: var(--g);
-    row-gap: 2.5cqw;
     visibility: hidden;
   }
 
@@ -264,23 +327,23 @@ const { title, description, running, author } = Astro.props
     grid-row: 2;
     display: grid;
     grid-template-columns: subgrid;
-    padding-top: 0.6cqw;
-    border-top: 1px solid var(--foreground);
-    font-size: 0.9375cqw;
-    line-height: 1.4;
+    /* the rule is drawn inside the row, so it adds no height */
+    box-shadow: inset 0 1px 0 var(--foreground);
+    font-size: var(--mm);
+    line-height: var(--mm-lh);
   }
 
   .slide-head .h-running {
     grid-column: 1 / 4;
   }
   .slide-head .h-section {
-    grid-column: 4 / 10;
+    grid-column: 4 / 9;
   }
   .slide-head .h-author {
-    grid-column: 10 / 12;
+    grid-column: 9 / 11;
   }
   .slide-head .h-num {
-    grid-column: 12 / 13;
+    grid-column: 11 / 13;
     text-align: right;
     font-family: var(--font-mono);
     font-variant-numeric: tabular-nums;
@@ -299,6 +362,43 @@ const { title, description, running, author } = Astro.props
     display: none;
   }
 
+  /* ── Layout aid: the grid, toggled with G ── */
+
+  .grid-overlay {
+    position: absolute;
+    inset: 0;
+    z-index: 50;
+    pointer-events: none;
+    padding: 3.125cqw; /* the slide's --m */
+    display: none;
+    grid-template-columns: repeat(12, minmax(0, 1fr));
+    column-gap: 1.25cqw; /* the slide's --g */
+    /* the line rhythm: 1.875cqw type on 2.5cqw lines, from the top margin */
+    background-image: repeating-linear-gradient(
+      to bottom,
+      transparent 0,
+      transparent calc(2.5cqw - 1px),
+      rgb(0 160 255 / 0.35) calc(2.5cqw - 1px),
+      rgb(0 160 255 / 0.35) 2.5cqw
+    );
+    background-position: 0 3.125cqw;
+    outline: 1px solid rgb(255 0 128 / 0.6);
+    outline-offset: -3.125cqw;
+  }
+
+  body.show-grid .grid-overlay {
+    display: grid;
+  }
+
+  .grid-overlay span {
+    background: rgb(255 0 128 / 0.04);
+    border-left: 1px solid rgb(255 0 128 / 0.35);
+    border-right: 1px solid rgb(255 0 128 / 0.35);
+    font: 0.75cqw / 1 var(--font-mono);
+    color: rgb(255 0 128 / 0.8);
+    padding: 0.3cqw;
+  }
+
   /* ── Type ── */
 
   .slide :is(h1, h2, h3, p) {
@@ -307,33 +407,30 @@ const { title, description, running, author } = Astro.props
   }
 
   .t-display {
-    font-size: 6cqw;
-    line-height: 1;
+    font-size: var(--xl);
+    line-height: var(--xl-lh);
     letter-spacing: -0.03em;
     text-wrap: balance;
   }
 
   .t-head {
-    font-size: 3.75cqw;
-    line-height: 1.05;
+    font-size: var(--l);
+    line-height: var(--l-lh);
     letter-spacing: -0.025em;
     text-wrap: balance;
   }
 
-  .t-body {
-    font-size: 1.875cqw;
-    line-height: calc(4 / 3);
-  }
-
+  /* body, small and credit text are all M */
+  .t-body,
   .t-small {
-    font-size: 1.4cqw;
-    line-height: 1.4;
+    font-size: var(--mm);
+    line-height: var(--mm-lh);
   }
 
   .t-credit {
     font-family: var(--font-mono);
-    font-size: 0.78cqw;
-    line-height: 1.45;
+    font-size: var(--mm);
+    line-height: var(--mm-lh);
     color: oklch(0.55 0 0);
   }
 
@@ -342,8 +439,8 @@ const { title, description, running, author } = Astro.props
   }
 
   .t-num {
-    font-size: 9cqw;
-    line-height: 0.9;
+    font-size: var(--xl);
+    line-height: var(--xl-lh);
     letter-spacing: -0.04em;
     font-variant-numeric: tabular-nums;
   }
@@ -352,11 +449,26 @@ const { title, description, running, author } = Astro.props
     color: color-mix(in oklab, var(--foreground) 55%, var(--background));
   }
 
+  /* gaps are whole rows */
   .stack > * + * {
-    margin-top: 1.25cqw !important;
+    margin-top: var(--mm-lh) !important;
   }
   .stack-lg > * + * {
-    margin-top: 2.5cqw !important;
+    margin-top: calc(2 * var(--mm-lh)) !important;
+  }
+
+  /* Baselines on the grid lines: each size moves its text down so the
+     baseline of every line sits on the line at the bottom of its row.
+     The shifts are measured from the font when the deck loads. */
+  .slide :where(p, h1, h2, h3, li, td, th, figcaption, .slide-head > *) {
+    position: relative;
+    top: var(--shift-mm, 0);
+  }
+  .slide :where(.t-display, .t-num) {
+    top: var(--shift-xl, 0);
+  }
+  .slide :where(.t-head) {
+    top: var(--shift-l, 0);
   }
 
   /* ── Column spans ── */
@@ -382,7 +494,7 @@ const { title, description, running, author } = Astro.props
     min-height: 0;
     display: flex;
     flex-direction: column;
-    gap: 0.6cqw;
+    gap: 0;
   }
 
   .fig img {
@@ -408,21 +520,21 @@ const { title, description, running, author } = Astro.props
   .slide table {
     width: 100%;
     border-collapse: collapse;
-    font-size: 1.4cqw;
-    line-height: 1.3;
+    font-size: var(--mm);
+    line-height: var(--mm-lh);
   }
 
   .slide th {
     text-align: left;
     font-weight: 400;
     color: color-mix(in oklab, var(--foreground) 55%, var(--background));
-    padding: 0 1cqw 0.6cqw 0;
-    border-bottom: 1px solid var(--foreground);
+    padding: 0 1cqw 0 0;
+    box-shadow: inset 0 -1px 0 var(--foreground);
   }
 
   .slide td {
-    padding: 0.7cqw 1cqw 0.7cqw 0;
-    border-bottom: 1px solid var(--border);
+    padding: 0 1cqw 0 0;
+    box-shadow: inset 0 -1px 0 var(--border);
     vertical-align: top;
   }
 
