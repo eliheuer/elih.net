@@ -31,10 +31,6 @@ const { title, description, running, author } = Astro.props
     <PageHead title={title} description={description} />
     <meta name="robots" content="noindex" />
     <script is:inline>
-      try {
-        if (localStorage.getItem('theme') === 'light')
-          document.documentElement.classList.remove('dark')
-      } catch (e) {}
       if (new URLSearchParams(location.search).has('presenter'))
         document.documentElement.classList.add('presenter')
     </script>
@@ -207,13 +203,6 @@ const { title, description, running, author } = Astro.props
         if (document.fullscreenElement) document.exitFullscreen()
         else document.documentElement.requestFullscreen()
         break
-      case 't': {
-        const dark = document.documentElement.classList.toggle('dark')
-        try {
-          localStorage.setItem('theme', dark ? 'dark' : 'light')
-        } catch {}
-        break
-      }
       case 'p':
         if (!presenter)
           window.open(
@@ -437,6 +426,7 @@ const { title, description, running, author } = Astro.props
   .c-1-4 { grid-column: 1 / 5; }
   .c-1-5 { grid-column: 1 / 6; }
   .c-1-6 { grid-column: 1 / 7; }
+  .c-1-7 { grid-column: 1 / 8; }
   .c-1-8 { grid-column: 1 / 9; }
   .c-1-9 { grid-column: 1 / 10; }
   .c-1-10 { grid-column: 1 / 11; }
@@ -490,8 +480,7 @@ const { title, description, running, author } = Astro.props
 
   /* Text over a full-bleed image: a box of the ground color behind each
      block, trimmed to the text itself (cap height at the top, the
-     baseline at the bottom, or the bottom of the descenders where a
-     block has them: .descends) with one unit of padding on every side.
+     baseline at the bottom) with one unit of padding on every side.
      The boxes, not the letters, sit on the margins. */
   .over-bleed {
     position: relative;
@@ -510,11 +499,18 @@ const { title, description, running, author } = Astro.props
     top: 0 !important;
     margin: 0 !important;
   }
+  /* a block with descenders: trimmed at the baseline like the rest, and
+     its bottom padding just deep enough for them (0.2em), so the bottom
+     edge stays as close to one unit as the other three */
   .over-bleed > .descends {
-    text-box: trim-both cap text;
+    padding-bottom: max(var(--u), 0.2em);
   }
   .over-bleed.at-bottom {
     align-self: end;
+  }
+
+  .quote {
+    margin: 0;
   }
 
   /* Two images stacked, each with a label in the first two columns:

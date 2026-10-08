@@ -15,6 +15,7 @@ import editorLabel from '@/assets/slides/nastaliq-distilled/editor-label.png'
 import fatihaLinesCalligraphy from '@/assets/slides/nastaliq-distilled/fatiha-lines-calligraphy.png'
 import fatihaLinesGulzar from '@/assets/slides/nastaliq-distilled/fatiha-lines-gulzar.png'
 import gulzarInUse from '@/assets/slides/nastaliq-distilled/gulzar-in-use.jpg'
+import shapeSorter from '@/assets/slides/nastaliq-distilled/shape-sorter.jpg'
 import titleRunebender from '@/assets/slides/nastaliq-distilled/title-runebender.jpg'
 import bahramGur from '@/content/blog/nastaliq-distilled/bahram-gur-red-palace.jpg'
 import cascade from '@/content/blog/nastaliq-distilled/cascade.png'
@@ -60,6 +61,39 @@ const PD = 'Public domain, via Wikimedia Commons.'
     <Fragment slot="notes">
       <p>I make font tools. This talk is about a font that is a neural network.</p>
       <p>Based on the blog post at elih.net/blog/nastaliq-distilled.</p>
+    </Fragment>
+  </Slide>
+
+  <Slide section="The problem" label="John Hudson on OpenType Layout">
+    <img
+      class="bleed"
+      src={shapeSorter.src}
+      alt="A clay bunny pushing a square block toward the round hole of a shape sorter."
+    />
+    <div class="c-1-7 over-bleed">
+      <p class="t-body">
+        A dozen or so years ago, I was able to sit down with Eliyezer Kohen,
+        one of the original inventors of OpenType Layout, and talk through the
+        difficulties of cascading Arabic. He told me something that neither I
+        nor any of my colleagues working with Arabic to that date had been
+        aware of: he never expected OTL to be able to handle cascading Arabic,
+        which he considered to be outside the scope of the technology.
+        Unfortunately, this information was lost because Eliyezer had left
+        Microsoft before OpenType became widely adopted. As Eliyezer put it to
+        me at the end of our conversation, he had been happy in the mid-1990s
+        to target 98% of the world with OTL and for Tom Milo to have the rest.
+      </p>
+      <p class="t-body">
+        A lot of time and effort has been wasted over the years trying to
+        force cascading Arabic into OTL.
+      </p>
+      <p class="t-body">
+        John Hudson, TypeDrawers, July 31<br />
+        typedrawers.com/discussion/comment/72005
+      </p>
+    </div>
+    <Fragment slot="notes">
+      <p>John Hudson, on talking with Eliyezer Kohen, one of the inventors of OpenType Layout.</p>
     </Fragment>
   </Slide>
 
