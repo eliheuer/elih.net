@@ -71,61 +71,42 @@ circle with the shapes tool, name the glyph `circle`. Repeat for a few
 shapes. Sizes do not matter; the trainer resizes.
 
 For this post the shapes are generated, so the result repeats on any
-machine. The demo repo has them in `fonts/Shapes`: 16 shapes in 8
-sizes each.
+machine. The demo repo has them in `fonts/Shapes.ufo`: 16 glyphs, one
+shape each, named `circle`, `square`, `triangle`, `star`, `ring`,
+`arrow`, and so on. One UFO, no masters, no designspace.
 
-![The Shapes font: arrows, bars, circles, crosses, frames, hexagons, pentagons, pluses, squares, stars, and triangles in several sizes](./shapes-proof.png)
+![The 16 glyphs of Shapes.ufo: arrow, bar, chevron, circle, cross, dash, diamond, frame, hexagon, octagon, pentagon, plus, ring, square, star, triangle](./shapes-proof.png)
 
 ### 03. Train the Model
 
 One command trains the model. It reads one UFO and writes one folder.
 
 ```sh
-font-ml run train-draw --source fonts/Shapes/Shapes-Regular.ufo --out models/shapes-draw
+font-ml run train-draw --source fonts/Shapes.ufo --out models/shapes-draw
 ```
 
 The demo script runs 6000 steps with a model of 256 dims and 6 layers,
-5.5 million parameters. On an M4 Pro laptop that takes 11 minutes on
-Metal and ends at a validation loss of 2.18. The run prints:
+5.5 million parameters. On an M4 Pro laptop that takes 12 minutes on
+Metal. The run prints:
 
 ```
 device metal
-init loss 8.329, a random model gives 7.261
-checkpoint step 500: val loss 3.1664 (best, saved)
+init loss 8.3, a random model gives 7.3
+checkpoint step 500: val loss 3.4 (best, saved)
 ...
-checkpoint step 6000: val loss 2.1824 (best, saved)
-models/shapes-draw: 6000 steps, best val loss 2.1824, 128 shapes, 5.5M params, 677s
+checkpoint step 6000: val loss 1.25 (best, saved)
 ```
 
 The loss is still falling when the run stops. The same command with
-15000 steps takes 27 minutes and ends at 0.49. The checked-in model in
-the demo repo is that one. Section 06 shows what the difference looks
-like.
-
-The output folder holds three files:
-
-| File | What it is |
-| --- | --- |
-| `config.json` | The shape of the network: width, layers, heads, and the task name `draw` |
-| `weights.safetensors` | The trained weights |
-| `vocab.txt` | Every word the model can read, one per line |
-
-Open `vocab.txt`. It lists the shape names from your glyph names, the
-words from the sentence templates, and every width from 24 to 720 in
-steps of 8. That list is the whole language the model knows. A word
-that is not in it becomes an unknown token.
-
-The trainer prints a validation loss every 500 steps. The number is the
-average surprise per token on sentences the model did not train on.
-Lower is better. It starts near 8, which is a random guess over the
-vocabulary, and the run keeps the checkpoint with the lowest value.
+15000 steps takes 29 minutes and ends at 0.51. The checked-in model in
+the demo repo is that one. Section 06 shows what the difference means.
 
 ### 04. Draw From Text
 
 Open the font with the model folder as the model root:
 
 ```sh
-RUNEBENDER_MODELS=$PWD/models runebender fonts/Shapes/Shapes.designspace
+RUNEBENDER_MODELS=$PWD/models runebender fonts/Shapes.ufo
 ```
 
 In the left panel, open Local AI and choose `shapes-draw` under Model.
@@ -142,9 +123,9 @@ The same call from the shell writes a proposal layer into the UFO and
 nothing else:
 
 ```sh
-font-ml run draw --model models/shapes-draw --source fonts/Shapes/Shapes-Regular.ufo \
+font-ml run draw --model models/shapes-draw --source fonts/Shapes.ufo \
     --glyph octagon --prompt "a star 300 units wide in the center" --write
-runebender proof fonts/Shapes/Shapes-Regular.ufo --layer com.runebender.proposal.draw --glyphs octagon --out star.svg
+runebender proof fonts/Shapes.ufo --layer com.runebender.proposal.draw --glyphs octagon --out star.svg
 ```
 
 And the same again as a node graph, which the Nodes tab draws and
@@ -153,7 +134,7 @@ And the same again as a node graph, which the Nodes tab draws and
 for this task.
 
 ```sh
-runebender nodes run 04-nodes/shapes-draw.nodes.json --font fonts/Shapes/Shapes.designspace --models models
+runebender nodes run 04-nodes/shapes-draw.nodes.json --font fonts/Shapes.ufo --models models
 ```
 
 TODO: screenshot of the node graph.
@@ -186,10 +167,10 @@ the sentence from one of six templates with one of the phrases for
 that position. A glyph named `circle` becomes thousands of different
 sentences and drawings. The model never sees the same sample twice.
 
-The glyph name is the only label. `circle.300` and `circle` both give
-the word "circle", so one shape drawn at several sizes is one word with
-more examples. A name with a hyphen gives two words: `five-star` is
-"five star".
+The glyph name is the only label. A suffix after a dot is dropped, so
+`circle.big` and `circle` both give the word "circle", and one shape
+drawn twice is one word with two examples. A name with a hyphen gives
+two words: `five-star` is "five star".
 
 At run time the editor sends the sentence and the advance of the open
 glyph. The model continues the sequence one token at a time, always
@@ -205,15 +186,15 @@ a heart.
 
 ### 06. What It Cannot Do, and What to Try Next
 
-The same eight sentences, drawn by the 6000-step model and by the
-15000-step model. Each cell is one glyph; the sentence asked for the
-shape, a width, and a position.
+Eight sentences drawn by the checked-in model, trained on the 16
+glyphs for 15000 steps. Each cell is one glyph; the sentence asked for
+a shape, a width, and a position.
 
-![Eight shapes from the 6000-step model: a triangle on the right, a rough circle, a plus with uneven arms, a star that is not a star, a hexagon, a square](./draw-6000-steps.png)
+![Eight shapes from the 15000-step model: a star in the center, a circle 64 units wide in the lower left, a triangle on the right, a circle 240 wide, and a rough hexagon and ring](./draw-15000-steps.png)
 
-![The same eight sentences from the 15000-step model: a clean triangle, circle, plus, star, hexagon, and square](./draw-15000-steps.png)
-
-Training time is the lever. Nothing else changed between the two.
+The star, the circles, and the triangle are clean. The hexagon and
+the ring are rough. At 6000 steps every shape is rough. Training time
+is the lever, and 16 drawings are enough data for it to work on.
 
 The model knows 16 shapes and the sentence patterns it was trained on.
 It does not know "heart". It does not know "next to the dot of the i".
