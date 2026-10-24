@@ -1,0 +1,419 @@
+---
+// Local AI in Runebender. About 15 minutes: how a model becomes a folder
+// beside your font, the loop it serves, and the two routes into the editor.
+// Companion to runebender.org/docs/local-ai-setup.html and the demo repo.
+import Fig from '@/components/slides/Fig.astro'
+import Slide from '@/components/slides/Slide.astro'
+import SlidesLayout from '@/layouts/SlidesLayout.astro'
+
+import endRunebender from '@/assets/slides/localai/end-runebender.jpg'
+import grid from '@/assets/slides/localai/runebender-xilem-grid.png'
+import nodes from '@/assets/slides/localai/runebender-xilem-nodes.png'
+import nufoEditing from '@/assets/slides/localai/runebender-xilem-nufo-editing.png'
+import outline from '@/assets/slides/localai/runebender-xilem-outline.png'
+import titleRunebender from '@/assets/slides/localai/title-runebender.jpg'
+---
+
+<SlidesLayout
+  title="Local AI (slides)"
+  description="Talk slides on using local AI models with the Runebender font editor."
+  running="Local AI"
+  author="Eli Heuer"
+>
+  <!-- ── Opening ── -->
+
+  <Slide label="Title">
+    <img
+      class="bleed"
+      src={titleRunebender.src}
+      alt="Runebender with a bismillah labeled for training: each letter’s ink inside a colored polygon."
+    />
+    <div class="c-1-9 over-bleed">
+      <h1 class="t-display descends">Local AI</h1>
+      <p class="t-head">Models that live<br />beside your font</p>
+    </div>
+    <div class="c-1-6 over-bleed at-bottom">
+      <p class="t-body">Eli Heuer 2026 · runebender.org</p>
+    </div>
+    <Fragment slot="notes">
+      <p>I make Runebender, a font editor in Rust. This talk is about running small models on your own machine, trained on your own drawings, from inside the editor.</p>
+      <p>Everything shown is at runebender.org/docs/local-ai-setup.html and in the demo repo.</p>
+    </Fragment>
+  </Slide>
+
+  <Slide section="Thesis" label="A model is a folder">
+    <div class="c-1-10 stack-lg">
+      <p class="t-display">A model is a folder.</p>
+      <p class="t-display muted">Nothing leaves your machine.</p>
+    </div>
+    <Fragment slot="notes">
+      <p>Three files on disk. You point the editor at the folder. No account, no API key, no upload.</p>
+    </Fragment>
+  </Slide>
+
+  <!-- ── Why local ── -->
+
+  <Slide section="Why local" label="Why local">
+    <div class="c-1-4 stack">
+      <h2 class="t-head">Why local</h2>
+      <p class="t-small">
+        Your drawings are your data. A model trained on them learns one
+        design system, not a thousand scraped conventions.
+      </p>
+      <p class="t-small">
+        Small on purpose. A few megabytes of weights, trained in minutes on a
+        laptop GPU, that know your font and nothing else.
+      </p>
+      <p class="t-small">
+        Nothing downloads, nothing phones home. Models are directories you can
+        open in Finder.
+      </p>
+    </div>
+    <Fig
+      class="c-5-12 fig-right"
+      src={nufoEditing}
+      alt="Runebender editing Arabic glyphs with a rendered preview."
+    />
+    <Fragment slot="notes">
+      <p>Most font AI trains on scraped fonts and spends its capacity reconciling drawing conventions. We train on original work drawn on one grid. Consistency is signal.</p>
+    </Fragment>
+  </Slide>
+
+  <Slide section="Why local" label="The loop">
+    <div class="c-1-4 stack">
+      <h2 class="t-head">The loop</h2>
+      <p class="t-small">
+        You draw a core set well. The editor drafts the rest in your
+        conventions. You grade and fix. Every accepted draft is new training
+        data.
+      </p>
+      <p class="t-small">
+        The designer judges and revises. Engineering diagnoses misses and
+        builds tools. Neither replaces the other.
+      </p>
+    </div>
+    <div class="c-5-12">
+      <table class="mono-table">
+        <tbody>
+          <tr><td>1</td><td>Draw and grade</td><td>A reference set in one master, marked green</td></tr>
+          <tr><td>2</td><td>Train</td><td>The model learns from the green set and nothing else</td></tr>
+          <tr><td>3</td><td>Draft</td><td>10 to 20 glyphs onto the machine grid, as a proposal</td></tr>
+          <tr><td>4</td><td>Review and fix</td><td>Judge, nudge, install, mark orange</td></tr>
+          <tr><td>5</td><td>Grade</td><td>Corrected drafts go green and join the set</td></tr>
+          <tr><td>6</td><td>Build</td><td>Compile, proof, see it in use</td></tr>
+          <tr><td>7</td><td>Diagnose</td><td>Name each recurring error; build a detector before training again</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <Fragment slot="notes">
+      <p>Stage 5 is the arrow back to stage 1. The next finetune sees more green glyphs; the next batch needs fewer corrections.</p>
+    </Fragment>
+  </Slide>
+
+  <Slide section="Why local" label="Rules">
+    <div class="c-1-10 stack">
+      <h2 class="t-head">Rules every model respects</h2>
+      <p class="t-body">
+        A draft is a proposal, never a direct edit. Install and Undo go through
+        the ordinary proposal flow.
+      </p>
+      <p class="t-body">
+        Only a human marks a glyph green. Machine drafts are orange until
+        graded.
+      </p>
+      <p class="t-body">
+        Drafts land on the 8-unit grid. Humans make the 2-unit optical
+        corrections.
+      </p>
+      <p class="t-body">
+        Measure before trusting. Every engine is scored against drawn pairs,
+        and a plain mean shift is the baseline it has to beat.
+      </p>
+      <p class="t-body">Nothing saves font files. The designer saves.</p>
+    </div>
+    <Fragment slot="notes">
+      <p>These hold for the local models, for Claude over MCP, and for the chat panel. One safety contract, several routes in.</p>
+    </Fragment>
+  </Slide>
+
+  <!-- ── Setup ── -->
+
+  <Slide section="Setup" label="Two programs">
+    <div class="c-1-4 stack">
+      <h2 class="t-head">Two programs</h2>
+      <p class="t-small">
+        <code>runebender</code> is the editor. <code>font-ml</code> runs and
+        trains the models. Rust stable from rustup.rs builds both.
+      </p>
+      <p class="t-small">
+        A mid-range computer is enough: an Apple Silicon laptop, a Linux PC
+        with a gaming GPU, or a plain CPU with patience.
+      </p>
+    </div>
+    <div class="c-5-12 stack">
+      <pre class="code">cargo install --git https://github.com/fontgarden/runebender
+cargo install --git https://github.com/eliheuer/font-ml \
+    --features metal     # or cuda, or nothing for CPU</pre>
+      <pre class="code">runebender --help
+font-ml tasks</pre>
+      <pre class="code">git clone https://github.com/eliheuer/runebender-local-ai-demo
+cd runebender-local-ai-demo
+runebender fonts/Shapes.ufo</pre>
+    </div>
+    <Fragment slot="notes">
+      <p>The three font-ml lines are alternatives: Metal on macOS, CUDA on Linux with NVIDIA, CPU otherwise.</p>
+      <p>font-ml tasks is authoritative. Only tasks marked ready are usable.</p>
+      <p>The install takes about fifteen minutes of compiling. Do it before a workshop, not during.</p>
+    </Fragment>
+  </Slide>
+
+  <Slide section="Setup" label="Where models live">
+    <div class="c-1-4 stack">
+      <h2 class="t-head">Where models live</h2>
+      <p class="t-small">
+        <code>~/Runebender/models/&lt;kind&gt;/</code>, a visible folder. Or
+        beside the font in <code>MyFont.models/</code>, so the model travels
+        with the font.
+      </p>
+      <p class="t-small">
+        The kinds are different artifacts. A chat model does not draw shapes,
+        and a shapes model does not talk.
+      </p>
+    </div>
+    <div class="c-5-12">
+      <table class="mono-table">
+        <thead>
+          <tr><th>Kind</th><th>Files</th><th>Comes from</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>shapes</td><td>config, weights, vocab, manifest</td><td>Local AI Shapes tool, from a UFO</td></tr>
+          <tr><td>bolden</td><td>config, weights, vocab</td><td>font-ml run train, from two masters</td></tr>
+          <tr><td>chat</td><td>model.gguf, tokenizer.json</td><td>Downloaded; the demo script fetches Qwen3</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <Fragment slot="notes">
+      <p>Nothing else is read. cat the config to see what you have.</p>
+      <p>RUNEBENDER_MODELS overrides the root for one run.</p>
+    </Fragment>
+  </Slide>
+
+  <!-- ── The demos ── -->
+
+  <Slide section="Demos" label="Demo 01: Local AI Shapes">
+    <div class="c-1-4 stack">
+      <h2 class="t-head">Draw from text</h2>
+      <p class="t-small">
+        Open any glyph. Hold the shapes button, pick Local AI Shapes. With no
+        model yet, the panel offers Train From the Sample Shapes.
+      </p>
+      <p class="t-small">
+        When it finishes, pick a shape, drag a box. The model fills it with a
+        ghost. Enter keeps it, Tab asks for another, Esc drops it.
+      </p>
+      <p class="t-small muted">
+        It knows only the shapes in the font and the words for them. Draw a
+        heart, click Add This Font’s Shapes, and now it knows “heart”.
+      </p>
+    </div>
+    <Fig
+      class="c-5-12 fig-right"
+      src={outline}
+      alt="Runebender editing an outline, with the right panel open."
+    />
+    <Fragment slot="notes">
+      <p>A quick run takes about twelve minutes on a laptop GPU; thorough about thirty. The demo repo has get-base-model.sh with a checksum to skip the wait.</p>
+      <p>That is the whole lesson: your drawings in, a model out, the model used from a tool.</p>
+    </Fragment>
+  </Slide>
+
+  <Slide section="Demos" label="Demo 02: Bolden">
+    <div class="c-1-4 stack">
+      <h2 class="t-head">Bolden</h2>
+      <p class="t-small">
+        A model that moves points keeps a family interpolating. Regular in,
+        Bold out, same point structure, on the 8-unit grid.
+      </p>
+      <p class="t-small">
+        The Weight debt block lists Bold glyphs still identical to Regular,
+        drafts batches of 20 by offset or by model, and marks them orange.
+      </p>
+      <p class="t-small">
+        About half a second per glyph on Metal.
+      </p>
+    </div>
+    <div class="c-5-12 demo-side">
+      <Fig
+        class="fig-right"
+        src={grid}
+        alt="Runebender’s glyph overview grid for a Latin font."
+      />
+      <table class="mono-table">
+        <thead>
+          <tr><th>Virtua Bold</th><th>Owed</th><th>Drawn pairs</th><th>Offset vs model</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>Latin</td><td>2</td><td>56</td><td>about even</td></tr>
+          <tr><td>Arabic</td><td>11</td><td>130</td><td>offset wins</td></tr>
+          <tr><td>Hebrew</td><td>71</td><td>5</td><td>offset wins</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <Fragment slot="notes">
+      <p>Measured 2026-10-09 on Virtua Grotesk. Both engines barely beat the mean shift. Hebrew, with five drawn pairs, is the group to watch. Minimum before trusting an engine on a script: 20 green pairs, 5 held out.</p>
+      <p>The score that matters is the distance between the draft and the outline the designer finally kept.</p>
+    </Fragment>
+  </Slide>
+
+  <Slide section="Demos" label="Demo 03: a chat model">
+    <div class="c-1-4 stack">
+      <h2 class="t-head">A chat model</h2>
+      <p class="t-small">
+        A Qwen3 GGUF from Hugging Face in the same folder layout. Ask it about
+        the open font. It calls the same tools an agent would.
+      </p>
+      <p class="t-small">
+        A small model cannot derive a stem from a point list. It calls the
+        right tools in the right order every time. So the tools must return
+        the number the question asks for.
+      </p>
+    </div>
+    <div class="c-5-12">
+      <table class="mono-table">
+        <thead>
+          <tr><th>Engine</th><th>Model</th><th>Time</th><th>Stem of H</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>font-ml chat (candle)</td><td>Qwen3 4B</td><td>543 s</td><td>74. Wrong</td></tr>
+          <tr><td>llama-server</td><td>Qwen3 4B</td><td>11 s</td><td>564. Wrong, bounds width</td></tr>
+          <tr><td>llama-server</td><td>Qwen3 8B</td><td>24 s</td><td>Subtracted sidebearings. Wrong</td></tr>
+          <tr><td>llama-server + analyze_glyph</td><td>Qwen3 4B</td><td>5 s</td><td>100. Right</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <Fragment slot="notes">
+      <p>Same question, same scratch copy of Virtua Grotesk, M4 Pro. Two lessons, both design decisions rather than model choices: the engine must be llama.cpp, and the tool has to do the measuring.</p>
+      <p>Expect wrong answers at 0.6B. 4B is what the Chat panel was built with.</p>
+    </Fragment>
+  </Slide>
+
+  <Slide section="Demos" label="Demo 04: Nodes">
+    <div class="c-1-4 stack">
+      <h2 class="t-head">Workflows are files</h2>
+      <p class="t-small">
+        The same train and bolden steps as a graph in the Nodes tab. Change
+        <code>steps</code>, run again. The same file runs from the shell.
+      </p>
+      <p class="t-small">
+        A graph run never saves or applies to the open font. Results are
+        candidates until you install them.
+      </p>
+    </div>
+    <Fig
+      class="c-5-12 fig-right"
+      src={nodes}
+      alt="Runebender’s Nodes tab with a workflow graph."
+    />
+    <Fragment slot="notes">
+      <p>External tasks declare their inputs so unchanged runs hit the cache. Model directories are hashed from their bytes, not trusted by manifest.</p>
+    </Fragment>
+  </Slide>
+
+  <!-- ── The other route ── -->
+
+  <Slide section="Agents" label="The other route: MCP">
+    <div class="c-1-4 stack">
+      <h2 class="t-head">Or bring your own agent</h2>
+      <p class="t-small">
+        One command registers the live editor with Claude Code, Codex, Claude
+        Desktop and Cursor. The agent talks to the open window and its unsaved
+        state.
+      </p>
+      <p class="t-small">
+        45 tools. Read, measure, proof, propose exact point edits, fork
+        experiments. Five workflows as prompts: review-glyph,
+        compatibility-check, spacing-pass, kerning-pass, draft-weight.
+      </p>
+      <p class="t-small muted">
+        Same contract: read first, proof the result, leave installing to the
+        designer.
+      </p>
+    </div>
+    <div class="c-5-12 stack">
+      <pre class="code">runebender mcp --install</pre>
+      <table class="mono-table">
+        <thead>
+          <tr><th>Kind of AI</th><th>Reaches the font how</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>Local models</td><td>font-ml tasks in the editor: shapes, bolden, brush</td></tr>
+          <tr><td>Agent in the repo</td><td>Edits GLIF, plists, scripts, CI</td></tr>
+          <tr><td>Agent in the editor</td><td>runebender mcp --live, proposals and receipts</td></tr>
+          <tr><td>Vision on proofs</td><td>Ranks drafts for attention; never grades</td></tr>
+          <tr><td>Local chat</td><td>The Chat panel, for people who will not install an agent</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <Fragment slot="notes">
+      <p>Every design app is growing an MCP. The differentiator is not the connection, it is the review loop (proof, compare, grade) and the safety contract (proposals, receipts, no saves).</p>
+      <p>Nothing has to load into Runebender to help. The MCP is the adapter; any Python model in the lab can read the UFO and propose.</p>
+    </Fragment>
+  </Slide>
+
+  <Slide section="Agents" label="Draw only what the machine cannot infer">
+    <div class="c-1-10 stack-lg">
+      <p class="t-display">Draw what the machine cannot infer.</p>
+      <p class="t-display muted">Grade the rest.</p>
+    </div>
+    <Fragment slot="notes">
+      <p>The end goal. A core set drawn well in one master; the editor drafts the rest in your conventions; the model gets better at your font the longer you work on it.</p>
+    </Fragment>
+  </Slide>
+
+  <!-- ── Live ── -->
+
+  <Slide section="Live" label="Runebender">
+    <img
+      class="bleed"
+      src={endRunebender.src}
+      alt="Runebender with a labeled bismillah and its preview."
+    />
+    <div class="c-1-9 over-bleed">
+      <p class="t-display">Runebender</p>
+    </div>
+    <Fragment slot="notes">
+      <p>Switch to Runebender. Shapes.ufo, Local AI Shapes, drag a box, type star. Then the bolden on octagon, undo, chevron.</p>
+    </Fragment>
+  </Slide>
+
+  <Slide section="End" label="Links">
+    <div class="c-1-10 stack-lg">
+      <p class="t-display">Thank you</p>
+      <p class="t-body">
+        runebender.org/docs/local-ai-setup.html<br />
+        github.com/eliheuer/runebender-local-ai-demo<br />
+        github.com/eliheuer/font-ml<br />
+        github.com/fontgarden/runebender<br />
+        eli@elih.net
+      </p>
+    </div>
+  </Slide>
+</SlidesLayout>
+
+<style is:global>
+  /* Shell commands, in the body size, two units per line. */
+  .slide pre.code {
+    margin: 0;
+    font-family: var(--font-mono);
+    font-size: var(--mm);
+    line-height: var(--mm-lh);
+    white-space: pre-wrap;
+    overflow-wrap: anywhere;
+    position: relative;
+    top: var(--shift-mm, 0);
+  }
+
+  .slide code {
+    font-family: var(--font-mono);
+  }
+</style>
