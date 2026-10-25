@@ -1,6 +1,7 @@
 ---
-// Local AI in Runebender. About 15 minutes: how a model becomes a folder
-// beside your font, the loop it serves, and the two routes into the editor.
+// Local AI in Runebender. About 25 minutes: how a model becomes a folder
+// beside your font, the hardware it runs on, the loop it serves, and the
+// two routes into the editor.
 // Companion to runebender.org/docs/local-ai-setup.html and the demo repo.
 import Fig from '@/components/slides/Fig.astro'
 import Slide from '@/components/slides/Slide.astro'
@@ -133,6 +134,295 @@ import titleRunebender from '@/assets/slides/localai/title-runebender.jpg'
     </div>
     <Fragment slot="notes">
       <p>These hold for the local models, for Claude over MCP, and for the chat panel. One safety contract, several routes in.</p>
+    </Fragment>
+  </Slide>
+
+  <!-- ── Hardware ── -->
+
+  <Slide section="Hardware" label="Hardware">
+    <div class="c-1-10 stack-lg">
+      <p class="t-display">What to run it on.</p>
+      <p class="t-display muted">Memory decides.</p>
+    </div>
+    <Fragment slot="notes">
+      <p>For people new to this. The chip matters less than how much memory the model can use and how fast that memory is.</p>
+    </Fragment>
+  </Slide>
+
+  <Slide section="Hardware" label="Two numbers">
+    <div class="c-1-4 stack">
+      <h2 class="t-head">Two numbers</h2>
+      <p class="t-small">
+        Capacity: does the model fit. At 4 bits a model takes about 0.6 GB per
+        billion parameters, plus room for the conversation.
+      </p>
+      <p class="t-small">
+        Bandwidth: how fast it answers. Each new token reads the active
+        weights once. Tokens per second is at most bandwidth divided by that
+        size.
+      </p>
+    </div>
+    <div class="c-5-12">
+      <table class="mono-table">
+        <thead>
+          <tr><th>Model</th><th>Parameters</th><th>File</th><th>Kind</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>qwen3.5-4b</td><td>4B</td><td>2.9 GB</td><td>dense</td></tr>
+          <tr><td>gpt-oss-20b</td><td>21B</td><td>12.1 GB</td><td>mixture of experts, 3.6B active</td></tr>
+          <tr><td>gemma-4-26b-a4b</td><td>26B</td><td>17.0 GB</td><td>mixture of experts, 4B active</td></tr>
+          <tr><td>qwen3.6-27b</td><td>27B</td><td>17.6 GB</td><td>dense</td></tr>
+          <tr><td>qwen3.6-35b-a3b</td><td>35B</td><td>22.4 GB</td><td>mixture of experts, 3B active</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <Fragment slot="notes">
+      <p>These are the chat models in my own ~/Runebender/models folder, 4-bit GGUF files. The file size is the memory the weights need.</p>
+      <p>Leave room for the operating system and the context: on a 16 GB machine, stay under about 10 GB of model.</p>
+    </Fragment>
+  </Slide>
+
+  <Slide section="Hardware" label="Dense and mixture of experts">
+    <div class="c-1-4 stack">
+      <h2 class="t-head">Dense and mixture of experts</h2>
+      <p class="t-small">
+        A dense model reads every weight for every token. A mixture of experts
+        reads only a few experts per token.
+      </p>
+      <p class="t-small">
+        qwen3.6-35b-a3b holds 35B parameters and reads about 3B per token. It
+        needs the memory of a large model and runs at the speed of a small
+        one.
+      </p>
+    </div>
+    <div class="c-5-12 stack">
+      <table class="mono-table">
+        <thead>
+          <tr><th>On a MacBook Pro, M4 Pro, 273 GB/s</th><th>Read per token</th><th>Ceiling</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>qwen3.6-27b, dense</td><td>17.6 GB</td><td>about 15 tokens/s</td></tr>
+          <tr><td>qwen3.6-35b-a3b, mixture of experts</td><td>about 2 GB</td><td>about 130 tokens/s</td></tr>
+        </tbody>
+      </table>
+      <table class="mono-table">
+        <thead>
+          <tr><th>Measured on AMD Strix Halo, 128 GB</th><th>Speed</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>Qwen3 30B-A3B, mixture of experts</td><td>about 100 tokens/s</td></tr>
+          <tr><td>gpt-oss-120b, mixture of experts</td><td>about 55 tokens/s</td></tr>
+          <tr><td>Llama 3.3 70B, dense</td><td>about 5 tokens/s</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <Fragment slot="notes">
+      <p>The ceiling is bandwidth divided by bytes read. Real speed is lower. The point is the ratio: the mixture of experts is several times faster on the same machine.</p>
+      <p>This is why large unified-memory machines are good for local AI now: the best open models are mixtures of experts.</p>
+    </Fragment>
+  </Slide>
+
+  <Slide section="Hardware" label="Three kinds of machine">
+    <div class="c-1-4 stack">
+      <h2 class="t-head">Graphics card</h2>
+      <p class="t-small">
+        Fast memory, and little of it: 24 to 32 GB on one consumer card.
+      </p>
+      <p class="t-small">
+        NVIDIA’s CUDA runs everything, including training. A PC you can build
+        and upgrade.
+      </p>
+    </div>
+    <div class="c-5-8 stack">
+      <h2 class="t-head">Unified memory</h2>
+      <p class="t-small">
+        The processor and the graphics share one large pool: 64 to 512 GB.
+      </p>
+      <p class="t-small">
+        Slower per byte than a card, but large models fit. Macs, AMD Strix
+        Halo, NVIDIA DGX Spark.
+      </p>
+    </div>
+    <div class="c-9-12 stack">
+      <h2 class="t-head">Many cards</h2>
+      <p class="t-small">
+        Several cards in one box, or a workstation chip with datacenter memory.
+      </p>
+      <p class="t-small">
+        For labs and teams. tinybox, RTX Pro 6000 builds, DGX Station.
+      </p>
+    </div>
+    <Fragment slot="notes">
+      <p>Inference, running a model, works well on all three. Training mostly wants NVIDIA. Small models like the Runebender font models also train on Apple’s Metal.</p>
+    </Fragment>
+  </Slide>
+
+  <Slide section="Hardware" label="Desk machines up to 128 GB">
+    <div class="c-1-12 stack">
+      <h2 class="t-head">Desk machines, up to 128 GB</h2>
+      <table class="mono-table">
+        <thead>
+          <tr><th>Machine</th><th>Memory</th><th>Bandwidth</th><th>Price</th><th>Good for</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>PC with a used RTX 3090</td><td>24 GB</td><td>936 GB/s</td><td>$700 to $1,050 per card</td><td>Most memory per dollar, CUDA</td></tr>
+          <tr><td>PC with an RTX 5090</td><td>32 GB</td><td>1,792 GB/s</td><td>$2,400 to $4,300 per card</td><td>Fastest consumer card</td></tr>
+          <tr><td>Strix Halo mini PC</td><td>128 GB</td><td>256 GB/s</td><td>from about $2,000</td><td>120B mixtures of experts</td></tr>
+          <tr><td>Framework Desktop, Max+ 395</td><td>128 GB</td><td>256 GB/s</td><td>$3,449</td><td>The same chip, repairable</td></tr>
+          <tr><td>Mac Studio, M5 Max</td><td>36 to 128 GB</td><td>460 to 614 GB/s</td><td>from $2,499</td><td>Quiet, MLX and llama.cpp</td></tr>
+          <tr><td>NVIDIA DGX Spark</td><td>64 or 128 GB</td><td>273 GB/s</td><td>$3,999 at launch, now higher</td><td>CUDA in a small box, links in pairs</td></tr>
+        </tbody>
+      </table>
+      <p class="t-credit">
+        US prices, October 2026, from vendor pages and retail listings. Memory
+        shortages moved them a lot this year.
+      </p>
+    </div>
+    <Fragment slot="notes">
+      <p>Strix Halo is AMD’s Ryzen AI Max+ 395. GMKtec, HP, Beelink, Minisforum and Framework all sell it; the chip is the same in every box.</p>
+      <p>The DGX Spark is the only one here with CUDA and 128 GB. Its bandwidth is the same as Strix Halo’s; you pay for the NVIDIA software, and for linking two units into 256 GB.</p>
+      <p>A 64 GB DGX Spark from OEMs started at $4,999 in October 2026.</p>
+    </Fragment>
+  </Slide>
+
+  <Slide section="Hardware" label="Bigger machines">
+    <div class="c-1-12 stack">
+      <h2 class="t-head">Bigger machines</h2>
+      <table class="mono-table">
+        <thead>
+          <tr><th>Machine</th><th>Memory</th><th>Bandwidth</th><th>Price</th><th>Good for</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>Framework Desktop, PRO 495</td><td>192 GB</td><td>about 273 GB/s</td><td>$6,799 kit</td><td>Ships November 2026</td></tr>
+          <tr><td>Mac Studio, M5 Ultra</td><td>96 to 512 GB</td><td>1.2 TB/s</td><td>from $5,499</td><td>The largest models in one quiet box</td></tr>
+          <tr><td>PC with RTX Pro 6000 Blackwell</td><td>96 GB per card</td><td>1,792 GB/s</td><td>$9,000 to $16,000 per card</td><td>70B at high precision on one card</td></tr>
+          <tr><td>tinybox green v2</td><td>4 × RTX 5090, 128 GB</td><td>1,792 GB/s per card</td><td>about $45,000</td><td>A ready-built multi-card box</td></tr>
+          <tr><td>NVIDIA DGX Station, GB300</td><td>748 GB, 252 GB of it HBM</td><td>7.1 TB/s</td><td>$85,000 to $160,000</td><td>A datacenter GPU at a desk</td></tr>
+          <tr><td>Mac Pro</td><td></td><td></td><td>Discontinued March 2026</td><td>The Mac Studio replaced it</td></tr>
+        </tbody>
+      </table>
+      <p class="t-credit">
+        US prices, October 2026. The 512 GB M5 Ultra is expected above $10,000.
+        DGX Station prices are set by OEMs.
+      </p>
+    </div>
+    <Fragment slot="notes">
+      <p>The M5 Ultra has the same 1.2 TB/s at every memory size, so more memory buys capacity, not speed.</p>
+      <p>tinybox is from tiny corp, the tinygrad company. Their red boxes use AMD cards and cost less.</p>
+      <p>The DGX Station bandwidth is for its 252 GB of HBM. The other 496 GB is LPDDR5X at 396 GB/s.</p>
+    </Fragment>
+  </Slide>
+
+  <Slide section="Hardware" label="A Linux PC">
+    <div class="c-1-6 stack">
+      <h2 class="t-head">A Linux PC</h2>
+      <p class="t-small">
+        The classic start is one used RTX 3090: 24 GB at 936 GB/s for about
+        $1,000. Add a second for 48 GB. llama.cpp splits a model across cards.
+      </p>
+      <p class="t-small">
+        The card is the computer. The rest only has to feed it.
+      </p>
+      <p class="t-small">
+        Linux with CUDA is what every training tool tests first.
+      </p>
+    </div>
+    <div class="c-7-12">
+      <table class="mono-table">
+        <thead>
+          <tr><th>Part</th><th>What to look for</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>Graphics card</td><td>Memory first, then bandwidth</td></tr>
+          <tr><td>Power supply</td><td>1000 W or more for two cards</td></tr>
+          <tr><td>Motherboard</td><td>Room for two wide cards</td></tr>
+          <tr><td>System memory</td><td>64 GB or more</td></tr>
+          <tr><td>Disk</td><td>NVMe, 2 TB; models are large</td></tr>
+          <tr><td>Processor</td><td>Any recent one</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <Fragment slot="notes">
+      <p>An RTX 3090 draws about 350 W. Two of them need a big power supply and good airflow.</p>
+      <p>AMD cards work with llama.cpp through Vulkan and ROCm. Training tools support them less well.</p>
+    </Fragment>
+  </Slide>
+
+  <Slide section="Hardware" label="What I use">
+    <div class="c-1-4 stack">
+      <h2 class="t-head">What I use</h2>
+      <p class="t-small">
+        None of it is special hardware. The Runebender font models are one to
+        a few dozen megabytes. Training them needs a graphics card, not a
+        datacenter.
+      </p>
+    </div>
+    <div class="c-5-12">
+      <table class="mono-table">
+        <thead>
+          <tr><th>Machine</th><th>Memory</th><th>Job</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>MacBook Pro, M4 Pro</td><td>48 GB, 273 GB/s</td><td>Daily chat and coding, qwen3.6-35b-a3b</td></tr>
+          <tr><td>Linux PC, RTX 2060 SUPER</td><td>8 GB, 448 GB/s</td><td>Training, about 100 s per epoch</td></tr>
+          <tr><td>Steam Deck</td><td>16 GB shared</td><td>qwen3.5-4b at 18 tokens/s</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <Fragment slot="notes">
+      <p>The Linux PC trained the Nasta’liq model from the other talk. The Steam Deck runs Runebender and a chat model with the Vulkan build of llama.cpp.</p>
+    </Fragment>
+  </Slide>
+
+  <Slide section="Hardware" label="Software that runs the model">
+    <div class="c-1-4 stack">
+      <h2 class="t-head">The software</h2>
+      <p class="t-small">
+        A model file is not a program. A runtime loads it and serves it, often
+        as a local web address that any app can call.
+      </p>
+      <p class="t-small">
+        Runebender’s Chat panel talks to llama.cpp that way.
+      </p>
+    </div>
+    <div class="c-5-12">
+      <table class="mono-table">
+        <thead>
+          <tr><th>Runtime</th><th>What it is</th><th>Runs on</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>llama.cpp</td><td>GGUF files, the common format</td><td>Mac, NVIDIA, AMD, CPU</td></tr>
+          <tr><td>MLX</td><td>Apple’s array library</td><td>Mac</td></tr>
+          <tr><td>Ollama, LM Studio</td><td>Friendly apps over those two</td><td>Mac, Windows, Linux</td></tr>
+          <tr><td>vLLM</td><td>Serves many users at once</td><td>NVIDIA, servers</td></tr>
+          <tr><td>PyTorch, Candle</td><td>Training; font-ml uses Candle</td><td>NVIDIA, Mac</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <Fragment slot="notes">
+      <p>Ollama or LM Studio is the easiest first step for most people. Download the app, pick a model, chat.</p>
+    </Fragment>
+  </Slide>
+
+  <Slide section="Hardware" label="Which one">
+    <div class="c-1-12 stack">
+      <h2 class="t-head">Which one</h2>
+      <table class="mono-table">
+        <thead>
+          <tr><th>To</th><th>Start with</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>Try it today</td><td>The computer you have. A 4B model needs 3 GB.</td></tr>
+          <tr><td>Train small font models</td><td>Any NVIDIA card with 8 GB or more, on Linux</td></tr>
+          <tr><td>Run 30B models fast</td><td>A 24 to 32 GB NVIDIA card, or a Mac with 48 GB or more</td></tr>
+          <tr><td>Run 120B models quietly</td><td>128 GB of unified memory: Strix Halo, Mac Studio, DGX Spark</td></tr>
+          <tr><td>Run the largest open models</td><td>Mac Studio, M5 Ultra, 256 to 512 GB</td></tr>
+          <tr><td>Serve a team, or train large models</td><td>RTX Pro 6000 builds, tinybox, DGX Station</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <Fragment slot="notes">
+      <p>Start with what you have. Buy hardware when a real task is too slow, and buy for memory first.</p>
     </Fragment>
   </Slide>
 
@@ -412,6 +702,9 @@ runebender fonts/Shapes.ufo</pre>
     position: relative;
     top: var(--shift-mm, 0);
   }
+
+  .c-5-8 { grid-column: 5 / 9; }
+  .c-9-12 { grid-column: 9 / 13; }
 
   .slide code {
     font-family: var(--font-mono);
