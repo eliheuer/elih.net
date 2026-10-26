@@ -63,6 +63,9 @@ const { title, description, running, author } = Astro.props
 </html>
 
 <script>
+  // ?final hides the slides marked planned.
+  if (new URLSearchParams(location.search).has('final'))
+    document.querySelectorAll('.slide[data-planned]').forEach((s) => s.remove())
   const slides = [...document.querySelectorAll<HTMLElement>('.slide')]
   const deck = document.querySelector<HTMLElement>('.deck')!
   const presenter = document.documentElement.classList.contains('presenter')
@@ -99,7 +102,8 @@ const { title, description, running, author } = Astro.props
     const next = slides[current + 1]
     document.querySelector('.pv-count')!.textContent =
       `${pad(current + 1)} / ${pad(total)}`
-    document.querySelector('.pv-label')!.textContent = s.dataset.label ?? ''
+    document.querySelector('.pv-label')!.textContent =
+      (s.dataset.label ?? '') + (s.hasAttribute('data-planned') ? ' (planned)' : '')
     document.querySelector('.pv-notes')!.innerHTML =
       s.querySelector('.notes')?.innerHTML ?? ''
     document.querySelector('.pv-next')!.textContent = next
@@ -313,6 +317,17 @@ const { title, description, running, author } = Astro.props
 
   .slide .notes {
     display: none;
+  }
+
+  /* Marks a slide about work that is not ready yet, in the bottom
+     margin. Orange, as Runebender marks machine drafts. */
+  .slide .planned-tag {
+    position: absolute;
+    top: auto;
+    right: var(--m);
+    bottom: var(--u);
+    margin: 0;
+    color: oklch(0.72 0.15 55);
   }
 
   /* ── Layout aid: the grid, toggled with G ── */

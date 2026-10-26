@@ -6,14 +6,18 @@ interface Props {
   section?: string
   // Short name for the presenter window's "Next:" line.
   label: string
+  // A slide about work that is not ready yet. It shows a "Planned" tag,
+  // and ?final in the address hides it.
+  planned?: boolean
 }
 
-const { label } = Astro.props
+const { label, planned } = Astro.props
 ---
 
-<section class="slide" data-label={label}>
+<section class="slide" data-label={label} data-planned={planned ? '' : undefined}>
   <div class="slide-body">
     <slot />
   </div>
+  {planned && <p class="planned-tag t-credit">Planned</p>}
   <div class="notes"><slot name="notes" /></div>
 </section>

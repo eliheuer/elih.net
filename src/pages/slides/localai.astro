@@ -164,8 +164,8 @@ import titleRunebender from '@/assets/slides/localai/title-runebender.jpg'
       <p class="t-display">Demo</p>
     </div>
     <Fragment slot="notes">
-      <p>Switch to Runebender. Order: open Shapes.ufo, train a shapes model from scratch, add a shape to fine-tune it, bolden octagon and chevron, ask the chat model about the font, run the bolden graph in the Nodes tab.</p>
-      <p>The next five slides are reference for the same steps.</p>
+      <p>Switch to Runebender. Order: open Shapes.ufo, train a shapes model from scratch, add a shape to fine-tune it, bolden octagon and chevron, ask the chat model about the font by voice, run the bolden graph in the Nodes tab.</p>
+      <p>The slides that follow are reference for the same steps. Slides marked Planned describe features that are not finished.</p>
     </Fragment>
   </Slide>
 
@@ -234,6 +234,41 @@ font-ml run bolden --model my-bolden --source Regular.ufo \
     </Fragment>
   </Slide>
 
+  <Slide section="Demo" label="Fine-tuning in the editor" planned>
+    <div class="c-1-4 stack">
+      <h2 class="t-head">Fine-tuning in the editor</h2>
+      <p class="t-small">
+        A Finetune button in the Local AI panel trains a bolden adapter on the
+        glyphs graded green in the open font.
+      </p>
+      <p class="t-small">
+        The panel shows whether each script has enough drawn pairs: 20 green
+        pairs, with 5 held out for scoring.
+      </p>
+      <p class="t-small">
+        The adapter is saved in <code>MyFont.models/</code> beside the font.
+        Bolden drafts use it after training.
+      </p>
+    </div>
+    <div class="c-5-12">
+      <table class="mono-table">
+        <thead>
+          <tr><th>Step</th><th>Action</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>1</td><td>Draw and grade Bold glyphs green</td></tr>
+          <tr><td>2</td><td>Click Finetune in the Local AI panel</td></tr>
+          <tr><td>3</td><td>An adapter trains with the base model frozen</td></tr>
+          <tr><td>4</td><td>The held-out pairs are scored with and without it</td></tr>
+          <tr><td>5</td><td>Bolden drafts use the adapter if its score is better</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <Fragment slot="notes">
+      <p>Today the same adapter training runs from font-ml and from the train-adapter graph in the node editor. The button puts it in the panel for people who do not use the command line.</p>
+    </Fragment>
+  </Slide>
+
   <Slide section="Demo" label="Bolden">
     <div class="c-1-4 stack">
       <h2 class="t-head">Bolden</h2>
@@ -272,6 +307,37 @@ font-ml run bolden --model my-bolden --source Regular.ufo \
     </Fragment>
   </Slide>
 
+  <Slide section="Demo" label="Drafting from a sketch" planned>
+    <div class="c-1-4 stack">
+      <h2 class="t-head">Drafting from a sketch</h2>
+      <p class="t-small">
+        The designer draws the rough shape of a glyph with the brush on the
+        glyph canvas. The model returns a draft in the conventions of the
+        font, as a proposal.
+      </p>
+      <p class="t-small">
+        The chat model does not draw. A separate drawing model, trained on
+        the glyphs graded green, redraws the traced sketch.
+      </p>
+    </div>
+    <div class="c-5-12">
+      <table class="mono-table">
+        <thead>
+          <tr><th>Step</th><th>Tool</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>Sketch the shape</td><td>Brush on the glyph canvas</td></tr>
+          <tr><td>Trace the sketch</td><td>img2bez, raster to outline</td></tr>
+          <tr><td>Redraw in the font’s style</td><td>Drawing model, through font-ml</td></tr>
+          <tr><td>Review</td><td>Proposal layer, Install or Discard</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <Fragment slot="notes">
+      <p>The Brush panel already traces temporary ink with img2bez and can draft with the Virtua sketch model. The first trial, on 2026-09-28, lost the form of the medial kaf. The drawing model is the open work, not the interface.</p>
+    </Fragment>
+  </Slide>
+
   <Slide section="Demo" label="Open-weight chat models">
     <div class="c-1-4 stack">
       <h2 class="t-head">Open-weight chat models</h2>
@@ -302,6 +368,60 @@ font-ml run bolden --model my-bolden --source Regular.ufo \
     <Fragment slot="notes">
       <p>Same question, same copy of Virtua Grotesk, M4 Pro. Two decisions came from this test: use llama.cpp as the engine, and make the tools do the measuring.</p>
       <p>A 0.6B model gives wrong answers. The Chat panel was built and tested with 4B.</p>
+    </Fragment>
+  </Slide>
+
+  <Slide section="Demo" label="Model catalog" planned>
+    <div class="c-1-4 stack">
+      <h2 class="t-head">Model catalog</h2>
+      <p class="t-small">
+        The Chat panel lists open-weight models with their size, license, and
+        source. One click downloads a model from Hugging Face and checks its
+        sha256 checksum. Nothing downloads without the click.
+      </p>
+      <p class="t-small">
+        The editor runs the model with llama-server from llama.cpp. A GGUF
+        file placed in a folder under <code>chat/</code> also works.
+      </p>
+    </div>
+    <div class="c-5-12">
+      <table class="mono-table">
+        <thead>
+          <tr><th>Entry</th><th>Model</th><th>Download</th><th>Machine</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>Small, default</td><td>Qwen3.5 4B</td><td>about 2.7 GB</td><td>8 GB or more</td></tr>
+          <tr><td>Better</td><td>Qwen3.5 9B</td><td>about 5.5 GB</td><td>16 GB or more</td></tr>
+          <tr><td>Large</td><td>Qwen3.6 35B A3B</td><td>about 20 GB</td><td>32 GB or more</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <Fragment slot="notes">
+      <p>Decided 2026-10-18: the catalog is shown in the app and the user picks. All three entries are Apache 2.0, 4-bit GGUF files. Gemma 4 and gpt-oss-20b can be added as optional entries.</p>
+      <p>Thinking is off by default, with a switch in the composer.</p>
+    </Fragment>
+  </Slide>
+
+  <Slide section="Demo" label="Voice input">
+    <div class="c-1-6 stack">
+      <h2 class="t-head">Voice input</h2>
+      <p class="t-small">
+        The Talk button in the Chat panel records a spoken request. A local
+        speech model transcribes it and puts the text in the field. The
+        designer checks the text before sending.
+      </p>
+      <p class="t-small">
+        It uses whisper-server from whisper.cpp and a Whisper model in a
+        folder whose name starts with <code>whisper</code>. The button is
+        hidden until both are found.
+      </p>
+    </div>
+    <div class="c-7-12 stack">
+      <pre class="code">brew install whisper.cpp
+~/Runebender/models/whisper-small/model.bin</pre>
+    </div>
+    <Fragment slot="notes">
+      <p>The speech model is a whisper.cpp ggml file from huggingface.co/ggerganov/whisper.cpp, saved as model.bin. Audio stays on the machine.</p>
     </Fragment>
   </Slide>
 
@@ -629,7 +749,7 @@ font-ml run bolden --model my-bolden --source Regular.ufo \
 
   <!-- ── Setup ── -->
 
-  <Slide section="Setup" label="Installation">
+  <Slide section="Setup" label="Installation" planned>
     <div class="c-1-4 stack">
       <h2 class="t-head">Installation</h2>
       <p class="t-small">
@@ -802,6 +922,28 @@ runebender fonts/Shapes.ufo</pre>
       <p>The editor is designed to be extended with both cloud and local agents. The rules for machine output apply here too. The agent reads first and proofs the result. The designer installs.</p>
       <p>Figma and Penpot have MCP servers, Glyphs has a third-party one, and FontLab 9 has an in-app chat. Runebender adds a review step (proof, compare, grade) and a safety contract (proposals, receipts, no saves).</p>
       <p>A model does not have to run inside Runebender. Any Python model can read the UFO and submit proposals through MCP.</p>
+    </Fragment>
+  </Slide>
+
+  <Slide section="End" label="Planned work">
+    <div class="c-1-12 stack">
+      <h2 class="t-head">Planned work</h2>
+      <table class="mono-table">
+        <thead>
+          <tr><th>Feature</th><th>Description</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>Spacing and kerning drafts</td><td>Sidebearings and kern pairs proposed from the glyphs already spaced</td></tr>
+          <tr><td>Fill a missing character</td><td>Trace a reference font’s letterform, then redraw it in the font’s style</td></tr>
+          <tr><td>Critique</td><td>A model ranks drafts for review, scored against the designer’s corrections</td></tr>
+          <tr><td>Proof panel</td><td>Local models run the full review loop inside the editor</td></tr>
+          <tr><td>Several families, one model</td><td>One model trained on two designs drawn on the same grid</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <Fragment slot="notes">
+      <p>Each feature uses the same rules: drafts are proposals, only the designer grades, and every engine is scored against drawn pairs.</p>
+      <p>The second design for the shared model is Virtua Oldstyle.</p>
     </Fragment>
   </Slide>
 
