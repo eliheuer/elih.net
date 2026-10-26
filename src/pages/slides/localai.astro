@@ -1,5 +1,6 @@
 ---
-// Local AI in Runebender. About 25 minutes: where models are stored, the
+// Local AI for Type Design with the Runebender Font Editor. Workshop
+// slides for ATypI 2026 Sharjah. About 25 minutes of slides: where models are stored, the
 // hardware they run on, the training loop, and the two ways to connect
 // a model to the editor.
 // Companion to runebender.org/docs/local-ai-setup.html and the demo repo.
@@ -16,9 +17,9 @@ import titleRunebender from '@/assets/slides/localai/title-runebender.jpg'
 ---
 
 <SlidesLayout
-  title="Local AI (slides)"
-  description="Talk slides on using local AI models with the Runebender font editor."
-  running="Local AI"
+  title="Local AI for Type Design with the Runebender Font Editor (slides)"
+  description="Workshop slides for Local AI for Type Design with the Runebender Font Editor, ATypI 2026 Sharjah."
+  running="Local AI for Type Design"
   author="Eli Heuer"
 >
   <!-- ── Opening ── -->
@@ -30,14 +31,14 @@ import titleRunebender from '@/assets/slides/localai/title-runebender.jpg'
       alt="Runebender with a bismillah labeled for training: each letter’s ink inside a colored polygon."
     />
     <div class="c-1-9 over-bleed">
-      <h1 class="t-display descends">Local AI</h1>
-      <p class="t-head">Running models on your own<br />machine with Runebender</p>
+      <h1 class="t-display descends">Local AI for<br />Type Design</h1>
+      <p class="t-head">with the Runebender Font Editor</p>
     </div>
     <div class="c-1-6 over-bleed at-bottom">
-      <p class="t-body">Eli Heuer 2026 · runebender.org</p>
+      <p class="t-body">Eli Heuer · ATypI 2026 Sharjah</p>
     </div>
     <Fragment slot="notes">
-      <p>Runebender is a font editor written in Rust. This talk covers small models that run on your own computer, trained on your own drawings, and used from inside the editor.</p>
+      <p>Runebender is a font editor written in Rust. This workshop covers small models that run on your own computer, trained on your own drawings, and used from inside the editor.</p>
       <p>Setup instructions are at runebender.org/docs/local-ai-setup.html. The examples are in the runebender-local-ai-demo repository.</p>
     </Fragment>
   </Slide>
@@ -51,7 +52,7 @@ import titleRunebender from '@/assets/slides/localai/title-runebender.jpg'
         needed.
       </p>
       <p class="t-body">
-        This talk covers why local models are useful for type design, what
+        This workshop covers why local models are useful for type design, what
         hardware runs them, how to set them up, four examples in the editor,
         and how external agents connect to the editor.
       </p>
