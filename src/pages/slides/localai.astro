@@ -726,8 +726,8 @@ local AI on this machine.</pre>
     grid-column: 7 / 13;
   }
 
-  /* Numbered points: a hairline above each, the number in mono at the
-     credit size, the text at body size, an optional value flush right. */
+  /* Numbered points: a hairline above each, the number in lining
+     tabular figures at the text size, an optional value flush right. */
   .slide .sw-points {
     list-style: none;
     margin: 0;
@@ -747,8 +747,7 @@ local AI on this machine.</pre>
   }
   .slide .sw-points li::before {
     content: counter(point, decimal-leading-zero);
-    font-family: var(--font-mono);
-    font-size: var(--cr);
+    font-variant-numeric: lining-nums tabular-nums;
   }
   .sw-points .val {
     text-align: right;
