@@ -1,8 +1,9 @@
 ---
 // Local AI for Type Design with the Runebender Font Editor. Workshop
 // slides for ATypI 2026 Sharjah. Part 1 is a short demo. Part 2 is
-// hands-on setup on the attendees' own machines: hardware, installation,
-// setup with a coding agent, and exercises from the demo repository.
+// hands-on setup on the attendees' own machines.
+// One idea per slide, in large type. Details, numbers, and commands are
+// in the speaker notes (press P for the presenter window).
 // Companion to runebender.org/docs/local-ai-setup.html and the demo repo.
 import Fig from '@/components/slides/Fig.astro'
 import Slide from '@/components/slides/Slide.astro'
@@ -44,111 +45,88 @@ import titleDgxSpark from '@/assets/slides/localai/title-dgx-spark.jpg'
   </Slide>
 
   <Slide section="Overview" label="Format">
-    <div class="c-1-10 stack">
-      <h2 class="t-head">Format</h2>
-      <p class="t-body">
-        Part 1 is a short demo. It shows Runebender training and fine-tuning
-        small models, running open-weight models, and building a workflow in
-        the node editor, on Mac and Linux.
-      </p>
-      <p class="t-body">
-        Part 2 is hands-on. We set up Runebender and local models on your own
-        machine: from a DMG on a Mac, with a few terminal commands on Mac or
-        Linux, or with a coding agent.
-      </p>
-      <p class="t-body">
-        After setup, no account or network connection is needed. In
-        Runebender, a model is a folder of files on your disk.
-      </p>
+    <div class="c-1-10 stack-lg">
+      <h2 class="t-display">Format</h2>
+      <p class="t-head">Part 1: a short demo of Runebender with local models.</p>
+      <p class="t-head">Part 2: hands-on setup on your own Mac or Linux PC.</p>
     </div>
     <Fragment slot="notes">
-      <p>A Runebender model folder holds three or four files: a config, the weights, a vocabulary, and sometimes a manifest.</p>
+      <p>The demo covers training a model from scratch, fine-tuning, open-weight chat models, and the node editor.</p>
+      <p>Setup routes: a DMG on a Mac, a few terminal commands on Mac or Linux, or a coding agent.</p>
     </Fragment>
   </Slide>
 
-  <!-- ── Why local ── -->
+  <!-- ── Core concepts ── -->
 
-  <Slide section="Why local" label="Why local">
-    <div class="c-1-4 stack">
-      <h2 class="t-head">Why local</h2>
-      <p class="t-small">
-        Small models run on a laptop. A PC with a good graphics card can
-        train larger ones.
-      </p>
-      <p class="t-small">
-        The designer controls each part of the process: the training data,
-        the model files, and what reaches the font. The editor downloads
-        nothing and sends nothing.
-      </p>
-      <p class="t-small">
-        The font models are one to a few dozen megabytes. Training one from
-        scratch takes minutes on a laptop GPU.
+  <Slide section="Concepts" label="Why local">
+    <div class="c-1-6 stack">
+      <h2 class="t-display">Why local</h2>
+      <p class="t-head">
+        Small models run on a laptop. You control the training data, the
+        models, and what reaches the font.
       </p>
     </div>
     <Fig
-      class="c-5-12 fig-right"
+      class="c-7-12 fig-right"
       src={nufoEditing}
       alt="Runebender editing Arabic glyphs with a rendered preview."
     />
     <Fragment slot="notes">
+      <p>A PC with a good graphics card can train larger models. The editor downloads nothing and sends nothing.</p>
+      <p>The font models are one to a few dozen megabytes. Training one from scratch takes minutes on a laptop GPU.</p>
       <p>Most font generation research trains on large collections of scraped fonts, which mix many drawing conventions. These models train on the designer’s own drawings, made on one grid.</p>
     </Fragment>
   </Slide>
 
-  <Slide section="Why local" label="The training loop">
-    <div class="c-1-4 stack">
-      <h2 class="t-head">The training loop</h2>
-      <p class="t-small">
-        The designer draws a core set of glyphs. The editor drafts the rest.
-        The designer reviews and corrects the drafts. Each accepted draft is
-        added to the training data.
+  <Slide section="Concepts" label="Models are folders">
+    <div class="c-1-10 stack-lg">
+      <h2 class="t-display">Models are folders</h2>
+      <p class="t-head">
+        A model is a folder of files on your disk. Runebender reads it from
+        <code>~/Runebender/models</code> or from beside the font.
       </p>
-      <p class="t-small">
-        The designer reviews shapes. Recurring errors get a detector or a
-        repair tool before the next training run.
-      </p>
-    </div>
-    <div class="c-5-12">
-      <table class="mono-table">
-        <tbody>
-          <tr><td>1</td><td>Draw and grade</td><td>A reference set in one master, marked green</td></tr>
-          <tr><td>2</td><td>Train</td><td>The model trains on the green set only</td></tr>
-          <tr><td>3</td><td>Draft</td><td>10 to 20 glyphs on the 8-unit grid, as a proposal</td></tr>
-          <tr><td>4</td><td>Review and fix</td><td>Correct, install, mark orange</td></tr>
-          <tr><td>5</td><td>Grade</td><td>Corrected drafts are marked green and join the set</td></tr>
-          <tr><td>6</td><td>Build</td><td>Compile the font and proof it in text</td></tr>
-          <tr><td>7</td><td>Diagnose</td><td>Name each recurring error and add a check for it</td></tr>
-        </tbody>
-      </table>
     </div>
     <Fragment slot="notes">
-      <p>Step 5 feeds step 1. Each training run has more green glyphs than the last, so later drafts need fewer corrections.</p>
+      <p>A Runebender model folder holds a config, the weights, a vocabulary, and sometimes a manifest. A chat model folder holds a GGUF file.</p>
+      <p>Folders are sorted by kind: shapes, bolden, chat. A font’s own models are in MyFont.models/ beside it, so they move with the font.</p>
+      <p>The editor reads only these files. The config is plain JSON. RUNEBENDER_MODELS sets a different root for one run.</p>
     </Fragment>
   </Slide>
 
-  <Slide section="Why local" label="Rules for machine output">
-    <div class="c-1-10 stack">
-      <h2 class="t-head">Rules for machine output</h2>
-      <p class="t-body">
-        A draft is a proposal, not a direct edit. Install and Undo use the
-        ordinary proposal flow.
+  <Slide section="Concepts" label="The training loop">
+    <div class="c-1-10 stack-lg">
+      <h2 class="t-display">The training loop</h2>
+      <p class="t-head">
+        You draw a core set of glyphs. The model drafts the rest. You correct
+        the drafts, and they become new training data.
       </p>
-      <p class="t-body">
-        Only a person marks a glyph green. Machine drafts stay orange until
-        they are graded.
-      </p>
-      <p class="t-body">
-        Drafts land on the 8-unit grid. The designer makes the 2-unit optical
-        corrections.
-      </p>
-      <p class="t-body">
-        Each engine is scored against drawn pairs. The baseline is a plain
-        mean shift.
-      </p>
-      <p class="t-body">Nothing writes font files. The designer saves.</p>
     </div>
     <Fragment slot="notes">
-      <p>The same rules apply to the local models, to agents over MCP, and to the Chat panel.</p>
+      <ul>
+        <li>Draw and grade a reference set in one master, marked green.</li>
+        <li>Train on the green set only.</li>
+        <li>Draft 10 to 20 glyphs on the 8-unit grid, as a proposal.</li>
+        <li>Correct, install, and mark orange.</li>
+        <li>Grade corrected drafts green. They join the training set.</li>
+        <li>Build the font and proof it in text.</li>
+        <li>Name each recurring error and add a check for it before the next run.</li>
+      </ul>
+    </Fragment>
+  </Slide>
+
+  <Slide section="Concepts" label="Drafts are proposals">
+    <div class="c-1-10 stack-lg">
+      <h2 class="t-display">Drafts are proposals</h2>
+      <p class="t-head">
+        A model never edits the font directly. You install or discard each
+        draft, and only you save.
+      </p>
+    </div>
+    <Fragment slot="notes">
+      <p>Only a person marks a glyph green. Machine drafts stay orange until they are graded.</p>
+      <p>Drafts land on the 8-unit grid. The designer makes the 2-unit optical corrections.</p>
+      <p>Each engine is scored against drawn pairs. The baseline is a plain mean shift.</p>
+      <p>The same rules apply to local models, to agents over MCP, and to the Chat panel.</p>
     </Fragment>
   </Slide>
 
@@ -170,780 +148,373 @@ import titleDgxSpark from '@/assets/slides/localai/title-dgx-spark.jpg'
   </Slide>
 
   <Slide section="Demo" label="Training from scratch">
-    <div class="c-1-4 stack">
-      <h2 class="t-head">Training from scratch</h2>
-      <p class="t-small">
-        Open a glyph, hold the shapes button, and choose Local AI Shapes.
-        Without a model, the panel offers Train From the Sample Shapes.
-      </p>
-      <p class="t-small">
-        After training, choose a shape and drag a box. The model draws a
-        preview in the box. Enter keeps it, Tab draws another, Esc removes it.
-      </p>
-      <p class="t-small muted">
-        The model can draw only the shapes in the training font. Each glyph
-        name is the word for its shape.
+    <div class="c-1-6 stack">
+      <h2 class="t-display">Training from scratch</h2>
+      <p class="t-head">
+        Train a model on the shapes in your font. Then drag a box, choose a
+        shape, and the model draws it.
       </p>
     </div>
     <Fig
-      class="c-5-12 fig-right"
+      class="c-7-12 fig-right"
       src={outline}
       alt="Runebender editing an outline, with the right panel open."
     />
     <Fragment slot="notes">
+      <p>Open a glyph, hold the shapes button, and choose Local AI Shapes. Without a model, the panel offers Train From the Sample Shapes.</p>
+      <p>After training, Enter keeps the preview, Tab draws another, Esc removes it.</p>
+      <p>The model can draw only the shapes in the training font. Each glyph name is the word for its shape.</p>
       <p>A quick training run takes about twelve minutes on a laptop GPU. A thorough run takes about thirty. get-base-model.sh in the demo repository downloads a trained base model with a checksum.</p>
     </Fragment>
   </Slide>
 
   <Slide section="Demo" label="Fine-tuning">
-    <div class="c-1-4 stack">
-      <h2 class="t-head">Fine-tuning</h2>
-      <p class="t-small">
-        Fine-tuning continues training from an existing model instead of
-        from random weights. It needs less data and less time.
+    <div class="c-1-10 stack-lg">
+      <h2 class="t-display">Fine-tuning</h2>
+      <p class="t-head">
+        Continue training an existing model with new drawings. It needs less
+        data and less time than training from scratch.
       </p>
-      <p class="t-small">
-        In the editor, draw a new shape and click Add This Font’s Shapes.
-        Training continues from the current model for about two minutes.
-      </p>
-      <p class="t-small">
-        In font-ml, an adapter is a small set of weights trained over a
-        frozen base model, in the shape of a LoRA. It is applied at load time
-        with a strength.
-      </p>
-    </div>
-    <div class="c-5-12 stack">
-      <pre class="code">font-ml run train --source Regular.ufo --target Bold.ufo \
-    --init my-bolden --adapter-out my-adapter --rank 8
-font-ml run bolden --model my-bolden --source Regular.ufo \
-    --glyph H --adapter my-adapter:1.0</pre>
-      <table class="mono-table">
-        <thead>
-          <tr><th>Method</th><th>Starts from</th><th>Output</th></tr>
-        </thead>
-        <tbody>
-          <tr><td>Train from scratch</td><td>Random weights</td><td>A new model folder</td></tr>
-          <tr><td>Continue training, --init</td><td>An existing model</td><td>A new model folder</td></tr>
-          <tr><td>Adapter, --adapter-out</td><td>A frozen base model</td><td>adapter.json, adapter.safetensors</td></tr>
-        </tbody>
-      </table>
     </div>
     <Fragment slot="notes">
-      <p>The Nodes tab includes a train-adapter graph that runs the same adapter training.</p>
-      <p>Two adapters can be applied in a row. Both are merged into the weights at load time.</p>
+      <p>In the editor: draw a new shape and click Add This Font’s Shapes. Training continues from the current model for about two minutes.</p>
+      <p>In font-ml, an adapter is a small set of weights trained over a frozen base model, in the shape of a LoRA:</p>
+      <p>font-ml run train --source Regular.ufo --target Bold.ufo --init my-bolden --adapter-out my-adapter --rank 8</p>
+      <p>font-ml run bolden --model my-bolden --source Regular.ufo --glyph H --adapter my-adapter:1.0</p>
+      <p>The Nodes tab includes a train-adapter graph that runs the same training.</p>
     </Fragment>
   </Slide>
 
   <Slide section="Demo" label="Fine-tuning in the editor" planned>
-    <div class="c-1-4 stack">
-      <h2 class="t-head">Fine-tuning in the editor</h2>
-      <p class="t-small">
-        A Finetune button in the Local AI panel trains a bolden adapter on the
-        glyphs graded green in the open font.
+    <div class="c-1-10 stack-lg">
+      <h2 class="t-display">Fine-tuning in the editor</h2>
+      <p class="t-head">
+        A Finetune button trains a small adapter on the glyphs you graded
+        green. Bolden drafts use it if it scores better.
       </p>
-      <p class="t-small">
-        The panel shows whether each script has enough drawn pairs: 20 green
-        pairs, with 5 held out for scoring.
-      </p>
-      <p class="t-small">
-        The adapter is saved in <code>MyFont.models/</code> beside the font.
-        Bolden drafts use it after training.
-      </p>
-    </div>
-    <div class="c-5-12">
-      <table class="mono-table">
-        <thead>
-          <tr><th>Step</th><th>Action</th></tr>
-        </thead>
-        <tbody>
-          <tr><td>1</td><td>Draw and grade Bold glyphs green</td></tr>
-          <tr><td>2</td><td>Click Finetune in the Local AI panel</td></tr>
-          <tr><td>3</td><td>An adapter trains with the base model frozen</td></tr>
-          <tr><td>4</td><td>The held-out pairs are scored with and without it</td></tr>
-          <tr><td>5</td><td>Bolden drafts use the adapter if its score is better</td></tr>
-        </tbody>
-      </table>
     </div>
     <Fragment slot="notes">
-      <p>Today the same adapter training runs from font-ml and from the train-adapter graph in the node editor. The button puts it in the panel for people who do not use the command line.</p>
+      <p>The panel shows whether each script has enough drawn pairs: 20 green pairs, with 5 held out for scoring.</p>
+      <p>The adapter is saved in MyFont.models/ beside the font.</p>
+      <p>Today the same training runs from font-ml and from the train-adapter graph.</p>
     </Fragment>
   </Slide>
 
   <Slide section="Demo" label="Bolden">
-    <div class="c-1-4 stack">
-      <h2 class="t-head">Bolden</h2>
-      <p class="t-small">
-        The model moves the points of a Regular glyph to make a Bold draft.
-        The point structure stays the same, so the masters still interpolate.
-      </p>
-      <p class="t-small">
-        The Weight debt block lists Bold glyphs that are still identical to
-        Regular. It drafts them in batches of 20 and marks them orange.
-      </p>
-      <p class="t-small">
-        About half a second per glyph on Metal.
+    <div class="c-1-6 stack">
+      <h2 class="t-display">Bolden</h2>
+      <p class="t-head">
+        The model moves the points of a Regular glyph to draft its Bold. The
+        masters still interpolate.
       </p>
     </div>
-    <div class="c-5-12 demo-side">
-      <Fig
-        class="fig-right"
-        src={grid}
-        alt="Runebender’s glyph overview grid for a Latin font."
-      />
-      <table class="mono-table">
-        <thead>
-          <tr><th>Virtua Grotesk Bold</th><th>Owed</th><th>Drawn pairs</th><th>Offset vs model</th></tr>
-        </thead>
-        <tbody>
-          <tr><td>Latin</td><td>2</td><td>56</td><td>about even</td></tr>
-          <tr><td>Arabic</td><td>11</td><td>130</td><td>offset is better</td></tr>
-          <tr><td>Hebrew</td><td>71</td><td>5</td><td>offset is better</td></tr>
-        </tbody>
-      </table>
-    </div>
+    <Fig
+      class="c-7-12 fig-right"
+      src={grid}
+      alt="Runebender’s glyph overview grid for a Latin font."
+    />
     <Fragment slot="notes">
-      <p>Measured 2026-10-09 on Virtua Grotesk. Both engines are only slightly better than the mean shift. Hebrew has five drawn pairs. An engine needs 20 green pairs on a script, with 5 held out, before its drafts are used.</p>
-      <p>The score is the distance between the draft and the outline the designer kept.</p>
+      <p>The Weight debt block lists Bold glyphs that are still identical to Regular. It drafts them in batches of 20 and marks them orange. About half a second per glyph on Metal.</p>
+      <p>Measured 2026-10-09 on Virtua Grotesk: Latin 56 drawn pairs, model and offset about even. Arabic 130 pairs, offset better. Hebrew 5 pairs, offset better. Both engines are only slightly better than the mean shift.</p>
+      <p>An engine needs 20 green pairs on a script, with 5 held out, before its drafts are used.</p>
     </Fragment>
   </Slide>
 
   <Slide section="Demo" label="Drafting from a sketch" planned>
-    <div class="c-1-4 stack">
-      <h2 class="t-head">Drafting from a sketch</h2>
-      <p class="t-small">
-        The designer draws the rough shape of a glyph with the brush on the
-        glyph canvas. The model returns a draft in the conventions of the
-        font, as a proposal.
+    <div class="c-1-10 stack-lg">
+      <h2 class="t-display">Drafting from a sketch</h2>
+      <p class="t-head">
+        Sketch a glyph with the brush. A drawing model redraws it in the
+        style of your font, as a proposal.
       </p>
-      <p class="t-small">
-        The chat model does not draw. A separate drawing model, trained on
-        the glyphs graded green, redraws the traced sketch.
-      </p>
-    </div>
-    <div class="c-5-12">
-      <table class="mono-table">
-        <thead>
-          <tr><th>Step</th><th>Tool</th></tr>
-        </thead>
-        <tbody>
-          <tr><td>Sketch the shape</td><td>Brush on the glyph canvas</td></tr>
-          <tr><td>Trace the sketch</td><td>img2bez, raster to outline</td></tr>
-          <tr><td>Redraw in the font’s style</td><td>Drawing model, through font-ml</td></tr>
-          <tr><td>Review</td><td>Proposal layer, Install or Discard</td></tr>
-        </tbody>
-      </table>
     </div>
     <Fragment slot="notes">
-      <p>The Brush panel already traces temporary ink with img2bez and can draft with the Virtua sketch model. The first trial, on 2026-09-28, lost the form of the medial kaf. The drawing model is the open work, not the interface.</p>
+      <p>Steps: brush on the glyph canvas, trace with img2bez, redraw with the drawing model through font-ml, review in the proposal layer.</p>
+      <p>The chat model does not draw. The drawing model trains on the glyphs graded green.</p>
+      <p>The Brush panel already traces temporary ink and can draft with the Virtua sketch model. The first trial, on 2026-09-28, lost the form of the medial kaf. The drawing model is the open work.</p>
     </Fragment>
   </Slide>
 
   <Slide section="Demo" label="Open-weight chat models">
-    <div class="c-1-4 stack">
-      <h2 class="t-head">Open-weight chat models</h2>
-      <p class="t-small">
-        Open-weight models are published with their weights, so they run on
-        your own machine. The Chat panel uses GGUF files, such as Qwen3 from
-        Hugging Face.
+    <div class="c-1-10 stack-lg">
+      <h2 class="t-display">Open-weight chat models</h2>
+      <p class="t-head">
+        Open-weight models run on your own machine. In the Chat panel, they
+        answer questions about the open font.
       </p>
-      <p class="t-small">
-        Small models cannot calculate a stem width from a point list. They do
-        call the correct tools in the correct order. The tools must return the
-        measurement directly.
-      </p>
-    </div>
-    <div class="c-5-12">
-      <table class="mono-table">
-        <thead>
-          <tr><th>Engine</th><th>Model</th><th>Time</th><th>Stem of H</th></tr>
-        </thead>
-        <tbody>
-          <tr><td>font-ml chat (Candle)</td><td>Qwen3 4B</td><td>543 s</td><td>74, wrong</td></tr>
-          <tr><td>llama-server</td><td>Qwen3 4B</td><td>11 s</td><td>564, wrong: bounds width</td></tr>
-          <tr><td>llama-server</td><td>Qwen3 8B</td><td>24 s</td><td>Subtracted sidebearings, wrong</td></tr>
-          <tr><td>llama-server + analyze_glyph</td><td>Qwen3 4B</td><td>5 s</td><td>100, correct</td></tr>
-        </tbody>
-      </table>
     </div>
     <Fragment slot="notes">
-      <p>Same question, same copy of Virtua Grotesk, M4 Pro. Two decisions came from this test: use llama.cpp as the engine, and make the tools do the measuring.</p>
+      <p>The Chat panel uses GGUF files, such as Qwen3 from Hugging Face, run by llama.cpp.</p>
+      <p>Small models cannot calculate a stem width from a point list. They do call the correct tools in the correct order. The tools must return the measurement directly.</p>
+      <p>Test on Virtua Grotesk, M4 Pro, stem of H. Candle runtime, Qwen3 4B: 543 s, wrong. llama-server, Qwen3 4B: 11 s, wrong. llama-server, Qwen3 8B: 24 s, wrong. llama-server with analyze_glyph, Qwen3 4B: 5 s, correct (100 units).</p>
       <p>A 0.6B model gives wrong answers. The Chat panel was built and tested with 4B.</p>
     </Fragment>
   </Slide>
 
   <Slide section="Demo" label="Model catalog" planned>
-    <div class="c-1-4 stack">
-      <h2 class="t-head">Model catalog</h2>
-      <p class="t-small">
-        The Chat panel lists open-weight models with their size, license, and
-        source. One click downloads a model from Hugging Face and checks its
-        sha256 checksum. Nothing downloads without the click.
+    <div class="c-1-10 stack-lg">
+      <h2 class="t-display">Model catalog</h2>
+      <p class="t-head">
+        Choose a chat model in the Chat panel and download it with one click.
       </p>
-      <p class="t-small">
-        The editor runs the model with llama-server from llama.cpp. A GGUF
-        file placed in a folder under <code>chat/</code> also works.
-      </p>
-    </div>
-    <div class="c-5-12">
-      <table class="mono-table">
-        <thead>
-          <tr><th>Entry</th><th>Model</th><th>Download</th><th>Machine</th></tr>
-        </thead>
-        <tbody>
-          <tr><td>Small, default</td><td>Qwen3.5 4B</td><td>about 2.7 GB</td><td>8 GB or more</td></tr>
-          <tr><td>Better</td><td>Qwen3.5 9B</td><td>about 5.5 GB</td><td>16 GB or more</td></tr>
-          <tr><td>Large</td><td>Qwen3.6 35B A3B</td><td>about 20 GB</td><td>32 GB or more</td></tr>
-        </tbody>
-      </table>
     </div>
     <Fragment slot="notes">
-      <p>Decided 2026-10-18: the catalog is shown in the app and the user picks. All three entries are Apache 2.0, 4-bit GGUF files. Gemma 4 and gpt-oss-20b can be added as optional entries.</p>
-      <p>Thinking is off by default, with a switch in the composer.</p>
+      <p>Each entry shows the size, license, and source. The download comes from Hugging Face and is checked against its sha256 checksum. Nothing downloads without the click.</p>
+      <p>Catalog decided 2026-10-18, all Apache 2.0: Qwen3.5 4B (about 2.7 GB, 8 GB machines, default), Qwen3.5 9B (about 5.5 GB, 16 GB), Qwen3.6 35B A3B (about 20 GB, 32 GB).</p>
+      <p>A GGUF file placed in a folder under chat/ also works. Thinking is off by default, with a switch in the composer.</p>
     </Fragment>
   </Slide>
 
   <Slide section="Demo" label="Voice input">
-    <div class="c-1-6 stack">
-      <h2 class="t-head">Voice input</h2>
-      <p class="t-small">
-        The Talk button in the Chat panel records a spoken request. A local
-        speech model transcribes it and puts the text in the field. The
-        designer checks the text before sending.
+    <div class="c-1-10 stack-lg">
+      <h2 class="t-display">Voice input</h2>
+      <p class="t-head">
+        Speak a request. A local speech model writes it in the chat field for
+        you to check.
       </p>
-      <p class="t-small">
-        It uses whisper-server from whisper.cpp and a Whisper model in a
-        folder whose name starts with <code>whisper</code>. The button is
-        hidden until both are found.
-      </p>
-    </div>
-    <div class="c-7-12 stack">
-      <pre class="code">brew install whisper.cpp
-~/Runebender/models/whisper-small/model.bin</pre>
     </div>
     <Fragment slot="notes">
-      <p>The speech model is a whisper.cpp ggml file from huggingface.co/ggerganov/whisper.cpp, saved as model.bin. Audio stays on the machine.</p>
+      <p>The Talk button uses whisper-server from whisper.cpp (brew install whisper.cpp) and a Whisper model saved as ~/Runebender/models/whisper-small/model.bin.</p>
+      <p>The button is hidden until both are found. Audio stays on the machine.</p>
     </Fragment>
   </Slide>
 
   <Slide section="Demo" label="The node editor">
-    <div class="c-1-4 stack">
-      <h2 class="t-head">The node editor</h2>
-      <p class="t-small">
-        Runebender includes a node editor, similar to ComfyUI. Nodes for the
-        font, a model, a master, and tasks such as Bolden, Compare, and
-        Install connect into a workflow.
-      </p>
-      <p class="t-small">
-        A workflow is a file. It runs in the Nodes tab or from the command
-        line.
-      </p>
-      <p class="t-small">
-        A run does not save or change the open font. Results are candidates
-        until they are installed.
+    <div class="c-1-6 stack">
+      <h2 class="t-display">The node editor</h2>
+      <p class="t-head">
+        Connect nodes into a workflow, as in ComfyUI. A workflow is a file you
+        can share and run again.
       </p>
     </div>
     <Fig
-      class="c-5-12 fig-right"
+      class="c-7-12 fig-right"
       src={nodes}
       alt="Runebender’s Nodes tab with a workflow graph."
     />
     <Fragment slot="notes">
-      <p>External tasks declare their inputs, so unchanged runs are cached. Model folders are hashed from their contents, not from the manifest.</p>
+      <p>Nodes for the font, a model, a master, and tasks such as Bolden, Compare, and Install.</p>
+      <p>A workflow runs in the Nodes tab or from the command line. A run does not save or change the open font. Results are candidates until they are installed.</p>
+      <p>External tasks declare their inputs, so unchanged runs are cached.</p>
     </Fragment>
   </Slide>
 
   <!-- ── Part 2: hands-on ── -->
 
   <Slide section="Hands-on" label="Hands-on setup">
-    <div class="c-1-10 stack">
+    <div class="c-1-10 stack-lg">
       <h2 class="t-display">Hands-on setup</h2>
-      <p class="t-body">
-        Install Runebender and run a first local model on your own machine.
-        The next slides cover what your hardware can run, how to install, and
-        the exercises.
+      <p class="t-head">
+        Install Runebender and run a first model on your own machine.
       </p>
     </div>
   </Slide>
 
   <!-- ── Hardware ── -->
 
-  <Slide section="Hardware" label="Memory size and bandwidth">
-    <div class="c-1-4 stack">
-      <h2 class="t-head">Memory size and bandwidth</h2>
-      <p class="t-small">
-        Memory size sets which models fit. At 4 bits, a model takes about
-        0.6 GB per billion parameters, plus space for the context.
+  <Slide section="Hardware" label="Memory size">
+    <div class="c-1-10 stack-lg">
+      <h2 class="t-display">Memory size</h2>
+      <p class="t-head">
+        The model must fit in memory. A 4B model needs about 3 GB. A 35B model
+        needs about 22 GB.
       </p>
-      <p class="t-small">
-        Memory bandwidth sets the speed. Each new token reads the active
-        weights once, so tokens per second is at most bandwidth divided by
-        their size.
-      </p>
-    </div>
-    <div class="c-5-12">
-      <table class="mono-table">
-        <thead>
-          <tr><th>Model</th><th>Parameters</th><th>File</th><th>Kind</th></tr>
-        </thead>
-        <tbody>
-          <tr><td>qwen3.5-4b</td><td>4B</td><td>2.9 GB</td><td>dense</td></tr>
-          <tr><td>gpt-oss-20b</td><td>21B</td><td>12.1 GB</td><td>mixture of experts, 3.6B active</td></tr>
-          <tr><td>gemma-4-26b-a4b</td><td>26B</td><td>17.0 GB</td><td>mixture of experts, 4B active</td></tr>
-          <tr><td>qwen3.6-27b</td><td>27B</td><td>17.6 GB</td><td>dense</td></tr>
-          <tr><td>qwen3.6-35b-a3b</td><td>35B</td><td>22.4 GB</td><td>mixture of experts, 3B active</td></tr>
-        </tbody>
-      </table>
     </div>
     <Fragment slot="notes">
       <p>For people new to local models: the processor matters less than the size and speed of the memory the model can use.</p>
-      <p>These are the chat models in my ~/Runebender/models folder, as 4-bit GGUF files. The file size is the memory the weights need.</p>
-      <p>The operating system and the context also need memory. On a 16 GB machine, keep the model under about 10 GB.</p>
+      <p>At 4 bits, a model takes about 0.6 GB per billion parameters, plus space for the context.</p>
+      <p>My chat models, 4-bit GGUF: qwen3.5-4b 2.9 GB, gpt-oss-20b 12.1 GB, gemma-4-26b-a4b 17.0 GB, qwen3.6-27b 17.6 GB, qwen3.6-35b-a3b 22.4 GB.</p>
+      <p>The operating system also needs memory. On a 16 GB machine, keep the model under about 10 GB.</p>
     </Fragment>
   </Slide>
 
-  <Slide section="Hardware" label="Dense and mixture of experts">
-    <div class="c-1-4 stack">
-      <h2 class="t-head">Dense and mixture of experts</h2>
-      <p class="t-small">
-        A dense model reads every weight for every token. A mixture of experts
-        reads only a few experts per token.
+  <Slide section="Hardware" label="Memory bandwidth">
+    <div class="c-1-10 stack-lg">
+      <h2 class="t-display">Memory bandwidth</h2>
+      <p class="t-head">
+        Each new word reads the model from memory. Faster memory gives faster
+        answers.
       </p>
-      <p class="t-small">
-        qwen3.6-35b-a3b has 35B parameters and reads about 3B per token. It
-        needs as much memory as a large model, but generates tokens about as
-        fast as a small one.
-      </p>
-    </div>
-    <div class="c-5-12 stack">
-      <table class="mono-table">
-        <thead>
-          <tr><th>MacBook Pro, M4 Pro, 273 GB/s</th><th>Read per token</th><th>Upper limit</th></tr>
-        </thead>
-        <tbody>
-          <tr><td>qwen3.6-27b, dense</td><td>17.6 GB</td><td>about 15 tokens/s</td></tr>
-          <tr><td>qwen3.6-35b-a3b, mixture of experts</td><td>about 2 GB</td><td>about 130 tokens/s</td></tr>
-        </tbody>
-      </table>
-      <table class="mono-table">
-        <thead>
-          <tr><th>Measured on AMD Strix Halo, 128 GB</th><th>Speed</th></tr>
-        </thead>
-        <tbody>
-          <tr><td>Qwen3 30B-A3B, mixture of experts</td><td>about 100 tokens/s</td></tr>
-          <tr><td>gpt-oss-120b, mixture of experts</td><td>about 55 tokens/s</td></tr>
-          <tr><td>Llama 3.3 70B, dense</td><td>about 5 tokens/s</td></tr>
-        </tbody>
-      </table>
     </div>
     <Fragment slot="notes">
-      <p>The upper limit is bandwidth divided by the bytes read per token. Measured speed is lower. On the same machine, the mixture of experts is several times faster than the dense model.</p>
+      <p>Precisely: each new token reads the active weights once, so tokens per second is at most bandwidth divided by their size.</p>
+      <p>MacBook Pro, M4 Pro, 273 GB/s: qwen3.6-27b reads 17.6 GB per token, upper limit about 15 tokens/s.</p>
+    </Fragment>
+  </Slide>
+
+  <Slide section="Hardware" label="Mixture of experts">
+    <div class="c-1-10 stack-lg">
+      <h2 class="t-display">Mixture of experts</h2>
+      <p class="t-head">
+        These models read only part of their weights for each word. They need
+        the memory of a large model and run at the speed of a small one.
+      </p>
+    </div>
+    <Fragment slot="notes">
+      <p>qwen3.6-35b-a3b has 35B parameters and reads about 3B per token. On the M4 Pro, the upper limit is about 130 tokens/s, against about 15 for the dense 27B.</p>
+      <p>Measured on AMD Strix Halo, 128 GB: Qwen3 30B-A3B about 100 tokens/s, gpt-oss-120b about 55, dense Llama 3.3 70B about 5.</p>
       <p>Many current open models are mixtures of experts, including gpt-oss and the Qwen3 A3B models. This is why machines with large unified memory are useful for local inference.</p>
     </Fragment>
   </Slide>
 
   <Slide section="Hardware" label="Three kinds of machine">
-    <div class="c-1-4 stack">
-      <h2 class="t-head">Graphics card</h2>
-      <p class="t-small">
-        24 to 32 GB of fast memory on one consumer card.
-      </p>
-      <p class="t-small">
-        NVIDIA’s CUDA is supported by all inference and training tools. The
-        card goes in a PC that can be built and upgraded.
-      </p>
-    </div>
-    <div class="c-5-8 stack">
-      <h2 class="t-head">Unified memory</h2>
-      <p class="t-small">
-        The processor and the graphics share one pool of 64 to 512 GB.
-      </p>
-      <p class="t-small">
-        Lower bandwidth than a graphics card, but larger models fit. Macs, AMD
-        Strix Halo, NVIDIA DGX Spark.
-      </p>
-    </div>
-    <div class="c-9-12 stack">
-      <h2 class="t-head">Multiple cards</h2>
-      <p class="t-small">
-        Several cards in one machine, or a workstation chip with datacenter
-        memory.
-      </p>
-      <p class="t-small">
-        For labs and teams. tinybox, RTX Pro 6000 builds, DGX Station.
-      </p>
-    </div>
-    <Fragment slot="notes">
-      <p>Inference works on all three. Training has the best support on NVIDIA. Small models, such as the Runebender font models, also train on Apple Metal.</p>
-    </Fragment>
-  </Slide>
-
-  <Slide section="Hardware" label="Desktop machines up to 128 GB">
     <div class="c-1-12 stack">
-      <h2 class="t-head">Desktop machines up to 128 GB</h2>
-      <table class="mono-table">
-        <thead>
-          <tr><th>Machine</th><th>Memory</th><th>Bandwidth</th><th>Price</th><th>Use</th></tr>
-        </thead>
-        <tbody>
-          <tr><td>PC with a used RTX 3090</td><td>24 GB</td><td>936 GB/s</td><td>$700 to $1,050 per card</td><td>Lowest cost per GB, CUDA</td></tr>
-          <tr><td>PC with an RTX 5090</td><td>32 GB</td><td>1,792 GB/s</td><td>$2,400 to $4,300 per card</td><td>Fastest consumer card</td></tr>
-          <tr><td>Strix Halo mini PC</td><td>128 GB</td><td>256 GB/s</td><td>from about $2,000</td><td>120B mixtures of experts</td></tr>
-          <tr><td>Framework Desktop, Max+ 395</td><td>128 GB</td><td>256 GB/s</td><td>$3,449</td><td>Same chip, repairable</td></tr>
-          <tr><td>Mac Studio, M5 Max</td><td>36 to 128 GB</td><td>460 to 614 GB/s</td><td>from $2,499</td><td>MLX and llama.cpp, low noise</td></tr>
-          <tr><td>NVIDIA DGX Spark</td><td>64 or 128 GB</td><td>273 GB/s</td><td>$3,999 at launch, now higher</td><td>CUDA, two units link</td></tr>
-        </tbody>
-      </table>
-      <p class="t-credit">
-        US prices, October 2026, from vendor pages and retail listings. Memory
-        shortages raised many of these prices during 2026.
-      </p>
+      <h2 class="t-display">Three kinds of machine</h2>
+      <p class="t-head">Graphics card: fast memory, 24 to 32 GB</p>
+      <p class="t-head">Unified memory: up to 512 GB, shared</p>
+      <p class="t-head">Multiple cards: for labs and teams</p>
     </div>
     <Fragment slot="notes">
-      <p>Strix Halo is the AMD Ryzen AI Max+ 395. GMKtec, HP, Beelink, Minisforum and Framework sell machines with the same chip.</p>
-      <p>The DGX Spark is the only machine in this table with both CUDA and 128 GB. Its bandwidth is close to Strix Halo’s. The extra cost buys the NVIDIA software stack and the option to link two units for 256 GB.</p>
-      <p>A 64 GB DGX Spark from OEM partners started at $4,999 in October 2026.</p>
+      <p>Graphics card: NVIDIA’s CUDA is supported by all inference and training tools. A used RTX 3090 (24 GB, $700 to $1,050) is a common start. An RTX 5090 (32 GB, $2,400 to $4,300) is the fastest consumer card.</p>
+      <p>Unified memory: the processor and the graphics share one pool, with lower bandwidth than a card. Macs, AMD Strix Halo, NVIDIA DGX Spark.</p>
+      <p>Multiple cards: tinybox, RTX Pro 6000 builds, DGX Station.</p>
+      <p>Small models, such as the Runebender font models, also train on Apple Metal.</p>
     </Fragment>
   </Slide>
 
-  <Slide section="Hardware" label="Larger machines">
+  <Slide section="Hardware" label="Example machines">
     <div class="c-1-12 stack">
-      <h2 class="t-head">Larger machines</h2>
-      <table class="mono-table">
-        <thead>
-          <tr><th>Machine</th><th>Memory</th><th>Bandwidth</th><th>Price</th><th>Use</th></tr>
-        </thead>
-        <tbody>
-          <tr><td>Framework Desktop, PRO 495</td><td>192 GB</td><td>about 273 GB/s</td><td>$6,799 kit</td><td>Ships November 2026</td></tr>
-          <tr><td>Mac Studio, M5 Ultra</td><td>96 to 512 GB</td><td>1.2 TB/s</td><td>from $5,499</td><td>Largest models in one machine</td></tr>
-          <tr><td>PC with RTX Pro 6000 Blackwell</td><td>96 GB per card</td><td>1,792 GB/s</td><td>$9,000 to $16,000 per card</td><td>70B at high precision, one card</td></tr>
-          <tr><td>tinybox green v2</td><td>4 × RTX 5090, 128 GB</td><td>1,792 GB/s per card</td><td>about $45,000</td><td>Prebuilt multi-card machine</td></tr>
-          <tr><td>NVIDIA DGX Station, GB300</td><td>748 GB, 252 GB of it HBM</td><td>7.1 TB/s</td><td>$85,000 to $160,000</td><td>Datacenter GPU in a workstation</td></tr>
-          <tr><td>Mac Pro</td><td></td><td></td><td>Discontinued March 2026</td><td>Replaced by the Mac Studio</td></tr>
-        </tbody>
-      </table>
-      <p class="t-credit">
-        US prices, October 2026. The 512 GB M5 Ultra is expected above $10,000.
-        DGX Station prices are set by OEM partners.
-      </p>
+      <h2 class="t-display">Example machines</h2>
+      <p class="t-head">PC with an RTX 3090 or 5090</p>
+      <p class="t-head">Strix Halo mini PC, Framework Desktop</p>
+      <p class="t-head">NVIDIA DGX Spark</p>
+      <p class="t-head">Mac Studio, M5 Max or M5 Ultra</p>
+      <p class="t-head">tinybox, RTX Pro 6000, DGX Station</p>
     </div>
     <Fragment slot="notes">
-      <p>The M5 Ultra has 1.2 TB/s at every memory size. More memory adds capacity, not speed.</p>
-      <p>tinybox is made by tiny corp, the company behind tinygrad. Their red models use AMD cards and cost less.</p>
-      <p>The DGX Station bandwidth figure is for its 252 GB of HBM. The other 496 GB is LPDDR5X at 396 GB/s.</p>
-    </Fragment>
-  </Slide>
-
-  <Slide section="Hardware" label="A Linux PC">
-    <div class="c-1-6 stack">
-      <h2 class="t-head">A Linux PC</h2>
-      <p class="t-small">
-        A common starting point is one used RTX 3090: 24 GB at 936 GB/s for
-        about $1,000. A second card brings the total to 48 GB. llama.cpp
-        splits a model across cards.
-      </p>
-      <p class="t-small">
-        The graphics card does the work. The other parts supply power, space,
-        and data.
-      </p>
-      <p class="t-small">
-        Most training tools are developed and tested on Linux with CUDA first.
-      </p>
-    </div>
-    <div class="c-7-12">
-      <table class="mono-table">
-        <thead>
-          <tr><th>Part</th><th>Requirement</th></tr>
-        </thead>
-        <tbody>
-          <tr><td>Graphics card</td><td>Memory first, then bandwidth</td></tr>
-          <tr><td>Power supply</td><td>1000 W or more for two cards</td></tr>
-          <tr><td>Motherboard</td><td>Space for two wide cards</td></tr>
-          <tr><td>System memory</td><td>64 GB or more</td></tr>
-          <tr><td>Disk</td><td>2 TB NVMe for model files</td></tr>
-          <tr><td>Processor</td><td>Any recent desktop processor</td></tr>
-        </tbody>
-      </table>
-    </div>
-    <Fragment slot="notes">
-      <p>An RTX 3090 draws about 350 W. Two cards need a large power supply and good airflow.</p>
-      <p>AMD cards work with llama.cpp through Vulkan and ROCm. Training tools support them less well.</p>
-    </Fragment>
-  </Slide>
-
-  <Slide section="Hardware" label="My setup">
-    <div class="c-1-4 stack">
-      <h2 class="t-head">My setup</h2>
-      <p class="t-small">
-        The Runebender font models are one to a few dozen megabytes. A
-        consumer graphics card is enough to train them.
-      </p>
-    </div>
-    <div class="c-5-12">
-      <table class="mono-table">
-        <thead>
-          <tr><th>Machine</th><th>Memory</th><th>Use</th></tr>
-        </thead>
-        <tbody>
-          <tr><td>MacBook Pro, M4 Pro</td><td>48 GB, 273 GB/s</td><td>Chat and coding, qwen3.6-35b-a3b</td></tr>
-          <tr><td>Linux PC, RTX 2060 SUPER</td><td>8 GB, 448 GB/s</td><td>Training, about 100 s per epoch</td></tr>
-          <tr><td>Steam Deck</td><td>16 GB shared</td><td>qwen3.5-4b at 18 tokens/s</td></tr>
-        </tbody>
-      </table>
-    </div>
-    <Fragment slot="notes">
-      <p>The Linux PC trained the Nasta’liq model in the Nasta’liq Distilled talk. The Steam Deck runs Runebender and a chat model with the Vulkan build of llama.cpp.</p>
-    </Fragment>
-  </Slide>
-
-  <Slide section="Hardware" label="Runtimes">
-    <div class="c-1-4 stack">
-      <h2 class="t-head">Runtimes</h2>
-      <p class="t-small">
-        A runtime loads a model file and runs it. Most runtimes can also serve
-        the model on a local address that other programs call.
-      </p>
-      <p class="t-small">
-        The Runebender Chat panel connects to llama.cpp this way.
-      </p>
-    </div>
-    <div class="c-5-12">
-      <table class="mono-table">
-        <thead>
-          <tr><th>Runtime</th><th>Description</th><th>Hardware</th></tr>
-        </thead>
-        <tbody>
-          <tr><td>llama.cpp</td><td>Runs GGUF files, the common format</td><td>Mac, NVIDIA, AMD, CPU</td></tr>
-          <tr><td>MLX</td><td>Apple’s machine learning library</td><td>Mac</td></tr>
-          <tr><td>Ollama, LM Studio</td><td>Desktop apps built on the two above</td><td>Mac, Windows, Linux</td></tr>
-          <tr><td>vLLM</td><td>Serves many users at once</td><td>NVIDIA servers</td></tr>
-          <tr><td>PyTorch, Candle</td><td>Training; font-ml uses Candle</td><td>NVIDIA, Mac</td></tr>
-        </tbody>
-      </table>
-    </div>
-    <Fragment slot="notes">
-      <p>Ollama and LM Studio are the simplest first step outside Runebender: install the app, choose a model, and start a chat.</p>
+      <p>US prices, October 2026. Memory shortages raised many of them during 2026.</p>
+      <ul>
+        <li>Used RTX 3090: 24 GB, 936 GB/s, $700 to $1,050 per card.</li>
+        <li>RTX 5090: 32 GB, 1,792 GB/s, $2,400 to $4,300 per card.</li>
+        <li>Strix Halo mini PC (AMD Ryzen AI Max+ 395, GMKtec, HP, Beelink, Minisforum): 128 GB, 256 GB/s, from about $2,000.</li>
+        <li>Framework Desktop, Max+ 395: 128 GB, $3,449. PRO 495: 192 GB, $6,799 kit, ships November 2026.</li>
+        <li>DGX Spark: 64 or 128 GB, 273 GB/s, $3,999 at launch, now higher. Two units link for 256 GB.</li>
+        <li>Mac Studio M5 Max: 36 to 128 GB, 460 to 614 GB/s, from $2,499. M5 Ultra: 96 to 512 GB, 1.2 TB/s, from $5,499; 512 GB expected above $10,000.</li>
+        <li>RTX Pro 6000 Blackwell: 96 GB per card, $9,000 to $16,000.</li>
+        <li>tinybox green v2: 4 × RTX 5090, about $45,000.</li>
+        <li>DGX Station GB300: 748 GB, 252 GB of it HBM at 7.1 TB/s, $85,000 to $160,000 from OEM partners.</li>
+        <li>Mac Pro: discontinued March 2026, replaced by the Mac Studio.</li>
+      </ul>
+      <p>Linux PC parts: 1000 W power supply for two cards, 64 GB system memory, 2 TB NVMe. llama.cpp splits a model across cards. My training PC has an RTX 2060 SUPER, 8 GB, about 100 s per epoch.</p>
     </Fragment>
   </Slide>
 
   <Slide section="Hardware" label="Choosing a machine">
-    <div class="c-1-12 stack">
-      <h2 class="t-head">Choosing a machine</h2>
-      <table class="mono-table">
-        <thead>
-          <tr><th>Goal</th><th>Starting point</th></tr>
-        </thead>
-        <tbody>
-          <tr><td>This workshop</td><td>The computer you have. A 4B chat model needs 3 GB.</td></tr>
-          <tr><td>Train small font models</td><td>A Mac with Apple silicon, or an NVIDIA card with 8 GB or more</td></tr>
-          <tr><td>30B models at high speed</td><td>A 24 to 32 GB NVIDIA card, or a Mac with 48 GB or more</td></tr>
-          <tr><td>120B models on a desktop</td><td>128 GB of unified memory: Strix Halo, Mac Studio, DGX Spark</td></tr>
-          <tr><td>The largest open models</td><td>Mac Studio, M5 Ultra, 256 to 512 GB</td></tr>
-          <tr><td>Teams, or training large models</td><td>RTX Pro 6000 builds, tinybox, DGX Station</td></tr>
-        </tbody>
-      </table>
+    <div class="c-1-10 stack-lg">
+      <h2 class="t-display">Choosing a machine</h2>
+      <p class="t-head">
+        Start with the computer you have. When a real task is too slow, buy
+        for memory first.
+      </p>
     </div>
     <Fragment slot="notes">
-      <p>Start with the hardware you have. Buy new hardware when a real task is too slow, and choose by memory first.</p>
+      <ul>
+        <li>Train small font models: a Mac with Apple silicon, or an NVIDIA card with 8 GB or more.</li>
+        <li>30B models at high speed: a 24 to 32 GB NVIDIA card, or a Mac with 48 GB or more.</li>
+        <li>120B models on a desktop: 128 GB of unified memory.</li>
+        <li>The largest open models: Mac Studio M5 Ultra, 256 to 512 GB.</li>
+        <li>Teams, or training large models: RTX Pro 6000 builds, tinybox, DGX Station.</li>
+      </ul>
+      <p>My setup: MacBook Pro M4 Pro 48 GB for chat and coding with qwen3.6-35b-a3b. Linux PC with an RTX 2060 SUPER for training. Steam Deck runs qwen3.5-4b at 18 tokens/s.</p>
+    </Fragment>
+  </Slide>
+
+  <Slide section="Hardware" label="Runtimes">
+    <div class="c-1-10 stack-lg">
+      <h2 class="t-display">Runtimes</h2>
+      <p class="t-head">
+        A runtime loads a model and runs it. Runebender uses llama.cpp for
+        chat and font-ml for its own models.
+      </p>
+    </div>
+    <Fragment slot="notes">
+      <ul>
+        <li>llama.cpp: runs GGUF files on Mac, NVIDIA, AMD, and CPU.</li>
+        <li>MLX: Apple’s machine learning library.</li>
+        <li>Ollama and LM Studio: desktop apps built on llama.cpp and MLX. The simplest first step outside Runebender.</li>
+        <li>vLLM: serves many users at once on NVIDIA servers.</li>
+        <li>PyTorch and Candle: training. font-ml uses Candle.</li>
+      </ul>
     </Fragment>
   </Slide>
 
   <!-- ── Setup ── -->
 
   <Slide section="Setup" label="Installation" planned>
-    <div class="c-1-4 stack">
-      <h2 class="t-head">Installation</h2>
-      <p class="t-small">
-        Mac: download the DMG from runebender.org and drag Runebender to
-        Applications.
-      </p>
-      <p class="t-small">
-        Mac and Linux, to build or modify the editor: install with Cargo,
-        using stable Rust from rustup.rs. On Linux, install the system
-        libraries first.
-      </p>
-      <p class="t-small">
-        <code>font-ml</code> runs and trains the models. Build it with
-        <code>metal</code> on a Mac, <code>cuda</code> with NVIDIA, or no
-        feature for CPU.
-      </p>
-    </div>
-    <div class="c-5-12 stack">
-      <pre class="code"># Debian or Ubuntu
-sudo apt-get install libfontconfig-dev libwayland-dev \
-    libxkbcommon-dev libx11-dev libxcb1-dev libvulkan1 \
-    libssl-dev libglib2.0-dev libgtk-3-dev libxdo-dev \
-    libasound2-dev</pre>
-      <pre class="code">cargo install --git https://github.com/fontgarden/runebender
-cargo install --git https://github.com/eliheuer/font-ml \
-    --features metal     # or cuda, or no feature for CPU</pre>
-      <pre class="code">runebender --help
-font-ml tasks</pre>
+    <div class="c-1-10 stack-lg">
+      <h2 class="t-display">Installation</h2>
+      <p class="t-head">Mac: download the DMG from runebender.org.</p>
+      <p class="t-head">Mac and Linux: install with Cargo.</p>
     </div>
     <Fragment slot="notes">
-      <p>The Linux package list is the one the Runebender CI installs on Ubuntu.</p>
-      <p>font-ml tasks lists the available tasks. Only tasks marked ready can be used.</p>
-      <p>Compiling takes about fifteen minutes. Start the build before Part 1 if you can.</p>
+      <p>cargo install --git https://github.com/fontgarden/runebender</p>
+      <p>cargo install --git https://github.com/eliheuer/font-ml --features metal (or cuda, or no feature for CPU)</p>
+      <p>Linux (Debian or Ubuntu) needs system libraries first: libfontconfig-dev libwayland-dev libxkbcommon-dev libx11-dev libxcb1-dev libvulkan1 libssl-dev libglib2.0-dev libgtk-3-dev libxdo-dev libasound2-dev.</p>
+      <p>Check with runebender --help and font-ml tasks. Compiling takes about fifteen minutes.</p>
     </Fragment>
   </Slide>
 
   <Slide section="Setup" label="Setup with a coding agent">
-    <div class="c-1-4 stack">
-      <h2 class="t-head">Setup with a coding agent</h2>
-      <p class="t-small">
-        Claude Code, Codex, or another coding agent can do the setup. Give it
-        the setup instructions published on runebender.org.
-      </p>
-      <p class="t-small">
-        The instructions tell the agent to inspect the machine first, ask
-        before each download or install, leave your own fonts unchanged, and
-        report what it did.
-      </p>
-    </div>
-    <div class="c-5-12 stack">
+    <div class="c-1-10 stack-lg">
+      <h2 class="t-display">Setup with a coding agent</h2>
+      <p class="t-head">Give Claude Code or Codex this request:</p>
       <pre class="code">Read https://runebender.org/local-ai-setup-prompt.md
 and set up Runebender for local AI on this machine.</pre>
-      <table class="mono-table">
-        <thead>
-          <tr><th>Step</th><th>What the agent does</th></tr>
-        </thead>
-        <tbody>
-          <tr><td>Inspect</td><td>Reports the OS, disk space, Rust, and existing tools</td></tr>
-          <tr><td>Install</td><td>runebender, and font-ml for the right GPU</td></tr>
-          <tr><td>Verify</td><td>runebender --help and font-ml tasks</td></tr>
-          <tr><td>Train</td><td>The first shapes model, or downloads the base</td></tr>
-          <tr><td>Report</td><td>Platform, device, training time, models</td></tr>
-        </tbody>
-      </table>
     </div>
     <Fragment slot="notes">
+      <p>The instructions tell the agent to inspect the machine first, ask before each download or install, leave your fonts unchanged, train a first shapes model, and report what it did.</p>
       <p>The chat model download is optional, about 800 MB. The agent does not open the editor unless asked.</p>
     </Fragment>
   </Slide>
 
-  <Slide section="Setup" label="Model folders">
-    <div class="c-1-4 stack">
-      <h2 class="t-head">Model folders</h2>
-      <p class="t-small">
-        Models are read from <code>~/Runebender/models/&lt;kind&gt;/</code>, or
-        from <code>MyFont.models/</code> beside the font, so the model stays
-        with the font.
-      </p>
-      <p class="t-small">
-        Each kind is a different type of model. A chat model cannot draw, and
-        a shapes model cannot chat.
-      </p>
-    </div>
-    <div class="c-5-12">
-      <table class="mono-table">
-        <thead>
-          <tr><th>Kind</th><th>Files</th><th>Source</th></tr>
-        </thead>
-        <tbody>
-          <tr><td>shapes</td><td>config, weights, vocab, manifest</td><td>Local AI Shapes tool, from a UFO</td></tr>
-          <tr><td>bolden</td><td>config, weights, vocab</td><td>font-ml run train, from two masters</td></tr>
-          <tr><td>chat</td><td>model.gguf, tokenizer.json</td><td>Download; the demo script gets Qwen3</td></tr>
-        </tbody>
-      </table>
-    </div>
-    <Fragment slot="notes">
-      <p>The editor reads only these files. The config is plain JSON.</p>
-      <p>RUNEBENDER_MODELS sets a different model root for one run.</p>
-    </Fragment>
-  </Slide>
-
   <Slide section="Setup" label="Exercises">
-    <div class="c-1-4 stack">
-      <h2 class="t-head">Exercises</h2>
-      <p class="t-small">
-        The demo repository has a small font family made for training,
-        scripts, and node graphs. Work through the numbered folders in order.
-        Each has a README.
-      </p>
-      <p class="t-small">
-        To reset the fonts after the exercises, run
-        <code>git checkout -- fonts</code>.
-      </p>
-    </div>
-    <div class="c-5-12 stack">
-      <pre class="code">git clone https://github.com/eliheuer/runebender-local-ai-demo
-cd runebender-local-ai-demo
-runebender fonts/Shapes.ufo</pre>
-      <table class="mono-table">
-        <thead>
-          <tr><th>Folder</th><th>Exercise</th></tr>
-        </thead>
-        <tbody>
-          <tr><td>01-draw-from-text</td><td>Train a shapes model from scratch, then fine-tune it</td></tr>
-          <tr><td>02-train-and-bolden</td><td>Train a bolden model and bolden a new shape</td></tr>
-          <tr><td>03-chat-model</td><td>Download an open-weight chat model and ask about the font</td></tr>
-          <tr><td>04-nodes</td><td>The same steps as a workflow in the node editor</td></tr>
-          <tr><td>05-real-font</td><td>The bolden loop on Virtua Grotesk</td></tr>
-        </tbody>
-      </table>
+    <div class="c-1-10 stack-lg">
+      <h2 class="t-display">Exercises</h2>
+      <p class="t-head">Clone the demo repository and work through its five folders in order.</p>
+      <pre class="code">git clone https://github.com/eliheuer/runebender-local-ai-demo</pre>
     </div>
     <Fragment slot="notes">
-      <p>Exercise 01 is the one to finish if there is time for only one.</p>
-      <p>If training fails, 01-draw-from-text/get-base-model.sh downloads a trained base model with a checksum.</p>
+      <ul>
+        <li>01-draw-from-text: train a shapes model from scratch, then fine-tune it.</li>
+        <li>02-train-and-bolden: train a bolden model and bolden a new shape.</li>
+        <li>03-chat-model: download an open-weight chat model and ask about the font.</li>
+        <li>04-nodes: the same steps as a workflow in the node editor.</li>
+        <li>05-real-font: the bolden loop on Virtua Grotesk.</li>
+      </ul>
+      <p>Exercise 01 is the one to finish if there is time for only one. To reset the fonts, run git checkout -- fonts.</p>
     </Fragment>
   </Slide>
 
   <!-- ── Agents ── -->
 
   <Slide section="Agents" label="Agents over MCP">
-    <div class="c-1-4 stack">
-      <h2 class="t-head">Agents over MCP</h2>
-      <p class="t-small">
-        One command registers the editor with Claude Code, Codex, Claude
-        Desktop and Cursor. The agent works on the open document, including
-        unsaved changes.
+    <div class="c-1-10 stack-lg">
+      <h2 class="t-display">Agents over MCP</h2>
+      <p class="t-head">
+        Claude Code, Codex, and Cursor can work in the open editor. They
+        propose edits, and you install them.
       </p>
-      <p class="t-small">
-        45 tools: read, measure, proof, propose point edits, and fork
-        experiments. Five workflows as prompts: review-glyph,
-        compatibility-check, spacing-pass, kerning-pass, draft-weight.
-      </p>
-    </div>
-    <div class="c-5-12 stack">
       <pre class="code">runebender mcp --install</pre>
-      <table class="mono-table">
-        <thead>
-          <tr><th>Kind of AI</th><th>Access to the font</th></tr>
-        </thead>
-        <tbody>
-          <tr><td>Local models</td><td>font-ml tasks in the editor: shapes, bolden, brush</td></tr>
-          <tr><td>Agent in the repository</td><td>Edits GLIF files, plists, scripts, CI</td></tr>
-          <tr><td>Agent in the editor</td><td>runebender mcp --live, proposals and receipts</td></tr>
-          <tr><td>Vision model on proofs</td><td>Ranks drafts for review; does not grade</td></tr>
-          <tr><td>Local chat</td><td>The Chat panel, without an external agent</td></tr>
-        </tbody>
-      </table>
     </div>
     <Fragment slot="notes">
-      <p>The editor is designed to be extended with both cloud and local agents. The rules for machine output apply here too. The agent reads first and proofs the result. The designer installs.</p>
-      <p>Figma and Penpot have MCP servers, Glyphs has a third-party one, and FontLab 9 has an in-app chat. Runebender adds a review step (proof, compare, grade) and a safety contract (proposals, receipts, no saves).</p>
-      <p>A model does not have to run inside Runebender. Any Python model can read the UFO and submit proposals through MCP.</p>
+      <p>45 tools: read, measure, proof, propose point edits, and fork experiments. Five workflows as prompts: review-glyph, compatibility-check, spacing-pass, kerning-pass, draft-weight.</p>
+      <p>The agent works on the open document, including unsaved changes. It reads first and proofs the result.</p>
+      <p>Figma and Penpot have MCP servers, Glyphs has a third-party one, and FontLab 9 has an in-app chat. Runebender adds a review step and a safety contract: proposals, receipts, no saves.</p>
     </Fragment>
   </Slide>
 
   <Slide section="End" label="Planned work">
     <div class="c-1-12 stack">
-      <h2 class="t-head">Planned work</h2>
-      <table class="mono-table">
-        <thead>
-          <tr><th>Feature</th><th>Description</th></tr>
-        </thead>
-        <tbody>
-          <tr><td>Spacing and kerning drafts</td><td>Sidebearings and kern pairs proposed from the glyphs already spaced</td></tr>
-          <tr><td>Fill a missing character</td><td>Trace a reference font’s letterform, then redraw it in the font’s style</td></tr>
-          <tr><td>Critique</td><td>A model ranks drafts for review, scored against the designer’s corrections</td></tr>
-          <tr><td>Proof panel</td><td>Local models run the full review loop inside the editor</td></tr>
-          <tr><td>Several families, one model</td><td>One model trained on two designs drawn on the same grid</td></tr>
-        </tbody>
-      </table>
+      <h2 class="t-display">Planned work</h2>
+      <p class="t-head">Spacing and kerning drafts</p>
+      <p class="t-head">Drawing a missing character</p>
+      <p class="t-head">A model that ranks drafts for review</p>
+      <p class="t-head">A Proof panel for the full review loop</p>
+      <p class="t-head">One model for several type families</p>
     </div>
     <Fragment slot="notes">
       <p>Each feature uses the same rules: drafts are proposals, only the designer grades, and every engine is scored against drawn pairs.</p>
-      <p>The second design for the shared model is Virtua Oldstyle.</p>
+      <p>The ranking model is scored against the designer’s corrections before it is used. The second family for the shared model is Virtua Oldstyle, drawn on the same grid.</p>
     </Fragment>
   </Slide>
 
