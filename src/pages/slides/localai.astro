@@ -1,8 +1,8 @@
 ---
 // Local AI for Type Design with the Runebender Font Editor. Workshop
-// slides for ATypI 2026 Sharjah. About 25 minutes of slides: where models are stored, the
-// hardware they run on, the training loop, and the two ways to connect
-// a model to the editor.
+// slides for ATypI 2026 Sharjah. Part 1 is a short demo. Part 2 is
+// hands-on setup on the attendees' own machines: hardware, installation,
+// setup with a coding agent, and exercises from the demo repository.
 // Companion to runebender.org/docs/local-ai-setup.html and the demo repo.
 import Fig from '@/components/slides/Fig.astro'
 import Slide from '@/components/slides/Slide.astro'
@@ -38,23 +38,27 @@ import titleRunebender from '@/assets/slides/localai/title-runebender.jpg'
       <p class="t-body">Eli Heuer · ATypI 2026 Sharjah</p>
     </div>
     <Fragment slot="notes">
-      <p>Runebender is a font editor written in Rust. This workshop covers small models that run on your own computer, trained on your own drawings, and used from inside the editor.</p>
-      <p>Setup instructions are at runebender.org/docs/local-ai-setup.html. The examples are in the runebender-local-ai-demo repository.</p>
+      <p>Runebender is an open-source, cross-platform font editor written in Rust. It runs, trains, and fine-tunes models on your own machine.</p>
+      <p>Setup instructions are at runebender.org/docs/local-ai-setup.html. The exercises are in the runebender-local-ai-demo repository.</p>
     </Fragment>
   </Slide>
 
-  <Slide section="Overview" label="Overview">
+  <Slide section="Overview" label="Format">
     <div class="c-1-10 stack">
-      <h2 class="t-head">Overview</h2>
+      <h2 class="t-head">Format</h2>
       <p class="t-body">
-        In Runebender, a model is a folder of files on your disk. The editor
-        reads it from a fixed location. No account or network connection is
-        needed.
+        Part 1 is a short demo. It shows Runebender training and fine-tuning
+        small models, running open-weight models, and building a workflow in
+        the node editor, on Mac and Linux.
       </p>
       <p class="t-body">
-        This workshop covers why local models are useful for type design, what
-        hardware runs them, how to set them up, four examples in the editor,
-        and how external agents connect to the editor.
+        Part 2 is hands-on. We set up Runebender and local models on your own
+        machine: from a DMG on a Mac, with a few terminal commands on Mac or
+        Linux, or with a coding agent.
+      </p>
+      <p class="t-body">
+        After setup, no account or network connection is needed. In
+        Runebender, a model is a folder of files on your disk.
       </p>
     </div>
     <Fragment slot="notes">
@@ -68,16 +72,17 @@ import titleRunebender from '@/assets/slides/localai/title-runebender.jpg'
     <div class="c-1-4 stack">
       <h2 class="t-head">Why local</h2>
       <p class="t-small">
-        The training data is the designer’s own drawings. A model trained on
-        one font learns one set of drawing conventions.
+        Small models run on a laptop. A PC with a good graphics card can
+        train larger ones.
       </p>
       <p class="t-small">
-        The font models are small: one to a few dozen megabytes. They train in
-        minutes on a laptop GPU.
+        The designer controls each part of the process: the training data,
+        the model files, and what reaches the font. The editor downloads
+        nothing and sends nothing.
       </p>
       <p class="t-small">
-        The editor downloads nothing and sends nothing. Model folders can be
-        opened and inspected like any other folder.
+        The font models are one to a few dozen megabytes. Training one from
+        scratch takes minutes on a laptop GPU.
       </p>
     </div>
     <Fig
@@ -86,7 +91,7 @@ import titleRunebender from '@/assets/slides/localai/title-runebender.jpg'
       alt="Runebender editing Arabic glyphs with a rendered preview."
     />
     <Fragment slot="notes">
-      <p>Most font generation research trains on large collections of scraped fonts, which mix many drawing conventions. These models train on original drawings made on one grid.</p>
+      <p>Most font generation research trains on large collections of scraped fonts, which mix many drawing conventions. These models train on the designer’s own drawings, made on one grid.</p>
     </Fragment>
   </Slide>
 
@@ -145,6 +150,199 @@ import titleRunebender from '@/assets/slides/localai/title-runebender.jpg'
     <Fragment slot="notes">
       <p>The same rules apply to the local models, to agents over MCP, and to the Chat panel.</p>
     </Fragment>
+  </Slide>
+
+  <!-- ── Part 1: demo ── -->
+
+  <Slide section="Demo" label="Demo">
+    <img
+      class="bleed"
+      src={endRunebender.src}
+      alt="Runebender with a labeled bismillah and its preview."
+    />
+    <div class="c-1-9 over-bleed">
+      <p class="t-display">Demo</p>
+    </div>
+    <Fragment slot="notes">
+      <p>Switch to Runebender. Order: open Shapes.ufo, train a shapes model from scratch, add a shape to fine-tune it, bolden octagon and chevron, ask the chat model about the font, run the bolden graph in the Nodes tab.</p>
+      <p>The next five slides are reference for the same steps.</p>
+    </Fragment>
+  </Slide>
+
+  <Slide section="Demo" label="Training from scratch">
+    <div class="c-1-4 stack">
+      <h2 class="t-head">Training from scratch</h2>
+      <p class="t-small">
+        Open a glyph, hold the shapes button, and choose Local AI Shapes.
+        Without a model, the panel offers Train From the Sample Shapes.
+      </p>
+      <p class="t-small">
+        After training, choose a shape and drag a box. The model draws a
+        preview in the box. Enter keeps it, Tab draws another, Esc removes it.
+      </p>
+      <p class="t-small muted">
+        The model can draw only the shapes in the training font. Each glyph
+        name is the word for its shape.
+      </p>
+    </div>
+    <Fig
+      class="c-5-12 fig-right"
+      src={outline}
+      alt="Runebender editing an outline, with the right panel open."
+    />
+    <Fragment slot="notes">
+      <p>A quick training run takes about twelve minutes on a laptop GPU. A thorough run takes about thirty. get-base-model.sh in the demo repository downloads a trained base model with a checksum.</p>
+    </Fragment>
+  </Slide>
+
+  <Slide section="Demo" label="Fine-tuning">
+    <div class="c-1-4 stack">
+      <h2 class="t-head">Fine-tuning</h2>
+      <p class="t-small">
+        Fine-tuning continues training from an existing model instead of
+        from random weights. It needs less data and less time.
+      </p>
+      <p class="t-small">
+        In the editor, draw a new shape and click Add This Font’s Shapes.
+        Training continues from the current model for about two minutes.
+      </p>
+      <p class="t-small">
+        In font-ml, an adapter is a small set of weights trained over a
+        frozen base model, in the shape of a LoRA. It is applied at load time
+        with a strength.
+      </p>
+    </div>
+    <div class="c-5-12 stack">
+      <pre class="code">font-ml run train --source Regular.ufo --target Bold.ufo \
+    --init my-bolden --adapter-out my-adapter --rank 8
+font-ml run bolden --model my-bolden --source Regular.ufo \
+    --glyph H --adapter my-adapter:1.0</pre>
+      <table class="mono-table">
+        <thead>
+          <tr><th>Method</th><th>Starts from</th><th>Output</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>Train from scratch</td><td>Random weights</td><td>A new model folder</td></tr>
+          <tr><td>Continue training, --init</td><td>An existing model</td><td>A new model folder</td></tr>
+          <tr><td>Adapter, --adapter-out</td><td>A frozen base model</td><td>adapter.json, adapter.safetensors</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <Fragment slot="notes">
+      <p>The Nodes tab includes a train-adapter graph that runs the same adapter training.</p>
+      <p>Two adapters can be applied in a row. Both are merged into the weights at load time.</p>
+    </Fragment>
+  </Slide>
+
+  <Slide section="Demo" label="Bolden">
+    <div class="c-1-4 stack">
+      <h2 class="t-head">Bolden</h2>
+      <p class="t-small">
+        The model moves the points of a Regular glyph to make a Bold draft.
+        The point structure stays the same, so the masters still interpolate.
+      </p>
+      <p class="t-small">
+        The Weight debt block lists Bold glyphs that are still identical to
+        Regular. It drafts them in batches of 20 and marks them orange.
+      </p>
+      <p class="t-small">
+        About half a second per glyph on Metal.
+      </p>
+    </div>
+    <div class="c-5-12 demo-side">
+      <Fig
+        class="fig-right"
+        src={grid}
+        alt="Runebender’s glyph overview grid for a Latin font."
+      />
+      <table class="mono-table">
+        <thead>
+          <tr><th>Virtua Grotesk Bold</th><th>Owed</th><th>Drawn pairs</th><th>Offset vs model</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>Latin</td><td>2</td><td>56</td><td>about even</td></tr>
+          <tr><td>Arabic</td><td>11</td><td>130</td><td>offset is better</td></tr>
+          <tr><td>Hebrew</td><td>71</td><td>5</td><td>offset is better</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <Fragment slot="notes">
+      <p>Measured 2026-10-09 on Virtua Grotesk. Both engines are only slightly better than the mean shift. Hebrew has five drawn pairs. An engine needs 20 green pairs on a script, with 5 held out, before its drafts are used.</p>
+      <p>The score is the distance between the draft and the outline the designer kept.</p>
+    </Fragment>
+  </Slide>
+
+  <Slide section="Demo" label="Open-weight chat models">
+    <div class="c-1-4 stack">
+      <h2 class="t-head">Open-weight chat models</h2>
+      <p class="t-small">
+        Open-weight models are published with their weights, so they run on
+        your own machine. The Chat panel uses GGUF files, such as Qwen3 from
+        Hugging Face.
+      </p>
+      <p class="t-small">
+        Small models cannot calculate a stem width from a point list. They do
+        call the correct tools in the correct order. The tools must return the
+        measurement directly.
+      </p>
+    </div>
+    <div class="c-5-12">
+      <table class="mono-table">
+        <thead>
+          <tr><th>Engine</th><th>Model</th><th>Time</th><th>Stem of H</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>font-ml chat (Candle)</td><td>Qwen3 4B</td><td>543 s</td><td>74, wrong</td></tr>
+          <tr><td>llama-server</td><td>Qwen3 4B</td><td>11 s</td><td>564, wrong: bounds width</td></tr>
+          <tr><td>llama-server</td><td>Qwen3 8B</td><td>24 s</td><td>Subtracted sidebearings, wrong</td></tr>
+          <tr><td>llama-server + analyze_glyph</td><td>Qwen3 4B</td><td>5 s</td><td>100, correct</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <Fragment slot="notes">
+      <p>Same question, same copy of Virtua Grotesk, M4 Pro. Two decisions came from this test: use llama.cpp as the engine, and make the tools do the measuring.</p>
+      <p>A 0.6B model gives wrong answers. The Chat panel was built and tested with 4B.</p>
+    </Fragment>
+  </Slide>
+
+  <Slide section="Demo" label="The node editor">
+    <div class="c-1-4 stack">
+      <h2 class="t-head">The node editor</h2>
+      <p class="t-small">
+        Runebender includes a node editor, similar to ComfyUI. Nodes for the
+        font, a model, a master, and tasks such as Bolden, Compare, and
+        Install connect into a workflow.
+      </p>
+      <p class="t-small">
+        A workflow is a file. It runs in the Nodes tab or from the command
+        line.
+      </p>
+      <p class="t-small">
+        A run does not save or change the open font. Results are candidates
+        until they are installed.
+      </p>
+    </div>
+    <Fig
+      class="c-5-12 fig-right"
+      src={nodes}
+      alt="Runebender’s Nodes tab with a workflow graph."
+    />
+    <Fragment slot="notes">
+      <p>External tasks declare their inputs, so unchanged runs are cached. Model folders are hashed from their contents, not from the manifest.</p>
+    </Fragment>
+  </Slide>
+
+  <!-- ── Part 2: hands-on ── -->
+
+  <Slide section="Hands-on" label="Hands-on setup">
+    <div class="c-1-10 stack">
+      <h2 class="t-display">Hands-on setup</h2>
+      <p class="t-body">
+        Install Runebender and run a first local model on your own machine.
+        The next slides cover what your hardware can run, how to install, and
+        the exercises.
+      </p>
+    </div>
   </Slide>
 
   <!-- ── Hardware ── -->
@@ -403,7 +601,7 @@ import titleRunebender from '@/assets/slides/localai/title-runebender.jpg'
       </table>
     </div>
     <Fragment slot="notes">
-      <p>Ollama and LM Studio are the simplest first step: install the app, choose a model, and start a chat.</p>
+      <p>Ollama and LM Studio are the simplest first step outside Runebender: install the app, choose a model, and start a chat.</p>
     </Fragment>
   </Slide>
 
@@ -415,8 +613,8 @@ import titleRunebender from '@/assets/slides/localai/title-runebender.jpg'
           <tr><th>Goal</th><th>Starting point</th></tr>
         </thead>
         <tbody>
-          <tr><td>First experiments</td><td>The computer you have. A 4B model needs 3 GB.</td></tr>
-          <tr><td>Train small font models</td><td>An NVIDIA card with 8 GB or more, on Linux</td></tr>
+          <tr><td>This workshop</td><td>The computer you have. A 4B chat model needs 3 GB.</td></tr>
+          <tr><td>Train small font models</td><td>A Mac with Apple silicon, or an NVIDIA card with 8 GB or more</td></tr>
           <tr><td>30B models at high speed</td><td>A 24 to 32 GB NVIDIA card, or a Mac with 48 GB or more</td></tr>
           <tr><td>120B models on a desktop</td><td>128 GB of unified memory: Strix Halo, Mac Studio, DGX Spark</td></tr>
           <tr><td>The largest open models</td><td>Mac Studio, M5 Ultra, 256 to 512 GB</td></tr>
@@ -435,28 +633,70 @@ import titleRunebender from '@/assets/slides/localai/title-runebender.jpg'
     <div class="c-1-4 stack">
       <h2 class="t-head">Installation</h2>
       <p class="t-small">
-        <code>runebender</code> is the editor. <code>font-ml</code> runs and
-        trains the models. Both build with stable Rust from rustup.rs.
+        Mac: download the DMG from runebender.org and drag Runebender to
+        Applications.
       </p>
       <p class="t-small">
-        Supported hardware: an Apple Silicon Mac, a Linux PC with an NVIDIA
-        card, or a CPU, which is slower.
+        Mac and Linux, to build or modify the editor: install with Cargo,
+        using stable Rust from rustup.rs. On Linux, install the system
+        libraries first.
+      </p>
+      <p class="t-small">
+        <code>font-ml</code> runs and trains the models. Build it with
+        <code>metal</code> on a Mac, <code>cuda</code> with NVIDIA, or no
+        feature for CPU.
       </p>
     </div>
     <div class="c-5-12 stack">
+      <pre class="code"># Debian or Ubuntu
+sudo apt-get install libfontconfig-dev libwayland-dev \
+    libxkbcommon-dev libx11-dev libxcb1-dev libvulkan1 \
+    libssl-dev libglib2.0-dev libgtk-3-dev libxdo-dev \
+    libasound2-dev</pre>
       <pre class="code">cargo install --git https://github.com/fontgarden/runebender
 cargo install --git https://github.com/eliheuer/font-ml \
     --features metal     # or cuda, or no feature for CPU</pre>
       <pre class="code">runebender --help
 font-ml tasks</pre>
-      <pre class="code">git clone https://github.com/eliheuer/runebender-local-ai-demo
-cd runebender-local-ai-demo
-runebender fonts/Shapes.ufo</pre>
     </div>
     <Fragment slot="notes">
-      <p>Use the metal feature on macOS, cuda on Linux with NVIDIA, and no feature for CPU.</p>
+      <p>The Linux package list is the one the Runebender CI installs on Ubuntu.</p>
       <p>font-ml tasks lists the available tasks. Only tasks marked ready can be used.</p>
-      <p>Compiling takes about fifteen minutes. For a workshop, install beforehand.</p>
+      <p>Compiling takes about fifteen minutes. Start the build before Part 1 if you can.</p>
+    </Fragment>
+  </Slide>
+
+  <Slide section="Setup" label="Setup with a coding agent">
+    <div class="c-1-4 stack">
+      <h2 class="t-head">Setup with a coding agent</h2>
+      <p class="t-small">
+        Claude Code, Codex, or another coding agent can do the setup. Give it
+        the setup instructions published on runebender.org.
+      </p>
+      <p class="t-small">
+        The instructions tell the agent to inspect the machine first, ask
+        before each download or install, leave your own fonts unchanged, and
+        report what it did.
+      </p>
+    </div>
+    <div class="c-5-12 stack">
+      <pre class="code">Read https://runebender.org/local-ai-setup-prompt.md
+and set up Runebender for local AI on this machine.</pre>
+      <table class="mono-table">
+        <thead>
+          <tr><th>Step</th><th>What the agent does</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>Inspect</td><td>Reports the OS, disk space, Rust, and existing tools</td></tr>
+          <tr><td>Install</td><td>runebender, and font-ml for the right GPU</td></tr>
+          <tr><td>Verify</td><td>runebender --help and font-ml tasks</td></tr>
+          <tr><td>Train</td><td>The first shapes model, or downloads the base</td></tr>
+          <tr><td>Report</td><td>Platform, device, training time, models</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <Fragment slot="notes">
+      <p>The chat model download is optional, about 800 MB. The agent does not open the editor unless asked.</p>
     </Fragment>
   </Slide>
 
@@ -491,131 +731,45 @@ runebender fonts/Shapes.ufo</pre>
     </Fragment>
   </Slide>
 
-  <!-- ── Examples ── -->
-
-  <Slide section="Examples" label="Example 1: Local AI Shapes">
+  <Slide section="Setup" label="Exercises">
     <div class="c-1-4 stack">
-      <h2 class="t-head">Local AI Shapes</h2>
+      <h2 class="t-head">Exercises</h2>
       <p class="t-small">
-        Open a glyph, hold the shapes button, and choose Local AI Shapes.
-        Without a model, the panel offers Train From the Sample Shapes.
+        The demo repository has a small font family made for training,
+        scripts, and node graphs. Work through the numbered folders in order.
+        Each has a README.
       </p>
       <p class="t-small">
-        After training, choose a shape and drag a box. The model draws a
-        preview in the box. Enter keeps it, Tab draws another, Esc removes it.
-      </p>
-      <p class="t-small muted">
-        The model can draw only the shapes in the training font. To add a
-        heart, draw one and click Add This Font’s Shapes.
+        To reset the fonts after the exercises, run
+        <code>git checkout -- fonts</code>.
       </p>
     </div>
-    <Fig
-      class="c-5-12 fig-right"
-      src={outline}
-      alt="Runebender editing an outline, with the right panel open."
-    />
-    <Fragment slot="notes">
-      <p>A quick training run takes about twelve minutes on a laptop GPU. A thorough run takes about thirty. get-base-model.sh in the demo repository downloads a trained base model with a checksum.</p>
-    </Fragment>
-  </Slide>
-
-  <Slide section="Examples" label="Example 2: Bolden">
-    <div class="c-1-4 stack">
-      <h2 class="t-head">Bolden</h2>
-      <p class="t-small">
-        The model moves the points of a Regular glyph to make a Bold draft.
-        The point structure stays the same, so the masters still interpolate.
-      </p>
-      <p class="t-small">
-        The Weight debt block lists Bold glyphs that are still identical to
-        Regular. It drafts them in batches of 20 and marks them orange.
-      </p>
-      <p class="t-small">
-        About half a second per glyph on Metal.
-      </p>
-    </div>
-    <div class="c-5-12 demo-side">
-      <Fig
-        class="fig-right"
-        src={grid}
-        alt="Runebender’s glyph overview grid for a Latin font."
-      />
+    <div class="c-5-12 stack">
+      <pre class="code">git clone https://github.com/eliheuer/runebender-local-ai-demo
+cd runebender-local-ai-demo
+runebender fonts/Shapes.ufo</pre>
       <table class="mono-table">
         <thead>
-          <tr><th>Virtua Grotesk Bold</th><th>Owed</th><th>Drawn pairs</th><th>Offset vs model</th></tr>
+          <tr><th>Folder</th><th>Exercise</th></tr>
         </thead>
         <tbody>
-          <tr><td>Latin</td><td>2</td><td>56</td><td>about even</td></tr>
-          <tr><td>Arabic</td><td>11</td><td>130</td><td>offset is better</td></tr>
-          <tr><td>Hebrew</td><td>71</td><td>5</td><td>offset is better</td></tr>
+          <tr><td>01-draw-from-text</td><td>Train a shapes model from scratch, then fine-tune it</td></tr>
+          <tr><td>02-train-and-bolden</td><td>Train a bolden model and bolden a new shape</td></tr>
+          <tr><td>03-chat-model</td><td>Download an open-weight chat model and ask about the font</td></tr>
+          <tr><td>04-nodes</td><td>The same steps as a workflow in the node editor</td></tr>
+          <tr><td>05-real-font</td><td>The bolden loop on Virtua Grotesk</td></tr>
         </tbody>
       </table>
     </div>
     <Fragment slot="notes">
-      <p>Measured 2026-10-09 on Virtua Grotesk. Both engines are only slightly better than the mean shift. Hebrew has five drawn pairs. An engine needs 20 green pairs on a script, with 5 held out, before its drafts are used.</p>
-      <p>The score is the distance between the draft and the outline the designer kept.</p>
-    </Fragment>
-  </Slide>
-
-  <Slide section="Examples" label="Example 3: chat model">
-    <div class="c-1-4 stack">
-      <h2 class="t-head">Chat model</h2>
-      <p class="t-small">
-        A Qwen3 GGUF file from Hugging Face, in the same folder layout. The
-        model answers questions about the open font with the same tools an
-        agent uses.
-      </p>
-      <p class="t-small">
-        Small models cannot calculate a stem width from a point list. They do
-        call the correct tools in the correct order. The tools must return the
-        measurement directly.
-      </p>
-    </div>
-    <div class="c-5-12">
-      <table class="mono-table">
-        <thead>
-          <tr><th>Engine</th><th>Model</th><th>Time</th><th>Stem of H</th></tr>
-        </thead>
-        <tbody>
-          <tr><td>font-ml chat (Candle)</td><td>Qwen3 4B</td><td>543 s</td><td>74, wrong</td></tr>
-          <tr><td>llama-server</td><td>Qwen3 4B</td><td>11 s</td><td>564, wrong: bounds width</td></tr>
-          <tr><td>llama-server</td><td>Qwen3 8B</td><td>24 s</td><td>Subtracted sidebearings, wrong</td></tr>
-          <tr><td>llama-server + analyze_glyph</td><td>Qwen3 4B</td><td>5 s</td><td>100, correct</td></tr>
-        </tbody>
-      </table>
-    </div>
-    <Fragment slot="notes">
-      <p>Same question, same copy of Virtua Grotesk, M4 Pro. Two decisions came from this test: use llama.cpp as the engine, and make the tools do the measuring.</p>
-      <p>A 0.6B model gives wrong answers. The Chat panel was built and tested with 4B.</p>
-    </Fragment>
-  </Slide>
-
-  <Slide section="Examples" label="Example 4: node graphs">
-    <div class="c-1-4 stack">
-      <h2 class="t-head">Node graphs</h2>
-      <p class="t-small">
-        The train and bolden steps as a graph in the Nodes tab. Change
-        <code>steps</code> and run it again. The same graph file runs from the
-        command line.
-      </p>
-      <p class="t-small">
-        A graph run does not save or change the open font. Results are
-        candidates until they are installed.
-      </p>
-    </div>
-    <Fig
-      class="c-5-12 fig-right"
-      src={nodes}
-      alt="Runebender’s Nodes tab with a workflow graph."
-    />
-    <Fragment slot="notes">
-      <p>External tasks declare their inputs, so unchanged runs are cached. Model folders are hashed from their contents, not from the manifest.</p>
+      <p>Exercise 01 is the one to finish if there is time for only one.</p>
+      <p>If training fails, 01-draw-from-text/get-base-model.sh downloads a trained base model with a checksum.</p>
     </Fragment>
   </Slide>
 
   <!-- ── Agents ── -->
 
-  <Slide section="Agents" label="External agents over MCP">
+  <Slide section="Agents" label="Agents over MCP">
     <div class="c-1-4 stack">
       <h2 class="t-head">Agents over MCP</h2>
       <p class="t-small">
@@ -645,25 +799,9 @@ runebender fonts/Shapes.ufo</pre>
       </table>
     </div>
     <Fragment slot="notes">
+      <p>The editor is designed to be extended with both cloud and local agents. The rules for machine output apply here too. The agent reads first and proofs the result. The designer installs.</p>
       <p>Figma and Penpot have MCP servers, Glyphs has a third-party one, and FontLab 9 has an in-app chat. Runebender adds a review step (proof, compare, grade) and a safety contract (proposals, receipts, no saves).</p>
-      <p>The rules for machine output apply here too. The agent reads first and proofs the result. The designer installs.</p>
       <p>A model does not have to run inside Runebender. Any Python model can read the UFO and submit proposals through MCP.</p>
-    </Fragment>
-  </Slide>
-
-  <!-- ── Live ── -->
-
-  <Slide section="Live" label="Runebender">
-    <img
-      class="bleed"
-      src={endRunebender.src}
-      alt="Runebender with a labeled bismillah and its preview."
-    />
-    <div class="c-1-9 over-bleed">
-      <p class="t-display">Runebender</p>
-    </div>
-    <Fragment slot="notes">
-      <p>Switch to Runebender. Open Shapes.ufo, choose Local AI Shapes, drag a box, type star. Then bolden octagon, undo, and bolden chevron.</p>
     </Fragment>
   </Slide>
 
@@ -672,6 +810,7 @@ runebender fonts/Shapes.ufo</pre>
       <p class="t-display">Thank you</p>
       <p class="t-body">
         runebender.org/docs/local-ai-setup.html<br />
+        runebender.org/local-ai-setup-prompt.md<br />
         github.com/eliheuer/runebender-local-ai-demo<br />
         github.com/eliheuer/font-ml<br />
         github.com/fontgarden/runebender<br />
@@ -699,5 +838,6 @@ runebender fonts/Shapes.ufo</pre>
 
   .slide code {
     font-family: var(--font-mono);
+    white-space: nowrap;
   }
 </style>
