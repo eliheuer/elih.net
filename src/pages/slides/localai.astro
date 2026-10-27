@@ -194,7 +194,7 @@ const TALK = 'Local AI for Type Design'
             <li>Hugging Face<span class="val">SmolLM</span></li>
             <li>Marin<span class="val">Marin</span></li>
           </ol>
-          <p class="t-credit">After Nathan Lambert, Open Language Models, Harvard, October 2026</p>
+          <p class="t-credit">After Nathan Lambert, Open Language Models, 2026</p>
         </div>
       </div>
     </div>
@@ -228,6 +228,30 @@ const TALK = 'Local AI for Type Design'
     </Fragment>
   </Slide>
 
+  <Slide section="Open models" label="Chinese open models">
+    <div class="sw">
+      <div class="sw-head"><p class="sw-sec">02 Open models</p><p class="sw-talk">{TALK}</p><p class="sw-num"></p></div>
+      <h2 class="sw-title t-display">Chinese open models</h2>
+      <div class="sw-body">
+        <div class="sw-lead stack">
+          <p class="t-head">Most leading open models now come from Chinese labs.</p>
+          <p class="t-credit">After Nathan Lambert, Open Language Models, 2026</p>
+        </div>
+        <ol class="sw-points">
+          <li>Older labs want impact<span class="val">GLM, since 2021</span></li>
+          <li>Startups want adoption<span class="val">Kimi</span></li>
+          <li>DeepSeek R1 drew new labs<span class="val">January 2025</span></li>
+          <li>Run locally, nothing is sent<span class="val">any origin</span></li>
+        </ol>
+      </div>
+    </div>
+    <Fragment slot="notes">
+      <p>Lambert’s reasons: Chinese labs wanted their work to matter, and many had built models for years; Zhipu released its first open GLM model in 2021. Newer startups such as Moonshot AI chose open weights to gain adoption for Kimi. There was also urgency to be taken seriously in the Western AI discussion. DeepSeek R1, released in January 2025, drew new entrants: Ant Group, Meituan, and Xiaomi.</p>
+      <p>The Qwen models in Runebender’s chat catalog are from Alibaba. Gemma is from Google and gpt-oss is from OpenAI.</p>
+      <p>For a type studio, the origin of an open model matters less when it runs locally. The weights are files on your disk. Nothing you type or draw is sent to the lab that made them. The license and the model’s behavior still matter, so test a model on your own work before you rely on it.</p>
+    </Fragment>
+  </Slide>
+
   <Slide section="Open models" label="Distillation">
     <div class="sw">
       <div class="sw-head"><p class="sw-sec">02 Open models</p><p class="sw-talk">{TALK}</p><p class="sw-num"></p></div>
@@ -235,7 +259,7 @@ const TALK = 'Local AI for Type Design'
       <div class="sw-body">
         <div class="sw-lead stack">
           <p class="t-head">Training a model on the output of another model.</p>
-          <p class="t-credit">After Nathan Lambert, Open Language Models, Harvard, October 2026</p>
+          <p class="t-credit">After Nathan Lambert, Open Language Models, 2026</p>
         </div>
         <ol class="sw-points">
           <li>Teacher and student models<span class="val">Hinton, 2015</span></li>
