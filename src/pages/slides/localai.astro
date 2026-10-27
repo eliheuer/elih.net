@@ -137,21 +137,35 @@ const TALK = 'Local AI for Type Design'
       <div class="sw-head"><p class="sw-sec">02 Open models</p><p class="sw-talk">{TALK}</p><p class="sw-num"></p></div>
       <h2 class="sw-title t-display">Licenses</h2>
       <div class="sw-body">
-        <div class="sw-lead stack">
-          <p class="t-head">Model licenses work like font licenses.</p>
-          <p class="t-credit">After Nathan Lambert, Open Language Models, Harvard, October 2026</p>
+        <div class="sw-half stack">
+          <h3 class="t-head">Models</h3>
+          <p class="t-body">The models Runebender uses are permissive.</p>
+          <ol class="sw-points">
+            <li>Qwen3.5 4B<span class="val">Apache 2.0</span></li>
+            <li>Qwen3.6 27B, 35B A3B<span class="val">Apache 2.0</span></li>
+            <li>Gemma 4 26B A4B<span class="val">Apache 2.0</span></li>
+            <li>gpt-oss 20B<span class="val">Apache 2.0</span></li>
+            <li>Whisper small<span class="val">MIT</span></li>
+          </ol>
         </div>
-        <ol class="sw-points">
-          <li>MIT, Apache 2.0<span class="val">like the OFL</span></li>
-          <li>Custom licenses<span class="val">like a EULA</span></li>
-          <li>Most custom terms are untested in court</li>
-        </ol>
+        <div class="sw-half sw-half-b stack">
+          <h3 class="t-head">Software</h3>
+          <p class="t-body">The programs that run them are permissive too.</p>
+          <ol class="sw-points">
+            <li>llama.cpp<span class="val">MIT</span></li>
+            <li>whisper.cpp<span class="val">MIT</span></li>
+            <li>Runebender, font-ml<span class="val">Apache 2.0 or MIT</span></li>
+            <li>Models trained on your fonts<span class="val">not defined</span></li>
+          </ol>
+          <p class="t-credit">From the model files and project licenses, October 2026</p>
+        </div>
       </div>
     </div>
     <Fragment slot="notes">
-      <p>Permissive: use, modify, sell, and redistribute, and keep the notice. MIT: DeepSeek, GLM-5.2, MiMo. Apache 2.0: Qwen, gpt-oss, Gemma 4.</p>
-      <p>Custom licenses are not open-source licenses. Revenue gates: Kimi K3 and Muse Spark Open above $20M for inference services. Branding: “Built with Llama”, the same idea as a Reserved Font Name. Use restrictions: acceptable-use policies in Llama and Gemma 1 to 3.</p>
-      <p>Every model in the Runebender chat catalog is Apache 2.0.</p>
+      <p>Permissive licenses (MIT, Apache 2.0) allow use, modification, sale, and redistribution, as long as the notice is kept. They work like the SIL Open Font License, without its Reserved Font Name clause.</p>
+      <p>Custom model licenses add conditions and are not open-source licenses: revenue limits (Kimi K3 and Muse Spark Open above $20M for inference services), branding (“Built with Llama”, like a Reserved Font Name), and acceptable-use policies (Llama, Gemma 1 to 3). Gemma 4 moved to Apache 2.0. Most of these terms have not been tested in court. (Nathan Lambert, Open Language Models, Harvard, October 2026.)</p>
+      <p>The chat models are 4-bit GGUF conversions published by Unsloth. The conversion keeps the original license.</p>
+      <p>No license says what a model trained on a font inherits from the font. A model trained on an OFL font, such as the Virtua Grotesk models, is an open question. The Shapes font in the demo repository is Apache 2.0 or MIT.</p>
     </Fragment>
   </Slide>
 
