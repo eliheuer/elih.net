@@ -96,6 +96,30 @@ const TALK = 'Local AI for Type Design'
 
   <!-- ── 02 Open models ── -->
 
+  <Slide section="Open models" label="Why local AI">
+    <div class="sw">
+      <div class="sw-head"><p class="sw-sec">02 Open models</p><p class="sw-talk">{TALK}</p><p class="sw-num"></p></div>
+      <h2 class="sw-title t-display">Why local AI</h2>
+      <div class="sw-body">
+        <p class="sw-lead t-head">One AI company serving every studio would control the type industry.</p>
+        <ol class="sw-points">
+          <li>Independence from any one company</li>
+          <li>Drawings, models, and fonts stay yours</li>
+          <li>Client work stays on your machine</li>
+          <li>No fee for each use</li>
+          <li>Models you can open and study</li>
+        </ol>
+      </div>
+    </div>
+    <Fragment slot="notes">
+      <p>The core reason is concentration of power. A company that runs the models for every studio sees every studio’s drawings and requests, sets the prices, can change the terms or close access, and can release its own fonts and font tools. With local models, no single company stands between the type industry and its own tools.</p>
+      <p>Ownership: a foundry owns its fonts; with local models it also owns the models trained on them. Lambert’s example from another industry: in August 2026, Harvey post-trained an open Kimi K3 base model so law firms can own their models.</p>
+      <p>Confidentiality: custom type for clients is often under a non-disclosure agreement. A local model sends nothing.</p>
+      <p>Cost: no per-token fee. Understanding: a model that can be opened, trained, and studied, which is how a field learns how a technology works.</p>
+      <p>Lambert’s general list of reasons people want open models: commoditizing complements, scientific progress, preventing concentration of power, and freedom. (Open Language Models, Harvard, October 2026.)</p>
+    </Fragment>
+  </Slide>
+
   <Slide section="Open models" label="Open weights and open source">
     <div class="sw">
       <div class="sw-head"><p class="sw-sec">02 Open models</p><p class="sw-talk">{TALK}</p><p class="sw-num"></p></div>
@@ -129,66 +153,6 @@ const TALK = 'Local AI for Type Design'
       <p>Both differ from Claude and GPT, which are available only through an API. Openness is a spectrum (Solaiman, 2023): NVIDIA Nemotron releases much of its training data, but not all.</p>
       <p>Moonshot AI (Kimi) and Zhipu (GLM) are also leading open-weight labs. Meta’s Llama and Muse models are open weights under custom licenses. Marin is from the Marin community and Open Athena.</p>
       <p>The Runebender font models are open in the full sense: the training data is the designer’s own font sources, and font-ml is open source.</p>
-    </Fragment>
-  </Slide>
-
-  <Slide section="Open models" label="Licenses">
-    <div class="sw">
-      <div class="sw-head"><p class="sw-sec">02 Open models</p><p class="sw-talk">{TALK}</p><p class="sw-num"></p></div>
-      <h2 class="sw-title t-display">Licenses</h2>
-      <div class="sw-body">
-        <div class="sw-half stack">
-          <h3 class="t-head">Models</h3>
-          <p class="t-body">The models Runebender uses are permissive.</p>
-          <ol class="sw-points">
-            <li>Qwen3.5 4B<span class="val">Apache 2.0</span></li>
-            <li>Qwen3.6 27B, 35B A3B<span class="val">Apache 2.0</span></li>
-            <li>Gemma 4 26B A4B<span class="val">Apache 2.0</span></li>
-            <li>gpt-oss 20B<span class="val">Apache 2.0</span></li>
-            <li>Whisper small<span class="val">MIT</span></li>
-          </ol>
-        </div>
-        <div class="sw-half sw-half-b stack">
-          <h3 class="t-head">Software</h3>
-          <p class="t-body">The programs that run them are permissive too.</p>
-          <ol class="sw-points">
-            <li>llama.cpp<span class="val">MIT</span></li>
-            <li>whisper.cpp<span class="val">MIT</span></li>
-            <li>Runebender, font-ml<span class="val">Apache 2.0 or MIT</span></li>
-            <li>Models trained on your fonts<span class="val">not defined</span></li>
-          </ol>
-          <p class="t-credit">From the model files and project licenses, October 2026</p>
-        </div>
-      </div>
-    </div>
-    <Fragment slot="notes">
-      <p>Permissive licenses (MIT, Apache 2.0) allow use, modification, sale, and redistribution, as long as the notice is kept. They work like the SIL Open Font License, without its Reserved Font Name clause.</p>
-      <p>Custom model licenses add conditions and are not open-source licenses: revenue limits (Kimi K3 and Muse Spark Open above $20M for inference services), branding (“Built with Llama”, like a Reserved Font Name), and acceptable-use policies (Llama, Gemma 1 to 3). Gemma 4 moved to Apache 2.0. Most of these terms have not been tested in court. (Nathan Lambert, Open Language Models, Harvard, October 2026.)</p>
-      <p>The chat models are 4-bit GGUF conversions published by Unsloth. The conversion keeps the original license.</p>
-      <p>No license says what a model trained on a font inherits from the font. A model trained on an OFL font, such as the Virtua Grotesk models, is an open question. The Shapes font in the demo repository is Apache 2.0 or MIT.</p>
-    </Fragment>
-  </Slide>
-
-  <Slide section="Open models" label="Why open models">
-    <div class="sw">
-      <div class="sw-head"><p class="sw-sec">02 Open models</p><p class="sw-talk">{TALK}</p><p class="sw-num"></p></div>
-      <h2 class="sw-title t-display">Why open models</h2>
-      <div class="sw-body">
-        <div class="sw-lead stack">
-          <p class="t-head">A foundry can own its models, as it owns its fonts.</p>
-          <p class="t-credit">After Nathan Lambert, Open Language Models, Harvard, October 2026</p>
-        </div>
-        <ol class="sw-points">
-          <li>Ownership of the model and the data</li>
-          <li>No fee for each use</li>
-          <li>No dependence on one company</li>
-          <li>You can study how it works</li>
-        </ol>
-      </div>
-    </div>
-    <Fragment slot="notes">
-      <p>Lambert lists four groups who want open models: businesses that want to commoditize an input, researchers, people who oppose concentration of power, and people who value software freedom.</p>
-      <p>His ownership example: in August 2026, Harvey post-trained a Kimi K3 base model for legal work, so law firms can own their models. A foundry can do the same with its own drawings.</p>
     </Fragment>
   </Slide>
 
@@ -237,18 +201,184 @@ const TALK = 'Local AI for Type Design'
     </Fragment>
   </Slide>
 
+  <Slide section="Open models" label="Google Fonts as training data">
+    <div class="sw">
+      <div class="sw-head"><p class="sw-sec">02 Open models</p><p class="sw-talk">{TALK}</p><p class="sw-num"></p></div>
+      <h2 class="sw-title t-display">Google Fonts</h2>
+      <div class="sw-body">
+        <div class="sw-lead stack">
+          <p class="t-head">Most fonts were never built as training data.</p>
+          <p class="t-credit">From elih.net/blog/virtua-grotesk</p>
+        </div>
+        <ol class="sw-points">
+          <li>Points land anywhere, not on a grid</li>
+          <li>Each family has its own conventions</li>
+          <li>Normalizing them removes information</li>
+          <li>Fonts made from them stay under the OFL</li>
+        </ol>
+      </div>
+    </div>
+    <Fragment slot="notes">
+      <p>Many font AI projects train on scraped fonts and Google Fonts, which differ in every dimension that matters. The coordinates land wherever each designer put them, and the contours are as individual as handwriting.</p>
+      <p>A model trained on that mix spends its capacity reconciling different drawing habits instead of learning one design. Preprocessing to normalize or quantize the fonts removes information, and mixed sources add variation unrelated to the target design.</p>
+      <p>Simon Cozens notes that “vectorization of glyph images has been historically very bad,” and his own experiment with Google Fonts “completely failed.” (State of AI font generation, June 2026.)</p>
+      <p>Licensing: the Google Fonts catalog is mostly OFL. Under OFL-FAQ 1.25, a font produced by a model trained on OFL sources is a derivative and must stay under the OFL.</p>
+      <p>Virtua-12M-v0.1 was pretrained on 28,770 Regular and Bold pairs traced from Google Fonts, then fine-tuned on Virtua Grotesk. The corrected corpus drops the Google Fonts stage and trains on Virtua Grotesk alone.</p>
+    </Fragment>
+  </Slide>
+
+  <Slide section="Open models" label="Licenses">
+    <div class="sw">
+      <div class="sw-head"><p class="sw-sec">02 Open models</p><p class="sw-talk">{TALK}</p><p class="sw-num"></p></div>
+      <h2 class="sw-title t-display">Licenses</h2>
+      <div class="sw-body">
+        <div class="sw-half stack">
+          <h3 class="t-head">Models</h3>
+          <p class="t-body">The models Runebender uses are permissive.</p>
+          <ol class="sw-points">
+            <li>Qwen3.5 4B<span class="val">Apache 2.0</span></li>
+            <li>Qwen3.6 27B, 35B A3B<span class="val">Apache 2.0</span></li>
+            <li>Gemma 4 26B A4B<span class="val">Apache 2.0</span></li>
+            <li>gpt-oss 20B<span class="val">Apache 2.0</span></li>
+            <li>Whisper small<span class="val">MIT</span></li>
+          </ol>
+        </div>
+        <div class="sw-half sw-half-b stack">
+          <h3 class="t-head">Software</h3>
+          <p class="t-body">The programs that run them are permissive too.</p>
+          <ol class="sw-points">
+            <li>llama.cpp<span class="val">MIT</span></li>
+            <li>whisper.cpp<span class="val">MIT</span></li>
+            <li>Runebender, font-ml<span class="val">Apache 2.0 or MIT</span></li>
+            <li>Models trained on your fonts<span class="val">not defined</span></li>
+          </ol>
+          <p class="t-credit">From the model files and project licenses, October 2026</p>
+        </div>
+      </div>
+    </div>
+    <Fragment slot="notes">
+      <p>Permissive licenses (MIT, Apache 2.0) allow use, modification, sale, and redistribution, as long as the notice is kept. They work like the SIL Open Font License, without its Reserved Font Name clause.</p>
+      <p>Custom model licenses add conditions and are not open-source licenses: revenue limits (Kimi K3 and Muse Spark Open above $20M for inference services), branding (“Built with Llama”, like a Reserved Font Name), and acceptable-use policies (Llama, Gemma 1 to 3). Gemma 4 moved to Apache 2.0. Most of these terms have not been tested in court. (Nathan Lambert, Open Language Models, Harvard, October 2026.)</p>
+      <p>The chat models are 4-bit GGUF conversions published by Unsloth. The conversion keeps the original license.</p>
+      <p>No license says what a model trained on a font inherits from the font. A model trained on an OFL font, such as the Virtua Grotesk models, is an open question. The Shapes font in the demo repository is Apache 2.0 or MIT.</p>
+    </Fragment>
+  </Slide>
+
+  <Slide section="Open models" label="Training on fonts">
+    <div class="sw">
+      <div class="sw-head"><p class="sw-sec">02 Open models</p><p class="sw-talk">{TALK}</p><p class="sw-num"></p></div>
+      <h2 class="sw-title t-display">Training on fonts</h2>
+      <div class="sw-body">
+        <div class="sw-lead stack">
+          <p class="t-head">A model trained on an OFL font: what carries over?</p>
+          <p class="t-credit">SIL OFL-FAQ 1.25 and 1.26, November 2023</p>
+        </div>
+        <ol class="sw-points">
+          <li>Fonts it drafts<span class="val">derivative, stays OFL</span></li>
+          <li>Graphics it makes<span class="val">normal use</span></li>
+          <li>The model weights<span class="val">not addressed</span></li>
+        </ol>
+      </div>
+    </div>
+    <Fragment slot="notes">
+      <p>FAQ 1.25: “Any font produced from such systems whose input or training data contains any source file from a font project licensed under the OFL should be considered a derivative work.” It must remain under the OFL. To release it under another license, ask the authors for permission.</p>
+      <p>FAQ 1.26: OFL fonts can be used by AI-based design tools “as long as the resulting work is not intended to be a font.” Graphical output is “similar to normal usage.”</p>
+      <p>Neither the license nor the FAQ says whether the trained weights are themselves Font Software or a Modified Version. That is the open question.</p>
+      <p>The FAQ is SIL’s interpretation, not a court ruling.</p>
+    </Fragment>
+  </Slide>
+
+  <Slide section="Open models" label="Font licenses and AI">
+    <div class="sw">
+      <div class="sw-head"><p class="sw-sec">02 Open models</p><p class="sw-talk">{TALK}</p><p class="sw-num"></p></div>
+      <h2 class="sw-title t-display">Font licenses</h2>
+      <div class="sw-body">
+        <div class="sw-half stack">
+          <h3 class="t-head">SIL Open Font License</h3>
+          <p class="t-body">Font output stays under the OFL.</p>
+          <ol class="sw-points">
+            <li>Condition 5<span class="val">OFL only</span></li>
+            <li>Modified Version<span class="val">includes new formats</span></li>
+            <li>FAQ 1.25<span class="val">model fonts derivative</span></li>
+            <li>FAQ 1.26<span class="val">graphics are normal use</span></li>
+          </ol>
+        </div>
+        <div class="sw-half sw-half-b stack">
+          <h3 class="t-head">Foundry licenses</h3>
+          <p class="t-body">Many now forbid AI training.</p>
+          <ol class="sw-points">
+            <li>Monotype<span class="val">no training on glyphs</span></li>
+            <li>Commercial Type<span class="val">no AI use</span></li>
+            <li>Ama, BAL<span class="val">no training data</span></li>
+            <li>Older licenses<span class="val">silent</span></li>
+          </ol>
+          <p class="t-credit">License texts and EULAs as published, October 2026</p>
+        </div>
+      </div>
+    </div>
+    <Fragment slot="notes">
+      <p>OFL condition 5: “The Font Software, modified or unmodified, in part or in whole, must be distributed entirely under this license, and must not be distributed under any other license.” A Modified Version is “any derivative made by adding to, deleting, or substituting, in part or in whole, any of the components of the Original Version, by changing formats or by porting the Font Software to a new environment.” Documents created with the font are exempt.</p>
+      <p>Monotype’s MyFonts EULAs forbid using the font software, rendered glyphs, outlines, or kerning data to develop, train, or fine-tune AI models; metadata such as names and classification tags is allowed. Ama Foundry’s clause also covers output that mimics the design. BAL Foundry forbids dataset inclusion and automated analysis. Commercial Type forbids use with AI services and AI programming.</p>
+      <p>Most EULAs were written before AI design tools. Check each foundry’s current text; these clauses change.</p>
+    </Fragment>
+  </Slide>
+
+  <Slide section="Open models" label="Copyright">
+    <div class="sw">
+      <div class="sw-head"><p class="sw-sec">02 Open models</p><p class="sw-talk">{TALK}</p><p class="sw-num"></p></div>
+      <h2 class="sw-title t-display">Copyright</h2>
+      <div class="sw-body">
+        <div class="sw-lead stack">
+          <p class="t-head">In the US, the font file is protected. The letterforms are not.</p>
+          <p class="t-credit">Adobe v. Southern Software, 1998</p>
+        </div>
+        <ol class="sw-points">
+          <li>Font software<span class="val">copyright</span></li>
+          <li>Typeface design<span class="val">not copyrightable</span></li>
+          <li>Novel designs<span class="val">design patent</span></li>
+          <li>Font names<span class="val">trademark</span></li>
+        </ol>
+      </div>
+    </div>
+    <Fragment slot="notes">
+      <p>The US Copyright Office treats typefaces as variations of letters, which cannot be owned. Font software is protected as a computer program. In Adobe v. Southern Software, the court found infringement in copied font software, not in the letterforms.</p>
+      <p>This matters for training: a model learns from outlines, which are part of the font software, but it may output only letterforms. Whether the weights copy the software is not settled.</p>
+      <p>Other countries differ. The UK and Germany give typeface designs some protection. Verify the details before presenting.</p>
+    </Fragment>
+  </Slide>
+
+  <Slide section="Open models" label="Open question: model licenses" planned>
+    <div class="sw">
+      <div class="sw-head"><p class="sw-sec">02 Open models</p><p class="sw-talk">{TALK}</p><p class="sw-num"></p></div>
+      <h2 class="sw-title t-display">Open question</h2>
+      <div class="sw-body">
+        <p class="sw-lead t-head">What license should a model trained on a font carry?</p>
+        <ol class="sw-points">
+          <li>Are the weights a Modified Version?</li>
+          <li>Is shipping the model shipping the font?</li>
+          <li>Does redrawing the font matter?</li>
+          <li>What should Runebender recommend?</li>
+        </ol>
+      </div>
+    </div>
+    <Fragment slot="notes">
+      <p>To be answered. Research notes: ~/Desktop/Model-License-Research.md.</p>
+      <p>Cases to work through: a model trained only on the designer’s own fonts (Virtua Grotesk, which is OFL, and the Shapes font, which is Apache 2.0 or MIT); a model trained on another designer’s OFL font (Nasta’liq Distilled used Gulzar); a model trained on a commercial font under a EULA that forbids training.</p>
+    </Fragment>
+  </Slide>
+
   <!-- ── 03 Concepts ── -->
 
-  <Slide section="Concepts" label="Why local">
+  <Slide section="Concepts" label="Small models">
     <div class="sw sw-split">
       <div class="sw-head"><p class="sw-sec">03 Concepts</p><p class="sw-talk">{TALK}</p><p class="sw-num"></p></div>
-      <h2 class="sw-title t-display">Why local</h2>
+      <h2 class="sw-title t-display">Small models</h2>
       <div class="sw-body">
-        <p class="sw-lead t-head">Small models run on a laptop, trained on your own drawings.</p>
+        <p class="sw-lead t-head">Font models are small enough to train on a laptop.</p>
         <ol class="sw-points">
-          <li>You control the data and the models</li>
-          <li>Nothing is downloaded or sent</li>
-          <li>Font models of a few megabytes</li>
+          <li>One to a few dozen megabytes</li>
+          <li>Minutes to train on a laptop GPU</li>
+          <li>Trained only on your own drawings</li>
         </ol>
       </div>
       <Fig class="sw-fig fig-right" src={nufoEditing} alt="Runebender editing Arabic glyphs with a rendered preview." />
