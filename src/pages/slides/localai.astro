@@ -99,22 +99,35 @@ const TALK = 'Local AI for Type Design'
   <Slide section="Open models" label="Open weights and open source">
     <div class="sw">
       <div class="sw-head"><p class="sw-sec">02 Open models</p><p class="sw-talk">{TALK}</p><p class="sw-num"></p></div>
-      <h2 class="sw-title t-display">Open weights and open source</h2>
+      <h2 class="sw-title t-display">What is open?</h2>
       <div class="sw-body">
-        <div class="sw-lead stack">
-          <p class="t-head">Open weights are the font binary. Open source adds the sources.</p>
+        <div class="sw-half stack">
+          <h3 class="t-head">Open weights</h3>
+          <p class="t-body">Released to download and run. Like a font binary.</p>
+          <ol class="sw-points">
+            <li>Alibaba<span class="val">Qwen</span></li>
+            <li>Google<span class="val">Gemma</span></li>
+            <li>OpenAI<span class="val">gpt-oss</span></li>
+            <li>DeepSeek<span class="val">V3, R1</span></li>
+          </ol>
+        </div>
+        <div class="sw-half sw-half-b stack">
+          <h3 class="t-head">Open source</h3>
+          <p class="t-body">Weights, data, and code. Like font sources.</p>
+          <ol class="sw-points">
+            <li>EleutherAI<span class="val">Pythia</span></li>
+            <li>Ai2<span class="val">OLMo, Tülu</span></li>
+            <li>Hugging Face<span class="val">SmolLM</span></li>
+            <li>Marin<span class="val">Marin</span></li>
+          </ol>
           <p class="t-credit">After Nathan Lambert, Open Language Models, Harvard, October 2026</p>
         </div>
-        <ol class="sw-points">
-          <li>Open weights<span class="val">Qwen, Gemma, gpt-oss</span></li>
-          <li>Open source<span class="val">OLMo, Pythia</span></li>
-          <li>API only<span class="val">Claude, GPT</span></li>
-        </ol>
       </div>
     </div>
     <Fragment slot="notes">
       <p>Open weights are like a compiled font: you can use it, but you cannot see how it was made. Open source is like a font released with its UFO or Glyphs sources and build scripts: you can study it, change it, and rebuild it.</p>
-      <p>Openness is a spectrum. NVIDIA’s Nemotron models release much of their training data, but not all of it.</p>
+      <p>Both differ from Claude and GPT, which are available only through an API. Openness is a spectrum (Solaiman, 2023): NVIDIA Nemotron releases much of its training data, but not all.</p>
+      <p>Moonshot AI (Kimi) and Zhipu (GLM) are also leading open-weight labs. Meta’s Llama and Muse models are open weights under custom licenses. Marin is from the Marin community and Open Athena.</p>
       <p>The Runebender font models are open in the full sense: the training data is the designer’s own font sources, and font-ml is open source.</p>
     </Fragment>
   </Slide>
@@ -921,6 +934,19 @@ local AI on this machine.</pre>
   .sw-divider-title {
     grid-row: 3;
     grid-column: 7 / 13;
+  }
+
+  /* Two halves in the lower register, each with its own heading,
+     definition, and points. */
+  .sw-half {
+    grid-column: 1 / 7;
+    align-self: start;
+  }
+  .sw-half-b {
+    grid-column: 7 / 13;
+  }
+  .slide .sw-half h3 {
+    margin: 0;
   }
 
   /* Shell commands, in the body size, two units per line. */
