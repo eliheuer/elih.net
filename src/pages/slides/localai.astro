@@ -51,11 +51,11 @@ const TALK = 'Local AI for Type Design'
     </Fragment>
   </Slide>
 
-  <!-- ── 01 Concepts ── -->
+  <!-- ── 01 Introduction ── -->
 
   <Slide section="Concepts" label="Format">
     <div class="sw">
-      <div class="sw-head"><p class="sw-sec">01 Concepts</p><p class="sw-talk">{TALK}</p><p class="sw-num"></p></div>
+      <div class="sw-head"><p class="sw-sec">01 Introduction</p><p class="sw-talk">{TALK}</p><p class="sw-num"></p></div>
       <h2 class="sw-title t-display">Format</h2>
       <div class="sw-body">
         <p class="sw-lead t-head">A short demo, then hands-on setup on your own machine.</p>
@@ -74,7 +74,7 @@ const TALK = 'Local AI for Type Design'
 
   <Slide section="Concepts" label="Questions">
     <div class="sw">
-      <div class="sw-head"><p class="sw-sec">01 Concepts</p><p class="sw-talk">{TALK}</p><p class="sw-num"></p></div>
+      <div class="sw-head"><p class="sw-sec">01 Introduction</p><p class="sw-talk">{TALK}</p><p class="sw-num"></p></div>
       <h2 class="sw-title t-display">Open questions</h2>
       <div class="sw-body">
         <p class="sw-lead t-head">Who controls the tools, the data, and the models?</p>
@@ -94,9 +94,127 @@ const TALK = 'Local AI for Type Design'
     </Fragment>
   </Slide>
 
+  <!-- ── 02 Open models ── -->
+
+  <Slide section="Open models" label="Open weights and open source">
+    <div class="sw">
+      <div class="sw-head"><p class="sw-sec">02 Open models</p><p class="sw-talk">{TALK}</p><p class="sw-num"></p></div>
+      <h2 class="sw-title t-display">Open weights and open source</h2>
+      <div class="sw-body">
+        <div class="sw-lead stack">
+          <p class="t-head">Open weights are the font binary. Open source adds the sources.</p>
+          <p class="t-credit">After Nathan Lambert, Open Language Models, Harvard, October 2026</p>
+        </div>
+        <ol class="sw-points">
+          <li>Open weights<span class="val">Qwen, Gemma, gpt-oss</span></li>
+          <li>Open source<span class="val">OLMo, Pythia</span></li>
+          <li>API only<span class="val">Claude, GPT</span></li>
+        </ol>
+      </div>
+    </div>
+    <Fragment slot="notes">
+      <p>Open weights are like a compiled font: you can use it, but you cannot see how it was made. Open source is like a font released with its UFO or Glyphs sources and build scripts: you can study it, change it, and rebuild it.</p>
+      <p>Openness is a spectrum. NVIDIA’s Nemotron models release much of their training data, but not all of it.</p>
+      <p>The Runebender font models are open in the full sense: the training data is the designer’s own font sources, and font-ml is open source.</p>
+    </Fragment>
+  </Slide>
+
+  <Slide section="Open models" label="Licenses">
+    <div class="sw">
+      <div class="sw-head"><p class="sw-sec">02 Open models</p><p class="sw-talk">{TALK}</p><p class="sw-num"></p></div>
+      <h2 class="sw-title t-display">Licenses</h2>
+      <div class="sw-body">
+        <div class="sw-lead stack">
+          <p class="t-head">Model licenses work like font licenses.</p>
+          <p class="t-credit">After Nathan Lambert, Open Language Models, Harvard, October 2026</p>
+        </div>
+        <ol class="sw-points">
+          <li>MIT, Apache 2.0<span class="val">like the OFL</span></li>
+          <li>Custom licenses<span class="val">like a EULA</span></li>
+          <li>Most custom terms are untested in court</li>
+        </ol>
+      </div>
+    </div>
+    <Fragment slot="notes">
+      <p>Permissive: use, modify, sell, and redistribute, and keep the notice. MIT: DeepSeek, GLM-5.2, MiMo. Apache 2.0: Qwen, gpt-oss, Gemma 4.</p>
+      <p>Custom licenses are not open-source licenses. Revenue gates: Kimi K3 and Muse Spark Open above $20M for inference services. Branding: “Built with Llama”, the same idea as a Reserved Font Name. Use restrictions: acceptable-use policies in Llama and Gemma 1 to 3.</p>
+      <p>Every model in the Runebender chat catalog is Apache 2.0.</p>
+    </Fragment>
+  </Slide>
+
+  <Slide section="Open models" label="Why open models">
+    <div class="sw">
+      <div class="sw-head"><p class="sw-sec">02 Open models</p><p class="sw-talk">{TALK}</p><p class="sw-num"></p></div>
+      <h2 class="sw-title t-display">Why open models</h2>
+      <div class="sw-body">
+        <div class="sw-lead stack">
+          <p class="t-head">A foundry can own its models, as it owns its fonts.</p>
+          <p class="t-credit">After Nathan Lambert, Open Language Models, Harvard, October 2026</p>
+        </div>
+        <ol class="sw-points">
+          <li>Ownership of the model and the data</li>
+          <li>No fee for each use</li>
+          <li>No dependence on one company</li>
+          <li>You can study how it works</li>
+        </ol>
+      </div>
+    </div>
+    <Fragment slot="notes">
+      <p>Lambert lists four groups who want open models: businesses that want to commoditize an input, researchers, people who oppose concentration of power, and people who value software freedom.</p>
+      <p>His ownership example: in August 2026, Harvey post-trained a Kimi K3 base model for legal work, so law firms can own their models. A foundry can do the same with its own drawings.</p>
+    </Fragment>
+  </Slide>
+
+  <Slide section="Open models" label="How close open models are">
+    <div class="sw">
+      <div class="sw-head"><p class="sw-sec">02 Open models</p><p class="sw-talk">{TALK}</p><p class="sw-num"></p></div>
+      <h2 class="sw-title t-display">How close open models are</h2>
+      <div class="sw-body">
+        <div class="sw-lead stack">
+          <p class="t-head">The best open models trail the best closed models by a few months.</p>
+          <p class="t-credit">Artificial Analysis and Epoch AI, via Nathan Lambert, October 2026</p>
+        </div>
+        <ol class="sw-points">
+          <li>General intelligence index<span class="val">about 3 months</span></li>
+          <li>Software engineering<span class="val">about 5 months</span></li>
+          <li>The gap is getting smaller</li>
+        </ol>
+      </div>
+    </div>
+    <Fragment slot="notes">
+      <p>The leading open models in October 2026 come from Chinese labs: Xiaomi MiMo-V2.6-Pro, DeepSeek V4.1 Flash, GLM-5.3. American open models trail by another 3 to 4 months.</p>
+      <p>These leading models have about 1 trillion parameters and do not run on a laptop. The models in this workshop are much smaller. The point is that open weights are not a second-rate category.</p>
+    </Fragment>
+  </Slide>
+
+  <Slide section="Open models" label="Distillation">
+    <div class="sw">
+      <div class="sw-head"><p class="sw-sec">02 Open models</p><p class="sw-talk">{TALK}</p><p class="sw-num"></p></div>
+      <h2 class="sw-title t-display">Distillation</h2>
+      <div class="sw-body">
+        <div class="sw-lead stack">
+          <p class="t-head">Training a model on the output of another model.</p>
+          <p class="t-credit">After Nathan Lambert, Open Language Models, Harvard, October 2026</p>
+        </div>
+        <ol class="sw-points">
+          <li>Teacher and student models<span class="val">Hinton, 2015</span></li>
+          <li>Training on any model’s output</li>
+          <li>Extracting output from a closed API</li>
+        </ol>
+      </div>
+    </div>
+    <Fragment slot="notes">
+      <p>Three meanings. The first is the original technique: a student model learns the full output distribution of a teacher. The second is post-training on outputs of any model, which covers most synthetic data. The third, the current debate, is taking hidden reasoning traces from closed APIs; Lambert calls it adversarial distillation.</p>
+      <p>Nasta’liq Distilled is the first meaning: a neural font trained on the shaped output of Gulzar, an OFL font.</p>
+      <p>The font-industry version of the debate is training on other foundries’ fonts. The Runebender models train only on the designer’s own drawings.</p>
+    </Fragment>
+  </Slide>
+
+  <!-- ── 03 Concepts ── -->
+
   <Slide section="Concepts" label="Why local">
     <div class="sw sw-split">
-      <div class="sw-head"><p class="sw-sec">01 Concepts</p><p class="sw-talk">{TALK}</p><p class="sw-num"></p></div>
+      <div class="sw-head"><p class="sw-sec">03 Concepts</p><p class="sw-talk">{TALK}</p><p class="sw-num"></p></div>
       <h2 class="sw-title t-display">Why local</h2>
       <div class="sw-body">
         <p class="sw-lead t-head">Small models run on a laptop, trained on your own drawings.</p>
@@ -116,7 +234,7 @@ const TALK = 'Local AI for Type Design'
 
   <Slide section="Concepts" label="Models are folders">
     <div class="sw">
-      <div class="sw-head"><p class="sw-sec">01 Concepts</p><p class="sw-talk">{TALK}</p><p class="sw-num"></p></div>
+      <div class="sw-head"><p class="sw-sec">03 Concepts</p><p class="sw-talk">{TALK}</p><p class="sw-num"></p></div>
       <h2 class="sw-title t-display">Models are folders</h2>
       <div class="sw-body">
         <p class="sw-lead t-head">A model is a folder of files on your disk.</p>
@@ -136,7 +254,7 @@ const TALK = 'Local AI for Type Design'
 
   <Slide section="Concepts" label="The training loop">
     <div class="sw">
-      <div class="sw-head"><p class="sw-sec">01 Concepts</p><p class="sw-talk">{TALK}</p><p class="sw-num"></p></div>
+      <div class="sw-head"><p class="sw-sec">03 Concepts</p><p class="sw-talk">{TALK}</p><p class="sw-num"></p></div>
       <h2 class="sw-title t-display">The training loop</h2>
       <div class="sw-body">
         <p class="sw-lead t-head">Your corrections become new training data.</p>
@@ -156,7 +274,7 @@ const TALK = 'Local AI for Type Design'
 
   <Slide section="Concepts" label="Drafts are proposals">
     <div class="sw">
-      <div class="sw-head"><p class="sw-sec">01 Concepts</p><p class="sw-talk">{TALK}</p><p class="sw-num"></p></div>
+      <div class="sw-head"><p class="sw-sec">03 Concepts</p><p class="sw-talk">{TALK}</p><p class="sw-num"></p></div>
       <h2 class="sw-title t-display">Drafts are proposals</h2>
       <div class="sw-body">
         <p class="sw-lead t-head">A model never edits the font directly.</p>
@@ -173,7 +291,7 @@ const TALK = 'Local AI for Type Design'
     </Fragment>
   </Slide>
 
-  <!-- ── 02 Demo ── -->
+  <!-- ── 04 Demo ── -->
 
   <Slide section="Demo" label="Demo">
     <img
@@ -182,7 +300,7 @@ const TALK = 'Local AI for Type Design'
       alt="Runebender with a labeled bismillah and its preview."
     />
     <div class="c-1-9 over-bleed">
-      <p class="t-display">02 Demo</p>
+      <p class="t-display">04 Demo</p>
     </div>
     <Fragment slot="notes">
       <p>Switch to Runebender. Order: open Shapes.ufo, train a shapes model from scratch, add a shape to fine-tune it, bolden octagon and chevron, ask the chat model about the font by voice, run the bolden graph in the Nodes tab.</p>
@@ -192,7 +310,7 @@ const TALK = 'Local AI for Type Design'
 
   <Slide section="Demo" label="Training from scratch">
     <div class="sw sw-split">
-      <div class="sw-head"><p class="sw-sec">02 Demo</p><p class="sw-talk">{TALK}</p><p class="sw-num"></p></div>
+      <div class="sw-head"><p class="sw-sec">04 Demo</p><p class="sw-talk">{TALK}</p><p class="sw-num"></p></div>
       <h2 class="sw-title t-display">Training from scratch</h2>
       <div class="sw-body">
         <p class="sw-lead t-head">Train a model on the shapes in your font.</p>
@@ -213,7 +331,7 @@ const TALK = 'Local AI for Type Design'
 
   <Slide section="Demo" label="Fine-tuning">
     <div class="sw">
-      <div class="sw-head"><p class="sw-sec">02 Demo</p><p class="sw-talk">{TALK}</p><p class="sw-num"></p></div>
+      <div class="sw-head"><p class="sw-sec">04 Demo</p><p class="sw-talk">{TALK}</p><p class="sw-num"></p></div>
       <h2 class="sw-title t-display">Fine-tuning</h2>
       <div class="sw-body">
         <p class="sw-lead t-head">Continue training an existing model with new drawings.</p>
@@ -235,7 +353,7 @@ const TALK = 'Local AI for Type Design'
 
   <Slide section="Demo" label="Fine-tuning in the editor" planned>
     <div class="sw">
-      <div class="sw-head"><p class="sw-sec">02 Demo</p><p class="sw-talk">{TALK}</p><p class="sw-num"></p></div>
+      <div class="sw-head"><p class="sw-sec">04 Demo</p><p class="sw-talk">{TALK}</p><p class="sw-num"></p></div>
       <h2 class="sw-title t-display">Fine-tuning in the editor</h2>
       <div class="sw-body">
         <p class="sw-lead t-head">A Finetune button trains an adapter on your green glyphs.</p>
@@ -253,7 +371,7 @@ const TALK = 'Local AI for Type Design'
 
   <Slide section="Demo" label="Bolden">
     <div class="sw sw-split">
-      <div class="sw-head"><p class="sw-sec">02 Demo</p><p class="sw-talk">{TALK}</p><p class="sw-num"></p></div>
+      <div class="sw-head"><p class="sw-sec">04 Demo</p><p class="sw-talk">{TALK}</p><p class="sw-num"></p></div>
       <h2 class="sw-title t-display">Bolden</h2>
       <div class="sw-body">
         <p class="sw-lead t-head">The model drafts the Bold from the Regular.</p>
@@ -274,7 +392,7 @@ const TALK = 'Local AI for Type Design'
 
   <Slide section="Demo" label="Drafting from a sketch" planned>
     <div class="sw">
-      <div class="sw-head"><p class="sw-sec">02 Demo</p><p class="sw-talk">{TALK}</p><p class="sw-num"></p></div>
+      <div class="sw-head"><p class="sw-sec">04 Demo</p><p class="sw-talk">{TALK}</p><p class="sw-num"></p></div>
       <h2 class="sw-title t-display">Drafting from a sketch</h2>
       <div class="sw-body">
         <p class="sw-lead t-head">Sketch a glyph. The model redraws it in your font’s style.</p>
@@ -294,7 +412,7 @@ const TALK = 'Local AI for Type Design'
 
   <Slide section="Demo" label="Open-weight chat models">
     <div class="sw">
-      <div class="sw-head"><p class="sw-sec">02 Demo</p><p class="sw-talk">{TALK}</p><p class="sw-num"></p></div>
+      <div class="sw-head"><p class="sw-sec">04 Demo</p><p class="sw-talk">{TALK}</p><p class="sw-num"></p></div>
       <h2 class="sw-title t-display">Open-weight chat models</h2>
       <div class="sw-body">
         <p class="sw-lead t-head">Open models answer questions about the open font.</p>
@@ -314,7 +432,7 @@ const TALK = 'Local AI for Type Design'
 
   <Slide section="Demo" label="Model catalog" planned>
     <div class="sw">
-      <div class="sw-head"><p class="sw-sec">02 Demo</p><p class="sw-talk">{TALK}</p><p class="sw-num"></p></div>
+      <div class="sw-head"><p class="sw-sec">04 Demo</p><p class="sw-talk">{TALK}</p><p class="sw-num"></p></div>
       <h2 class="sw-title t-display">Model catalog</h2>
       <div class="sw-body">
         <p class="sw-lead t-head">Choose a chat model and download it with one click.</p>
@@ -333,7 +451,7 @@ const TALK = 'Local AI for Type Design'
 
   <Slide section="Demo" label="Voice input">
     <div class="sw">
-      <div class="sw-head"><p class="sw-sec">02 Demo</p><p class="sw-talk">{TALK}</p><p class="sw-num"></p></div>
+      <div class="sw-head"><p class="sw-sec">04 Demo</p><p class="sw-talk">{TALK}</p><p class="sw-num"></p></div>
       <h2 class="sw-title t-display">Voice input</h2>
       <div class="sw-body">
         <p class="sw-lead t-head">Speak a request. A local speech model writes it down.</p>
@@ -350,7 +468,7 @@ const TALK = 'Local AI for Type Design'
 
   <Slide section="Demo" label="The node editor">
     <div class="sw sw-split">
-      <div class="sw-head"><p class="sw-sec">02 Demo</p><p class="sw-talk">{TALK}</p><p class="sw-num"></p></div>
+      <div class="sw-head"><p class="sw-sec">04 Demo</p><p class="sw-talk">{TALK}</p><p class="sw-num"></p></div>
       <h2 class="sw-title t-display">The node editor</h2>
       <div class="sw-body">
         <p class="sw-lead t-head">Connect nodes into a workflow, as in ComfyUI.</p>
@@ -368,12 +486,12 @@ const TALK = 'Local AI for Type Design'
     </Fragment>
   </Slide>
 
-  <!-- ── 03 Hardware ── -->
+  <!-- ── 05 Hardware ── -->
 
   <Slide section="Hardware" label="Hands-on setup">
     <div class="sw">
-      <div class="sw-head"><p class="sw-sec">03 Hardware</p><p class="sw-talk">{TALK}</p><p class="sw-num"></p></div>
-      <p class="sw-numeral t-num">03</p>
+      <div class="sw-head"><p class="sw-sec">05 Hardware</p><p class="sw-talk">{TALK}</p><p class="sw-num"></p></div>
+      <p class="sw-numeral t-num">05</p>
       <h2 class="sw-divider-title t-display">Hands-on setup</h2>
       <div class="sw-body">
         <p class="sw-right t-head">Install Runebender and run a first model on your own machine.</p>
@@ -383,7 +501,7 @@ const TALK = 'Local AI for Type Design'
 
   <Slide section="Hardware" label="Memory size">
     <div class="sw">
-      <div class="sw-head"><p class="sw-sec">03 Hardware</p><p class="sw-talk">{TALK}</p><p class="sw-num"></p></div>
+      <div class="sw-head"><p class="sw-sec">05 Hardware</p><p class="sw-talk">{TALK}</p><p class="sw-num"></p></div>
       <h2 class="sw-title t-display">Memory size</h2>
       <div class="sw-body">
         <p class="sw-lead t-head">The model must fit in memory.</p>
@@ -404,7 +522,7 @@ const TALK = 'Local AI for Type Design'
 
   <Slide section="Hardware" label="Memory bandwidth">
     <div class="sw">
-      <div class="sw-head"><p class="sw-sec">03 Hardware</p><p class="sw-talk">{TALK}</p><p class="sw-num"></p></div>
+      <div class="sw-head"><p class="sw-sec">05 Hardware</p><p class="sw-talk">{TALK}</p><p class="sw-num"></p></div>
       <h2 class="sw-title t-display">Memory bandwidth</h2>
       <div class="sw-body">
         <p class="sw-lead t-head">Faster memory gives faster answers.</p>
@@ -422,7 +540,7 @@ const TALK = 'Local AI for Type Design'
 
   <Slide section="Hardware" label="Mixture of experts">
     <div class="sw">
-      <div class="sw-head"><p class="sw-sec">03 Hardware</p><p class="sw-talk">{TALK}</p><p class="sw-num"></p></div>
+      <div class="sw-head"><p class="sw-sec">05 Hardware</p><p class="sw-talk">{TALK}</p><p class="sw-num"></p></div>
       <h2 class="sw-title t-display">Mixture of experts</h2>
       <div class="sw-body">
         <p class="sw-lead t-head">The model reads only part of its weights for each token.</p>
@@ -442,7 +560,7 @@ const TALK = 'Local AI for Type Design'
 
   <Slide section="Hardware" label="Three kinds of machine">
     <div class="sw">
-      <div class="sw-head"><p class="sw-sec">03 Hardware</p><p class="sw-talk">{TALK}</p><p class="sw-num"></p></div>
+      <div class="sw-head"><p class="sw-sec">05 Hardware</p><p class="sw-talk">{TALK}</p><p class="sw-num"></p></div>
       <h2 class="sw-title t-display">Three kinds of machine</h2>
       <div class="sw-body">
         <p class="sw-lead t-head">Each trades memory size against speed.</p>
@@ -462,7 +580,7 @@ const TALK = 'Local AI for Type Design'
 
   <Slide section="Hardware" label="Example machines">
     <div class="sw">
-      <div class="sw-head"><p class="sw-sec">03 Hardware</p><p class="sw-talk">{TALK}</p><p class="sw-num"></p></div>
+      <div class="sw-head"><p class="sw-sec">05 Hardware</p><p class="sw-talk">{TALK}</p><p class="sw-num"></p></div>
       <h2 class="sw-title t-display">Example machines</h2>
       <div class="sw-body">
         <p class="sw-lead t-head">Memory is the number to compare.</p>
@@ -494,7 +612,7 @@ const TALK = 'Local AI for Type Design'
 
   <Slide section="Hardware" label="Choosing a machine">
     <div class="sw">
-      <div class="sw-head"><p class="sw-sec">03 Hardware</p><p class="sw-talk">{TALK}</p><p class="sw-num"></p></div>
+      <div class="sw-head"><p class="sw-sec">05 Hardware</p><p class="sw-talk">{TALK}</p><p class="sw-num"></p></div>
       <h2 class="sw-title t-display">Choosing a machine</h2>
       <div class="sw-body">
         <p class="sw-lead t-head">Start with the computer you have.</p>
@@ -519,7 +637,7 @@ const TALK = 'Local AI for Type Design'
 
   <Slide section="Hardware" label="Runtimes">
     <div class="sw">
-      <div class="sw-head"><p class="sw-sec">03 Hardware</p><p class="sw-talk">{TALK}</p><p class="sw-num"></p></div>
+      <div class="sw-head"><p class="sw-sec">05 Hardware</p><p class="sw-talk">{TALK}</p><p class="sw-num"></p></div>
       <h2 class="sw-title t-display">Runtimes</h2>
       <div class="sw-body">
         <p class="sw-lead t-head">A runtime loads a model and runs it.</p>
@@ -537,11 +655,11 @@ const TALK = 'Local AI for Type Design'
     </Fragment>
   </Slide>
 
-  <!-- ── 04 Setup ── -->
+  <!-- ── 06 Setup ── -->
 
   <Slide section="Setup" label="Installation" planned>
     <div class="sw">
-      <div class="sw-head"><p class="sw-sec">04 Setup</p><p class="sw-talk">{TALK}</p><p class="sw-num"></p></div>
+      <div class="sw-head"><p class="sw-sec">06 Setup</p><p class="sw-talk">{TALK}</p><p class="sw-num"></p></div>
       <h2 class="sw-title t-display">Installation</h2>
       <div class="sw-body">
         <p class="sw-lead t-head">Two ways to install Runebender.</p>
@@ -562,7 +680,7 @@ const TALK = 'Local AI for Type Design'
 
   <Slide section="Setup" label="Setup with a coding agent">
     <div class="sw">
-      <div class="sw-head"><p class="sw-sec">04 Setup</p><p class="sw-talk">{TALK}</p><p class="sw-num"></p></div>
+      <div class="sw-head"><p class="sw-sec">06 Setup</p><p class="sw-talk">{TALK}</p><p class="sw-num"></p></div>
       <h2 class="sw-title t-display">Setup with a coding agent</h2>
       <div class="sw-body">
         <p class="sw-lead t-head">Give Claude Code or Codex this request.</p>
@@ -580,7 +698,7 @@ local AI on this machine.</pre>
 
   <Slide section="Setup" label="Exercises">
     <div class="sw">
-      <div class="sw-head"><p class="sw-sec">04 Setup</p><p class="sw-talk">{TALK}</p><p class="sw-num"></p></div>
+      <div class="sw-head"><p class="sw-sec">06 Setup</p><p class="sw-talk">{TALK}</p><p class="sw-num"></p></div>
       <h2 class="sw-title t-display">Exercises</h2>
       <div class="sw-body">
         <p class="sw-lead t-head">Work through the demo repository in order.</p>
@@ -606,11 +724,11 @@ local AI on this machine.</pre>
     </Fragment>
   </Slide>
 
-  <!-- ── 05 Agents ── -->
+  <!-- ── 07 Agents ── -->
 
   <Slide section="Agents" label="Agents over MCP">
     <div class="sw">
-      <div class="sw-head"><p class="sw-sec">05 Agents</p><p class="sw-talk">{TALK}</p><p class="sw-num"></p></div>
+      <div class="sw-head"><p class="sw-sec">07 Agents</p><p class="sw-talk">{TALK}</p><p class="sw-num"></p></div>
       <h2 class="sw-title t-display">Agents over MCP</h2>
       <div class="sw-body">
         <p class="sw-lead t-head">Coding agents can work in the open editor.</p>
@@ -630,7 +748,7 @@ local AI on this machine.</pre>
 
   <Slide section="Agents" label="Planned work">
     <div class="sw">
-      <div class="sw-head"><p class="sw-sec">05 Agents</p><p class="sw-talk">{TALK}</p><p class="sw-num"></p></div>
+      <div class="sw-head"><p class="sw-sec">07 Agents</p><p class="sw-talk">{TALK}</p><p class="sw-num"></p></div>
       <h2 class="sw-title t-display">Planned work</h2>
       <div class="sw-body">
         <p class="sw-lead t-head">The same rules apply to each new feature.</p>
