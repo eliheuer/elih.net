@@ -108,6 +108,7 @@ const TALK = 'Local AI for Type Design'
           <li>Client work stays on your machine</li>
           <li>No fee for each use</li>
           <li>Models you can open and study</li>
+          <li>A model on disk keeps working</li>
         </ol>
       </div>
     </div>
@@ -116,7 +117,32 @@ const TALK = 'Local AI for Type Design'
       <p>Ownership: a foundry owns its fonts; with local models it also owns the models trained on them. Lambert’s example from another industry: in August 2026, Harvey post-trained an open Kimi K3 base model so law firms can own their models.</p>
       <p>Confidentiality: custom type for clients is often under a non-disclosure agreement. A local model sends nothing.</p>
       <p>Cost: no per-token fee. Understanding: a model that can be opened, trained, and studied, which is how a field learns how a technology works.</p>
+      <p>Durability: a model file on disk runs as long as the hardware does. A cloud model can be retired, repriced, or changed by its provider. Mark Zuckerberg’s list of what developers want from open models covers the same ground: train, fine-tune, and distill their own models; “control our own destiny and not get locked into a closed vendor”; protect their data; run at lower cost; and build on the ecosystem that will last. (Open Source AI is the Path Forward, July 2024.)</p>
       <p>Lambert’s general list of reasons people want open models: commoditizing complements, scientific progress, preventing concentration of power, and freedom. (Open Language Models, Harvard, October 2026.)</p>
+    </Fragment>
+  </Slide>
+
+  <Slide section="Open models" label="Open formats">
+    <div class="sw">
+      <div class="sw-head"><p class="sw-sec">02 Open models</p><p class="sw-talk">{TALK}</p><p class="sw-num"></p></div>
+      <h2 class="sw-title t-display">Open formats</h2>
+      <div class="sw-body">
+        <div class="sw-lead stack">
+          <p class="t-head">Type has seen this before: closed formats gave way to open ones.</p>
+          <p class="t-credit">Zuckerberg, Open Source AI is the Path Forward, 2024</p>
+        </div>
+        <ol class="sw-points">
+          <li>PostScript Type 1<span class="val">support ended 2023</span></li>
+          <li>OpenType<span class="val">an ISO standard</span></li>
+          <li>UFO<span class="val">open source format</span></li>
+          <li>Unix to Linux<span class="val">the same pattern</span></li>
+        </ol>
+      </div>
+    </div>
+    <Fragment slot="notes">
+      <p>Zuckerberg’s argument starts with Unix: each large company built its own closed version, and open source Linux replaced them, first because it was cheaper and could be modified, later because it was better and had a larger ecosystem. He expects AI to follow the same path.</p>
+      <p>Type went through the same change. PostScript Type 1 was Adobe’s closed format; Adobe ended Type 1 support in new releases of its apps in January 2023. OpenType, an open specification from Adobe and Microsoft, is published as an ISO standard (Open Font Format). UFO is an open source format that most font editors read and write, and Runebender uses it.</p>
+      <p>The same choice is coming for the models in type design tools: closed models behind an API, or open models in a format anyone can run.</p>
     </Fragment>
   </Slide>
 
