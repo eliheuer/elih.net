@@ -1007,8 +1007,8 @@ const TALK = 'Local AI for Type Design'
       </div>
     </div>
     <Fragment slot="notes">
-      <p>llama-server comes from llama.cpp: brew install llama.cpp. The editor looks for it inside the app first, then RUNEBENDER_LLAMA_SERVER, then PATH and the Homebrew folders. A pinned llama-server can be bundled into the app with scripts/bundle_llama.py; the DMG build does not run that step yet.</p>
-      <p>font-ml runs and trains the font models: Local AI Shapes, bolden, and the node editor’s model tasks. It is not in the DMG. Install it with cargo install --git https://github.com/eliheuer/font-ml --features metal, which needs Rust. The editor looks in RUNEBENDER_FONT_ML, then PATH, then ~/.cargo/bin.</p>
+      <p>llama-server comes from llama.cpp: brew install llama.cpp. The editor looks for it inside the app first, then RUNEBENDER_LLAMA_SERVER, then PATH and the Homebrew folders. It stays outside the app on purpose, so one server can serve Runebender, Pi, and other tools at the same time.</p>
+      <p>font-ml runs and trains the font models: Local AI Shapes, bolden, and the node editor’s model tasks. It is not in the DMG yet; bundling it is planned. Until then, install it with cargo install --git https://github.com/eliheuer/font-ml --features metal, which needs Rust. The editor looks in RUNEBENDER_FONT_ML, then PATH, then ~/.cargo/bin.</p>
       <p>whisper-server comes from whisper.cpp: brew install whisper.cpp. Upgrade llama.cpp and whisper.cpp together; they share Homebrew’s ggml package.</p>
       <p>Models: chat models are downloaded GGUF files; font models are trained in the editor or with font-ml. Nothing is downloaded by the editor.</p>
     </Fragment>
