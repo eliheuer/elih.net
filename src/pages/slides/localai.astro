@@ -304,6 +304,83 @@ const TALK = 'Local AI for Type Design'
     </Fragment>
   </Slide>
 
+  <Slide section="Open models" label="Expertise as training data">
+    <div class="sw">
+      <div class="sw-head"><p class="sw-sec">02 Open models</p><p class="sw-talk">{TALK}</p><p class="sw-num"></p></div>
+      <h2 class="sw-title t-display">Expertise as training data</h2>
+      <div class="sw-body">
+        <div class="sw-half stack">
+          <h3 class="t-head">Harvey, legal work</h3>
+          <p class="t-body">Law firms can own their models.</p>
+          <ol class="sw-points">
+            <li>Base model<span class="val">Kimi K3, open</span></li>
+            <li>Data<span class="val">public and expert</span></li>
+            <li>Held-out tasks<span class="val">nearly 2×</span></li>
+          </ol>
+        </div>
+        <div class="sw-half sw-half-b stack">
+          <h3 class="t-head">Mercor, knowledge work</h3>
+          <p class="t-body">Weights and script released.</p>
+          <ol class="sw-points">
+            <li>Base model<span class="val">Qwen3.5 397B, open</span></li>
+            <li>Data<span class="val">about 2,000 tasks</span></li>
+            <li>Score<span class="val">16.1% to 27.3%</span></li>
+          </ol>
+          <p class="t-credit">Harvey, August 2026; Mercor and SkyRL, September 2026</p>
+        </div>
+      </div>
+    </div>
+    <Fragment slot="notes">
+      <p>The pattern: take an open-weight base model, train it on an industry’s expert data, and own the result.</p>
+      <p>Harvey Tenet (research preview, August 20, 2026): a Kimi K3 base post-trained with Fireworks using reinforcement learning on synthetic, public legal, and human expert data. Harvey says no customer data was used. It reports nearly twice as many held-out Legal Agent Benchmark tasks completed as the base model, at a stable cost. These are Harvey’s own evaluations, and the weights are not released.</p>
+      <p>Mercor and SkyRL (September 2026): in January, fewer than 1,000 expert-labeled tasks nearly doubled an open model’s score on APEX-Agents. The first full run post-trained Qwen3.6-35B-A3B, the same model I use every day for chat and coding. The 397B run raised Pass@1 on 480 tasks from 16.11% to 27.29%. They released the weights, the training script, and the evaluation traces.</p>
+      <p>Lambert calls this an economic engine for ownership and cost savings. (Open Language Models, Harvard, October 2026.)</p>
+    </Fragment>
+  </Slide>
+
+  <Slide section="Open models" label="The same pattern for type">
+    <div class="sw">
+      <div class="sw-head"><p class="sw-sec">02 Open models</p><p class="sw-talk">{TALK}</p><p class="sw-num"></p></div>
+      <h2 class="sw-title t-display">The same pattern for type</h2>
+      <div class="sw-body">
+        <p class="sw-lead t-head">An open model plus a foundry’s graded glyphs is a model the foundry owns.</p>
+        <ol class="sw-points">
+          <li>Base model<span class="val">open weights</span></li>
+          <li>Expert data<span class="val">graded glyphs</span></li>
+          <li>Training<span class="val">fine-tune, adapter</span></li>
+          <li>Measure<span class="val">held-out pairs</span></li>
+          <li>Result<span class="val">your own model</span></li>
+        </ol>
+      </div>
+    </div>
+    <Fragment slot="notes">
+      <p>A foundry’s expert data is its drawings and its corrections: every glyph graded green, and every draft the designer fixed. That is the type equivalent of Harvey’s legal expertise and Mercor’s expert tasks.</p>
+      <p>Small amounts of expert data go far. Mercor nearly doubled an open model’s score with fewer than 1,000 expert tasks. The first Virtua Grotesk model was fine-tuned on 50 graded Bold pairs.</p>
+      <p>Measuring matters as much as training. Harvey and Mercor report scores on held-out tasks. Runebender scores each engine on held-out drawn pairs against a mean-shift baseline.</p>
+    </Fragment>
+  </Slide>
+
+  <Slide section="Open models" label="Where to start">
+    <div class="sw">
+      <div class="sw-head"><p class="sw-sec">02 Open models</p><p class="sw-talk">{TALK}</p><p class="sw-num"></p></div>
+      <h2 class="sw-title t-display">Where to start</h2>
+      <div class="sw-body">
+        <p class="sw-lead t-head">Local AI is the place to learn how this works.</p>
+        <ol class="sw-points">
+          <li>Run an open model on your machine</li>
+          <li>Train a small model on your drawings</li>
+          <li>Fine-tune it and measure the result</li>
+          <li>Scale up on rented GPUs when needed</li>
+        </ol>
+      </div>
+    </div>
+    <Fragment slot="notes">
+      <p>This workshop covers the first three steps. They run on a laptop and need no account.</p>
+      <p>The same steps scale. Harvey and Mercor ran the same kind of post-training on much larger open models with rented compute. The skills are the same: prepare expert data, train, and measure on held-out work.</p>
+      <p>Many industries could do this, and type design is one. I plan to do it with my own company.</p>
+    </Fragment>
+  </Slide>
+
   <Slide section="Open models" label="Licenses">
     <div class="sw">
       <div class="sw-head"><p class="sw-sec">02 Open models</p><p class="sw-talk">{TALK}</p><p class="sw-num"></p></div>
