@@ -570,17 +570,18 @@ const TALK = 'Local AI for Type Design'
       <div class="sw-head"><p class="sw-sec">03 Concepts</p><p class="sw-talk">{TALK}</p><p class="sw-num"></p></div>
       <h2 class="sw-title t-display">Models are folders</h2>
       <div class="sw-body">
-        <p class="sw-lead t-head">A model is a folder of files on your disk.</p>
+        <p class="sw-lead t-head">A model is a folder in <code>~/Runebender/models</code>.</p>
         <ol class="sw-points">
-          <li><code>~/Runebender/models/shapes</code></li>
-          <li><code>~/Runebender/models/bolden</code></li>
-          <li><code>~/Runebender/models/chat</code></li>
-          <li><span><code>MyFont.models/</code>, beside the font</span></li>
+          <li>Chat model<span class="val"><code>models/qwen3.5-4b/</code></span></li>
+          <li>Shapes model<span class="val"><code>models/shapes/</code></span></li>
+          <li>Bolden model<span class="val"><code>models/bolden/</code></span></li>
+          <li>A font’s own models<span class="val"><code>MyFont.models/</code></span></li>
         </ol>
       </div>
     </div>
     <Fragment slot="notes">
-      <p>A Runebender model folder holds a config, the weights, a vocabulary, and sometimes a manifest. A chat model folder holds a GGUF file.</p>
+      <p>A chat model is a folder directly under ~/Runebender/models that holds a .gguf file, for example ~/Runebender/models/qwen3.5-4b/model.gguf. The folder name is the model name. An optional model.json holds its settings. A Runebender model (shapes, bolden) holds a config, the weights, a vocabulary, and sometimes a manifest; it sits directly under the models folder or one level down in shapes/ or bolden/.</p>
+      <p>The editor also reads the older ~/.runebender/models and any extra folders listed in ~/.runebender/model_paths. RUNEBENDER_MODELS sets a different root.</p>
       <p>A font’s own models are in MyFont.models/ beside it, so they move with the font. The editor reads only these files. RUNEBENDER_MODELS sets a different root for one run.</p>
     </Fragment>
   </Slide>
@@ -989,6 +990,52 @@ const TALK = 'Local AI for Type Design'
   </Slide>
 
   <!-- ── 06 Setup ── -->
+
+  <Slide section="Setup" label="What you need">
+    <div class="sw">
+      <div class="sw-head"><p class="sw-sec">06 Setup</p><p class="sw-talk">{TALK}</p><p class="sw-num"></p></div>
+      <h2 class="sw-title t-display">What you need</h2>
+      <div class="sw-body">
+        <p class="sw-lead t-head">The app, two helper programs, and a models folder.</p>
+        <ol class="sw-points">
+          <li>Runebender<span class="val">DMG or Cargo</span></li>
+          <li>llama-server, for chat<span class="val">Homebrew</span></li>
+          <li>font-ml, for font models<span class="val">Cargo</span></li>
+          <li>whisper-server, for voice<span class="val">optional</span></li>
+          <li>Models<span class="val"><code>~/Runebender/models</code></span></li>
+        </ol>
+      </div>
+    </div>
+    <Fragment slot="notes">
+      <p>llama-server comes from llama.cpp: brew install llama.cpp. The editor looks for it inside the app first, then RUNEBENDER_LLAMA_SERVER, then PATH and the Homebrew folders. A pinned llama-server can be bundled into the app with scripts/bundle_llama.py; the DMG build does not run that step yet.</p>
+      <p>font-ml runs and trains the font models: Local AI Shapes, bolden, and the node editor’s model tasks. It is not in the DMG. Install it with cargo install --git https://github.com/eliheuer/font-ml --features metal, which needs Rust. The editor looks in RUNEBENDER_FONT_ML, then PATH, then ~/.cargo/bin.</p>
+      <p>whisper-server comes from whisper.cpp: brew install whisper.cpp. Upgrade llama.cpp and whisper.cpp together; they share Homebrew’s ggml package.</p>
+      <p>Models: chat models are downloaded GGUF files; font models are trained in the editor or with font-ml. Nothing is downloaded by the editor.</p>
+    </Fragment>
+  </Slide>
+
+  <Slide section="Setup" label="How it fits together">
+    <div class="sw">
+      <div class="sw-head"><p class="sw-sec">06 Setup</p><p class="sw-talk">{TALK}</p><p class="sw-num"></p></div>
+      <h2 class="sw-title t-display">How it fits together</h2>
+      <div class="sw-body">
+        <p class="sw-lead t-head">Runebender starts each helper when a feature needs it.</p>
+        <ol class="sw-points">
+          <li>Chat panel<span class="val">llama-server, a GGUF model</span></li>
+          <li>Font models<span class="val">font-ml, a model folder</span></li>
+          <li>Talk button<span class="val">whisper-server, model.bin</span></li>
+          <li>Coding agents<span class="val"><code>runebender mcp</code></span></li>
+        </ol>
+      </div>
+    </div>
+    <Fragment slot="notes">
+      <p>Chat: the panel first asks a shared server on 127.0.0.1:8080 for its model list. If the chosen model is there, the chat uses it. Otherwise the editor starts its own llama-server with the model’s GGUF file, and stops it when the editor quits.</p>
+      <p>Font models: the editor runs font-ml as a separate process for each training run or draft, and installs the result as a proposal.</p>
+      <p>Voice: the Talk button appears only when whisper-server and a model folder whose name starts with whisper are both found.</p>
+      <p>Agents: runebender mcp --install registers the editor with Claude Code, Codex, Claude Desktop, and Cursor. Those agents connect to the open window; they do not need any of the helpers above.</p>
+      <p>Everything runs on the machine. The helpers listen only on 127.0.0.1.</p>
+    </Fragment>
+  </Slide>
 
   <Slide section="Setup" label="Installation" planned>
     <div class="sw">
