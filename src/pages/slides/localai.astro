@@ -77,6 +77,95 @@ const TALK = 'Local AI for Type Design'
     </Fragment>
   </Slide>
 
+  <Slide section="Overview" label="Runebender">
+    <div class="sw sw-split">
+      <div class="sw-head"><p class="sw-sec">01 Introduction</p><p class="sw-talk">{TALK}</p><p class="sw-num"></p></div>
+      <h2 class="sw-title t-display">Runebender</h2>
+      <div class="sw-body">
+        <p class="sw-lead t-head">A free, open-source font editor written in Rust.</p>
+        <ol class="sw-points">
+          <li>Built on<span class="val">Linebender crates</span></li>
+          <li>Sources<span class="val">UFO, Designspace</span></li>
+          <li>Runs on<span class="val">macOS, Linux, browser</span></li>
+          <li>License<span class="val">Apache 2.0 or MIT</span></li>
+        </ol>
+      </div>
+      <Fig class="sw-fig fig-right" src={grid} alt="Runebender’s glyph overview for Virtua Grotesk, with color-graded glyph cells and a glyph preview." />
+    </div>
+    <Fragment slot="notes">
+      <p>Runebender is a cross-platform font editor built on the Linebender ecosystem of Rust crates. The desktop app runs on macOS and Linux; an experimental WebAssembly version runs in the browser.</p>
+      <p>UFO and Designspace are the main editable formats. It also opens Glyphs and Fontra sources with basic alpha support, and imports compiled TTF and OTF fonts.</p>
+      <p>It includes Graph, a node editor similar to ComfyUI, the Chat panel for local models, and an MCP server for coding agents.</p>
+    </Fragment>
+  </Slide>
+
+  <Slide section="Overview" label="Written in Rust">
+    <div class="sw">
+      <div class="sw-head"><p class="sw-sec">01 Introduction</p><p class="sw-talk">{TALK}</p><p class="sw-num"></p></div>
+      <h2 class="sw-title t-display">Written in Rust</h2>
+      <div class="sw-body">
+        <p class="sw-lead t-head">One language from the curve math to the window to the models.</p>
+        <ol class="sw-points">
+          <li>Interface<span class="val">Xilem, Masonry</span></li>
+          <li>Curves, UFO<span class="val">kurbo, norad</span></li>
+          <li>Compiling, shaping<span class="val">fontc, HarfRust</span></li>
+          <li>Models<span class="val">font-ml, Candle</span></li>
+          <li>Browser<span class="val">same code, WebAssembly</span></li>
+        </ol>
+      </div>
+    </div>
+    <Fragment slot="notes">
+      <p>The editor is about 178,000 lines of Rust. Python appears only in release scripts and in optional recipes, which talk to the editor through JSON.</p>
+      <p>Xilem and Masonry are the Linebender interface libraries; kurbo is Linebender’s curve library. norad reads and writes UFO. fontc is Google’s font compiler written in Rust, and HarfRust is the Rust port of HarfBuzz. The fontations crates read and write font files.</p>
+      <p>Rust gives one fast native binary with no runtime to install, memory safety checked by the compiler, and the same code compiled to WebAssembly for the browser. The model runtime, font-ml, is Rust too, built on Hugging Face’s Candle.</p>
+      <p>External helpers, such as llama-server, are separate programs and are not part of the editor’s code.</p>
+    </Fragment>
+  </Slide>
+
+  <Slide section="Overview" label="The RoboFont tradition">
+    <div class="sw">
+      <div class="sw-head"><p class="sw-sec">01 Introduction</p><p class="sw-talk">{TALK}</p><p class="sw-num"></p></div>
+      <h2 class="sw-title t-display">The RoboFont tradition</h2>
+      <div class="sw-body">
+        <div class="sw-lead stack">
+          <p class="t-head">A starting point for designers who build their own tools.</p>
+          <p class="t-credit">RoboFont design principles, robofont.com</p>
+        </div>
+        <ol class="sw-points">
+          <li>The designer decides<span class="val">no automatic changes</span></li>
+          <li>Own your tools<span class="val">scripts, extensions</span></li>
+          <li>Runebender’s tools<span class="val">recipes, nodes, agents</span></li>
+          <li>Build from source<span class="val">change anything</span></li>
+        </ol>
+      </div>
+    </div>
+    <Fragment slot="notes">
+      <p>RoboFont, by Frederik Berlaen, is a UFO font editor written in Python and built to be extended. Its design principles say: “The typeface designer should make the decisions and have the power to design their fonts,” and the application “shouldn’t make autonomous decisions.” Also: “Not being (partly) the designer of your own tools puts a designer in a vulnerable position.”</p>
+      <p>Runebender follows the same idea. It is meant as a base for people who customize their tools: Python recipes, node graphs, the MCP connection for agents, and the source itself. Machine output is always a proposal the designer installs, which is the same rule as no automatic changes.</p>
+    </Fragment>
+  </Slide>
+
+  <Slide section="Overview" label="How Runebender differs">
+    <div class="sw">
+      <div class="sw-head"><p class="sw-sec">01 Introduction</p><p class="sw-talk">{TALK}</p><p class="sw-num"></p></div>
+      <h2 class="sw-title t-display">How it differs</h2>
+      <div class="sw-body">
+        <p class="sw-lead t-head">Open source, cross-platform, and built for local AI from the start.</p>
+        <ol class="sw-points">
+          <li>Open source<span class="val">Apache 2.0 or MIT</span></li>
+          <li>Cross-platform<span class="val">macOS, Linux, browser</span></li>
+          <li>Local models<span class="val">train and run in the editor</span></li>
+          <li>Agents<span class="val">live MCP connection</span></li>
+          <li>Machine output<span class="val">always a proposal</span></li>
+        </ol>
+      </div>
+    </div>
+    <Fragment slot="notes">
+      <p>For comparison: Glyphs runs on macOS only and is commercial. FontLab is commercial and runs on macOS and Windows. RoboFont is commercial, macOS only, and scripted in Python. FontForge is open source and long-established. Fontra is open source and runs in the browser. Runebender’s difference is the combination: a permissive open-source license, native and browser versions from one Rust codebase, and local AI and agents built into the editor’s design rather than added later.</p>
+      <p>Runebender is alpha software. The established editors are far more complete; this is a base to build on, not a replacement today.</p>
+    </Fragment>
+  </Slide>
+
   <Slide section="Overview" label="First public alpha">
     <div class="sw">
       <div class="sw-head"><p class="sw-sec">01 Introduction</p><p class="sw-talk">{TALK}</p><p class="sw-num"></p></div>
