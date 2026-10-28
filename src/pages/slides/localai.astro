@@ -20,6 +20,9 @@ import nodes from '@/assets/slides/localai/runebender-xilem-nodes.png'
 import nufoEditing from '@/assets/slides/localai/runebender-xilem-nufo-editing.png'
 import outline from '@/assets/slides/localai/runebender-xilem-outline.png'
 import titleDgxSpark from '@/assets/slides/localai/title-dgx-spark.jpg'
+import proofTextReferences from '@/assets/slides/localai/proof-text-references.png'
+import reviewProofImage from '@/assets/slides/localai/review-proof-image.png'
+import virtuaBrowserProof from '@/assets/slides/localai/virtua-browser-proof.png'
 
 const TALK = 'Local AI for Type Design'
 ---
@@ -69,6 +72,29 @@ const TALK = 'Local AI for Type Design'
     <Fragment slot="notes">
       <p>Bring a Mac with Apple silicon or a Linux PC. Windows desktop support is not ready.</p>
       <p>Setup routes: a DMG on a Mac, Cargo on Mac and Linux, or a coding agent pointed at runebender.org.</p>
+    </Fragment>
+  </Slide>
+
+  <Slide section="Overview" label="First public alpha">
+    <div class="sw">
+      <div class="sw-head"><p class="sw-sec">01 Introduction</p><p class="sw-talk">{TALK}</p><p class="sw-num"></p></div>
+      <h2 class="sw-title t-display">First public alpha</h2>
+      <div class="sw-body">
+        <p class="sw-lead t-head">The first public release: a signed, notarized DMG for Apple silicon Macs.</p>
+        <ol class="sw-points">
+          <li>Version<span class="val">0.1.0-alpha.1</span></li>
+          <li>Released<span class="val">October 28, 2026</span></li>
+          <li>Platform<span class="val">Apple silicon, macOS 12+</span></li>
+          <li>Download<span class="val">runebender.org</span></li>
+          <li>Not yet tested<span class="val">save and reopen, updates</span></li>
+        </ol>
+      </div>
+    </div>
+    <Fragment slot="notes">
+      <p>Runebender 0.1.0-alpha.1 is published as a GitHub prerelease and linked from runebender.org. The DMG is signed with a Developer ID, notarized by Apple, and stapled. Its SHA-256 is 2818eb2d02e9ee920020510675ad43ca175608b3e09115ce9e1f3d4773a73622.</p>
+      <p>Download: github.com/fontgarden/runebender/releases/tag/v0.1.0-alpha.1</p>
+      <p>This is an alpha. A manual save-and-reopen regression test, a full two-version update install, and older macOS versions have not been tested yet. They are on the checklist for alpha.2. The app includes an updater (Check for Updates).</p>
+      <p>Intel Macs and Linux build from source. There is no Windows installer.</p>
     </Fragment>
   </Slide>
 
@@ -637,7 +663,7 @@ const TALK = 'Local AI for Type Design'
       <p class="t-display">04 Demo</p>
     </div>
     <Fragment slot="notes">
-      <p>Switch to Runebender. Order: open Shapes.ufo, train a shapes model from scratch, add a shape to fine-tune it, bolden octagon and chevron, ask the chat model about the font by voice, run the bolden graph in the Nodes tab.</p>
+      <p>Switch to Runebender. Order: open Shapes.ufo, train a shapes model from scratch, add a shape to fine-tune it, bolden octagon and chevron, ask the chat model about the font by voice, run the bolden graph in the Nodes tab, then open Proof and compare a glyph with the reference fonts.</p>
       <p>The slides that follow are reference for the same steps. Slides marked Planned describe features that are not finished.</p>
     </Fragment>
   </Slide>
@@ -817,6 +843,71 @@ const TALK = 'Local AI for Type Design'
     <Fragment slot="notes">
       <p>Nodes for the font, a model, a master, and tasks such as Bolden, Compare, and Install. A run does not save or change the open font.</p>
       <p>External tasks declare their inputs, so unchanged runs are cached.</p>
+    </Fragment>
+  </Slide>
+
+  <Slide section="Demo" label="Proof review">
+    <div class="sw sw-split">
+      <div class="sw-head"><p class="sw-sec">04 Demo</p><p class="sw-talk">{TALK}</p><p class="sw-num"></p></div>
+      <h2 class="sw-title t-display">Proof review</h2>
+      <div class="sw-body">
+        <p class="sw-lead t-head">Compare a glyph with its earlier state and with reference fonts.</p>
+        <ol class="sw-points">
+          <li>Compare, Toggle<span class="val">one glyph</span></li>
+          <li>Waterfall, Text<span class="val">shaped text</span></li>
+          <li>References<span class="val">your own fonts</span></li>
+        </ol>
+      </div>
+      <Fig class="sw-fig fig-right" src={proofTextReferences} alt="Runebender’s proof page in Text mode: Before and Working samples of Virtua Grotesk above samples in four reference fonts." />
+    </div>
+    <Fragment slot="notes">
+      <p>Compare shows Before and Working side by side. Toggle switches between them in place, for quick repeated checks. Before is an in-memory baseline; editing Working does not change it.</p>
+      <p>Waterfall and Text use the compiled font with real shaping: Waterfall at 72, 48, 36, 24, 18, and 12 px, Text at a chosen size. Samples are Glyph, Spacing, Alphabet, or custom text. The text can be selected and copied.</p>
+      <p>The proof reads the open document, including unsaved edits. A light or dark setting covers the whole proof area.</p>
+    </Fragment>
+  </Slide>
+
+  <Slide section="Demo" label="Reference fonts">
+    <div class="sw">
+      <div class="sw-head"><p class="sw-sec">04 Demo</p><p class="sw-talk">{TALK}</p><p class="sw-num"></p></div>
+      <h2 class="sw-title t-display">Reference fonts</h2>
+      <div class="sw-body">
+        <p class="sw-lead t-head">Comparison fonts go in a <code>reference-fonts</code> folder.</p>
+        <ol class="sw-points">
+          <li>Location<span class="val">nearest Git root</span></li>
+          <li>Licensed fonts<span class="val">add to .gitignore</span></li>
+          <li>Weights<span class="val">nearest match</span></li>
+          <li>Missing glyphs<span class="val">shown, not replaced</span></li>
+          <li>Downloads<span class="val">none</span></li>
+        </ol>
+      </div>
+    </div>
+    <Fragment slot="notes">
+      <p>Outside Git, the folder goes beside the font or designspace. TTF and OTF files are found recursively; webfonts, collections, hidden files, and symlinks are skipped. Each font is limited to 32 MiB.</p>
+      <p>Faces are grouped by family, width, and italic. The nearest supplied weight is used, the lower one on a tie, and a variable font is set to the requested weight. There is no synthetic bold or italic, and a substituted weight is labeled.</p>
+      <p>If a reference lacks a glyph, that specimen is withheld rather than drawn in a system font. Adding or removing files updates the proof within about a second, without losing unsaved edits.</p>
+      <p>Put /reference-fonts/ in .gitignore before adding licensed fonts, so they are never committed.</p>
+    </Fragment>
+  </Slide>
+
+  <Slide section="Demo" label="Shared proof workflow">
+    <div class="sw sw-split">
+      <div class="sw-head"><p class="sw-sec">04 Demo</p><p class="sw-talk">{TALK}</p><p class="sw-num"></p></div>
+      <h2 class="sw-title t-display">Shared proofs</h2>
+      <div class="sw-body">
+        <p class="sw-lead t-head">The Virtua Grotesk browser proof and Runebender use the same review.</p>
+        <ol class="sw-points">
+          <li>Same four modes</li>
+          <li>Same reference folder</li>
+          <li>Different renderers</li>
+        </ol>
+      </div>
+      <Fig class="sw-fig fig-right" src={virtuaBrowserProof} alt="The Virtua Grotesk browser proof in Text mode: an Arabic alphabet sample, Before and Working, above IBM Plex Sans Arabic and Noto Sans Arabic." />
+    </div>
+    <Fragment slot="notes">
+      <p>The Virtua Grotesk design review runs in a browser proof that agents such as Codex use. Runebender’s native proof now has the same modes (Compare, Toggle, Waterfall, Text) and reads the same reference-fonts folder with the same weight matching.</p>
+      <p>A designer can move between the agent review and the editor without learning a second set of conventions.</p>
+      <p>The two are not pixel-identical. The native proof reads the open document and its unsaved edits. The browser proof reads prepared snapshots, which are archived with hashes of the reference fonts used.</p>
     </Fragment>
   </Slide>
 
@@ -1152,12 +1243,13 @@ EOS</pre>
       <div class="sw-head"><p class="sw-sec">07 Setup</p><p class="sw-talk">{TALK}</p><p class="sw-num"></p></div>
       <h2 class="sw-title t-display">What you need</h2>
       <div class="sw-body">
-        <p class="sw-lead t-head">The app, two helper programs, and a models folder.</p>
+        <p class="sw-lead t-head">The app, a few helper programs, and a models folder.</p>
         <ol class="sw-points">
           <li>Runebender<span class="val">DMG or Cargo</span></li>
           <li>llama-server, for chat<span class="val">Homebrew</span></li>
           <li>font-ml, for font models<span class="val">Cargo</span></li>
           <li>whisper-server, for voice<span class="val">optional</span></li>
+          <li>Designbot, for proof images<span class="val">optional</span></li>
           <li>Models<span class="val"><code>~/Runebender/models</code></span></li>
         </ol>
       </div>
@@ -1166,6 +1258,7 @@ EOS</pre>
       <p>llama-server comes from llama.cpp: brew install llama.cpp. The editor looks for it inside the app first, then RUNEBENDER_LLAMA_SERVER, then PATH and the Homebrew folders. It stays outside the app on purpose, so one server can serve Runebender, Pi, and other tools at the same time.</p>
       <p>font-ml runs and trains the font models: Local AI Shapes, bolden, and the node editor’s model tasks. It is not in the DMG yet; bundling it is planned. Until then, install it with cargo install --git https://github.com/eliheuer/font-ml --features metal, which needs Rust. The editor looks in RUNEBENDER_FONT_ML, then PATH, then ~/.cargo/bin.</p>
       <p>whisper-server comes from whisper.cpp: brew install whisper.cpp. Upgrade llama.cpp and whisper.cpp together; they share Homebrew’s ggml package.</p>
+      <p>Designbot renders the proof images that review_proof sends to agents and the Chat panel. Install it with Cargo. The proof page itself does not need it.</p>
       <p>Models: chat models are downloaded GGUF files; font models are trained in the editor or with font-ml. Nothing is downloaded by the editor.</p>
     </Fragment>
   </Slide>
@@ -1240,21 +1333,22 @@ EOS</pre>
     </Fragment>
   </Slide>
 
-  <Slide section="Setup" label="Installation" planned>
+  <Slide section="Setup" label="Installation">
     <div class="sw">
       <div class="sw-head"><p class="sw-sec">07 Setup</p><p class="sw-talk">{TALK}</p><p class="sw-num"></p></div>
       <h2 class="sw-title t-display">Installation</h2>
       <div class="sw-body">
-        <p class="sw-lead t-head">Two ways to install Runebender.</p>
+        <p class="sw-lead t-head">Download the DMG, or build from source.</p>
         <ol class="sw-points">
-          <li>Mac: the DMG from runebender.org</li>
-          <li>Mac and Linux: install with Cargo</li>
-          <li><span>Check with <code>font-ml tasks</code></span></li>
+          <li>Apple silicon Mac<span class="val">DMG, runebender.org</span></li>
+          <li>Intel Mac, Linux<span class="val">Cargo, Rust 1.96+</span></li>
+          <li>font-ml<span class="val">Cargo, for now</span></li>
         </ol>
       </div>
     </div>
     <Fragment slot="notes">
-      <p>cargo install --git https://github.com/fontgarden/runebender</p>
+      <p>DMG: github.com/fontgarden/runebender/releases/tag/v0.1.0-alpha.1, also linked from runebender.org. Open it, drag Runebender to Applications, eject, and open it from Applications.</p>
+      <p>From source: cargo install --git https://github.com/fontgarden/runebender. This installs the current main branch, not the frozen alpha. It needs Rust 1.96 or newer.</p>
       <p>cargo install --git https://github.com/eliheuer/font-ml --features metal (or cuda, or no feature for CPU)</p>
       <p>Linux (Debian or Ubuntu) needs system libraries first: libfontconfig-dev libwayland-dev libxkbcommon-dev libx11-dev libxcb1-dev libvulkan1 libssl-dev libglib2.0-dev libgtk-3-dev libxdo-dev libasound2-dev.</p>
       <p>Runebender is meant as a base to customize. Building from source is the normal way to use it; the DMG is a quick start. The DMG is for Apple silicon Macs. While Runebender is in alpha, Intel Macs and Linux PCs build Runebender and font-ml from source with Cargo.</p>
@@ -1318,7 +1412,7 @@ local AI on this machine.</pre>
         <p class="sw-lead t-head">Coding agents can work in the open editor.</p>
         <ol class="sw-points">
           <li><code>runebender mcp --install</code></li>
-          <li>47 tools and 6 workflows</li>
+          <li>48 tools and 6 workflows</li>
           <li>They propose, you install</li>
         </ol>
       </div>
@@ -1327,6 +1421,29 @@ local AI on this machine.</pre>
       <p>Works with Claude Code, Codex, Claude Desktop, and Cursor. The agent works on the open document, including unsaved changes. It reads first and proofs the result.</p>
       <p>Workflows: review-glyph, triage-font, compatibility-check, spacing-pass, kerning-pass, draft-weight.</p>
       <p>Figma and Penpot have MCP servers, Glyphs has a third-party one, and FontLab 9 has an in-app chat. Runebender adds a review step and a safety contract: proposals, receipts, no saves.</p>
+    </Fragment>
+  </Slide>
+
+  <Slide section="Agents" label="Agents see proofs">
+    <div class="sw sw-split">
+      <div class="sw-head"><p class="sw-sec">08 Agents</p><p class="sw-talk">{TALK}</p><p class="sw-num"></p></div>
+      <h2 class="sw-title t-display">Proof images</h2>
+      <div class="sw-body">
+        <p class="sw-lead t-head">An agent can request the comparison image the designer sees.</p>
+        <ol class="sw-points">
+          <li>Tool<span class="val">review_proof</span></li>
+          <li>Tested with<span class="val">Pi 1.4.0</span></li>
+          <li>Local Chat<span class="val">vision models</span></li>
+          <li>Never<span class="val">saves or applies</span></li>
+        </ol>
+      </div>
+      <Fig class="sw-fig fig-right" src={reviewProofImage} alt="A proof image for the glyph one in Virtua Grotesk: Working beside an empty Before, above the same glyph in IBM Plex Sans Arabic, Noto Sans Arabic, Readex Pro, and Rubik." />
+    </div>
+    <Fragment slot="notes">
+      <p>review_proof captures the active glyph’s comparison with up to four reference fonts per page, rendered by Designbot outside the editor. The request must name the exact source, glyph, document epoch, and revision from editor_context, so a stale request is rejected.</p>
+      <p>It does not switch sources, reset Before, apply proposals, or save. A missing Before is labeled, as in this image from a real Pi session.</p>
+      <p>Pi setup: pi mcp add runebender -l --exposure direct -- runebender mcp --live. Pi keeps this in .pi/mcp.json.</p>
+      <p>The Chat panel sends the same image to its model, which must accept image input. A text-only model cannot use it.</p>
     </Fragment>
   </Slide>
 
@@ -1340,7 +1457,7 @@ local AI on this machine.</pre>
           <li>Spacing and kerning drafts</li>
           <li>Drawing a missing character</li>
           <li>A model that ranks drafts</li>
-          <li>A Proof panel in the editor</li>
+          <li>Local models in the review loop</li>
           <li>One model for several families</li>
         </ol>
       </div>
@@ -1358,7 +1475,7 @@ local AI on this machine.</pre>
       <div class="sw-body">
         <p class="sw-lead t-head">Eli Heuer<br />eli@elih.net</p>
         <ol class="sw-points">
-          <li>runebender.org</li>
+          <li>runebender.org, download</li>
           <li>github.com/fontgarden/runebender</li>
           <li>github.com/eliheuer/font-ml</li>
           <li>github.com/eliheuer/runebender-local-ai-demo</li>
