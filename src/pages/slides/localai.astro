@@ -820,12 +820,168 @@ const TALK = 'Local AI for Type Design'
     </Fragment>
   </Slide>
 
-  <!-- ── 05 Hardware ── -->
+  <!-- ── 05 Training ── -->
+
+  <Slide section="Training" label="How a model learns">
+    <div class="sw">
+      <div class="sw-head"><p class="sw-sec">05 Training</p><p class="sw-talk">{TALK}</p><p class="sw-num"></p></div>
+      <h2 class="sw-title t-display">How a model learns</h2>
+      <div class="sw-body">
+        <p class="sw-lead t-head">It predicts the next part of a glyph, again and again, and is corrected each time.</p>
+        <ol class="sw-points">
+          <li>Turn each glyph into tokens</li>
+          <li>Predict the next token</li>
+          <li>Adjust the weights after each error</li>
+          <li>Score it on glyphs it never saw</li>
+        </ol>
+      </div>
+    </div>
+    <Fragment slot="notes">
+      <p>Training starts with random weights. For each training example, the model predicts the next token, the error is measured as a loss, and the weights move a small step to reduce it. One pass over the whole training set is an epoch.</p>
+      <p>A fixed set of glyphs is kept out of training. The score on those held-out glyphs picks the best checkpoint and shows whether the model learned the design or only memorized the examples.</p>
+      <p>The method follows Andrej Karpathy’s small from-scratch projects: char-rnn, makemore, and microgpt. Each trains a small model on one narrow corpus with a small vocabulary.</p>
+    </Fragment>
+  </Slide>
+
+  <Slide section="Training" label="Glyphs as sentences">
+    <div class="sw">
+      <div class="sw-head"><p class="sw-sec">05 Training</p><p class="sw-talk">{TALK}</p><p class="sw-num"></p></div>
+      <h2 class="sw-title t-display">Glyphs as sentences</h2>
+      <div class="sw-body">
+        <div class="sw-lead stack">
+          <p class="t-head">A glyph is an ordered list of drawing commands. A codec turns it into tokens.</p>
+          <p class="t-credit">Virtua Grotesk Regular, numeral two</p>
+        </div>
+        <pre class="sw-code code">BOS N_two U_0032 W400 ADV 592
+MOVE 48 0
+LINE 528 0
+LINE 544 16
+…
+CURVE 152 136 232 216 356 276
+CURVE 492 342 560 422 560 552
+…
+LINE 32 16
+CLOSE
+EOS</pre>
+      </div>
+    </div>
+    <Fragment slot="notes">
+      <p>BOS and EOS mark the start and end. N_two is the glyph name, U_0032 the codepoint, W400 the weight, and ADV 592 the advance width. MOVE starts a contour, LINE adds a line, CURVE adds a cubic Bézier, and CLOSE ends the contour. Each coordinate is one token.</p>
+      <p>The codec is reversible: generated tokens become editable UFO glyphs again. The round trip is exact when every coordinate is on the token grid, and Virtua Grotesk is drawn on that grid. A glyph is about 90 tokens.</p>
+      <p>The model trains on source outlines directly. It needs no rasterization, image encoder, or diffusion process.</p>
+    </Fragment>
+  </Slide>
+
+  <Slide section="Training" label="Training on a Mac or a PC">
+    <div class="sw">
+      <div class="sw-head"><p class="sw-sec">05 Training</p><p class="sw-talk">{TALK}</p><p class="sw-num"></p></div>
+      <h2 class="sw-title t-display">On a Mac or a PC</h2>
+      <div class="sw-body">
+        <div class="sw-half stack">
+          <h3 class="t-head">Mac, Apple silicon</h3>
+          <p class="t-body">MacBook Pro, M4 Pro.</p>
+          <ol class="sw-points">
+            <li>Libraries<span class="val">MLX, Candle</span></li>
+            <li>Shapes model<span class="val">29 minutes</span></li>
+            <li>Virtua-12M-v0.1<span class="val">3 h 20 min</span></li>
+          </ol>
+        </div>
+        <div class="sw-half sw-half-b stack">
+          <h3 class="t-head">PC, NVIDIA</h3>
+          <p class="t-body">RTX 2060 SUPER, 8 GB.</p>
+          <ol class="sw-points">
+            <li>Libraries<span class="val">PyTorch, Candle</span></li>
+            <li>Virtua-12M run<span class="val">20 minutes</span></li>
+            <li>Nasta’liq model<span class="val">100 s per epoch</span></li>
+          </ol>
+          <p class="t-credit">From elih.net/blog</p>
+        </div>
+      </div>
+    </div>
+    <Fragment slot="notes">
+      <p>Shapes model: 5.5 million parameters, 15,000 steps on an M4 Pro laptop in 29 minutes, ending at a validation loss of 0.85. The quick run, 6,000 steps, takes about 12 minutes.</p>
+      <p>Virtua-12M-v0.1 trained on the M4 Pro with MLX in 3 hours 20 minutes. Training then moved to the Linux PC: an eight-year-old card with 8 GB, about a sixteenth of a second per step, a full run in twenty minutes. Both builds must give identical output; a script loads one set of weights into each and compares them.</p>
+      <p>The Nasta’liq model trained with Candle on the same card: 1.36 million parameters, about 100 seconds per epoch, using 2.9 GB of the card’s memory.</p>
+      <p>None of this needs a data center. A model of a few million parameters trained on one design fits on hardware a designer already owns.</p>
+    </Fragment>
+  </Slide>
+
+  <Slide section="Training" label="Measuring a model">
+    <div class="sw">
+      <div class="sw-head"><p class="sw-sec">05 Training</p><p class="sw-talk">{TALK}</p><p class="sw-num"></p></div>
+      <h2 class="sw-title t-display">Measuring a model</h2>
+      <div class="sw-body">
+        <p class="sw-lead t-head">Score every model on glyphs it never saw, against a simple baseline.</p>
+        <ol class="sw-points">
+          <li>Hold out glyphs<span class="val">never trained on</span></li>
+          <li>Beat a baseline<span class="val">mean shift</span></li>
+          <li>Run several seeds<span class="val">not one run</span></li>
+          <li>Check the conventions<span class="val">grid fit</span></li>
+        </ol>
+      </div>
+    </div>
+    <Fragment slot="notes">
+      <p>Virtua-12M-v0.1, predicting ten held-out Bold glyphs. The baseline shifts each Regular by the average Regular-to-Bold change. Coordinate error (MAE): baseline 31.3, model 24.0 ± 1.6. Outline shape (Chamfer): 37.4 against 22.4. Filled ink overlap (IoU): 0.564 against 0.745.</p>
+      <p>The first result I recorded was 20.9. It was a lucky run. Five seeds gave 24.0 ± 1.6, which is the number to report.</p>
+      <p>Grid fit is a check a script can run: 85 percent of the points in the hand-drawn sources sit on the 8-unit grid, and 68 percent of the model’s points do. A random point on the 2-unit token grid would land there 6 percent of the time.</p>
+    </Fragment>
+  </Slide>
+
+  <Slide section="Training" label="Virtua-12M">
+    <div class="sw">
+      <div class="sw-head"><p class="sw-sec">05 Training</p><p class="sw-talk">{TALK}</p><p class="sw-num"></p></div>
+      <h2 class="sw-title t-display">Virtua-12M</h2>
+      <div class="sw-body">
+        <div class="sw-lead stack">
+          <p class="t-head">A small model that learns one design system: Virtua Grotesk.</p>
+          <p class="t-credit">elih.net/blog/virtua-grotesk</p>
+        </div>
+        <ol class="sw-points">
+          <li>Parameters<span class="val">12.54 million</span></li>
+          <li>Architecture<span class="val">transformer, 6 layers</span></li>
+          <li>Data<span class="val">graded glyphs only</span></li>
+          <li>Tasks<span class="val">Bold, sketch to outline</span></li>
+          <li>Release<span class="val">Hugging Face, planned</span></li>
+        </ol>
+      </div>
+    </div>
+    <Fragment slot="notes">
+      <p>Virtua-12M-v0.1: a decoder-only transformer with 6 layers, 384 dimensions, and 8 attention heads. Context of 1,368 tokens, a vocabulary of 1,784 tokens (commands, names, coordinates, deltas). The checkpoint is a 50 MB safetensors file.</p>
+      <p>Virtua Grotesk is drawn on a dyadic self-labeling grid: points default to the 8-unit grid, and optical corrections drop to the 2-unit grid. The grid records most of the drawing intent, so the sources are labeled training data without extra work.</p>
+      <p>Version 0.1 was pretrained on 28,770 Regular-to-Bold pairs traced from Google Fonts, then fine-tuned on 50 graded Virtua Grotesk pairs. I would not repeat the pretraining: the outlines came from compiled binaries, with point bloat, and from many unrelated designs. The corpus is now Virtua Grotesk only, and it has grown to 111 approved Regular-to-Bold pairs, about half of them Arabic.</p>
+      <p>The model runs in Runebender: the Brush panel’s Draft with Virtua tool redraws a sketch in the font’s conventions.</p>
+    </Fragment>
+  </Slide>
+
+  <Slide section="Training" label="The goal for Virtua-12M">
+    <div class="sw">
+      <div class="sw-head"><p class="sw-sec">05 Training</p><p class="sw-talk">{TALK}</p><p class="sw-num"></p></div>
+      <h2 class="sw-title t-display">The goal</h2>
+      <div class="sw-body">
+        <p class="sw-lead t-head">Draw the core glyphs by hand. The model drafts the rest in the same conventions.</p>
+        <ol class="sw-points">
+          <li>Bold drafts from the Regular</li>
+          <li>Sketches redrawn as outlines</li>
+          <li>Arabic and Hebrew in the same system</li>
+          <li>A second design on the same grid</li>
+          <li>Fonts that are models</li>
+        </ol>
+      </div>
+    </div>
+    <Fragment slot="notes">
+      <p>The near-term goal is to finish Virtua Grotesk: a designer draws a core set in one master, and the model drafts the rest for the designer to grade and fix. Each accepted draft becomes new training data, so the model improves at this font the longer the work continues.</p>
+      <p>Arabic is the current test of whether the method works beyond the Latin alphabet it was designed on. Weight transfer is harder there: a heavier Arabic letter is not just thicker stems on the same skeleton.</p>
+      <p>The next design on the same grid is an oldstyle, Virtua Oldstyle. Training on two designs with a design-system token tests whether the method generalizes.</p>
+      <p>The long-term aim is fonts that are models rather than tables of outlines: a generative model that draws each glyph in context, without the per-glyph boxes digital type inherited from metal type.</p>
+    </Fragment>
+  </Slide>
+
+  <!-- ── 06 Hardware ── -->
 
   <Slide section="Hardware" label="Hands-on setup">
     <div class="sw">
-      <div class="sw-head"><p class="sw-sec">05 Hardware</p><p class="sw-talk">{TALK}</p><p class="sw-num"></p></div>
-      <p class="sw-numeral t-num">05</p>
+      <div class="sw-head"><p class="sw-sec">06 Hardware</p><p class="sw-talk">{TALK}</p><p class="sw-num"></p></div>
+      <p class="sw-numeral t-num">06</p>
       <h2 class="sw-divider-title t-display">Hands-on setup</h2>
       <div class="sw-body">
         <p class="sw-right t-head">Install Runebender and run a first model on your own machine.</p>
@@ -835,7 +991,7 @@ const TALK = 'Local AI for Type Design'
 
   <Slide section="Hardware" label="Memory size">
     <div class="sw">
-      <div class="sw-head"><p class="sw-sec">05 Hardware</p><p class="sw-talk">{TALK}</p><p class="sw-num"></p></div>
+      <div class="sw-head"><p class="sw-sec">06 Hardware</p><p class="sw-talk">{TALK}</p><p class="sw-num"></p></div>
       <h2 class="sw-title t-display">Memory size</h2>
       <div class="sw-body">
         <p class="sw-lead t-head">The model must fit in memory.</p>
@@ -856,7 +1012,7 @@ const TALK = 'Local AI for Type Design'
 
   <Slide section="Hardware" label="Memory bandwidth">
     <div class="sw">
-      <div class="sw-head"><p class="sw-sec">05 Hardware</p><p class="sw-talk">{TALK}</p><p class="sw-num"></p></div>
+      <div class="sw-head"><p class="sw-sec">06 Hardware</p><p class="sw-talk">{TALK}</p><p class="sw-num"></p></div>
       <h2 class="sw-title t-display">Memory bandwidth</h2>
       <div class="sw-body">
         <p class="sw-lead t-head">Faster memory gives faster answers.</p>
@@ -874,7 +1030,7 @@ const TALK = 'Local AI for Type Design'
 
   <Slide section="Hardware" label="Mixture of experts">
     <div class="sw">
-      <div class="sw-head"><p class="sw-sec">05 Hardware</p><p class="sw-talk">{TALK}</p><p class="sw-num"></p></div>
+      <div class="sw-head"><p class="sw-sec">06 Hardware</p><p class="sw-talk">{TALK}</p><p class="sw-num"></p></div>
       <h2 class="sw-title t-display">Mixture of experts</h2>
       <div class="sw-body">
         <p class="sw-lead t-head">The model reads only part of its weights for each token.</p>
@@ -894,7 +1050,7 @@ const TALK = 'Local AI for Type Design'
 
   <Slide section="Hardware" label="Three kinds of machine">
     <div class="sw">
-      <div class="sw-head"><p class="sw-sec">05 Hardware</p><p class="sw-talk">{TALK}</p><p class="sw-num"></p></div>
+      <div class="sw-head"><p class="sw-sec">06 Hardware</p><p class="sw-talk">{TALK}</p><p class="sw-num"></p></div>
       <h2 class="sw-title t-display">Three kinds of machine</h2>
       <div class="sw-body">
         <p class="sw-lead t-head">Each trades memory size against speed.</p>
@@ -914,7 +1070,7 @@ const TALK = 'Local AI for Type Design'
 
   <Slide section="Hardware" label="Example machines">
     <div class="sw">
-      <div class="sw-head"><p class="sw-sec">05 Hardware</p><p class="sw-talk">{TALK}</p><p class="sw-num"></p></div>
+      <div class="sw-head"><p class="sw-sec">06 Hardware</p><p class="sw-talk">{TALK}</p><p class="sw-num"></p></div>
       <h2 class="sw-title t-display">Example machines</h2>
       <div class="sw-body">
         <p class="sw-lead t-head">Memory is the number to compare.</p>
@@ -946,7 +1102,7 @@ const TALK = 'Local AI for Type Design'
 
   <Slide section="Hardware" label="Choosing a machine">
     <div class="sw">
-      <div class="sw-head"><p class="sw-sec">05 Hardware</p><p class="sw-talk">{TALK}</p><p class="sw-num"></p></div>
+      <div class="sw-head"><p class="sw-sec">06 Hardware</p><p class="sw-talk">{TALK}</p><p class="sw-num"></p></div>
       <h2 class="sw-title t-display">Choosing a machine</h2>
       <div class="sw-body">
         <p class="sw-lead t-head">Start with the computer you have.</p>
@@ -971,7 +1127,7 @@ const TALK = 'Local AI for Type Design'
 
   <Slide section="Hardware" label="Runtimes">
     <div class="sw">
-      <div class="sw-head"><p class="sw-sec">05 Hardware</p><p class="sw-talk">{TALK}</p><p class="sw-num"></p></div>
+      <div class="sw-head"><p class="sw-sec">06 Hardware</p><p class="sw-talk">{TALK}</p><p class="sw-num"></p></div>
       <h2 class="sw-title t-display">Runtimes</h2>
       <div class="sw-body">
         <p class="sw-lead t-head">A runtime loads a model and runs it.</p>
@@ -989,11 +1145,11 @@ const TALK = 'Local AI for Type Design'
     </Fragment>
   </Slide>
 
-  <!-- ── 06 Setup ── -->
+  <!-- ── 07 Setup ── -->
 
   <Slide section="Setup" label="What you need">
     <div class="sw">
-      <div class="sw-head"><p class="sw-sec">06 Setup</p><p class="sw-talk">{TALK}</p><p class="sw-num"></p></div>
+      <div class="sw-head"><p class="sw-sec">07 Setup</p><p class="sw-talk">{TALK}</p><p class="sw-num"></p></div>
       <h2 class="sw-title t-display">What you need</h2>
       <div class="sw-body">
         <p class="sw-lead t-head">The app, two helper programs, and a models folder.</p>
@@ -1016,7 +1172,7 @@ const TALK = 'Local AI for Type Design'
 
   <Slide section="Setup" label="How it fits together">
     <div class="sw">
-      <div class="sw-head"><p class="sw-sec">06 Setup</p><p class="sw-talk">{TALK}</p><p class="sw-num"></p></div>
+      <div class="sw-head"><p class="sw-sec">07 Setup</p><p class="sw-talk">{TALK}</p><p class="sw-num"></p></div>
       <h2 class="sw-title t-display">How it fits together</h2>
       <div class="sw-body">
         <p class="sw-lead t-head">Runebender starts each helper when a feature needs it.</p>
@@ -1039,7 +1195,7 @@ const TALK = 'Local AI for Type Design'
 
   <Slide section="Setup" label="Where models come from">
     <div class="sw">
-      <div class="sw-head"><p class="sw-sec">06 Setup</p><p class="sw-talk">{TALK}</p><p class="sw-num"></p></div>
+      <div class="sw-head"><p class="sw-sec">07 Setup</p><p class="sw-talk">{TALK}</p><p class="sw-num"></p></div>
       <h2 class="sw-title t-display">Model sources</h2>
       <div class="sw-body">
         <p class="sw-lead t-head">Most models come from Hugging Face. Font models you train yourself.</p>
@@ -1061,7 +1217,7 @@ const TALK = 'Local AI for Type Design'
 
   <Slide section="Setup" label="Installing models safely">
     <div class="sw">
-      <div class="sw-head"><p class="sw-sec">06 Setup</p><p class="sw-talk">{TALK}</p><p class="sw-num"></p></div>
+      <div class="sw-head"><p class="sw-sec">07 Setup</p><p class="sw-talk">{TALK}</p><p class="sw-num"></p></div>
       <h2 class="sw-title t-display">Model safety</h2>
       <div class="sw-body">
         <p class="sw-lead t-head">A model is a file from someone else. Check it before you run it.</p>
@@ -1086,7 +1242,7 @@ const TALK = 'Local AI for Type Design'
 
   <Slide section="Setup" label="Installation" planned>
     <div class="sw">
-      <div class="sw-head"><p class="sw-sec">06 Setup</p><p class="sw-talk">{TALK}</p><p class="sw-num"></p></div>
+      <div class="sw-head"><p class="sw-sec">07 Setup</p><p class="sw-talk">{TALK}</p><p class="sw-num"></p></div>
       <h2 class="sw-title t-display">Installation</h2>
       <div class="sw-body">
         <p class="sw-lead t-head">Two ways to install Runebender.</p>
@@ -1108,7 +1264,7 @@ const TALK = 'Local AI for Type Design'
 
   <Slide section="Setup" label="Setup with a coding agent">
     <div class="sw">
-      <div class="sw-head"><p class="sw-sec">06 Setup</p><p class="sw-talk">{TALK}</p><p class="sw-num"></p></div>
+      <div class="sw-head"><p class="sw-sec">07 Setup</p><p class="sw-talk">{TALK}</p><p class="sw-num"></p></div>
       <h2 class="sw-title t-display">Setup with a coding agent</h2>
       <div class="sw-body">
         <p class="sw-lead t-head">Give Claude Code or Codex this request.</p>
@@ -1126,7 +1282,7 @@ local AI on this machine.</pre>
 
   <Slide section="Setup" label="Exercises">
     <div class="sw">
-      <div class="sw-head"><p class="sw-sec">06 Setup</p><p class="sw-talk">{TALK}</p><p class="sw-num"></p></div>
+      <div class="sw-head"><p class="sw-sec">07 Setup</p><p class="sw-talk">{TALK}</p><p class="sw-num"></p></div>
       <h2 class="sw-title t-display">Exercises</h2>
       <div class="sw-body">
         <p class="sw-lead t-head">Work through the demo repository in order.</p>
@@ -1152,11 +1308,11 @@ local AI on this machine.</pre>
     </Fragment>
   </Slide>
 
-  <!-- ── 07 Agents ── -->
+  <!-- ── 08 Agents ── -->
 
   <Slide section="Agents" label="Agents over MCP">
     <div class="sw">
-      <div class="sw-head"><p class="sw-sec">07 Agents</p><p class="sw-talk">{TALK}</p><p class="sw-num"></p></div>
+      <div class="sw-head"><p class="sw-sec">08 Agents</p><p class="sw-talk">{TALK}</p><p class="sw-num"></p></div>
       <h2 class="sw-title t-display">Agents over MCP</h2>
       <div class="sw-body">
         <p class="sw-lead t-head">Coding agents can work in the open editor.</p>
@@ -1176,7 +1332,7 @@ local AI on this machine.</pre>
 
   <Slide section="Agents" label="Planned work">
     <div class="sw">
-      <div class="sw-head"><p class="sw-sec">07 Agents</p><p class="sw-talk">{TALK}</p><p class="sw-num"></p></div>
+      <div class="sw-head"><p class="sw-sec">08 Agents</p><p class="sw-talk">{TALK}</p><p class="sw-num"></p></div>
       <h2 class="sw-title t-display">Planned work</h2>
       <div class="sw-body">
         <p class="sw-lead t-head">The same rules apply to each new feature.</p>
