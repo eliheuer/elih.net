@@ -23,6 +23,8 @@ import titleDgxSpark from '@/assets/slides/localai/title-dgx-spark.jpg'
 import proofTextReferences from '@/assets/slides/localai/proof-text-references.png'
 import reviewProofImage from '@/assets/slides/localai/review-proof-image.png'
 import virtuaBrowserProof from '@/assets/slides/localai/virtua-browser-proof.png'
+import virtuaBoldenN from '@/content/blog/virtua-grotesk/fig-model-bolden-n.png'
+import nastaliqSdfKha from '@/content/blog/nastaliq-distilled/sdf-kha.png'
 
 const TALK = 'Local AI for Type Design'
 ---
@@ -918,48 +920,95 @@ const TALK = 'Local AI for Type Design'
       <div class="sw-head"><p class="sw-sec">05 Training</p><p class="sw-talk">{TALK}</p><p class="sw-num"></p></div>
       <h2 class="sw-title t-display">How a model learns</h2>
       <div class="sw-body">
-        <p class="sw-lead t-head">It predicts the next part of a glyph, again and again, and is corrected each time.</p>
+        <p class="sw-lead t-head">It predicts, measures the error, and adjusts its weights, over and over.</p>
         <ol class="sw-points">
-          <li>Turn each glyph into tokens</li>
-          <li>Predict the next token</li>
-          <li>Adjust the weights after each error</li>
-          <li>Score it on glyphs it never saw</li>
+          <li>Start from random weights</li>
+          <li>Predict one training example</li>
+          <li>Measure how far off it is</li>
+          <li>Adjust the weights a little</li>
+          <li>Score it on examples it never saw</li>
         </ol>
       </div>
     </div>
     <Fragment slot="notes">
-      <p>Training starts with random weights. For each training example, the model predicts the next token, the error is measured as a loss, and the weights move a small step to reduce it. One pass over the whole training set is an epoch.</p>
-      <p>A fixed set of glyphs is kept out of training. The score on those held-out glyphs picks the best checkpoint and shows whether the model learned the design or only memorized the examples.</p>
-      <p>The method follows Andrej Karpathy’s small from-scratch projects: char-rnn, makemore, and microgpt. Each trains a small model on one narrow corpus with a small vocabulary.</p>
+      <p>The error is measured as a loss. One pass over the whole training set is an epoch. A fixed set of examples is kept out of training; the score on those picks the best checkpoint and shows whether the model learned the design or only memorized the examples.</p>
+      <p>The two models that follow learn this way, but they predict very different things.</p>
     </Fragment>
   </Slide>
 
-  <Slide section="Training" label="Glyphs as sentences">
+  <Slide section="Training" label="Two approaches">
     <div class="sw">
       <div class="sw-head"><p class="sw-sec">05 Training</p><p class="sw-talk">{TALK}</p><p class="sw-num"></p></div>
-      <h2 class="sw-title t-display">Glyphs as sentences</h2>
+      <h2 class="sw-title t-display">Two approaches</h2>
       <div class="sw-body">
-        <div class="sw-lead stack">
-          <p class="t-head">A glyph is an ordered list of drawing commands. A codec turns it into tokens.</p>
-          <p class="t-credit">Virtua Grotesk Regular, numeral two</p>
+        <div class="sw-half stack">
+          <h3 class="t-head">Virtua-12M</h3>
+          <p class="t-body">Draws outlines as drawing commands.</p>
+          <ol class="sw-points">
+            <li>Output<span class="val">outline tokens</span></li>
+            <li>Learns from<span class="val">its own font’s sources</span></li>
+            <li>Task<span class="val">Bold, sketch to outline</span></li>
+          </ol>
         </div>
-        <pre class="sw-code code">BOS N_two U_0032 W400 ADV 592
-MOVE 48 0
-LINE 528 0
-LINE 544 16
-…
-CURVE 152 136 232 216 356 276
-CURVE 492 342 560 422 560 552
-…
-LINE 32 16
-CLOSE
-EOS</pre>
+        <div class="sw-half sw-half-b stack">
+          <h3 class="t-head">NeuralType Nasta’liq</h3>
+          <p class="t-body">Draws shapes as distance fields.</p>
+          <ol class="sw-points">
+            <li>Output<span class="val">field, then traced</span></li>
+            <li>Learns from<span class="val">Gulzar’s shaped text</span></li>
+            <li>Task<span class="val">each shape in context</span></li>
+          </ol>
+          <p class="t-credit">elih.net/blog/virtua-grotesk and nastaliq-distilled</p>
+        </div>
       </div>
     </div>
     <Fragment slot="notes">
-      <p>BOS and EOS mark the start and end. N_two is the glyph name, U_0032 the codepoint, W400 the weight, and ADV 592 the advance width. MOVE starts a contour, LINE adds a line, CURVE adds a cubic Bézier, and CLOSE ends the contour. Each coordinate is one token.</p>
-      <p>The codec is reversible: generated tokens become editable UFO glyphs again. The round trip is exact when every coordinate is on the token grid, and Virtua Grotesk is drawn on that grid. A glyph is about 90 tokens.</p>
-      <p>The model trains on source outlines directly. It needs no rasterization, image encoder, or diffusion process.</p>
+      <p>Virtua-12M is an outline model. It writes a glyph as a sequence of tokens (MOVE, LINE, CURVE, coordinates), so its output is an editable outline with real points. A small error can break the outline, which is why the grid matters: every coordinate is one token on the font’s own grid.</p>
+      <p>NeuralType is a field model. It predicts a grid of distances to the nearest edge for each shape, and a tracer turns the zero crossing into a Bézier outline. A small error moves an edge slightly instead of breaking the outline. It suits Nasta’liq, where a letter’s shape depends on its neighbors.</p>
+      <p>Both are small and specialized: each learns one design, not a library of fonts.</p>
+    </Fragment>
+  </Slide>
+
+  <Slide section="Training" label="Virtua-12M">
+    <div class="sw sw-split">
+      <div class="sw-head"><p class="sw-sec">05 Training</p><p class="sw-talk">{TALK}</p><p class="sw-num"></p></div>
+      <h2 class="sw-title t-display">Virtua-12M</h2>
+      <div class="sw-body">
+        <p class="sw-lead t-head">Drafts the Bold from the Regular, point by point.</p>
+        <ol class="sw-points">
+          <li>Parameters<span class="val">12.54 million</span></li>
+          <li>Model<span class="val">transformer</span></li>
+          <li>Held-out Bold error<span class="val">24.0, baseline 31.3</span></li>
+        </ol>
+      </div>
+      <Fig class="sw-fig fig-right" src={virtuaBoldenN} alt="The lowercase n of Virtua Grotesk on its design grid: the drawn Regular on the left, and the Bold drawn by Virtua-12M-v0.1 on the right." />
+    </div>
+    <Fragment slot="notes">
+      <p>Virtua-12M-v0.1: a decoder-only transformer, 6 layers, 384 dimensions, 8 heads; 1,784 tokens of vocabulary; a 50 MB checkpoint. A codec turns each UFO glyph into tokens and back without loss, because Virtua Grotesk is drawn on the same grid as the tokens. A glyph is about 90 tokens, for example: BOS N_two U_0032 W400 ADV 592, MOVE 48 0, LINE 528 0, and so on to CLOSE and EOS.</p>
+      <p>For weight transfer it predicts, for each Regular point, the move to its Bold position. On ten held-out Bold glyphs, average coordinate error was 24.0 ± 1.6 over five seeds, against 31.3 for shifting each Regular by the average change.</p>
+      <p>Version 0.1 was pretrained on Google Fonts pairs; I dropped that stage. The corpus is now Virtua Grotesk only: 111 approved Regular-to-Bold pairs, about half Arabic. An open-weight release on Hugging Face is planned.</p>
+    </Fragment>
+  </Slide>
+
+  <Slide section="Training" label="NeuralType Nastaliq">
+    <div class="sw sw-split">
+      <div class="sw-head"><p class="sw-sec">05 Training</p><p class="sw-talk">{TALK}</p><p class="sw-num"></p></div>
+      <h2 class="sw-title t-display">NeuralType</h2>
+      <div class="sw-body">
+        <p class="sw-lead t-head">A Nasta’liq font that draws each shape from the letters around it.</p>
+        <ol class="sw-points">
+          <li>Parameters<span class="val">1.36 million</span></li>
+          <li>Font file<span class="val">1.38 MB</span></li>
+          <li>Held-out shape overlap<span class="val">0.945</span></li>
+        </ol>
+      </div>
+      <Fig class="sw-fig fig-right" src={nastaliqSdfKha} alt="The isolated Nasta’liq letter kha from Gulzar, and the same shape as a signed-distance field with its zero contour marked in red." />
+    </div>
+    <Fragment slot="notes">
+      <p>NeuralType is a font format that is a small neural network. This model was distilled from Gulzar, an OpenType Nasta’liq font: Gulzar and the HarfRust shaper were the teacher. The dataset has every one-, two-, and three-letter string, 30,783 in all, plus 24 longer words: 91,390 examples covering 1,150 distinct shapes.</p>
+      <p>A feed-forward network turns the nearby letters into one description of the shape, decodes it into a 155 × 219 signed-distance field at 64 pixels per em, and predicts the shape’s offset. The renderer traces the field into a Bézier outline. No OpenType shaping runs at runtime.</p>
+      <p>Shape overlap (IoU) on held-out examples was 0.945. It measures shape, not position, and not new words: the model still breaks on some unseen words. The weights are 8-bit; the file is 1.38 MB.</p>
+      <p>The next Nasta’liq model trains from labeled drawings alone, with no teacher font.</p>
     </Fragment>
   </Slide>
 
@@ -1002,68 +1051,40 @@ EOS</pre>
       <div class="sw-head"><p class="sw-sec">05 Training</p><p class="sw-talk">{TALK}</p><p class="sw-num"></p></div>
       <h2 class="sw-title t-display">Measuring a model</h2>
       <div class="sw-body">
-        <p class="sw-lead t-head">Score every model on glyphs it never saw, against a simple baseline.</p>
+        <p class="sw-lead t-head">Score every model on examples it never saw, and say what the score misses.</p>
         <ol class="sw-points">
-          <li>Hold out glyphs<span class="val">never trained on</span></li>
-          <li>Beat a baseline<span class="val">mean shift</span></li>
+          <li>Hold out examples<span class="val">never trained on</span></li>
+          <li>Compare with a baseline<span class="val">or the teacher</span></li>
           <li>Run several seeds<span class="val">not one run</span></li>
-          <li>Check the conventions<span class="val">grid fit</span></li>
+          <li>State the limits<span class="val">what it can’t do</span></li>
         </ol>
       </div>
     </div>
     <Fragment slot="notes">
-      <p>Virtua-12M-v0.1, predicting ten held-out Bold glyphs. The baseline shifts each Regular by the average Regular-to-Bold change. Coordinate error (MAE): baseline 31.3, model 24.0 ± 1.6. Outline shape (Chamfer): 37.4 against 22.4. Filled ink overlap (IoU): 0.564 against 0.745.</p>
-      <p>The first result I recorded was 20.9. It was a lucky run. Five seeds gave 24.0 ± 1.6, which is the number to report.</p>
-      <p>Grid fit is a check a script can run: 85 percent of the points in the hand-drawn sources sit on the 8-unit grid, and 68 percent of the model’s points do. A random point on the 2-unit token grid would land there 6 percent of the time.</p>
+      <p>Virtua-12M: on ten held-out Bold glyphs, coordinate error 24.0 ± 1.6 over five seeds, against 31.3 for a plain mean shift. The first result I recorded, 20.9, was a lucky single run. Shape (Chamfer) 22.4 against 37.4; filled-ink overlap (IoU) 0.745 against 0.564.</p>
+      <p>NeuralType Nasta’liq: shape overlap 0.945 on held-out examples. The held-out set comes from the same short strings as training, so the number says nothing about new words, and it measures shape only, not position.</p>
+      <p>A script can also check conventions: 85 percent of the points in Virtua Grotesk’s sources sit on its 8-unit grid, and 68 percent of the model’s points do.</p>
     </Fragment>
   </Slide>
 
-  <Slide section="Training" label="Virtua-12M">
+  <Slide section="Training" label="Where this goes">
     <div class="sw">
       <div class="sw-head"><p class="sw-sec">05 Training</p><p class="sw-talk">{TALK}</p><p class="sw-num"></p></div>
-      <h2 class="sw-title t-display">Virtua-12M</h2>
+      <h2 class="sw-title t-display">Where this goes</h2>
       <div class="sw-body">
-        <div class="sw-lead stack">
-          <p class="t-head">A small model that learns one design system: Virtua Grotesk.</p>
-          <p class="t-credit">elih.net/blog/virtua-grotesk</p>
-        </div>
+        <p class="sw-lead t-head">A designer draws the core. Models trained on those drawings draft the rest.</p>
         <ol class="sw-points">
-          <li>Parameters<span class="val">12.54 million</span></li>
-          <li>Architecture<span class="val">transformer, 6 layers</span></li>
-          <li>Data<span class="val">graded glyphs only</span></li>
-          <li>Tasks<span class="val">Bold, sketch to outline</span></li>
-          <li>Release<span class="val">Hugging Face, planned</span></li>
+          <li>Weights and sketches<span class="val">Virtua-12M</span></li>
+          <li>Shapes in context<span class="val">NeuralType</span></li>
+          <li>Training from drawings alone<span class="val">no teacher font</span></li>
+          <li>Fonts that are models<span class="val">post-OpenType</span></li>
         </ol>
       </div>
     </div>
     <Fragment slot="notes">
-      <p>Virtua-12M-v0.1: a decoder-only transformer with 6 layers, 384 dimensions, and 8 attention heads. Context of 1,368 tokens, a vocabulary of 1,784 tokens (commands, names, coordinates, deltas). The checkpoint is a 50 MB safetensors file.</p>
-      <p>Virtua Grotesk is drawn on a dyadic self-labeling grid: points default to the 8-unit grid, and optical corrections drop to the 2-unit grid. The grid records most of the drawing intent, so the sources are labeled training data without extra work.</p>
-      <p>Version 0.1 was pretrained on 28,770 Regular-to-Bold pairs traced from Google Fonts, then fine-tuned on 50 graded Virtua Grotesk pairs. I would not repeat the pretraining: the outlines came from compiled binaries, with point bloat, and from many unrelated designs. The corpus is now Virtua Grotesk only, and it has grown to 111 approved Regular-to-Bold pairs, about half of them Arabic.</p>
-      <p>The model runs in Runebender: the Brush panel’s Draft with Virtua tool redraws a sketch in the font’s conventions.</p>
-    </Fragment>
-  </Slide>
-
-  <Slide section="Training" label="The goal for Virtua-12M">
-    <div class="sw">
-      <div class="sw-head"><p class="sw-sec">05 Training</p><p class="sw-talk">{TALK}</p><p class="sw-num"></p></div>
-      <h2 class="sw-title t-display">The goal</h2>
-      <div class="sw-body">
-        <p class="sw-lead t-head">Draw the core glyphs by hand. The model drafts the rest in the same conventions.</p>
-        <ol class="sw-points">
-          <li>Bold drafts from the Regular</li>
-          <li>Sketches redrawn as outlines</li>
-          <li>Arabic and Hebrew in the same system</li>
-          <li>A second design on the same grid</li>
-          <li>Fonts that are models</li>
-        </ol>
-      </div>
-    </div>
-    <Fragment slot="notes">
-      <p>The near-term goal is to finish Virtua Grotesk: a designer draws a core set in one master, and the model drafts the rest for the designer to grade and fix. Each accepted draft becomes new training data, so the model improves at this font the longer the work continues.</p>
-      <p>Arabic is the current test of whether the method works beyond the Latin alphabet it was designed on. Weight transfer is harder there: a heavier Arabic letter is not just thicker stems on the same skeleton.</p>
-      <p>The next design on the same grid is an oldstyle, Virtua Oldstyle. Training on two designs with a design-system token tests whether the method generalizes.</p>
-      <p>The long-term aim is fonts that are models rather than tables of outlines: a generative model that draws each glyph in context, without the per-glyph boxes digital type inherited from metal type.</p>
+      <p>Virtua-12M is aimed at finishing Virtua Grotesk: drafting Bold from Regular and redrawing sketches in the font’s conventions, then a second design (Virtua Oldstyle) on the same grid.</p>
+      <p>NeuralType is aimed at scripts that OpenType serves badly. Distilling Gulzar showed it can work; the next model trains from labeled drawings alone, so the font is designed for the format from the start.</p>
+      <p>Both point toward fonts that are models rather than tables of outlines: a model that draws each glyph in context, without the per-glyph boxes digital type inherited from metal type.</p>
     </Fragment>
   </Slide>
 
